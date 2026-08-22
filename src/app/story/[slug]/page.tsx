@@ -2,10 +2,16 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PublicShell } from "@/components/PublicShell";
 import { CivicList } from "@/components/CivicList";
-import { formatShortDate } from "@/lib/dates";
+import { formatStoryDateline } from "@/lib/dates";
 import { getAppData, getOriginalBySlug } from "@/lib/data/store";
 import { civicEvents } from "@/lib/queries";
 import { clusterStories } from "@/lib/pull/cluster";
+import {
+  isQuotedParagraph,
+  readTimeMinutes,
+  storySectionLabel,
+  stripOuterQuotes,
+} from "@/lib/story-display";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +36,9 @@ export default async function StoryPage({ params }: Props) {
     .slice(0, 5);
 
   const paragraphs = (story.body ?? "").split(/\n\n+/).filter(Boolean);
+  const section = storySectionLabel(story, data.sources, data.beats);
+  const readMins = readTimeMinutes(story.body);
+  const dateline = formatStoryDateline(story.published_at);
 
   return (
     <PublicShell active="/">
@@ -57,6 +66,12 @@ export default async function StoryPage({ params }: Props) {
 
         <article className="min-w-0">
           <p className="text-[0.72rem] font-semibold tracking-[0.08em] text-teal uppercase">
+            {section ? (
+              <>
+                ● {section}
+                {" · "}
+              </>
+            ) : null}
             traverse.news reporting
           </p>
           <h1 className="mt-3 font-serif text-[2rem] leading-[1.12] text-ink md:text-[2.6rem]">
@@ -70,7 +85,8 @@ export default async function StoryPage({ params }: Props) {
           <p className="mt-4 text-sm text-muted">
             By <strong className="text-ink">{story.byline ?? "Desk"}</strong>
             {" · "}
-            {formatShortDate(story.published_at)}
+            {dateline}
+            {readMins ? ` · ${readMins} min read` : null}
           </p>
 
           {story.image_url ? (
@@ -81,9 +97,15 @@ export default async function StoryPage({ params }: Props) {
           ) : null}
 
           <div className="prose-article mt-8 max-w-2xl">
-            {paragraphs.map((p) => (
-              <p key={p.slice(0, 40)}>{p}</p>
-            ))}
+            {paragraphs.map((p) =>
+              isQuotedParagraph(p) ? (
+                <blockquote key={p.slice(0, 40)} className="pull-quote">
+                  {stripOuterQuotes(p)}
+                </blockquote>
+              ) : (
+                <p key={p.slice(0, 40)}>{p}</p>
+              ),
+            )}
           </div>
 
           <div className="mt-10 max-w-2xl border border-rule bg-paper-2 p-4">
@@ -91,11 +113,10 @@ export default async function StoryPage({ params }: Props) {
               Corrections & tips
             </p>
             <p className="mt-2 text-sm text-[#333]">
-              Tips and corrections:{" "}
+              Spot an error?{" "}
               <a className="text-teal" href="mailto:nick@traverse.news">
                 nick@traverse.news
               </a>
-              .
             </p>
           </div>
         </article>

@@ -36,6 +36,8 @@ export type Story = {
   image_url: string | null;
   byline: string | null;
   slug: string | null;
+  /** Public kicker label (e.g. "Events"). Prefer over beat name when set. */
+  section?: string | null;
 };
 
 export type EventItem = {

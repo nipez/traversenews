@@ -34,6 +34,25 @@ export function formatShortDate(iso: string): string {
   return `${MONTHS[d.getMonth()].slice(0, 3)} ${d.getDate()}, ${d.getFullYear()}`;
 }
 
+/** Dateline for originals: date + local time in America/Detroit. */
+export function formatStoryDateline(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return formatShortDate(iso);
+  const date = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Detroit",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(d);
+  const time = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Detroit",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).format(d);
+  return `${date}, ${time}`;
+}
+
 export function formatCivicDate(iso: string): { day: string; label: string } {
   const d = new Date(iso);
   return {
