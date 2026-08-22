@@ -1,7 +1,9 @@
 import { createSeedData } from "@/lib/data/seed";
 import { getTraverseDataKv, STORE_KEY } from "@/lib/data/kv";
+import { buildEditionSnapshot, upsertEdition } from "@/lib/editions";
 import type {
   AppData,
+  EditionSnapshot,
   EventItem,
   Source,
   Story,
@@ -16,6 +18,13 @@ function cloneSeed(): AppData {
   return structuredClone(createSeedData());
 }
 
+function normalizeAppData(data: AppData): AppData {
+  if (!Array.isArray(data.editions)) {
+    data.editions = [];
+  }
+  return data;
+}
+
 export function getMemoryStore(): AppData {
   if (!globalStore.__traverseStore) {
     globalStore.__traverseStore = cloneSeed();
@@ -24,7 +33,9 @@ export function getMemoryStore(): AppData {
 }
 
 export function resetMemoryStore(data?: AppData): AppData {
-  globalStore.__traverseStore = data ? structuredClone(data) : cloneSeed();
+  globalStore.__traverseStore = data
+    ? normalizeAppData(structuredClone(data))
+    : cloneSeed();
   return globalStore.__traverseStore;
 }
 
@@ -83,14 +94,14 @@ async function writeKvStore(data: AppData): Promise<boolean> {
 export async function loadStore(): Promise<AppData> {
   const fromKv = await readKvStore();
   if (fromKv) {
-    globalStore.__traverseStore = fromKv;
-    return fromKv;
+    globalStore.__traverseStore = normalizeAppData(fromKv);
+    return globalStore.__traverseStore;
   }
 
   const file = await readLocalFileStore();
   if (file) {
-    globalStore.__traverseStore = file;
-    return file;
+    globalStore.__traverseStore = normalizeAppData(file);
+    return globalStore.__traverseStore;
   }
 
   return getMemoryStore();
@@ -192,4 +203,23 @@ export async function getBeats() {
 
 export async function getAppData(): Promise<AppData> {
   return loadStore();
+}
+
+export async function listEditions(): Promise<EditionSnapshot[]> {
+  const data = await loadStore();
+  return [...data.editions].sort((a, b) => b.date.localeCompare(a.date));
+}
+
+export async function getEdition(date: string): Promise<EditionSnapshot | undefined> {
+  const data = await loadStore();
+  return data.editions.find((e) => e.date === date);
+}
+
+/** Snapshot today's clustered homepage into the edition archive (upsert by Detroit date). */
+export async function snapshotTodaysEdition(at = new Date()): Promise<EditionSnapshot> {
+  const data = await loadStore();
+  const snapshot = buildEditionSnapshot(data, at);
+  data.editions = upsertEdition(data.editions, snapshot);
+  await saveStore(data);
+  return snapshot;
 }

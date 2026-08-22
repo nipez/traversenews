@@ -10,7 +10,7 @@ export async function DeskChrome({
   backHref,
 }: {
   children: React.ReactNode;
-  active?: "sources" | "queue" | "originals" | "email";
+  active?: "sources" | "queue" | "originals" | "email" | "editions";
   backHref?: string;
 }) {
   const authed = await isDeskAuthed();
@@ -28,6 +28,7 @@ export async function DeskChrome({
     { id: "sources", href: "/desk", label: "Sources" },
     { id: "queue", href: "/desk/queue", label: "Queue" },
     { id: "originals", href: "/desk/originals", label: "Originals" },
+    { id: "editions", href: "/desk/editions", label: "Editions" },
     { id: "email", href: "/desk/email", label: "Email" },
   ] as const;
 

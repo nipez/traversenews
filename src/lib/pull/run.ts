@@ -4,6 +4,7 @@ import {
   replacePulledEvents,
   replacePulledStories,
   saveStore,
+  snapshotTodaysEdition,
 } from "@/lib/data/store";
 import { pullIcsSource } from "@/lib/pull/ics";
 import { pullRssSource } from "@/lib/pull/rss";
@@ -16,6 +17,7 @@ export type PullResult = {
   errors: Array<{ source: string; error: string }>;
   last_pull_at: string;
   persisted: "kv" | "file" | "memory";
+  edition_date: string | null;
 };
 
 export async function runPull(): Promise<PullResult> {
@@ -46,8 +48,6 @@ export async function runPull(): Promise<PullResult> {
   const existing = await listStories();
   const originals = existing.filter((s) => s.is_original);
 
-  // When any live RSS items arrive, drop fictional seed aggregated cards.
-  // Only fall back to prior aggregated rows if the pull produced nothing.
   const nextAggregated =
     pulledStories.length > 0
       ? pulledStories
@@ -61,6 +61,8 @@ export async function runPull(): Promise<PullResult> {
   const store = await loadStore();
   store.last_pull_at = new Date().toISOString();
   await saveStore(store);
+
+  const edition = await snapshotTodaysEdition(new Date());
 
   let persisted: PullResult["persisted"] = "memory";
   try {
@@ -81,5 +83,6 @@ export async function runPull(): Promise<PullResult> {
     errors,
     last_pull_at: store.last_pull_at,
     persisted,
+    edition_date: edition.date,
   };
 }

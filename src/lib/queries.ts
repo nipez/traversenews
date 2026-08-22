@@ -42,15 +42,15 @@ export async function getHomepageData() {
 export function civicEvents(
   events: EventItem[],
   sources: { id: string; beat_id: string }[],
+  nowMs = Date.now(),
 ): EventItem[] {
   const civicBeats = new Set(["beat_government", "beat_schools"]);
   const civicSourceIds = new Set(
     sources.filter((s) => civicBeats.has(s.beat_id)).map((s) => s.id),
   );
-  const now = Date.now();
   return events
     .filter((e) => civicSourceIds.has(e.source_id))
-    .filter((e) => new Date(e.starts_at).getTime() >= now - 60 * 60 * 1000)
+    .filter((e) => new Date(e.starts_at).getTime() >= nowMs - 60 * 60 * 1000)
     .sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime());
 }
 

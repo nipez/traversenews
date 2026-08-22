@@ -66,6 +66,34 @@ export type ClusteredStory = {
   body: string | null;
 };
 
+/** Compact card stored in a day's edition (no third-party bodies). */
+export type EditionStoryCard = {
+  title: string;
+  dek: string;
+  url: string;
+  published_at: string;
+  sources: string[];
+  byline: string | null;
+  slug: string | null;
+  is_original: boolean;
+};
+
+export type EditionEventCard = {
+  title: string;
+  starts_at: string;
+  place: string;
+  url: string | null;
+};
+
+export type EditionSnapshot = {
+  date: string;
+  captured_at: string;
+  lead: EditionStoryCard | null;
+  around: EditionStoryCard[];
+  events: EditionEventCard[];
+  civic: EditionEventCard[];
+};
+
 export type AppData = {
   beats: Beat[];
   sources: Source[];
@@ -73,4 +101,5 @@ export type AppData = {
   events: EventItem[];
   subscribers: Subscriber[];
   last_pull_at: string | null;
+  editions: EditionSnapshot[];
 };

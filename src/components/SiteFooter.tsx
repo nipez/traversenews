@@ -11,6 +11,7 @@ export function SiteFooter() {
           <Link href="/email">About</Link>
           <a href="mailto:tips@traverse.news">Contact a reporter</a>
           <a href="mailto:tips@traverse.news">Corrections</a>
+          <Link href="/editions">Editions</Link>
           <Link href="/email#signup">Support us</Link>
         </nav>
         <p className="text-sm text-muted">

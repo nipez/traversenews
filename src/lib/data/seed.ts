@@ -506,6 +506,7 @@ export function createSeedData(): AppData {
     events,
     subscribers: [],
     last_pull_at: null,
+    editions: [],
   };
 }
 

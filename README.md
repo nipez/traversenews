@@ -152,6 +152,16 @@ npx wrangler secret put SUPABASE_SERVICE_ROLE_KEY
 
 OpenNext deploys this app as a **Worker with static assets** (not classic Pages). Point a custom domain at the Worker in the Cloudflare dashboard when you want traverse.news on it.
 
+## Editions archive
+
+Each successful `/api/pull` writes (or refreshes) today's edition snapshot in the same `TRAVERSE_DATA` KV blob (`app_data.editions[]`).
+
+- Date key: `YYYY-MM-DD` in **America/Detroit**
+- One edition per day; later pulls the same day overwrite that day's snapshot so the archive matches the last homepage readers saw
+- Payload: lead original, around-the-bay cards, tonight/events, civic (no third-party full bodies)
+- Public: `/editions`, `/editions/[date]` (linked from the footer)
+- Desk: `/desk/editions`
+
 ## Product rules (v1)
 
 - Public nav: Today, What's on, Civic, plus morning email CTA
