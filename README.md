@@ -60,7 +60,7 @@ See `.env.example`.
 | `DEV_DESK_EMAIL` | Local Desk email |
 | `NEXT_PUBLIC_SITE_URL` | Canonical site URL |
 
-Without Supabase vars the app seeds beats, sources, stories, and events in memory and persists Desk edits to `.data/store.json` during `next dev` / Node. On Cloudflare Workers, use Supabase for durable Desk data.
+Without Supabase vars the app seeds **beats and sources** only (empty stories/events), then fills the public site from `/api/pull`. Desk edits persist to `.data/store.json` during `next dev` / Node. On Cloudflare Workers, `TRAVERSE_DATA` KV holds the durable store.
 
 ## Supabase
 
@@ -69,7 +69,7 @@ Without Supabase vars the app seeds beats, sources, stories, and events in memor
 3. Create a staff Auth user.
 4. Set the env vars and redeploy.
 
-Seed rows can be inserted from the Desk UI or by adapting `src/lib/data/seed.ts`.
+Source catalog lives in `src/lib/data/seed.ts` (feeds and beats only). Do not paste invented journalism into seed — write real pieces in Desk when ready.
 
 ## Cloudflare deploy
 
@@ -158,9 +158,20 @@ Each successful `/api/pull` writes (or refreshes) today's edition snapshot in th
 
 - Date key: `YYYY-MM-DD` in **America/Detroit**
 - One edition per day; later pulls the same day overwrite that day's snapshot so the archive matches the last homepage readers saw
-- Payload: lead original, around-the-bay cards, tonight/events, civic (no third-party full bodies)
+- Payload: lead (staff original if any, else other-desk wire), around-the-bay cards, tonight/events from ICS, civic (no third-party full bodies)
 - Public: `/editions`, `/editions/[date]` (linked from the footer)
 - Desk: `/desk/editions`
+
+## Editorial
+
+**Hard rule — never invent journalism.**
+
+- Do **not** invent quotes, events, crashes, officials, or original articles.
+- Seed data may include **real source records only** (beats, outlet names, feed/ICS URLs, enable flags, notes). No fake `Story` bodies. No fake bylines on fiction. No placeholder wire cards that point at outlet homepages instead of article permalinks.
+- Homepage originals / “More from us” stay **empty** until a real piece is saved in the Desk. Empty layout is correct; do not invent copy to make the page look full.
+- Around the bay and civic/events listings must come from a real RSS/ICS pull (real title, dek, permalink). If a pull has not run yet, show empty — not fabricated seed stories.
+- If there is no staff original, the homepage lead may be empty or the first clustered live wire card, labeled **From other desks**, never as traverse.news reporting.
+- `src/lib/data/scrub.ts` strips known invented seed IDs from KV on load. Do not reintroduce those slugs or placeholder journalism.
 
 ## Product rules (v1)
 
@@ -168,8 +179,9 @@ Each successful `/api/pull` writes (or refreshes) today's edition snapshot in th
 - Photos only on original stories, and only when they match
 - Overheard in TC is On (Facebook tip wire, no scrape yet)
 - TC Business News is Off (paywall)
-- Morning email preview leads with an original when one exists
+- Morning email preview leads with an original when one exists; otherwise a live wire card
 - Empty Sports / HS sports beats stay on the Desk only
+- Editorial rule above is non-negotiable for seed, homepage, and Desk originals
 
 ## License
 

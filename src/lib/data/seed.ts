@@ -1,3 +1,8 @@
+/**
+ * Seed = real Desk catalog only (beats + sources with feed URLs).
+ * NEVER invent Story bodies, bylines, quotes, crashes, or events here.
+ * See README → Editorial.
+ */
 import type { AppData, Beat, EventItem, Source, Story } from "@/lib/types";
 
 const beats: Beat[] = [
@@ -295,42 +300,8 @@ const sources: Source[] = [
 
 const stories: Story[] = [];
 
-function daysFrom(baseIso: string, days: number, hourUtc: number): string {
-  const d = new Date(baseIso);
-  d.setUTCDate(d.getUTCDate() + days);
-  d.setUTCHours(hourUtc, 0, 0, 0);
-  return d.toISOString();
-}
-
-// Lightweight civic placeholders only (public meetings). No invented news copy.
-const seedDay = "2026-08-22T12:00:00.000Z";
-
-const events: EventItem[] = [
-  {
-    id: "evt_city_study",
-    title: "City Commission study session",
-    starts_at: daysFrom(seedDay, 3, 23),
-    place: "7 p.m., Governmental Center",
-    url: "https://traversecitymi.civicweb.net/Portal/",
-    source_id: "src_civicweb",
-  },
-  {
-    id: "evt_road_comm",
-    title: "Road Commission regular meeting",
-    starts_at: daysFrom(seedDay, 4, 12),
-    place: "8 a.m., County Road Commission",
-    url: "https://www.gtcountymi.gov",
-    source_id: "src_civicweb",
-  },
-  {
-    id: "evt_tcaps_board",
-    title: "TCAPS Board of Education",
-    starts_at: daysFrom(seedDay, 5, 23),
-    place: "7 p.m., Administration Building",
-    url: "https://www.tcaps.net",
-    source_id: "src_tcaps",
-  },
-];
+// Events come from ICS pull only. Do not invent meetings to fill the layout.
+const events: EventItem[] = [];
 
 export function createSeedData(): AppData {
   return {

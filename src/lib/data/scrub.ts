@@ -1,6 +1,6 @@
 import type { AppData, EditionSnapshot, EditionStoryCard, Story } from "@/lib/types";
 
-/** Invented seed copy that must never appear as reporting. */
+/** Invented seed copy that must never appear as reporting. See README → Editorial. */
 export const BANNED_ORIGINAL_SLUGS = new Set([
   "center-road-fix-list",
   "boardman-overnight-parking",
@@ -29,6 +29,9 @@ export const BANNED_EVENT_IDS = new Set([
   "evt_foodwine",
   "evt_film",
   "evt_writers",
+  "evt_city_study",
+  "evt_road_comm",
+  "evt_tcaps_board",
 ]);
 
 /** Known invented titles (seed + archive cards) — match case-insensitive substring. */
