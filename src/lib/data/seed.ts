@@ -437,19 +437,29 @@ const stories: Story[] = [
   },
 ];
 
+function daysFrom(baseIso: string, days: number, hourUtc: number): string {
+  const d = new Date(baseIso);
+  d.setUTCDate(d.getUTCDate() + days);
+  d.setUTCHours(hourUtc, 0, 0, 0);
+  return d.toISOString();
+}
+
+// Seeded around the Center Road publish day so the homepage always has listings.
+const seedDay = "2026-08-22T12:00:00.000Z";
+
 const events: EventItem[] = [
   {
     id: "evt_foodwine",
     title: "Traverse City Food & Wine, last days",
-    starts_at: "2026-08-22T17:00:00.000Z",
+    starts_at: daysFrom(seedDay, 0, 23),
     place: "Downtown Traverse City · through Sunday",
-    url: "https://www.cherryfestival.org/",
+    url: "https://www.traverseticker.com/calendar/",
     source_id: "src_downtown",
   },
   {
     id: "evt_film",
     title: "Open-air film at Clinch Park",
-    starts_at: "2026-08-22T22:30:00.000Z",
+    starts_at: daysFrom(seedDay, 1, 0),
     place: "Clinch Park beach · free",
     url: "https://www.downtowntc.com/events/",
     source_id: "src_downtown",
@@ -457,7 +467,7 @@ const events: EventItem[] = [
   {
     id: "evt_writers",
     title: "National Writers Series: evening conversation",
-    starts_at: "2026-08-23T23:00:00.000Z",
+    starts_at: daysFrom(seedDay, 1, 23),
     place: "City Opera House",
     url: "https://nationalwritersseries.org/",
     source_id: "src_nws",
@@ -465,7 +475,7 @@ const events: EventItem[] = [
   {
     id: "evt_city_study",
     title: "City Commission study session",
-    starts_at: "2026-08-25T23:00:00.000Z",
+    starts_at: daysFrom(seedDay, 3, 23),
     place: "7 p.m., Governmental Center",
     url: "https://traversecitymi.civicweb.net/Portal/",
     source_id: "src_civicweb",
@@ -473,15 +483,15 @@ const events: EventItem[] = [
   {
     id: "evt_road_comm",
     title: "Road Commission regular meeting",
-    starts_at: "2026-08-26T14:00:00.000Z",
+    starts_at: daysFrom(seedDay, 4, 12),
     place: "8 a.m., County Road Commission",
     url: "https://www.gtcountymi.gov",
-    source_id: "src_gt_cal",
+    source_id: "src_civicweb",
   },
   {
     id: "evt_tcaps_board",
     title: "TCAPS Board of Education",
-    starts_at: "2026-08-27T23:00:00.000Z",
+    starts_at: daysFrom(seedDay, 5, 23),
     place: "7 p.m., Administration Building",
     url: "https://www.tcaps.net",
     source_id: "src_tcaps",
