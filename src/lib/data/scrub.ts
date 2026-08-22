@@ -24,6 +24,13 @@ export const BANNED_STORY_IDS = new Set([
   "story_seed_more_3",
 ]);
 
+/** Invented seed calendar rows that were never from ICS. */
+export const BANNED_EVENT_IDS = new Set([
+  "evt_foodwine",
+  "evt_film",
+  "evt_writers",
+]);
+
 /** Known invented titles (seed + archive cards) — match case-insensitive substring. */
 const BANNED_TITLE_MARKERS = [
   "center road",
@@ -109,6 +116,12 @@ export function scrubAppData(data: AppData): { data: AppData; changed: boolean }
     data.stories = nextStories;
   }
 
+  const nextEvents = data.events.filter((e) => !BANNED_EVENT_IDS.has(e.id));
+  if (nextEvents.length !== data.events.length) {
+    changed = true;
+    data.events = nextEvents;
+  }
+
   data.editions = data.editions.map((ed) => {
     const scrubbed = scrubEdition(ed);
     if (scrubbed.changed) changed = true;
@@ -116,6 +129,16 @@ export function scrubAppData(data: AppData): { data: AppData; changed: boolean }
   });
 
   return { data, changed };
+}
+
+function eventCardLooksInvented(title: string): boolean {
+  const t = title.toLowerCase();
+  return (
+    t.includes("food & wine") ||
+    t.includes("food and wine") ||
+    t.includes("open-air film at clinch") ||
+    t.includes("national writers series: evening conversation")
+  );
 }
 
 function scrubEdition(edition: EditionSnapshot): {
@@ -142,10 +165,16 @@ function scrubEdition(edition: EditionSnapshot): {
     changed = true;
   }
 
+  const events = edition.events.filter((e) => !eventCardLooksInvented(e.title));
+  const civic = edition.civic.filter((e) => !eventCardLooksInvented(e.title));
+  if (events.length !== edition.events.length || civic.length !== edition.civic.length) {
+    changed = true;
+  }
+
   if (!changed) return { edition, changed: false };
   return {
     changed: true,
-    edition: { ...edition, lead, around },
+    edition: { ...edition, lead, around, events, civic },
   };
 }
 
