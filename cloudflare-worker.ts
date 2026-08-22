@@ -1,3 +1,4 @@
+// @ts-ignore `.open-next/worker.js` is generated at OpenNext build time
 import { default as handler } from "./.open-next/worker.js";
 
 type PullEnv = {
@@ -33,6 +34,7 @@ export default {
   },
 };
 
+// @ts-ignore generated at OpenNext build time
 export {
   DOQueueHandler,
   DOShardedTagCache,

@@ -75,7 +75,7 @@ Seed rows can be inserted from the Desk UI or by adapting `src/lib/data/seed.ts`
 
 **Live:** [https://traverse-news.nickperez.workers.dev](https://traverse-news.nickperez.workers.dev)
 
-Config: `wrangler.jsonc`, `worker.ts` (custom OpenNext entry + cron), `open-next.config.ts`, `public/_headers`.
+Config: `wrangler.jsonc`, `cloudflare-worker.ts` (custom OpenNext entry + cron), `open-next.config.ts`, `public/_headers`.
 
 ```bash
 npm run deploy
@@ -133,7 +133,7 @@ curl https://traverse-news.nickperez.workers.dev/
 
 ### Morning cron
 
-Weekdays at **11:30 UTC** (7:30am EDT): `30 11 * * 1-5` in `wrangler.jsonc` → `worker.ts` `scheduled` handler POSTs `/api/pull` via the self service binding.
+Weekdays at **11:30 UTC** (7:30am EDT): `30 11 * * 1-5` in `wrangler.jsonc` → `cloudflare-worker.ts` `scheduled` handler POSTs `/api/pull` via the self service binding.
 
 Test locally:
 
