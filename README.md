@@ -75,12 +75,14 @@ Seed rows can be inserted from the Desk UI or by adapting `src/lib/data/seed.ts`
 
 **Live:** [https://traverse-news.nickperez.workers.dev](https://traverse-news.nickperez.workers.dev)
 
-Config: `wrangler.jsonc`, `open-next.config.ts`, `public/_headers`.
+Config: `wrangler.jsonc`, `worker.ts` (custom OpenNext entry + cron), `open-next.config.ts`, `public/_headers`.
 
 ```bash
 npm run deploy
 # runs: opennextjs-cloudflare build && opennextjs-cloudflare deploy
 ```
+
+You must run `npx wrangler deploy` / `npm run deploy` after changing bindings in `wrangler.jsonc` so the Worker picks up the new KV namespace and cron.
 
 Preview the Worker build locally:
 
@@ -88,7 +90,59 @@ Preview the Worker build locally:
 npm run preview
 ```
 
-Secrets already set on the Worker for local Desk mode: `DEV_DESK_PASSWORD`, `DEV_DESK_EMAIL`. Bind Supabase vars the same way when ready:
+### Persistent store (KV)
+
+Pulled stories, events, Desk source edits, and email subscribers persist in Cloudflare KV. Binding name: **`TRAVERSE_DATA`**. Key: `app_data`.
+
+This does **not** require Supabase. Local `next dev` still uses `.data/store.json` (or in-memory seed) when the binding is unavailable.
+
+Create namespaces (once per account):
+
+```bash
+npx wrangler kv namespace create traverse-news-data
+npx wrangler kv namespace create traverse-news-data --preview
+```
+
+Put the returned ids into `wrangler.jsonc`:
+
+```jsonc
+"kv_namespaces": [
+  {
+    "binding": "TRAVERSE_DATA",
+    "id": "<production id>",
+    "preview_id": "<preview id>"
+  }
+]
+```
+
+Then regenerate types and deploy:
+
+```bash
+npx wrangler types --env-interface CloudflareEnv
+npm run deploy
+```
+
+Verify a pull lands in KV and shows on the homepage:
+
+```bash
+curl -X POST https://traverse-news.nickperez.workers.dev/api/pull
+# response includes "persisted":"kv"
+curl https://traverse-news.nickperez.workers.dev/
+# Around the bay should be live RSS (Ticker / IPR / 9&10), not seed placeholders
+```
+
+### Morning cron
+
+Weekdays at **11:30 UTC** (7:30am EDT): `30 11 * * 1-5` in `wrangler.jsonc` → `worker.ts` `scheduled` handler POSTs `/api/pull` via the self service binding.
+
+Test locally:
+
+```bash
+npx wrangler dev --test-scheduled
+curl "http://localhost:8787/__scheduled?cron=30+11+*+*+1-5"
+```
+
+Secrets already set on the Worker for Desk demo mode: `DEV_DESK_PASSWORD`, `DEV_DESK_EMAIL`. Bind Supabase vars the same way when ready (optional):
 
 ```bash
 npx wrangler secret put NEXT_PUBLIC_SUPABASE_URL

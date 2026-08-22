@@ -15,6 +15,7 @@ export type PullResult = {
   eventsAdded: number;
   errors: Array<{ source: string; error: string }>;
   last_pull_at: string;
+  persisted: "kv" | "file" | "memory";
 };
 
 export async function runPull(): Promise<PullResult> {
@@ -44,13 +45,15 @@ export async function runPull(): Promise<PullResult> {
 
   const existing = await listStories();
   const originals = existing.filter((s) => s.is_original);
-  // Keep a few seed aggregated stories if pull returned nothing useful
-  const fallbackAgg =
-    pulledStories.length === 0
-      ? existing.filter((s) => !s.is_original)
-      : pulledStories;
 
-  await replacePulledStories(originals, fallbackAgg);
+  // When any live RSS items arrive, drop fictional seed aggregated cards.
+  // Only fall back to prior aggregated rows if the pull produced nothing.
+  const nextAggregated =
+    pulledStories.length > 0
+      ? pulledStories
+      : existing.filter((s) => !s.is_original);
+
+  await replacePulledStories(originals, nextAggregated);
   if (pulledEvents.length > 0) {
     await replacePulledEvents(pulledEvents);
   }
@@ -59,11 +62,24 @@ export async function runPull(): Promise<PullResult> {
   store.last_pull_at = new Date().toISOString();
   await saveStore(store);
 
+  let persisted: PullResult["persisted"] = "memory";
+  try {
+    const { getTraverseDataKv } = await import("@/lib/data/kv");
+    const kv = await getTraverseDataKv();
+    if (kv) persisted = "kv";
+    else if (typeof process !== "undefined" && typeof process.cwd === "function") {
+      persisted = "file";
+    }
+  } catch {
+    persisted = "memory";
+  }
+
   return {
     ok: errors.length === 0,
     storiesAdded: pulledStories.length,
     eventsAdded: pulledEvents.length,
     errors,
     last_pull_at: store.last_pull_at,
+    persisted,
   };
 }

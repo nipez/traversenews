@@ -1,4 +1,5 @@
 import { createSeedData } from "@/lib/data/seed";
+import { getTraverseDataKv, STORE_KEY } from "@/lib/data/kv";
 import type {
   AppData,
   EventItem,
@@ -53,22 +54,61 @@ export async function writeLocalFileStore(data: AppData): Promise<void> {
       "utf8",
     );
   } catch {
-    // Cloudflare Workers and other read-only runtimes skip persistence.
+    // Read-only runtimes skip file persistence.
   }
 }
 
+async function readKvStore(): Promise<AppData | null> {
+  const kv = await getTraverseDataKv();
+  if (!kv) return null;
+  try {
+    const raw = await kv.get(STORE_KEY, "text");
+    if (!raw) return null;
+    return JSON.parse(raw) as AppData;
+  } catch {
+    return null;
+  }
+}
+
+async function writeKvStore(data: AppData): Promise<boolean> {
+  const kv = await getTraverseDataKv();
+  if (!kv) return false;
+  await kv.put(STORE_KEY, JSON.stringify(data));
+  return true;
+}
+
+/**
+ * Load order: Cloudflare KV (Workers) → local `.data/store.json` → in-memory seed.
+ */
 export async function loadStore(): Promise<AppData> {
+  const fromKv = await readKvStore();
+  if (fromKv) {
+    globalStore.__traverseStore = fromKv;
+    return fromKv;
+  }
+
   const file = await readLocalFileStore();
   if (file) {
     globalStore.__traverseStore = file;
     return file;
   }
+
   return getMemoryStore();
 }
 
+/**
+ * Persist to KV when bound (Workers / wrangler preview). Always update memory.
+ * Also writes `.data/store.json` during local Node/`next dev` when possible.
+ */
 export async function saveStore(data: AppData): Promise<void> {
   globalStore.__traverseStore = data;
-  await writeLocalFileStore(data);
+  const wroteKv = await writeKvStore(data);
+  if (!wroteKv) {
+    await writeLocalFileStore(data);
+  } else {
+    // Keep a local copy when developing against remote/preview bindings.
+    await writeLocalFileStore(data);
+  }
 }
 
 export function supabaseConfigured(): boolean {
@@ -112,6 +152,7 @@ export async function replacePulledStories(
   pulled: Story[],
 ): Promise<void> {
   const data = await loadStore();
+  // Live RSS replaces seed "around the bay" placeholders entirely.
   data.stories = [...keepOriginals, ...pulled];
   data.last_pull_at = new Date().toISOString();
   await saveStore(data);
@@ -119,7 +160,6 @@ export async function replacePulledStories(
 
 export async function replacePulledEvents(events: EventItem[]): Promise<void> {
   const data = await loadStore();
-  // Keep seeded civic/event items that came from html sources; merge by id
   const byId = new Map(data.events.map((e) => [e.id, e]));
   for (const event of events) byId.set(event.id, event);
   data.events = Array.from(byId.values());
