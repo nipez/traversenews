@@ -293,149 +293,7 @@ const sources: Source[] = [
   },
 ];
 
-const centerRoadBody = `Center Road between Mapleton Lane and the peninsula spine has been on Grand Traverse County Road Commission's repair and safety list since 2020. After a fatal crash Sunday night involving a Traverse City Central student, neighbors asked the same question again: what does the plan actually say?
-
-The commission has studied the three-mile stretch twice. Both reviews flagged the same pattern: a posted drop from 55 to 45 that drivers treat as a suggestion, limited shoulder, and sight-line problems at Mapleton. The draft capital plan still lists Center Road as a "priority corridor," not a funded rebuild.
-
-"It has never been that we don't know what to do out there. It's that Center Road competes with every other road in the county," a road commission engineer told our desk Monday.
-
-County staff say a shoulder-and-curve package is still in the five-year window, contingent on state safety dollars. Residents who want the full packet can find the study session materials on the county calendar. We will update this story when the next vote is scheduled.
-
-If you drive this corridor daily or have records from earlier crashes, Nick wants to hear from you.`;
-
-const stories: Story[] = [
-  {
-    id: "story_center_road",
-    source_id: "src_tn",
-    title:
-      "Center Road has been on the county's fix list for six years. Here's what the plan actually says.",
-    dek: "A Traverse City Central student was killed Sunday night near Mapleton Lane. It was the fourth serious crash on the same three-mile stretch since 2020, and the road commission has studied it twice.",
-    url: "/story/center-road-fix-list",
-    published_at: "2026-08-22T06:40:00.000Z",
-    is_original: true,
-    body: centerRoadBody,
-    image_url: null,
-    byline: "Nick Perez",
-    slug: "center-road-fix-list",
-  },
-  {
-    id: "story_seed_bat",
-    source_id: "src_910",
-    title: "Rabies-positive bat found in a Grand Traverse County home",
-    dek: "Health officials say the homeowner and a pet were exposed. Post-exposure treatment is available through the county health department.",
-    url: "https://www.9and10news.com/",
-    published_at: "2026-08-22T09:12:00.000Z",
-    is_original: false,
-    body: null,
-    image_url: null,
-    byline: null,
-    slug: null,
-  },
-  {
-    id: "story_seed_bat_ticker",
-    source_id: "src_ticker",
-    title: "Rabies-positive bat found in a Grand Traverse County home",
-    dek: "County health department urges anyone who handled the animal to call for guidance.",
-    url: "https://www.traverseticker.com/",
-    published_at: "2026-08-22T09:40:00.000Z",
-    is_original: false,
-    body: null,
-    image_url: null,
-    byline: null,
-    slug: null,
-  },
-  {
-    id: "story_seed_crash",
-    source_id: "src_re",
-    title: "Two injured in Peninsula Township crash Friday evening",
-    dek: "Deputies closed a stretch of Center Road for about an hour while crews cleared the scene.",
-    url: "https://www.record-eagle.com/",
-    published_at: "2026-08-22T01:20:00.000Z",
-    is_original: false,
-    body: null,
-    image_url: null,
-    byline: null,
-    slug: null,
-  },
-  {
-    id: "story_seed_ipr",
-    source_id: "src_ipr",
-    title: "State investigators open review of peninsula corridor crashes",
-    dek: "MDOT and the county road commission will share prior studies at a public briefing next week.",
-    url: "https://www.interlochenpublicradio.org/",
-    published_at: "2026-08-21T18:00:00.000Z",
-    is_original: false,
-    body: null,
-    image_url: null,
-    byline: null,
-    slug: null,
-  },
-  {
-    id: "story_seed_hub",
-    source_id: "src_ticker",
-    title: "TCAPS expands student-services hub for fall semester",
-    dek: "Counseling and family resource appointments open Monday at the Central campus annex.",
-    url: "https://www.traverseticker.com/",
-    published_at: "2026-08-21T14:00:00.000Z",
-    is_original: false,
-    body: null,
-    image_url: null,
-    byline: null,
-    slug: null,
-  },
-  {
-    id: "story_seed_detour",
-    source_id: "src_910",
-    title: "Weekend detour set for Eighth Street sewer work",
-    dek: "City crews ask drivers to use Fourteenth and Union while a block of Eighth is closed.",
-    url: "https://www.9and10news.com/",
-    published_at: "2026-08-21T11:30:00.000Z",
-    is_original: false,
-    body: null,
-    image_url: null,
-    byline: null,
-    slug: null,
-  },
-  {
-    id: "story_seed_more_1",
-    source_id: "src_tn",
-    title: "City Commission weighs overnight parking rules for the Boardman neighborhood",
-    dek: "A draft ordinance would ban overnight street parking on three winter months. Neighbors are split.",
-    url: "/story/boardman-overnight-parking",
-    published_at: "2026-08-20T11:00:00.000Z",
-    is_original: true,
-    body: "City staff brought a draft overnight parking ordinance to the Boardman neighborhood association this week. The proposal would ban overnight street parking from December through February on designated blocks near the Boardman River.\n\nSupporters say snowplows need room. Critics say renters without driveways would be pushed into paid lots.\n\nThe commission takes public comment at Monday's study session.",
-    image_url: null,
-    byline: "Nick Perez",
-    slug: "boardman-overnight-parking",
-  },
-  {
-    id: "story_seed_more_2",
-    source_id: "src_tn",
-    title: "What the Food & Wine weekend still has on the schedule",
-    dek: "Last tickets, last seating times, and where to find the free public stages downtown.",
-    url: "/story/food-wine-last-days",
-    published_at: "2026-08-21T08:00:00.000Z",
-    is_original: true,
-    body: "Traverse City Food & Wine wraps Sunday. Organizers say Saturday night tastings are mostly sold out, but Sunday afternoon public stages on Front Street remain free.\n\nIf you are coming from out of town, expect slow traffic on Eighth and Grandview after 4 p.m.",
-    image_url: null,
-    byline: "Desk",
-    slug: "food-wine-last-days",
-  },
-  {
-    id: "story_seed_more_3",
-    source_id: "src_tn",
-    title: "BATA riders report spotty alerts after software cutover",
-    dek: "The transit agency says the GTFS-RT feed is back. App push notices are still catching up.",
-    url: "/story/bata-alert-cutover",
-    published_at: "2026-08-19T16:20:00.000Z",
-    is_original: true,
-    body: "BATA confirmed a software cutover earlier this week disrupted some rider alerts. The public GTFS-RT feed is responding again. Push notices inside the agency's preferred app may lag through the weekend.",
-    image_url: null,
-    byline: "Desk",
-    slug: "bata-alert-cutover",
-  },
-];
+const stories: Story[] = [];
 
 function daysFrom(baseIso: string, days: number, hourUtc: number): string {
   const d = new Date(baseIso);
@@ -444,34 +302,10 @@ function daysFrom(baseIso: string, days: number, hourUtc: number): string {
   return d.toISOString();
 }
 
-// Seeded around the Center Road publish day so the homepage always has listings.
+// Lightweight civic placeholders only (public meetings). No invented news copy.
 const seedDay = "2026-08-22T12:00:00.000Z";
 
 const events: EventItem[] = [
-  {
-    id: "evt_foodwine",
-    title: "Traverse City Food & Wine, last days",
-    starts_at: daysFrom(seedDay, 0, 23),
-    place: "Downtown Traverse City · through Sunday",
-    url: "https://www.traverseticker.com/calendar/",
-    source_id: "src_downtown",
-  },
-  {
-    id: "evt_film",
-    title: "Open-air film at Clinch Park",
-    starts_at: daysFrom(seedDay, 1, 0),
-    place: "Clinch Park beach · free",
-    url: "https://www.downtowntc.com/events/",
-    source_id: "src_downtown",
-  },
-  {
-    id: "evt_writers",
-    title: "National Writers Series: evening conversation",
-    starts_at: daysFrom(seedDay, 1, 23),
-    place: "City Opera House",
-    url: "https://nationalwritersseries.org/",
-    source_id: "src_nws",
-  },
   {
     id: "evt_city_study",
     title: "City Commission study session",

@@ -92,11 +92,13 @@ export function buildEditionSnapshot(
   at = new Date(),
 ): EditionSnapshot {
   const clusters = clusterStories(data.stories, data.sources);
-  const leadCluster =
-    clusters.find((c) => c.is_original) ??
-    data.stories.find((s) => s.is_original) ??
-    null;
-  const around = clusters.filter((c) => !c.is_original).slice(0, 12);
+  const originals = clusters.filter((c) => c.is_original);
+  const aroundAll = clusters.filter((c) => !c.is_original);
+  const leadOriginal = originals[0] ?? null;
+  // No staff original → lead with first live wire card (other-desk), never fake reporting.
+  const wireLead = !leadOriginal && aroundAll[0] ? aroundAll[0] : null;
+  const leadCluster = leadOriginal ?? wireLead;
+  const around = wireLead ? aroundAll.slice(1, 13) : aroundAll.slice(0, 12);
 
   const weekendEvents = data.events
     .filter((e) => {
@@ -117,7 +119,12 @@ export function buildEditionSnapshot(
   return {
     date: detroitDateKey(at),
     captured_at: at.toISOString(),
-    lead: leadCluster ? toStoryCard(leadCluster) : null,
+    lead: leadCluster
+      ? toStoryCard(
+          leadCluster,
+          leadCluster.is_original ? ["traverse.news"] : undefined,
+        )
+      : null,
     around: around.map((c) => toStoryCard(c)),
     events: weekendEvents.map(toEventCard),
     civic: civic.map(toEventCard),

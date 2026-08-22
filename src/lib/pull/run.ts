@@ -6,6 +6,7 @@ import {
   saveStore,
   snapshotTodaysEdition,
 } from "@/lib/data/store";
+import { isInventedStory, keepRealOriginals } from "@/lib/data/scrub";
 import { pullIcsSource } from "@/lib/pull/ics";
 import { pullRssSource } from "@/lib/pull/rss";
 import type { EventItem, Story } from "@/lib/types";
@@ -46,12 +47,13 @@ export async function runPull(): Promise<PullResult> {
   }
 
   const existing = await listStories();
-  const originals = existing.filter((s) => s.is_original);
+  // Never carry invented "originals" or fake wire placeholders across a pull.
+  const originals = keepRealOriginals(existing);
 
   const nextAggregated =
     pulledStories.length > 0
       ? pulledStories
-      : existing.filter((s) => !s.is_original);
+      : existing.filter((s) => !s.is_original && !isInventedStory(s));
 
   await replacePulledStories(originals, nextAggregated);
   if (pulledEvents.length > 0) {

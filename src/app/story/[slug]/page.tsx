@@ -30,7 +30,6 @@ export default async function StoryPage({ params }: Props) {
     .slice(0, 5);
 
   const paragraphs = (story.body ?? "").split(/\n\n+/).filter(Boolean);
-  const quote = paragraphs.find((p) => p.includes("It has never been that"));
 
   return (
     <PublicShell active="/">
@@ -58,18 +57,20 @@ export default async function StoryPage({ params }: Props) {
 
         <article className="min-w-0">
           <p className="text-[0.72rem] font-semibold tracking-[0.08em] text-teal uppercase">
-            ● Roads & safety · traverse.news reporting
+            traverse.news reporting
           </p>
           <h1 className="mt-3 font-serif text-[2rem] leading-[1.12] text-ink md:text-[2.6rem]">
-            {story.title.replace(/\.\s*Here's what the plan actually says\.?$/, "")}
+            {story.title}
           </h1>
-          <p className="mt-4 max-w-2xl font-serif text-lg leading-relaxed text-[#333]">
-            {story.dek}
-          </p>
+          {story.dek ? (
+            <p className="mt-4 max-w-2xl font-serif text-lg leading-relaxed text-[#333]">
+              {story.dek}
+            </p>
+          ) : null}
           <p className="mt-4 text-sm text-muted">
             By <strong className="text-ink">{story.byline ?? "Desk"}</strong>
             {" · "}
-            {formatShortDate(story.published_at)}, 6:40 a.m. · 7 min read
+            {formatShortDate(story.published_at)}
           </p>
 
           {story.image_url ? (
@@ -80,15 +81,9 @@ export default async function StoryPage({ params }: Props) {
           ) : null}
 
           <div className="prose-article mt-8 max-w-2xl">
-            {paragraphs.map((p) =>
-              quote && p === quote ? (
-                <blockquote key={p.slice(0, 24)} className="pull-quote">
-                  {p.replace(/^"|"$/g, "")}
-                </blockquote>
-              ) : (
-                <p key={p.slice(0, 24)}>{p}</p>
-              ),
-            )}
+            {paragraphs.map((p) => (
+              <p key={p.slice(0, 40)}>{p}</p>
+            ))}
           </div>
 
           <div className="mt-10 max-w-2xl border border-rule bg-paper-2 p-4">
@@ -96,7 +91,7 @@ export default async function StoryPage({ params }: Props) {
               Corrections & tips
             </p>
             <p className="mt-2 text-sm text-[#333]">
-              Know this corridor? Nick is at{" "}
+              Tips and corrections:{" "}
               <a className="text-teal" href="mailto:nick@traverse.news">
                 nick@traverse.news
               </a>

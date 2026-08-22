@@ -5,13 +5,19 @@ import type { ClusteredStory, EventItem, Story } from "@/lib/types";
 export async function getHomepageData() {
   const data = await getAppData();
   const clusters = clusterStories(data.stories, data.sources);
-  const lead =
-    clusters.find((c) => c.is_original) ??
-    data.stories.find((s) => s.is_original) ??
-    null;
-  const around = clusters.filter((c) => !c.is_original).slice(0, 12);
+  const originals = clusters.filter((c) => c.is_original);
+  const aroundAll = clusters.filter((c) => !c.is_original);
+  const leadOriginal = originals[0] ?? null;
+
+  // No invented originals: if we have no staff piece, lead with a live wire card
+  // clearly labeled as other-desk (never as traverse.news reporting).
+  const wireLead = !leadOriginal && aroundAll[0] ? aroundAll[0] : null;
+  const lead = leadOriginal ?? wireLead;
+  const around = wireLead ? aroundAll.slice(1, 13) : aroundAll.slice(0, 12);
+
   const moreFromUs = data.stories
-    .filter((s) => s.is_original && s.slug !== (lead && "slug" in lead ? lead.slug : null))
+    .filter((s) => s.is_original)
+    .filter((s) => !leadOriginal || s.slug !== leadOriginal.slug)
     .sort(
       (a, b) =>
         new Date(b.published_at).getTime() - new Date(a.published_at).getTime(),
@@ -22,7 +28,10 @@ export async function getHomepageData() {
   const weekendEvents = data.events
     .filter((e) => {
       const t = new Date(e.starts_at).getTime();
-      return t >= now.getTime() - 60 * 60 * 1000 && t <= now.getTime() + 3 * 24 * 60 * 60 * 1000;
+      return (
+        t >= now.getTime() - 60 * 60 * 1000 &&
+        t <= now.getTime() + 3 * 24 * 60 * 60 * 1000
+      );
     })
     .sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime())
     .slice(0, 6);
@@ -55,18 +64,19 @@ export function civicEvents(
 }
 
 export async function getEmailPreviewData() {
-  const { data, around, weekendEvents, civic } = await getHomepageData();
+  const { around, weekendEvents, civic } = await getHomepageData();
+  const data = await getAppData();
   const originals = data.stories
     .filter((s) => s.is_original)
     .sort(
       (a, b) =>
         new Date(b.published_at).getTime() - new Date(a.published_at).getTime(),
     );
-  const oneToRead =
-    around[0] ??
-    null;
-  // Prefer leading with an original when one exists (product rule)
   const featuredOriginal = originals[0] ?? null;
+  const oneToRead = featuredOriginal
+    ? null
+    : around[0] ?? null;
+
   const rest = [
     ...(featuredOriginal
       ? [
@@ -78,7 +88,7 @@ export async function getEmailPreviewData() {
           },
         ]
       : []),
-    ...around.slice(featuredOriginal ? 0 : 1, featuredOriginal ? 5 : 6).map((c) => ({
+    ...around.slice(0, featuredOriginal ? 5 : 6).map((c) => ({
       title: c.title,
       dek: c.dek,
       sources: c.sources.map((s) => s.name),

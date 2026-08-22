@@ -1,5 +1,6 @@
 import { createSeedData } from "@/lib/data/seed";
 import { getTraverseDataKv, STORE_KEY } from "@/lib/data/kv";
+import { isBannedOriginalSlug, scrubAppData } from "@/lib/data/scrub";
 import { buildEditionSnapshot, upsertEdition } from "@/lib/editions";
 import type {
   AppData,
@@ -18,11 +19,12 @@ function cloneSeed(): AppData {
   return structuredClone(createSeedData());
 }
 
-function normalizeAppData(data: AppData): AppData {
+function normalizeAppData(data: AppData): { data: AppData; scrubbed: boolean } {
   if (!Array.isArray(data.editions)) {
     data.editions = [];
   }
-  return data;
+  const { data: scrubbed, changed } = scrubAppData(data);
+  return { data: scrubbed, scrubbed: changed };
 }
 
 export function getMemoryStore(): AppData {
@@ -33,9 +35,11 @@ export function getMemoryStore(): AppData {
 }
 
 export function resetMemoryStore(data?: AppData): AppData {
-  globalStore.__traverseStore = data
-    ? normalizeAppData(structuredClone(data))
-    : cloneSeed();
+  if (data) {
+    globalStore.__traverseStore = normalizeAppData(structuredClone(data)).data;
+  } else {
+    globalStore.__traverseStore = cloneSeed();
+  }
   return globalStore.__traverseStore;
 }
 
@@ -90,18 +94,23 @@ async function writeKvStore(data: AppData): Promise<boolean> {
 
 /**
  * Load order: Cloudflare KV (Workers) → local `.data/store.json` → in-memory seed.
+ * Invented seed journalism is stripped on load; if anything was removed, we persist.
  */
 export async function loadStore(): Promise<AppData> {
   const fromKv = await readKvStore();
   if (fromKv) {
-    globalStore.__traverseStore = normalizeAppData(fromKv);
-    return globalStore.__traverseStore;
+    const { data, scrubbed } = normalizeAppData(fromKv);
+    globalStore.__traverseStore = data;
+    if (scrubbed) await saveStore(data);
+    return data;
   }
 
   const file = await readLocalFileStore();
   if (file) {
-    globalStore.__traverseStore = normalizeAppData(file);
-    return globalStore.__traverseStore;
+    const { data, scrubbed } = normalizeAppData(file);
+    globalStore.__traverseStore = data;
+    if (scrubbed) await saveStore(data);
+    return data;
   }
 
   return getMemoryStore();
@@ -154,6 +163,7 @@ export async function listStories(): Promise<Story[]> {
 }
 
 export async function getOriginalBySlug(slug: string): Promise<Story | undefined> {
+  if (isBannedOriginalSlug(slug)) return undefined;
   const data = await loadStore();
   return data.stories.find((s) => s.is_original && s.slug === slug);
 }

@@ -36,8 +36,10 @@ export default async function EmailPreviewPage() {
 
           <p className="mt-5 font-serif text-[1.05rem] leading-relaxed text-[#333]">
             {featuredOriginal
-              ? `Good morning. Start with our reporting on Center Road, then the wires (${subjectLead}) and what's on tonight.`
-              : `Good morning. Saturday in Traverse City: five things, then what's on tonight.`}
+              ? `Good morning. Start with our reporting (${subjectLead}), then the wires and what's on tonight.`
+              : oneToRead
+                ? `Good morning. Here's what other desks are covering (${subjectLead}), then what's on tonight.`
+                : `Good morning. Here's what's on tonight — more from the wires after the next pull.`}
           </p>
 
           {featuredOriginal ? (

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AroundTheBay } from "@/components/AroundTheBay";
 import { CivicList } from "@/components/CivicList";
+import { LeadStory } from "@/components/LeadStory";
 import { PublicShell } from "@/components/PublicShell";
 import { TonightBlock } from "@/components/TonightBlock";
 import {
@@ -110,24 +111,7 @@ export default async function EditionPage({ params }: Props) {
 
       <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="min-w-0 space-y-10">
-          {lead ? (
-            <article>
-              <p className="kicker">traverse.news reporting</p>
-              <h2 className="mt-3 max-w-3xl font-serif text-[1.85rem] leading-[1.15] text-ink md:text-[2.35rem]">
-                {lead.slug ? (
-                  <Link href={`/story/${lead.slug}`}>{lead.title}</Link>
-                ) : (
-                  lead.title
-                )}
-              </h2>
-              <p className="mt-3 max-w-2xl text-[1.02rem] leading-relaxed text-[#333]">
-                {lead.dek}
-              </p>
-              <p className="mt-3 text-sm text-muted">
-                {lead.byline ? `By ${lead.byline}` : "By Desk"}
-              </p>
-            </article>
-          ) : null}
+          {lead ? <LeadStory lead={lead} /> : null}
           <hr className="rule" />
           <AroundTheBay items={around} />
         </div>
