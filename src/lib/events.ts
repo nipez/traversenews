@@ -1,5 +1,34 @@
 import type { EventItem } from "@/lib/types";
 
+const DETROIT = "America/Detroit";
+
+/** Normalize place to the venue name (drop street noise for cross-feed matches). */
+export function normalizePlace(place: string): string {
+  return place
+    .split(",")[0]
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
+}
+
+/** Detroit calendar day + hour for grouping the same meeting. */
+export function detroitDayHour(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso.slice(0, 13);
+  const day = new Intl.DateTimeFormat("en-CA", {
+    timeZone: DETROIT,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(d);
+  const hour = new Intl.DateTimeFormat("en-US", {
+    timeZone: DETROIT,
+    hour: "2-digit",
+    hourCycle: "h23",
+  }).format(d);
+  return `${day}T${hour}`;
+}
+
 /** Stable fingerprint for the same meeting across pulls / feeds. */
 export function eventDedupeKey(event: {
   title: string;
@@ -7,14 +36,10 @@ export function eventDedupeKey(event: {
   place: string;
   source_id?: string;
 }): string {
-  const start = new Date(event.starts_at);
-  const minute = Number.isNaN(start.getTime())
-    ? event.starts_at
-    : start.toISOString().slice(0, 16); // YYYY-MM-DDTHH:MM
   return [
     event.title.trim().toLowerCase().replace(/\s+/g, " "),
-    minute,
-    event.place.trim().toLowerCase().replace(/\s+/g, " "),
+    detroitDayHour(event.starts_at),
+    normalizePlace(event.place),
   ].join("|");
 }
 
@@ -33,13 +58,17 @@ export function stableEventId(sourceId: string, uid: string): string {
 }
 
 /**
- * Keep one row per title+start+place. Prefers earlier source order / first seen.
+ * Keep one row per title+local day/hour+venue.
+ * Prefer the longer place string when merging near-duplicates.
  */
 export function dedupeEvents(events: EventItem[]): EventItem[] {
   const byKey = new Map<string, EventItem>();
   for (const event of events) {
     const key = eventDedupeKey(event);
-    if (!byKey.has(key)) byKey.set(key, event);
+    const existing = byKey.get(key);
+    if (!existing || event.place.length > existing.place.length) {
+      byKey.set(key, event);
+    }
   }
   return Array.from(byKey.values()).sort(
     (a, b) =>

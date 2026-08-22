@@ -36,7 +36,7 @@ export function CivicList({
           );
         })}
         {events.length === 0 ? (
-          <li className="text-sm text-muted">No upcoming meetings seeded yet.</li>
+          <li className="text-sm text-muted">No upcoming meetings in the pull yet.</li>
         ) : null}
       </ul>
     </section>

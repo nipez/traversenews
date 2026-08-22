@@ -55,10 +55,17 @@ export function formatStoryDateline(iso: string): string {
 
 export function formatCivicDate(iso: string): { day: string; label: string } {
   const d = new Date(iso);
-  return {
-    day: SHORT_WEEKDAYS[d.getDay()].toUpperCase(),
-    label: String(d.getDate()),
-  };
+  const day = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Detroit",
+    weekday: "short",
+  })
+    .format(d)
+    .toUpperCase();
+  const label = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Detroit",
+    day: "numeric",
+  }).format(d);
+  return { day, label };
 }
 
 export function formatRelative(iso: string, now = new Date()): string {
@@ -73,21 +80,44 @@ export function formatRelative(iso: string, now = new Date()): string {
 
 export function formatEventWhen(iso: string, now = new Date()): string {
   const d = new Date(iso);
-  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const startOfEvent = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-  const dayDiff = Math.round(
-    (startOfEvent.getTime() - startOfToday.getTime()) / (1000 * 60 * 60 * 24),
-  );
+  const detroitNow = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Detroit",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(now);
+  const detroitEvent = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Detroit",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(d);
 
-  const time = d.toLocaleTimeString("en-US", {
+  const time = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Detroit",
     hour: "numeric",
     minute: "2-digit",
     hour12: true,
-  }).toUpperCase();
+  })
+    .format(d)
+    .toUpperCase();
+
+  const [ny, nm, nd] = detroitNow.split("-").map(Number);
+  const [ey, em, ed] = detroitEvent.split("-").map(Number);
+  const startOfToday = Date.UTC(ny, nm - 1, nd);
+  const startOfEvent = Date.UTC(ey, em - 1, ed);
+  const dayDiff = Math.round((startOfEvent - startOfToday) / 86_400_000);
+
+  const weekday = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Detroit",
+    weekday: "short",
+  })
+    .format(d)
+    .toUpperCase();
 
   if (dayDiff === 0) return `TONIGHT, ${time}`;
   if (dayDiff === 1) return `TOMORROW, ${time}`;
-  return `${SHORT_WEEKDAYS[d.getDay()].toUpperCase()}, ${time}`;
+  return `${weekday} ${em}/${ed}, ${time}`;
 }
 
 export function isWeekendWindow(iso: string, now = new Date()): boolean {
