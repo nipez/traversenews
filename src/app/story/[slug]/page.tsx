@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { PublicShell } from "@/components/PublicShell";
 import { CivicList } from "@/components/CivicList";
 import { formatStoryDateline } from "@/lib/dates";
+import { selectAroundTheBay } from "@/lib/around";
 import { getAppData, getOriginalBySlug } from "@/lib/data/store";
 import { civicEvents } from "@/lib/queries";
 import { clusterStories } from "@/lib/pull/cluster";
@@ -31,9 +32,10 @@ export default async function StoryPage({ params }: Props) {
 
   const data = await getAppData();
   const civic = civicEvents(data.events, data.sources).slice(0, 4);
-  const also = clusterStories(data.stories, data.sources)
-    .filter((c) => !c.is_original)
-    .slice(0, 5);
+  const also = selectAroundTheBay(
+    clusterStories(data.stories, data.sources),
+    { limit: 5, maxPerSource: 2 },
+  );
 
   const paragraphs = (story.body ?? "").split(/\n\n+/).filter(Boolean);
   const section = storySectionLabel(story, data.sources, data.beats);

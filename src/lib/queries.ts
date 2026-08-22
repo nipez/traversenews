@@ -1,3 +1,4 @@
+import { selectAroundTheBay } from "@/lib/around";
 import { clusterStories } from "@/lib/pull/cluster";
 import { getAppData } from "@/lib/data/store";
 import type { ClusteredStory, EventItem, Story } from "@/lib/types";
@@ -6,14 +7,17 @@ export async function getHomepageData() {
   const data = await getAppData();
   const clusters = clusterStories(data.stories, data.sources);
   const originals = clusters.filter((c) => c.is_original);
-  const aroundAll = clusters.filter((c) => !c.is_original);
+  const aroundRail = selectAroundTheBay(
+    clusters.filter((c) => !c.is_original),
+    { limit: 13, maxPerSource: 3 },
+  );
   const leadOriginal = originals[0] ?? null;
 
-  // No invented originals: if we have no staff piece, lead with a live wire card
+  // No invented originals: if we have no staff piece, lead with a mixed wire card
   // clearly labeled as other-desk (never as traverse.news reporting).
-  const wireLead = !leadOriginal && aroundAll[0] ? aroundAll[0] : null;
+  const wireLead = !leadOriginal && aroundRail[0] ? aroundRail[0] : null;
   const lead = leadOriginal ?? wireLead;
-  const around = wireLead ? aroundAll.slice(1, 13) : aroundAll.slice(0, 12);
+  const around = wireLead ? aroundRail.slice(1, 13) : aroundRail.slice(0, 12);
 
   const moreFromUs = data.stories
     .filter((s) => s.is_original)

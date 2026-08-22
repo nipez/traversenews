@@ -1,3 +1,4 @@
+import { selectAroundTheBay } from "@/lib/around";
 import { clusterStories } from "@/lib/pull/cluster";
 import type {
   AppData,
@@ -93,12 +94,15 @@ export function buildEditionSnapshot(
 ): EditionSnapshot {
   const clusters = clusterStories(data.stories, data.sources);
   const originals = clusters.filter((c) => c.is_original);
-  const aroundAll = clusters.filter((c) => !c.is_original);
+  const aroundRail = selectAroundTheBay(
+    clusters.filter((c) => !c.is_original),
+    { limit: 13, maxPerSource: 3 },
+  );
   const leadOriginal = originals[0] ?? null;
-  // No staff original → lead with first live wire card (other-desk), never fake reporting.
-  const wireLead = !leadOriginal && aroundAll[0] ? aroundAll[0] : null;
+  // No staff original → lead with first mixed wire card (other-desk), never fake reporting.
+  const wireLead = !leadOriginal && aroundRail[0] ? aroundRail[0] : null;
   const leadCluster = leadOriginal ?? wireLead;
-  const around = wireLead ? aroundAll.slice(1, 13) : aroundAll.slice(0, 12);
+  const around = wireLead ? aroundRail.slice(1, 13) : aroundRail.slice(0, 12);
 
   const weekendEvents = data.events
     .filter((e) => {
