@@ -43,9 +43,9 @@ HTML, Facebook, and original sources are stored but not auto-fetched in v1. Aggr
 
 Public: `/`, `/whats-on`, `/civic`, `/story/[slug]`, `/email`
 
-Desk: `/desk/login`, `/desk`, `/desk/sources/new`, `/desk/sources/[id]`, plus stub tabs Queue / Originals / Email
+Desk: `/desk/login`, `/desk`, `/desk/sources/new`, `/desk/sources/[id]`, `/desk/originals`, `/desk/originals/new`, `/desk/originals/[id]`, plus Queue / Email / Editions
 
-API: `POST /api/subscribe`, `GET|POST /api/pull`, Desk CRUD under `/api/desk/*`
+API: `POST /api/subscribe`, `GET|POST /api/pull`, Desk CRUD under `/api/desk/*` (including `/api/desk/originals`)
 
 ## Environment
 
@@ -172,6 +172,16 @@ Each successful `/api/pull` writes (or refreshes) today's edition snapshot in th
 - Around the bay and civic/events listings must come from a real RSS/ICS pull (real title, dek, permalink). If a pull has not run yet, show empty — not fabricated seed stories.
 - If there is no staff original, the homepage lead may be empty or the first clustered live wire card, labeled **From other desks**, never as traverse.news reporting.
 - `src/lib/data/scrub.ts` strips known invented seed IDs from KV on load. Do not reintroduce those slugs or placeholder journalism.
+- **Desk originals workflow:** Nick drafts from a live pulled story (real title/dek/permalink → `source_urls[]`), edits in Desk, then publishes. Status is `draft | published`. Unpublished drafts never appear on the public site. Publish writes an `is_original` story (byline Nick Perez / Desk) shown as traverse.news reporting. Optional `POST /api/desk/originals/[id]/generate` uses `OPENAI_API_KEY` when set; without it, Nick writes the body himself. Generation must not invent quotes or facts beyond the cited source.
+
+## Desk originals
+
+1. Pull feeds so Around the bay has live items.
+2. Desk → Originals → **Draft from a pulled story**.
+3. Edit title/dek/body; keep `source_urls` accurate; run the checklist.
+4. Optional: **Generate from source** if `OPENAI_API_KEY` is configured (still review — no invented quotes).
+5. **Publish** → public `/story/[slug]` + homepage lead / More from us.
+6. **Unpublish** or delete removes it from the public site.
 
 ## Product rules (v1)
 

@@ -40,6 +40,29 @@ export type Story = {
   section?: string | null;
 };
 
+export type DraftStatus = "draft" | "published";
+
+/** Staff original in Desk. Unpublished drafts never appear on the public site. */
+export type OriginalDraft = {
+  id: string;
+  status: DraftStatus;
+  title: string;
+  dek: string;
+  body: string;
+  section: string | null;
+  byline: string;
+  slug: string | null;
+  /** Permalinks the draft may draw facts from. Required. */
+  source_urls: string[];
+  based_on_story_ids: string[];
+  source_title: string | null;
+  source_dek: string | null;
+  published_story_id: string | null;
+  created_at: string;
+  updated_at: string;
+  published_at: string | null;
+};
+
 export type EventItem = {
   id: string;
   title: string;
@@ -104,4 +127,6 @@ export type AppData = {
   subscribers: Subscriber[];
   last_pull_at: string | null;
   editions: EditionSnapshot[];
+  /** Desk originals workflow. Drafts are never public. */
+  drafts: OriginalDraft[];
 };

@@ -2,10 +2,16 @@ import { createSeedData } from "@/lib/data/seed";
 import { getTraverseDataKv, STORE_KEY } from "@/lib/data/kv";
 import { isBannedOriginalSlug, scrubAppData } from "@/lib/data/scrub";
 import { buildEditionSnapshot, upsertEdition } from "@/lib/editions";
+import {
+  DEFAULT_ORIGINAL_BYLINE,
+  storyFromPublishedDraft,
+  uniqueOriginalSlug,
+} from "@/lib/originals";
 import type {
   AppData,
   EditionSnapshot,
   EventItem,
+  OriginalDraft,
   Source,
   Story,
   Subscriber,
@@ -19,9 +25,19 @@ function cloneSeed(): AppData {
   return structuredClone(createSeedData());
 }
 
+function siteOrigin(): string {
+  return (
+    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
+    "https://traverse.news"
+  );
+}
+
 function normalizeAppData(data: AppData): { data: AppData; scrubbed: boolean } {
   if (!Array.isArray(data.editions)) {
     data.editions = [];
+  }
+  if (!Array.isArray(data.drafts)) {
+    data.drafts = [];
   }
   const { data: scrubbed, changed } = scrubAppData(data);
   return { data: scrubbed, scrubbed: changed };
@@ -232,4 +248,124 @@ export async function snapshotTodaysEdition(at = new Date()): Promise<EditionSna
   data.editions = upsertEdition(data.editions, snapshot);
   await saveStore(data);
   return snapshot;
+}
+
+export async function listDrafts(): Promise<OriginalDraft[]> {
+  const data = await loadStore();
+  return [...data.drafts].sort((a, b) => b.updated_at.localeCompare(a.updated_at));
+}
+
+export async function getDraft(id: string): Promise<OriginalDraft | undefined> {
+  const data = await loadStore();
+  return data.drafts.find((d) => d.id === id);
+}
+
+export async function upsertDraft(draft: OriginalDraft): Promise<OriginalDraft> {
+  const data = await loadStore();
+  const next: OriginalDraft = {
+    ...draft,
+    title: draft.title.trim(),
+    dek: draft.dek.trim(),
+    body: draft.body,
+    byline: draft.byline.trim() || DEFAULT_ORIGINAL_BYLINE,
+    section: draft.section?.trim() || null,
+    source_urls: draft.source_urls.map((u) => u.trim()).filter(Boolean),
+    updated_at: new Date().toISOString(),
+  };
+
+  // Keep the public story in sync when this draft is already published.
+  if (next.status === "published") {
+    const slug = uniqueOriginalSlug(
+      next.title,
+      data.stories,
+      next.slug,
+      next.published_story_id,
+    );
+    next.slug = slug;
+    const story = storyFromPublishedDraft(next, slug, siteOrigin());
+    next.published_story_id = story.id;
+    const sIdx = data.stories.findIndex((s) => s.id === story.id);
+    if (sIdx >= 0) data.stories[sIdx] = story;
+    else data.stories.push(story);
+  }
+
+  const idx = data.drafts.findIndex((d) => d.id === next.id);
+  if (idx >= 0) data.drafts[idx] = next;
+  else data.drafts.push(next);
+
+  await saveStore(data);
+  return next;
+}
+
+export async function deleteDraft(id: string): Promise<boolean> {
+  const data = await loadStore();
+  const draft = data.drafts.find((d) => d.id === id);
+  if (!draft) return false;
+  data.drafts = data.drafts.filter((d) => d.id !== id);
+  if (draft.published_story_id) {
+    data.stories = data.stories.filter((s) => s.id !== draft.published_story_id);
+  }
+  await saveStore(data);
+  return true;
+}
+
+export async function publishDraft(id: string): Promise<OriginalDraft> {
+  const data = await loadStore();
+  const idx = data.drafts.findIndex((d) => d.id === id);
+  if (idx < 0) throw new Error("Draft not found");
+  const draft = data.drafts[idx];
+  if (!draft.title.trim()) throw new Error("Title is required to publish");
+  if (draft.source_urls.length === 0) {
+    throw new Error("Add at least one source permalink before publishing");
+  }
+
+  const now = new Date().toISOString();
+  const slug = uniqueOriginalSlug(
+    draft.title,
+    data.stories,
+    draft.slug,
+    draft.published_story_id,
+  );
+  if (isBannedOriginalSlug(slug)) {
+    throw new Error("That slug is reserved / banned");
+  }
+
+  const next: OriginalDraft = {
+    ...draft,
+    status: "published",
+    slug,
+    byline: draft.byline.trim() || DEFAULT_ORIGINAL_BYLINE,
+    published_at: draft.published_at ?? now,
+    updated_at: now,
+  };
+  const story = storyFromPublishedDraft(next, slug, siteOrigin());
+  next.published_story_id = story.id;
+
+  data.drafts[idx] = next;
+  const sIdx = data.stories.findIndex((s) => s.id === story.id);
+  if (sIdx >= 0) data.stories[sIdx] = story;
+  else data.stories.push(story);
+
+  await saveStore(data);
+  return next;
+}
+
+export async function unpublishDraft(id: string): Promise<OriginalDraft> {
+  const data = await loadStore();
+  const idx = data.drafts.findIndex((d) => d.id === id);
+  if (idx < 0) throw new Error("Draft not found");
+  const draft = data.drafts[idx];
+  if (draft.published_story_id) {
+    data.stories = data.stories.filter((s) => s.id !== draft.published_story_id);
+  }
+  const next: OriginalDraft = {
+    ...draft,
+    status: "draft",
+    published_story_id: null,
+    published_at: null,
+    updated_at: new Date().toISOString(),
+  };
+  data.drafts[idx] = next;
+  await saveStore(data);
+  return next;
 }
