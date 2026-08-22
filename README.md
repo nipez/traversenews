@@ -73,6 +73,8 @@ Seed rows can be inserted from the Desk UI or by adapting `src/lib/data/seed.ts`
 
 ## Cloudflare deploy
 
+**Live:** [https://traverse-news.nickperez.workers.dev](https://traverse-news.nickperez.workers.dev)
+
 Config: `wrangler.jsonc`, `open-next.config.ts`, `public/_headers`.
 
 ```bash
@@ -86,9 +88,15 @@ Preview the Worker build locally:
 npm run preview
 ```
 
-Bind the same secrets in the Cloudflare dashboard or with `wrangler secret put`.
+Secrets already set on the Worker for local Desk mode: `DEV_DESK_PASSWORD`, `DEV_DESK_EMAIL`. Bind Supabase vars the same way when ready:
 
-Pages vs Workers: OpenNext deploys this app as a Worker with static assets. Point a custom domain at the Worker, or connect the GitHub repo in the Cloudflare dashboard and set the build command to `npx opennextjs-cloudflare build` with output handled by the adapter.
+```bash
+npx wrangler secret put NEXT_PUBLIC_SUPABASE_URL
+npx wrangler secret put NEXT_PUBLIC_SUPABASE_ANON_KEY
+npx wrangler secret put SUPABASE_SERVICE_ROLE_KEY
+```
+
+OpenNext deploys this app as a **Worker with static assets** (not classic Pages). Point a custom domain at the Worker in the Cloudflare dashboard when you want traverse.news on it.
 
 ## Product rules (v1)
 
