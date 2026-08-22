@@ -7,7 +7,7 @@ export function getDevDeskPassword(): string {
 }
 
 export function getDevDeskEmail(): string {
-  return process.env.DEV_DESK_EMAIL || "nina@traverse.news";
+  return process.env.DEV_DESK_EMAIL || "nick@traverse.news";
 }
 
 export async function createDeskSession(): Promise<void> {

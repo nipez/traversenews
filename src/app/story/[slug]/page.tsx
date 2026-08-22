@@ -96,9 +96,9 @@ export default async function StoryPage({ params }: Props) {
               Corrections & tips
             </p>
             <p className="mt-2 text-sm text-[#333]">
-              Know this corridor? Nina is at{" "}
-              <a className="text-teal" href="mailto:nina@traverse.news">
-                nina@traverse.news
+              Know this corridor? Nick is at{" "}
+              <a className="text-teal" href="mailto:nick@traverse.news">
+                nick@traverse.news
               </a>
               .
             </p>

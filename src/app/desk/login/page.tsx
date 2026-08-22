@@ -5,7 +5,7 @@ import { useState, type FormEvent } from "react";
 
 export default function DeskLoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("nina@traverse.news");
+  const [email, setEmail] = useState("nick@traverse.news");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);

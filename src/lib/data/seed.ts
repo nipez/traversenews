@@ -301,7 +301,7 @@ The commission has studied the three-mile stretch twice. Both reviews flagged th
 
 County staff say a shoulder-and-curve package is still in the five-year window, contingent on state safety dollars. Residents who want the full packet can find the study session materials on the county calendar. We will update this story when the next vote is scheduled.
 
-If you drive this corridor daily or have records from earlier crashes, Nina wants to hear from you.`;
+If you drive this corridor daily or have records from earlier crashes, Nick wants to hear from you.`;
 
 const stories: Story[] = [
   {
@@ -315,7 +315,7 @@ const stories: Story[] = [
     is_original: true,
     body: centerRoadBody,
     image_url: null,
-    byline: "Nina Kowalski",
+    byline: "Nick Perez",
     slug: "center-road-fix-list",
   },
   {
@@ -406,7 +406,7 @@ const stories: Story[] = [
     is_original: true,
     body: "City staff brought a draft overnight parking ordinance to the Boardman neighborhood association this week. The proposal would ban overnight street parking from December through February on designated blocks near the Boardman River.\n\nSupporters say snowplows need room. Critics say renters without driveways would be pushed into paid lots.\n\nThe commission takes public comment at Monday's study session.",
     image_url: null,
-    byline: "Nina Kowalski",
+    byline: "Nick Perez",
     slug: "boardman-overnight-parking",
   },
   {

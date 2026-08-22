@@ -22,7 +22,7 @@ Open [http://localhost:3000](http://localhost:3000).
 
 Desk (local mode): [http://localhost:3000/desk/login](http://localhost:3000/desk/login)
 
-- Email: `nina@traverse.news` (or `DEV_DESK_EMAIL`)
+- Email: `nick@traverse.news` (or `DEV_DESK_EMAIL`)
 - Password: `desk` (or `DEV_DESK_PASSWORD`)
 
 ### Pull feeds
