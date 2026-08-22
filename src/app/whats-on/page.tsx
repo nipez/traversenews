@@ -1,6 +1,7 @@
 import { PublicShell } from "@/components/PublicShell";
 import { TonightBlock } from "@/components/TonightBlock";
 import { formatEventWhen } from "@/lib/dates";
+import { dedupeEvents } from "@/lib/events";
 import { listEvents } from "@/lib/data/store";
 
 export const dynamic = "force-dynamic";
@@ -10,12 +11,7 @@ export const metadata = {
 };
 
 export default async function WhatsOnPage() {
-  const events = (await listEvents())
-    .slice()
-    .sort(
-      (a, b) =>
-        new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime(),
-    );
+  const events = dedupeEvents(await listEvents());
 
   const upcoming = events.filter(
     (e) => new Date(e.starts_at).getTime() >= Date.now() - 60 * 60 * 1000,

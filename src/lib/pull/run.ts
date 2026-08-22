@@ -57,7 +57,10 @@ export async function runPull(): Promise<PullResult> {
 
   await replacePulledStories(originals, nextAggregated);
   if (pulledEvents.length > 0) {
-    await replacePulledEvents(pulledEvents);
+    const icsSourceIds = [
+      ...new Set(pulledEvents.map((e) => e.source_id)),
+    ];
+    await replacePulledEvents(pulledEvents, icsSourceIds);
   }
 
   const store = await loadStore();

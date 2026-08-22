@@ -1,4 +1,5 @@
 import { selectAroundTheBay } from "@/lib/around";
+import { dedupeEvents } from "@/lib/events";
 import { clusterStories } from "@/lib/pull/cluster";
 import { getAppData } from "@/lib/data/store";
 import type { ClusteredStory, EventItem, Story } from "@/lib/types";
@@ -29,7 +30,7 @@ export async function getHomepageData() {
     .slice(0, 3);
 
   const now = new Date();
-  const weekendEvents = data.events
+  const weekendEvents = dedupeEvents(data.events)
     .filter((e) => {
       const t = new Date(e.starts_at).getTime();
       return (
@@ -37,7 +38,6 @@ export async function getHomepageData() {
         t <= now.getTime() + 3 * 24 * 60 * 60 * 1000
       );
     })
-    .sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime())
     .slice(0, 6);
 
   const civic = civicEvents(data.events, data.sources).slice(0, 6);
@@ -61,10 +61,9 @@ export function civicEvents(
   const civicSourceIds = new Set(
     sources.filter((s) => civicBeats.has(s.beat_id)).map((s) => s.id),
   );
-  return events
+  return dedupeEvents(events)
     .filter((e) => civicSourceIds.has(e.source_id))
-    .filter((e) => new Date(e.starts_at).getTime() >= nowMs - 60 * 60 * 1000)
-    .sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime());
+    .filter((e) => new Date(e.starts_at).getTime() >= nowMs - 60 * 60 * 1000);
 }
 
 export async function getEmailPreviewData() {

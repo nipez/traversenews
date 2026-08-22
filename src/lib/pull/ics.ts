@@ -1,5 +1,5 @@
 import ical from "node-ical";
-import { newId } from "@/lib/ids";
+import { stableEventId } from "@/lib/events";
 import type { EventItem, Source } from "@/lib/types";
 
 export async function pullIcsSource(source: Source): Promise<EventItem[]> {
@@ -16,7 +16,7 @@ export async function pullIcsSource(source: Source): Promise<EventItem[]> {
   const parsed = ical.sync.parseICS(text);
   const now = Date.now();
   const horizon = now + 1000 * 60 * 60 * 24 * 45;
-  const events: EventItem[] = [];
+  const byId = new Map<string, EventItem>();
 
   for (const value of Object.values(parsed)) {
     if (!value || typeof value !== "object") continue;
@@ -32,8 +32,13 @@ export async function pullIcsSource(source: Source): Promise<EventItem[]> {
       typeof value.url === "string"
         ? value.url
         : source.homepage;
-    events.push({
-      id: newId("evt"),
+    const uid =
+      typeof value.uid === "string" && value.uid.trim()
+        ? value.uid.trim()
+        : `${title}|${new Date(start).toISOString()}|${place}`;
+    const id = stableEventId(source.id, uid);
+    byId.set(id, {
+      id,
       title,
       starts_at: new Date(start).toISOString(),
       place,
@@ -42,7 +47,7 @@ export async function pullIcsSource(source: Source): Promise<EventItem[]> {
     });
   }
 
-  return events.sort(
+  return Array.from(byId.values()).sort(
     (a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime(),
   );
 }

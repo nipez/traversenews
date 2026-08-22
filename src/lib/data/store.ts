@@ -2,6 +2,7 @@ import { createSeedData } from "@/lib/data/seed";
 import { getTraverseDataKv, STORE_KEY } from "@/lib/data/kv";
 import { isBannedOriginalSlug, scrubAppData } from "@/lib/data/scrub";
 import { buildEditionSnapshot, upsertEdition } from "@/lib/editions";
+import { dedupeEvents } from "@/lib/events";
 import {
   DEFAULT_ORIGINAL_BYLINE,
   storyFromPublishedDraft,
@@ -195,11 +196,23 @@ export async function replacePulledStories(
   await saveStore(data);
 }
 
-export async function replacePulledEvents(events: EventItem[]): Promise<void> {
+export async function replacePulledEvents(
+  events: EventItem[],
+  pulledSourceIds?: string[],
+): Promise<void> {
   const data = await loadStore();
-  const byId = new Map(data.events.map((e) => [e.id, e]));
-  for (const event of events) byId.set(event.id, event);
-  data.events = Array.from(byId.values());
+  const sourceIds = new Set(
+    pulledSourceIds && pulledSourceIds.length > 0
+      ? pulledSourceIds
+      : events.map((e) => e.source_id),
+  );
+  // Drop prior rows from sources we just pulled so random-id dupes cannot pile up.
+  const kept = data.events.filter((e) => !sourceIds.has(e.source_id));
+  const incoming = new Map<string, EventItem>();
+  for (const event of events) {
+    incoming.set(event.id, event);
+  }
+  data.events = dedupeEvents([...kept, ...incoming.values()]);
   await saveStore(data);
 }
 

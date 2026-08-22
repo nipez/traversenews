@@ -1,4 +1,5 @@
 import { selectAroundTheBay } from "@/lib/around";
+import { dedupeEvents } from "@/lib/events";
 import { clusterStories } from "@/lib/pull/cluster";
 import type {
   AppData,
@@ -44,10 +45,9 @@ function civicForEdition(
   const civicSourceIds = new Set(
     sources.filter((s) => civicBeats.has(s.beat_id)).map((s) => s.id),
   );
-  return events
+  return dedupeEvents(events)
     .filter((e) => civicSourceIds.has(e.source_id))
-    .filter((e) => new Date(e.starts_at).getTime() >= nowMs - 60 * 60 * 1000)
-    .sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime());
+    .filter((e) => new Date(e.starts_at).getTime() >= nowMs - 60 * 60 * 1000);
 }
 
 function toStoryCard(
@@ -104,7 +104,7 @@ export function buildEditionSnapshot(
   const leadCluster = leadOriginal ?? wireLead;
   const around = wireLead ? aroundRail.slice(1, 13) : aroundRail.slice(0, 12);
 
-  const weekendEvents = data.events
+  const weekendEvents = dedupeEvents(data.events)
     .filter((e) => {
       const t = new Date(e.starts_at).getTime();
       return (
@@ -112,7 +112,6 @@ export function buildEditionSnapshot(
         t <= at.getTime() + 3 * 24 * 60 * 60 * 1000
       );
     })
-    .sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime())
     .slice(0, 6);
 
   const civic = civicForEdition(data.events, data.sources, at.getTime()).slice(

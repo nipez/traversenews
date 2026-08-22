@@ -1,4 +1,5 @@
 import type { AppData, EditionSnapshot, EditionStoryCard, Story } from "@/lib/types";
+import { dedupeEvents } from "@/lib/events";
 
 /** Invented seed copy that must never appear as reporting. See README → Editorial. */
 export const BANNED_ORIGINAL_SLUGS = new Set([
@@ -119,9 +120,14 @@ export function scrubAppData(data: AppData): { data: AppData; changed: boolean }
     data.stories = nextStories;
   }
 
-  const nextEvents = data.events.filter((e) => !BANNED_EVENT_IDS.has(e.id));
-  if (nextEvents.length !== data.events.length) {
+  const filtered = data.events.filter((e) => !BANNED_EVENT_IDS.has(e.id));
+  const nextEvents = dedupeEvents(filtered);
+  const beforeIds = data.events.map((e) => e.id).sort().join(",");
+  const afterIds = nextEvents.map((e) => e.id).sort().join(",");
+  if (beforeIds !== afterIds) {
     changed = true;
+    data.events = nextEvents;
+  } else {
     data.events = nextEvents;
   }
 
@@ -142,6 +148,21 @@ function eventCardLooksInvented(title: string): boolean {
     t.includes("open-air film at clinch") ||
     t.includes("national writers series: evening conversation")
   );
+}
+
+function dedupeEditionEventCards(
+  cards: EditionSnapshot["events"],
+): EditionSnapshot["events"] {
+  const byKey = new Map<string, EditionSnapshot["events"][number]>();
+  for (const card of cards) {
+    const key = [
+      card.title.trim().toLowerCase(),
+      card.starts_at.slice(0, 16),
+      card.place.trim().toLowerCase(),
+    ].join("|");
+    if (!byKey.has(key)) byKey.set(key, card);
+  }
+  return Array.from(byKey.values());
 }
 
 function scrubEdition(edition: EditionSnapshot): {
@@ -168,8 +189,12 @@ function scrubEdition(edition: EditionSnapshot): {
     changed = true;
   }
 
-  const events = edition.events.filter((e) => !eventCardLooksInvented(e.title));
-  const civic = edition.civic.filter((e) => !eventCardLooksInvented(e.title));
+  const events = dedupeEditionEventCards(
+    edition.events.filter((e) => !eventCardLooksInvented(e.title)),
+  );
+  const civic = dedupeEditionEventCards(
+    edition.civic.filter((e) => !eventCardLooksInvented(e.title)),
+  );
   if (events.length !== edition.events.length || civic.length !== edition.civic.length) {
     changed = true;
   }
