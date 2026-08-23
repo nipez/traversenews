@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { PublicShell } from "@/components/PublicShell";
 import { formatEditionLabel } from "@/lib/editions";
-import { listEditions } from "@/lib/data/store";
+import { getEditionsSnapshot } from "@/lib/public-snapshots";
 
 export const dynamic = "force-dynamic";
 
@@ -10,7 +10,8 @@ export const metadata = {
 };
 
 export default async function EditionsIndexPage() {
-  const editions = await listEditions();
+  const snap = await getEditionsSnapshot();
+  const editions = snap.editions;
 
   return (
     <PublicShell active="/">

@@ -1,10 +1,19 @@
-import type { AlertItem } from "@/lib/alerts";
-
 /**
  * Homepage Alerts rail — real Facebook tip wires only.
  * Renders nothing when empty (no dummy strip).
+ * Accepts compact public snapshot cards (not full Story rows).
  */
-export function AlertsStrip({ items }: { items: AlertItem[] }) {
+export function AlertsStrip({
+  items,
+}: {
+  items: Array<{
+    id: string;
+    title: string;
+    dek: string;
+    url: string;
+    source_name: string;
+  }>;
+}) {
   if (items.length === 0) return null;
 
   return (

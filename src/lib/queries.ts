@@ -1,51 +1,21 @@
-import { selectAroundTheBay } from "@/lib/around";
-import { selectAlerts } from "@/lib/alerts";
-import { dedupeEvents, eventInUpcomingWindow, isCivicEvent, selectTonightEvents } from "@/lib/events";
-import { buildEmailEditionSnapshot } from "@/lib/email-editions";
-import { clusterStories } from "@/lib/pull/cluster";
-import { getAppData } from "@/lib/data/store";
-import type { ClusteredStory, EventItem, Story } from "@/lib/types";
+import { dedupeEvents, eventInUpcomingWindow, isCivicEvent } from "@/lib/events";
+import {
+  getEmailSnapshot,
+  getHomeSnapshot,
+} from "@/lib/public-snapshots";
+import type { EventItem } from "@/lib/types";
 
 export async function getHomepageData() {
-  // Public homepage: one store load. Do not repair/write drafts here —
-  // that path burned Worker CPU on cold custom-domain hits (CF 1102).
-  const data = await getAppData();
-  const clusters = clusterStories(data.stories, data.sources);
-  const originals = clusters.filter((c) => c.is_original);
-  const around = selectAroundTheBay(
-    clusters.filter((c) => !c.is_original),
-    { limit: 18, maxPerSource: 4, maxSports: 4, maxRecordEagle: 3, maxUpNorth: 3 },
-  );
-  // Hero is staff originals only — never promote other-desk crime/wire to the lead.
-  const lead = originals[0] ?? null;
-
-  const moreFromUs = data.stories
-    .filter((s) => s.is_original)
-    .filter((s) => !lead || s.slug !== lead.slug)
-    .sort(
-      (a, b) =>
-        new Date(b.published_at).getTime() - new Date(a.published_at).getTime(),
-    )
-    .slice(0, 3);
-
-  const weekendEvents = selectTonightEvents(data.events, data.sources, {
-    limit: 6,
-    horizonDays: 5,
-    maxPerSource: 3,
-    timedOnly: true,
-  });
-
-  const civic = civicEvents(data.events, data.sources).slice(0, 6);
-  const alerts = selectAlerts(data.stories, data.sources, { limit: 3 });
+  // Public homepage: one compact snapshot key. Clustering runs on write
+  // (pull/import), not on every visitor GET.
+  const snap = await getHomeSnapshot();
 
   return {
-    data,
-    lead: lead as ClusteredStory | Story | null,
-    around,
-    moreFromUs,
-    weekendEvents,
-    civic,
-    alerts,
+    lead: snap.lead,
+    around: snap.around,
+    weekendEvents: snap.weekendEvents,
+    civic: snap.civic,
+    alerts: snap.alerts,
   };
 }
 
@@ -61,11 +31,10 @@ export function civicEvents(
 }
 
 /**
- * Live morning-email preview — same mix as a captured letter snapshot.
- * Does not invent copy; does not send mail.
+ * Live morning-email preview — compact public:email snapshot.
+ * Does not invent copy; does not send mail; no full-store load on GET.
  */
 export async function getEmailPreviewData() {
-  const data = await getAppData();
-  const letter = buildEmailEditionSnapshot(data);
-  return { letter, live: true as const };
+  const snap = await getEmailSnapshot();
+  return { letter: snap.letter, live: true as const };
 }

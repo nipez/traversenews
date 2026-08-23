@@ -1,19 +1,24 @@
 import Link from "next/link";
 import { formatShortDate } from "@/lib/dates";
 import { formatPublicOriginalByline } from "@/lib/originals";
-import type { ClusteredStory, Story } from "@/lib/types";
 
-type Lead = ClusteredStory | Story;
+/** Fields LeadStory actually renders (full Story / ClusteredStory / public snapshot). */
+type Lead = {
+  title: string;
+  dek: string;
+  url: string;
+  published_at: string;
+  is_original: boolean;
+  byline: string | null;
+  slug: string | null;
+  image_url?: string | null;
+  image_credit?: string | null;
+  image_caption?: string | null;
+};
 
 function leadCaption(lead: Lead): string | null {
-  const caption =
-    "image_caption" in lead && typeof lead.image_caption === "string"
-      ? lead.image_caption.trim()
-      : "";
-  const credit =
-    "image_credit" in lead && typeof lead.image_credit === "string"
-      ? lead.image_credit.trim()
-      : "";
+  const caption = lead.image_caption?.trim() ?? "";
+  const credit = lead.image_credit?.trim() ?? "";
   const line = [caption, credit].filter(Boolean).join(" · ");
   return line || null;
 }
@@ -40,7 +45,7 @@ export function LeadStory({ lead }: { lead: Lead }) {
         {" · "}
         {formatShortDate(lead.published_at)}
       </p>
-      {"image_url" in lead && lead.image_url ? (
+      {lead.image_url ? (
         <figure className="mt-5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img

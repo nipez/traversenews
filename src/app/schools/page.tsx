@@ -1,14 +1,7 @@
 import { DeskRail } from "@/components/DeskRail";
 import { PublicShell } from "@/components/PublicShell";
 import { SchoolsDistrictToggle } from "@/components/SchoolsDistrictToggle";
-import { getAppData } from "@/lib/data/store";
-import {
-  groupSchoolDaysByDistrict,
-  SCHOOL_DISTRICT_CALENDAR_PDF_URLS,
-  SCHOOL_DISTRICT_CALENDAR_URLS,
-  selectUpcomingSchoolDays,
-  sourceIdForDistrict,
-} from "@/lib/schools";
+import { getSchoolsSnapshot } from "@/lib/public-snapshots";
 
 export const dynamic = "force-dynamic";
 
@@ -17,30 +10,7 @@ export const metadata = {
 };
 
 export default async function SchoolsPage() {
-  const data = await getAppData();
-  const upcoming = selectUpcomingSchoolDays(data.schools ?? []);
-  const grouped = groupSchoolDaysByDistrict(upcoming, { includeEmpty: false });
-
-  const districts = grouped.map((block) => {
-    const sourceId = sourceIdForDistrict(block.district);
-    const source = sourceId
-      ? data.sources.find((s) => s.id === sourceId)
-      : undefined;
-    const calendarUrl =
-      source?.calendar_url ||
-      SCHOOL_DISTRICT_CALENDAR_URLS[block.district] ||
-      null;
-    const calendarPdfUrl =
-      source?.calendar_pdf_url ||
-      SCHOOL_DISTRICT_CALENDAR_PDF_URLS[block.district] ||
-      null;
-    return {
-      district: block.district,
-      calendarUrl,
-      calendarPdfUrl,
-      months: block.months,
-    };
-  });
+  const snap = await getSchoolsSnapshot();
 
   return (
     <PublicShell active="/schools" header="compact">
@@ -57,7 +27,7 @@ export default async function SchoolsPage() {
             </p>
           </header>
 
-          <SchoolsDistrictToggle districts={districts} />
+          <SchoolsDistrictToggle districts={snap.districts} />
         </div>
 
         <DeskRail active="/schools" />

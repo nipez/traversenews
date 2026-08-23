@@ -2,11 +2,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MorningLetter } from "@/components/MorningLetter";
 import { PublicShell } from "@/components/PublicShell";
-import { getEmailEdition } from "@/lib/data/store";
 import {
   formatEmailEditionLabel,
   isValidEmailEditionDate,
 } from "@/lib/email-editions";
+import { getEmailArchiveSnapshot } from "@/lib/public-snapshots";
 
 export const dynamic = "force-dynamic";
 
@@ -24,7 +24,8 @@ export default async function EmailEditionPage({ params }: Props) {
   const { date } = await params;
   if (!isValidEmailEditionDate(date)) notFound();
 
-  const letter = await getEmailEdition(date);
+  const snap = await getEmailArchiveSnapshot();
+  const letter = snap.letters.find((l) => l.date === date);
   if (!letter) {
     return (
       <PublicShell active="/" header="compact">
