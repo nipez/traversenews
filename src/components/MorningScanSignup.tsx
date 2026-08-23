@@ -45,7 +45,7 @@ export function MorningScanSignup({
             className="input"
             type="email"
             required
-            placeholder="you@email.com"
+            placeholder="Your email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             aria-label="Email"
@@ -85,7 +85,7 @@ export function MorningScanSignup({
           className="input"
           type="email"
           required
-          placeholder="you@email.com"
+          placeholder="Your email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           aria-label="Email"

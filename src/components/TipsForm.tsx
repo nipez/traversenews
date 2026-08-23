@@ -171,16 +171,6 @@ export function TipsForm({
           </p>
         ) : null}
       </form>
-
-      <p className="mt-4 text-sm text-muted">
-        or{" "}
-        <a
-          href="mailto:tips@traverse.news"
-          className="underline-offset-2 hover:underline"
-        >
-          tips@traverse.news
-        </a>
-      </p>
     </div>
   );
 }
