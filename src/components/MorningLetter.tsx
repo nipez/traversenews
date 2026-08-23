@@ -48,15 +48,22 @@ function sportsWhenLabel(
 export function MorningLetter({
   letter,
   mode,
+  unsubscribeEmail,
 }: {
   letter: EmailEditionSnapshot;
   mode: "preview" | "archive";
+  /** Personalized send: one-click Unsubscribe with this address. */
+  unsubscribeEmail?: string;
 }) {
   const dateObj = (() => {
     const [y, m, d] = letter.date.split("-").map(Number);
     if (!y || !m || !d) return new Date(letter.captured_at);
     return new Date(Date.UTC(y, m - 1, d, 17, 0, 0));
   })();
+
+  const unsubscribeHref = unsubscribeEmail
+    ? `/email/unsubscribe?email=${encodeURIComponent(unsubscribeEmail.trim().toLowerCase())}`
+    : "/email/unsubscribe";
 
   return (
     <div className="morning-letter border border-ink bg-paper p-5 md:p-8">
@@ -228,8 +235,21 @@ export function MorningLetter({
           </Link>
         </p>
         <p className="mt-2 text-xs">
-          Traverse City, Michigan · Unsubscribe · Weekdays and Saturdays
+          Traverse City, Michigan · Weekdays and Saturdays
           {mode === "archive" ? " · Archive copy (not sent)" : null}
+        </p>
+        <p className="mt-2 text-xs">
+          <Link href={unsubscribeHref} className="font-bold text-teal">
+            Unsubscribe
+          </Link>
+          {" · "}
+          <Link href="/privacy" className="font-bold text-teal">
+            Privacy
+          </Link>
+          {" · "}
+          <Link href="/terms" className="font-bold text-teal">
+            Terms
+          </Link>
         </p>
         {mode === "preview" ? (
           <p className="mt-3 text-xs">

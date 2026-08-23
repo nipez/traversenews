@@ -20,6 +20,8 @@ const STATIC_PATHS = [
   "/email",
   "/email/archive",
   "/tips",
+  "/privacy",
+  "/terms",
 ] as const;
 
 type SitemapSlice = {

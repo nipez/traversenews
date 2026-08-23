@@ -12,6 +12,8 @@ export function SiteFooter() {
           <Link href="/tips">Tips</Link>
           <Link href="/editions">Editions</Link>
           <Link href="/email">Morning email</Link>
+          <Link href="/privacy">Privacy</Link>
+          <Link href="/terms">Terms</Link>
         </nav>
         <p className="text-sm text-muted">
           © 2026 · Traverse City, Michigan
