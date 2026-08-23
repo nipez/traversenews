@@ -10,13 +10,16 @@ export function TonightBlock({
 }) {
   return (
     <section className="tonight-block anim-fade">
-      <div className="mb-4 flex items-baseline justify-between gap-3">
-        <h2 className="font-serif text-[1.45rem] leading-none tracking-tight text-white md:text-[1.55rem]">
-          Tonight & this weekend
-        </h2>
+      <div className="mb-4 flex items-baseline justify-between gap-3 border-b border-rule pb-3">
+        <div>
+          <p className="kicker">Night out</p>
+          <h2 className="mt-1.5 font-serif text-[1.45rem] leading-none tracking-tight text-ink md:text-[1.6rem]">
+            Tonight & this weekend
+          </h2>
+        </div>
         <Link
           href="/whats-on"
-          className="text-[0.68rem] font-bold tracking-[0.12em] text-[#9fd0cd] uppercase"
+          className="text-[0.68rem] font-bold tracking-[0.12em] text-teal uppercase"
         >
           All →
         </Link>
@@ -27,19 +30,21 @@ export function TonightBlock({
           return (
             <li
               key={event.id}
-              className={i === 0 ? "pb-4" : "border-t border-white/20 py-4"}
+              className={
+                i === 0
+                  ? "pb-4 pl-3"
+                  : "border-t border-rule py-4 pl-3"
+              }
             >
-              <p className="font-sans text-[0.95rem] font-bold tracking-[0.04em] text-teal uppercase">
-                <span className="text-[1.15rem] tracking-tight text-[#b8ebe7]">
-                  {when.time}
-                </span>
-                <span className="mx-2 text-white/35">·</span>
+              <p className="font-sans text-[0.8rem] font-bold tracking-[0.08em] text-teal uppercase">
+                <span className="text-[1.05rem] tracking-tight">{when.time}</span>
+                <span className="mx-2 text-rule">·</span>
                 <span>{when.dayLabel}</span>
               </p>
-              <p className="mt-1.5 text-[0.92rem] leading-snug text-[#c8c8c8]">
+              <p className="mt-1.5 text-[0.95rem] leading-snug text-[#444]">
                 {event.place}
               </p>
-              <p className="mt-1.5 font-serif text-[1.2rem] leading-snug text-white md:text-[1.28rem]">
+              <p className="mt-1.5 font-serif text-[1.2rem] leading-snug tracking-tight text-ink md:text-[1.28rem]">
                 {event.url ? (
                   <a href={event.url} target="_blank" rel="noopener noreferrer">
                     {event.title}
@@ -52,7 +57,7 @@ export function TonightBlock({
           );
         })}
         {events.length === 0 ? (
-          <li className="text-sm text-[#b5b5b5]">
+          <li className="py-3 text-sm text-muted">
             No concerts or community listings in the next few days. Civic
             meetings stay on Civic.
           </li>

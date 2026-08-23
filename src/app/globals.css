@@ -156,14 +156,15 @@ h4,
 }
 
 .tonight-block {
-  background: var(--black);
-  color: var(--white);
-  padding: 1.35rem 1.25rem 1.4rem;
-  box-shadow: 0 18px 40px rgba(11, 11, 11, 0.18);
+  background: var(--paper-2);
+  color: var(--ink);
+  padding: 1.15rem 1.1rem 1.2rem;
+  border: 1px solid var(--rule);
+  border-left: 3px solid var(--teal);
 }
 
 .tonight-block a:hover {
-  color: #9fd0cd;
+  color: var(--teal-ink);
 }
 
 .pb-mobile-nav {
