@@ -40,8 +40,35 @@ function normalizeAppData(data: AppData): { data: AppData; scrubbed: boolean } {
   if (!Array.isArray(data.drafts)) {
     data.drafts = [];
   }
+
+  let catalogChanged = false;
+  const seed = createSeedData();
+  const byId = new Map(data.sources.map((s) => [s.id, s]));
+  for (const source of seed.sources) {
+    const existing = byId.get(source.id);
+    if (!existing) {
+      data.sources.push(structuredClone(source));
+      catalogChanged = true;
+      continue;
+    }
+    // Keep Desk enable/notes; refresh feed wiring for known catalog rows.
+    if (
+      existing.feed_url !== source.feed_url ||
+      existing.pull_method !== source.pull_method ||
+      existing.homepage !== source.homepage ||
+      existing.beat_id !== source.beat_id
+    ) {
+      existing.feed_url = source.feed_url;
+      existing.pull_method = source.pull_method;
+      existing.homepage = source.homepage;
+      existing.beat_id = source.beat_id;
+      existing.name = source.name;
+      catalogChanged = true;
+    }
+  }
+
   const { data: scrubbed, changed } = scrubAppData(data);
-  return { data: scrubbed, scrubbed: changed };
+  return { data: scrubbed, scrubbed: changed || catalogChanged };
 }
 
 export function getMemoryStore(): AppData {

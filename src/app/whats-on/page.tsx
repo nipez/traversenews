@@ -1,8 +1,8 @@
 import { PublicShell } from "@/components/PublicShell";
 import { TonightBlock } from "@/components/TonightBlock";
 import { formatEventWhen } from "@/lib/dates";
-import { dedupeEvents } from "@/lib/events";
-import { listEvents } from "@/lib/data/store";
+import { getAppData, listEvents } from "@/lib/data/store";
+import { dedupeEvents, selectTonightEvents } from "@/lib/events";
 
 export const dynamic = "force-dynamic";
 
@@ -11,9 +11,16 @@ export const metadata = {
 };
 
 export default async function WhatsOnPage() {
-  const events = dedupeEvents(await listEvents());
+  const data = await getAppData();
+  const all = await listEvents();
+  const featured = selectTonightEvents(all, data.sources, {
+    limit: 8,
+    horizonDays: 7,
+    maxMeetings: 1,
+    maxPerSource: 3,
+  });
 
-  const upcoming = events.filter(
+  const upcoming = dedupeEvents(all).filter(
     (e) => new Date(e.starts_at).getTime() >= Date.now() - 60 * 60 * 1000,
   );
 
@@ -22,11 +29,12 @@ export default async function WhatsOnPage() {
       <div className="mx-auto max-w-3xl">
         <h1 className="font-serif text-3xl text-ink md:text-4xl">What&apos;s on</h1>
         <p className="mt-2 text-[#444]">
-          Concerts, festivals, and things to do around Traverse City.
+          Concerts, festivals, library programs, and things to do around Traverse
+          City — meetings stay on Civic.
         </p>
 
         <div className="mt-8">
-          <TonightBlock events={upcoming.slice(0, 5)} />
+          <TonightBlock events={featured} />
         </div>
 
         <ul className="mt-10">

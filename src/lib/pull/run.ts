@@ -7,6 +7,7 @@ import {
   snapshotTodaysEdition,
 } from "@/lib/data/store";
 import { isInventedStory, keepRealOriginals } from "@/lib/data/scrub";
+import { pullHtmlEvents } from "@/lib/pull/html-events";
 import { pullIcsSource } from "@/lib/pull/ics";
 import { pullRssSource } from "@/lib/pull/rss";
 import type { EventItem, Story } from "@/lib/types";
@@ -20,6 +21,13 @@ export type PullResult = {
   persisted: "kv" | "file" | "memory";
   edition_date: string | null;
 };
+
+/** Sources whose HTML listing pages we can turn into EventItems. */
+const HTML_EVENT_SOURCE_IDS = new Set([
+  "src_interlochen",
+  "src_tadl",
+  "src_visit_events",
+]);
 
 export async function runPull(): Promise<PullResult> {
   const data = await loadStore();
@@ -36,8 +44,14 @@ export async function runPull(): Promise<PullResult> {
       } else if (source.pull_method === "ics") {
         const items = await pullIcsSource(source);
         pulledEvents.push(...items);
+      } else if (
+        source.pull_method === "html" &&
+        HTML_EVENT_SOURCE_IDS.has(source.id)
+      ) {
+        const items = await pullHtmlEvents(source);
+        pulledEvents.push(...items);
       }
-      // html / facebook / original / none skipped in v1
+      // remaining html / facebook / original / none skipped in v1
     } catch (err) {
       errors.push({
         source: source.name,

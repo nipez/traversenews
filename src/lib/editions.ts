@@ -1,5 +1,5 @@
 import { selectAroundTheBay } from "@/lib/around";
-import { dedupeEvents } from "@/lib/events";
+import { dedupeEvents, selectTonightEvents } from "@/lib/events";
 import { clusterStories } from "@/lib/pull/cluster";
 import type {
   AppData,
@@ -104,15 +104,13 @@ export function buildEditionSnapshot(
   const leadCluster = leadOriginal ?? wireLead;
   const around = wireLead ? aroundRail.slice(1, 13) : aroundRail.slice(0, 12);
 
-  const weekendEvents = dedupeEvents(data.events)
-    .filter((e) => {
-      const t = new Date(e.starts_at).getTime();
-      return (
-        t >= at.getTime() - 60 * 60 * 1000 &&
-        t <= at.getTime() + 3 * 24 * 60 * 60 * 1000
-      );
-    })
-    .slice(0, 6);
+  const weekendEvents = selectTonightEvents(data.events, data.sources, {
+    now: at,
+    limit: 6,
+    horizonDays: 5,
+    maxMeetings: 1,
+    maxPerSource: 2,
+  });
 
   const civic = civicForEdition(data.events, data.sources, at.getTime()).slice(
     0,

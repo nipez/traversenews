@@ -1,5 +1,5 @@
 import { selectAroundTheBay } from "@/lib/around";
-import { dedupeEvents } from "@/lib/events";
+import { dedupeEvents, selectTonightEvents } from "@/lib/events";
 import { clusterStories } from "@/lib/pull/cluster";
 import { getAppData } from "@/lib/data/store";
 import type { ClusteredStory, EventItem, Story } from "@/lib/types";
@@ -29,16 +29,12 @@ export async function getHomepageData() {
     )
     .slice(0, 3);
 
-  const now = new Date();
-  const weekendEvents = dedupeEvents(data.events)
-    .filter((e) => {
-      const t = new Date(e.starts_at).getTime();
-      return (
-        t >= now.getTime() - 60 * 60 * 1000 &&
-        t <= now.getTime() + 3 * 24 * 60 * 60 * 1000
-      );
-    })
-    .slice(0, 6);
+  const weekendEvents = selectTonightEvents(data.events, data.sources, {
+    limit: 6,
+    horizonDays: 5,
+    maxMeetings: 1,
+    maxPerSource: 2,
+  });
 
   const civic = civicEvents(data.events, data.sources).slice(0, 6);
 

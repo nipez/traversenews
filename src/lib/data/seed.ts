@@ -151,7 +151,18 @@ const sources: Source[] = [
     pull_method: "rss",
     beat_id: "beat_events",
     enabled: true,
-    notes: "",
+    notes: "Blog RSS for Around the bay. Public events calendar is a separate source.",
+  },
+  {
+    id: "src_visit_events",
+    name: "Visit TC Events",
+    homepage: "https://www.traversecity.com/events/",
+    feed_url: "https://www.traversecity.com/events/",
+    pull_method: "html",
+    beat_id: "beat_events",
+    enabled: true,
+    notes:
+      "Community/concerts calendar (Simpleview). Often bot-blocked from datacenters; empty pull is OK — do not invent listings.",
   },
   {
     id: "src_tart",
@@ -214,7 +225,7 @@ const sources: Source[] = [
     pull_method: "html",
     beat_id: "beat_arts",
     enabled: true,
-    notes: "HTML pull deferred to v2.",
+    notes: "HTML listing pull for concerts (Tonight / What's on).",
   },
   {
     id: "src_tadl",
@@ -224,7 +235,7 @@ const sources: Source[] = [
     pull_method: "html",
     beat_id: "beat_events",
     enabled: true,
-    notes: "HTML pull deferred to v2.",
+    notes: "HTML listing pull for library programs.",
   },
   {
     id: "src_dennos",
