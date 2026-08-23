@@ -82,7 +82,8 @@ export const LOCAL_GROUPS: readonly LocalGroup[] = [
 ] as const;
 
 /**
- * Events “Going out” chip — wine, happy hours, two boats only.
+ * Events dek line — wine, happy hours, two boats only (+ /local).
+ * Editorial sentence under the Events dek, not a promo chip strip.
  * Do not put builders, Sleeping Bear, TART, lighthouse, or Dennos here.
  */
 export const GOING_OUT: readonly UsefulLocalLink[] =

@@ -1195,38 +1195,20 @@ a:hover {
   }
 }
 
-.events-going-out {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.55rem 0.85rem;
-  margin: 1.25rem 0 0;
-  padding: 0.65rem 0;
-  border-top: 1px solid var(--rule);
-  border-bottom: 1px solid var(--rule);
-  font-family: var(--font-source-serif), Georgia, serif;
-  font-size: 0.98rem;
-  color: #1c1712;
+.events-dek-local {
+  margin-top: 0.55rem;
 }
 
-.events-going-out-label {
-  font-family: var(--font-archivo), system-ui, sans-serif;
-  font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: #7a7060;
-}
-
-.events-going-out-link {
-  color: #2a6f6c;
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.events-going-out-link:hover {
+.events-dek-link {
+  color: inherit;
+  font-weight: inherit;
   text-decoration: underline;
-  text-underline-offset: 0.12em;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.14em;
+}
+
+.events-dek-link:hover {
+  color: #1c1712;
 }
 
 .events-featured {
