@@ -91,9 +91,20 @@ export async function runPull(): Promise<PullResult> {
   // Never carry invented "originals" or fake wire placeholders across a pull.
   const originals = keepRealOriginals(existing);
 
+  // RSS pull only replaces rows for sources we actually fetched this run —
+  // keep browser-imported Facebook alerts (src_gt911, etc.) intact.
   const nextAggregated =
     pulledStories.length > 0
-      ? pulledStories
+      ? (() => {
+          const pulledIds = new Set(pulledStories.map((s) => s.source_id));
+          const preserved = existing.filter(
+            (s) =>
+              !s.is_original &&
+              !isInventedStory(s) &&
+              !pulledIds.has(s.source_id),
+          );
+          return [...preserved, ...pulledStories];
+        })()
       : existing.filter((s) => !s.is_original && !isInventedStory(s));
 
   await replacePulledStories(originals, nextAggregated);

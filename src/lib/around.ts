@@ -1,4 +1,5 @@
 import type { ClusteredStory } from "@/lib/types";
+import { isAlertSourceId } from "@/lib/alerts";
 
 const JUNK_TITLE_MARKERS = [
   "blood drive",
@@ -187,6 +188,7 @@ export function selectAroundTheBay(
 
   const eligible = clusters
     .filter((c) => !c.is_original)
+    .filter((c) => !c.sources.some((s) => isAlertSourceId(s.id)))
     .filter((c) => !isOutletHomepageUrl(c.url))
     .filter((c) => !isLifestyleJunk(c))
     .filter((c) => !looksLikeCivicListing(c))

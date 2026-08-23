@@ -253,6 +253,28 @@ export async function replacePulledStories(
   await saveStore(data);
 }
 
+/**
+ * Replace story rows for specific source_ids only (Facebook alerts import).
+ * Keeps originals and wire from every other source.
+ */
+export async function replaceStoriesForSources(
+  stories: Story[],
+  sourceIds: string[],
+): Promise<void> {
+  const data = await loadStore();
+  const targets = new Set(sourceIds);
+  const kept = data.stories.filter((s) => !targets.has(s.source_id));
+  const incoming = new Map<string, Story>();
+  for (const story of stories) {
+    if (!targets.has(story.source_id)) continue;
+    if (story.is_original) continue;
+    incoming.set(story.id, story);
+  }
+  data.stories = [...kept, ...incoming.values()];
+  data.last_pull_at = new Date().toISOString();
+  await saveStore(data);
+}
+
 export async function replacePulledEvents(
   events: EventItem[],
   pulledSourceIds?: string[],
