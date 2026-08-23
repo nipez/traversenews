@@ -9,6 +9,7 @@ export function PublicShell({
 }: {
   children: React.ReactNode;
   active?: string;
+  /** hero = bay photo + ink nav; compact = cream mast + same ink nav */
   header?: "hero" | "compact";
   /** @deprecated kept for call-site compat */
   wide?: boolean;

@@ -56,15 +56,37 @@ body {
 
 /* Never let OS dark mode turn the paper brown/black */
 @media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #f4edde;
+    --paper-2: #efe6d4;
+    --ink: #1c1712;
+    --muted: #7a7060;
+    --muted-2: #52493c;
+    --rule: #c8ba9a;
+    color-scheme: only light;
+  }
+
   html,
   body,
   .site-shell,
   .stage,
   .story-page,
-  .about-layout {
+  .about-layout,
+  .whats-on-page,
+  .schools-page,
+  .sports-page,
+  .civic-page,
+  .email-page,
+  .editions-page {
     color-scheme: only light !important;
     background-color: #f4edde !important;
     color: #1c1712 !important;
+  }
+
+  /* Multiply grain reads muddy under forced dark — keep cream paper flat */
+  .site-shell {
+    background-image: none !important;
+    background-blend-mode: normal !important;
   }
 }
 
@@ -283,68 +305,35 @@ a:hover {
   color: #1c1712;
 }
 
-/* Compact / inner-page header */
-.header-compact {
-  padding: 20px 16px 0;
+/* Interior pages: cream mast + same full-width ink nav as homepage */
+.site-header-interior {
+  background: #f4edde;
+  color-scheme: only light;
+}
+
+.interior-mast {
+  background: #f4edde;
+  padding: 14px 16px 12px;
 }
 
 @media (min-width: 768px) {
-  .header-compact {
-    padding: 28px 40px 0;
+  .interior-mast {
+    padding: 18px 40px 14px;
   }
 }
 
-.header-compact-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
+.interior-wordmark {
+  display: inline-block;
 }
 
-.header-compact-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 12px;
-}
-
-.header-compact .wordmark {
+.interior-mast .wordmark {
   font-size: 28px;
 }
 
-.nav-boxed {
-  display: none;
-  border: 1px solid #1c1712;
-}
-
 @media (min-width: 768px) {
-  .nav-boxed {
-    display: inline-flex;
+  .interior-mast .wordmark {
+    font-size: 34px;
   }
-}
-
-.nav-boxed .nav-link {
-  color: #1c1712;
-  border-right: 1px solid #1c1712;
-  padding: 8px 12px;
-}
-
-.nav-boxed .nav-link:last-child {
-  border-right: 0;
-}
-
-.nav-boxed .nav-link:hover {
-  color: var(--teal);
-}
-
-.nav-boxed .nav-link-active-fill {
-  background: #1c1712;
-  color: #f4edde;
-}
-
-.nav-boxed .nav-link-active-fill:hover {
-  color: #f4edde;
 }
 
 .btn-email {
