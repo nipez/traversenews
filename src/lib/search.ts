@@ -1,5 +1,6 @@
 import { isAlertSourceId } from "@/lib/alerts";
 import { selectThisWeekAthletics } from "@/lib/athletics";
+import { detroitDayKey } from "@/lib/dates";
 import {
   dedupeEvents,
   isCivicEvent,
@@ -49,6 +50,78 @@ function storyHref(story: Story): { href: string; external: boolean } {
   return { href: story.url, external: true };
 }
 
+/** Canonical URL when present; else title + source + place. */
+export function eventSearchCollapseKey(event: EventItem): string {
+  const url = (event.url ?? "").trim().toLowerCase().replace(/\/+$/, "");
+  if (url) return `url:${url}`;
+  return `tps:${norm(event.title)}|${event.source_id}|${norm(event.place)}`;
+}
+
+/** Short remaining-date label, e.g. "Aug 23". Never invents a clock. */
+function formatSearchEventDate(iso: string): string {
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Detroit",
+    month: "short",
+    day: "numeric",
+  }).format(new Date(iso));
+}
+
+/**
+ * Collapse recurring listings that share a URL (or title+source+place)
+ * into one hit; dek lists remaining dates (no invented times).
+ */
+export function collapseEventSearchHits(
+  matched: EventItem[],
+  sourceName: (id: string) => string,
+  now = new Date(),
+): SearchHit[] {
+  const groups = new Map<string, EventItem[]>();
+  for (const event of matched) {
+    const key = eventSearchCollapseKey(event);
+    const list = groups.get(key) ?? [];
+    list.push(event);
+    groups.set(key, list);
+  }
+
+  const todayKey = detroitDayKey(now);
+  const hits: SearchHit[] = [];
+
+  for (const group of groups.values()) {
+    group.sort(
+      (a, b) =>
+        new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime(),
+    );
+    const primary = group[0];
+
+    let dated = group.filter((e) => detroitDayKey(e.starts_at) >= todayKey);
+    if (dated.length === 0) dated = group;
+
+    const dateLabels: string[] = [];
+    const seenDays = new Set<string>();
+    for (const e of dated) {
+      const day = detroitDayKey(e.starts_at);
+      if (seenDays.has(day)) continue;
+      seenDays.add(day);
+      dateLabels.push(formatSearchEventDate(e.starts_at));
+    }
+
+    const place = primary.place?.trim() || "";
+    const dates = dateLabels.join(", ");
+    const dek = [place, dates].filter(Boolean).join(" · ");
+
+    hits.push({
+      id: primary.id,
+      title: primary.title,
+      dek,
+      href: primary.url || "/whats-on",
+      meta: sourceName(primary.source_id) || undefined,
+      external: Boolean(primary.url),
+    });
+  }
+
+  return hits;
+}
+
 /**
  * Search live AppData only (titles, deks, places). Case-insensitive.
  * Never invents hits. Never scrapes Visit TC at query time.
@@ -83,7 +156,9 @@ export function searchAppData(data: AppData, rawQuery: string): SearchResults {
       title,
       dek,
       href,
-      meta: sourceName(story.source_id) || (story.is_original ? "traverse.news" : undefined),
+      meta:
+        sourceName(story.source_id) ||
+        (story.is_original ? "traverse.news" : undefined),
       external,
     };
 
@@ -95,18 +170,20 @@ export function searchAppData(data: AppData, rawQuery: string): SearchResults {
     }
   }
 
-  const events: SearchHit[] = [];
-  const civic: SearchHit[] = [];
+  const eventMatches: EventItem[] = [];
+  const civicMatches: EventItem[] = [];
   for (const event of dedupeEvents(data.events)) {
     if (isHsAthleticsEventSource(event.source_id)) continue;
     const title = event.title ?? "";
     const place = event.place ?? "";
     if (!matches(title, q) && !matches(place, q)) continue;
 
-    const hit = eventHit(event, sourceName(event.source_id));
-    if (isCivicEvent(event, data.sources)) civic.push(hit);
-    else events.push(hit);
+    if (isCivicEvent(event, data.sources)) civicMatches.push(event);
+    else eventMatches.push(event);
   }
+
+  const events = collapseEventSearchHits(eventMatches, sourceName);
+  const civic = collapseEventSearchHits(civicMatches, sourceName);
 
   const schools: SearchHit[] = [];
   for (const item of selectUpcomingSchoolDays(data.schools ?? [])) {
@@ -138,17 +215,6 @@ export function searchAppData(data: AppData, rawQuery: string): SearchResults {
     schools: schools.slice(0, 40),
     sports: sports.slice(0, 40),
     alerts: alerts.slice(0, 20),
-  };
-}
-
-function eventHit(event: EventItem, source: string): SearchHit {
-  return {
-    id: event.id,
-    title: event.title,
-    dek: event.place || "",
-    href: event.url || "/whats-on",
-    meta: source || undefined,
-    external: Boolean(event.url),
   };
 }
 
