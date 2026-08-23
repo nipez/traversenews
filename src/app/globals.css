@@ -1552,10 +1552,27 @@ a:hover {
   animation: rise 0.5s ease both;
 }
 
-/* About */
-.about-page {
-  max-width: 40rem;
-  padding-bottom: 3.5rem;
+/* About — essay + rail (Today-like), readable measure */
+.about-layout {
+  display: grid;
+  gap: 40px;
+  padding: 0 0 3.5rem;
+  align-items: start;
+  background-color: #f4edde;
+  color-scheme: only light;
+}
+
+@media (min-width: 960px) {
+  .about-layout {
+    grid-template-columns: minmax(0, 1fr) 380px;
+    gap: 56px;
+    padding: 0 0 4rem;
+  }
+}
+
+.about-essay {
+  min-width: 0;
+  max-width: 72ch;
 }
 
 .about-hed {
@@ -1585,7 +1602,7 @@ a:hover {
 .about-body {
   margin-top: 2rem;
   font-family: var(--font-source-serif), Georgia, serif;
-  font-size: 1.1rem;
+  font-size: 1.125rem;
   line-height: 1.55;
   color: #1c1712;
 }
@@ -1621,14 +1638,121 @@ a:hover {
   text-decoration: underline;
 }
 
-.about-email-cta {
-  margin-top: 2rem !important;
-  font-family: var(--font-archivo), system-ui, sans-serif;
-  font-size: 0.95rem;
-  font-weight: 800;
-  letter-spacing: 0.04em;
+.about-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
 }
 
-.about-email-cta a {
+.about-rail-card {
+  background: #f4edde;
+  border: 1px solid #1c1712;
+  padding: 16px 18px;
+  color-scheme: only light;
+}
+
+.about-rail-email {
+  padding: 0;
+  overflow: hidden;
+}
+
+.about-rail-email .signup-teal {
+  border: none;
+  margin: 0;
+}
+
+.about-rail-more {
+  margin: 0;
+  padding: 10px 18px 14px;
+  border-top: 1px solid #1c1712;
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-size: 12px;
   font-weight: 800;
+  letter-spacing: 0.04em;
+  background: #efe6d4;
+}
+
+.about-rail-more a {
+  color: #1c1712;
+}
+
+.about-rail-more a:hover {
+  color: #2a6f6c;
+}
+
+.about-rail-kicker {
+  margin: 0;
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #1c1712;
+}
+
+.about-rail-copy {
+  margin: 8px 0 0;
+  font-family: var(--font-source-serif), Georgia, serif;
+  font-size: 15px;
+  line-height: 1.4;
+  color: #52493c;
+}
+
+.about-rail-links {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+}
+
+.about-rail-links li + li {
+  margin-top: 6px;
+}
+
+.about-rail-links a {
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #2a6f6c;
+}
+
+.about-rail-links a:hover {
+  text-decoration: underline;
+}
+
+.about-rail-nav {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+}
+
+.about-rail-nav li {
+  border-top: 1px solid #c8ba9a;
+}
+
+.about-rail-nav li:first-child {
+  border-top: none;
+}
+
+.about-rail-nav a {
+  display: block;
+  padding: 10px 0;
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: #1c1712;
+}
+
+.about-rail-nav a:hover {
+  color: #2a6f6c;
+}
+
+/* Widen stage padding on about (desktop) without full-bleed essay */
+@media (min-width: 960px) {
+  .site-shell:has(.about-layout) .stage {
+    padding-left: 40px;
+    padding-right: 40px;
+    padding-top: 44px;
+  }
 }
