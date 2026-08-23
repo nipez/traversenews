@@ -1,0 +1,94 @@
+import Link from "next/link";
+import { PublicShell } from "@/components/PublicShell";
+import { formatBayDay } from "@/lib/dates";
+import { getAppData } from "@/lib/data/store";
+import { selectSportsStories, type SportsStory } from "@/lib/sports";
+
+export const dynamic = "force-dynamic";
+
+export const metadata = {
+  title: "Sports",
+};
+
+function SportsList({ items }: { items: SportsStory[] }) {
+  if (items.length === 0) {
+    return (
+      <p className="sports-empty">
+        No sports headlines in the pull yet — we do not invent games or scores.
+      </p>
+    );
+  }
+
+  return (
+    <ul className="sports-list">
+      {items.map((item) => (
+        <li key={item.id} className="sports-item">
+          <a
+            href={item.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="sports-item-link"
+          >
+            <h3 className="sports-title">{item.title}</h3>
+            <div className="sports-meta">
+              <span className="source-box">{item.source_name}</span>
+              <span className="sports-day">{formatBayDay(item.published_at)}</span>
+            </div>
+          </a>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+export default async function SportsPage() {
+  const data = await getAppData();
+  const all = selectSportsStories(data.stories, data.sources, { limit: 40 });
+  const seen = new Set<string>();
+  const unique: typeof all = [];
+  for (const item of all) {
+    const key = item.title.trim().toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    unique.push(item);
+  }
+  const varsity = unique.filter((s) => s.beat_id === "beat_sports");
+  const prepOnly = unique.filter((s) => s.beat_id === "beat_hs_sports");
+  const showHsSubhead = varsity.length > 0 && prepOnly.length > 0;
+
+  return (
+    <PublicShell active="/sports" header="compact">
+      <div className="sports-page">
+        <header className="sports-hero">
+          <p className="sports-kicker">Scores &amp; prep</p>
+          <h1 className="sports-hed">Sports</h1>
+          <p className="sports-dek">
+            Headlines from 9&amp;10 Sports, Record-Eagle Sports, and local prep.
+            They link out — we do not reprint game stories or invent scores.
+          </p>
+        </header>
+
+        {showHsSubhead ? (
+          <>
+            <section className="sports-section">
+              <h2 className="sports-subhed">Sports</h2>
+              <SportsList items={varsity} />
+            </section>
+            <section className="sports-section">
+              <h2 className="sports-subhed">High school</h2>
+              <SportsList items={prepOnly} />
+            </section>
+          </>
+        ) : (
+          <SportsList items={all} />
+        )}
+
+        <p className="sports-foot">
+          Also on{" "}
+          <Link href="/">Today</Link> in Around the bay when the wire carries
+          them.
+        </p>
+      </div>
+    </PublicShell>
+  );
+}

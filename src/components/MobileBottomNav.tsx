@@ -3,7 +3,8 @@ import Link from "next/link";
 const ITEMS = [
   { href: "/", label: "Today" },
   { href: "/whats-on", label: "Events" },
-  { href: "/civic", label: "Civic Calendar" },
+  { href: "/civic", label: "Civic" },
+  { href: "/sports", label: "Sports" },
 ] as const;
 
 export function MobileBottomNav({ active = "/" }: { active?: string }) {
