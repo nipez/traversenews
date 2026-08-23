@@ -299,9 +299,12 @@ export function selectAroundTheBay(
   const used = new Set<string>();
   const sportsCount = { n: 0 };
 
+  // Leave room for up to maxSports items; news fills the rest first.
+  const newsTarget = Math.max(0, limit - Math.min(maxSports, sports.length));
+
   // 1) Multi-source news clusters first.
   for (const c of news) {
-    if (picked.length >= limit) break;
+    if (picked.length >= newsTarget) break;
     if (c.sources.length < 2) continue;
     const key = primarySourceKey(c);
     if ((counts.get(key) ?? 0) >= maxPerSource) continue;
@@ -310,15 +313,15 @@ export function selectAroundTheBay(
     picked.push(c);
   }
 
-  // 2) Fill with preferred news desks, then other non-sports.
+  // 2) Preferred news desks, then other non-sports (up to newsTarget).
   takeFromPool(news, picked, used, counts, {
-    limit,
+    limit: newsTarget,
     maxPerSource,
     maxSports,
     sportsCount,
   });
 
-  // 3) Up to maxSports sports items (after news has a foothold).
+  // 3) Up to maxSports sports items.
   takeFromPool(sports, picked, used, counts, {
     limit,
     maxPerSource,
