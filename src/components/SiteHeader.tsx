@@ -60,9 +60,12 @@ function NavInkBar({ active }: { active: string }) {
 export function SiteHeader({
   active = "/",
   variant = "compact",
+  yesterdayEditionDate = null,
 }: {
   active?: string;
   variant?: "hero" | "compact";
+  /** Homepage only: link Yesterday when that edition snapshot exists. */
+  yesterdayEditionDate?: string | null;
 }) {
   if (variant === "hero") {
     return (
@@ -88,6 +91,19 @@ export function SiteHeader({
               </Link>
               <p className="hero-dek">
                 One tab for the bay: news, nights out, civic, and schools.
+              </p>
+              <p className="hero-editions">
+                <Link href="/editions">Earlier editions</Link>
+                {yesterdayEditionDate ? (
+                  <>
+                    <span className="hero-editions-sep" aria-hidden>
+                      ·
+                    </span>
+                    <Link href={`/editions/${yesterdayEditionDate}`}>
+                      Yesterday
+                    </Link>
+                  </>
+                ) : null}
               </p>
             </div>
           </div>

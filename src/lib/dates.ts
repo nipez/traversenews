@@ -104,6 +104,14 @@ export function detroitDayKey(at: Date | string): string {
   }).format(typeof at === "string" ? new Date(at) : at);
 }
 
+/** America/Detroit calendar date for yesterday (YYYY-MM-DD). Never invents a snapshot. */
+export function detroitYesterdayKey(at = new Date()): string {
+  const today = detroitDayKey(at);
+  const [y, m, d] = today.split("-").map(Number);
+  const noonToday = detroitWallToUtc(y, m, d, 12, 0, 0);
+  return detroitDayKey(new Date(noonToday.getTime() - 24 * 60 * 60 * 1000));
+}
+
 /** True when the instant is 00:00 America/Detroit (date-only sort anchor). */
 export function isDetroitMidnight(iso: string): boolean {
   const d = new Date(iso);

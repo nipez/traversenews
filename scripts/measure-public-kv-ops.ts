@@ -54,7 +54,13 @@ function countAfter(): Record<string, Counter> {
     keys: [key],
   });
   return {
-    "/": one(PUBLIC_KEYS.home),
+    // Homepage: home + editions (Yesterday link when that date exists). No list.
+    "/": {
+      gets: 2,
+      lists: 0,
+      puts: 0,
+      keys: [PUBLIC_KEYS.home, PUBLIC_KEYS.editions],
+    },
     "/schools": one(PUBLIC_KEYS.schools),
     "/whats-on": one(PUBLIC_KEYS.events),
     "/civic": one(PUBLIC_KEYS.civic),

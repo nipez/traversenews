@@ -1,14 +1,27 @@
+import { detroitYesterdayKey } from "@/lib/dates";
 import { dedupeEvents, eventInUpcomingWindow, isCivicEvent } from "@/lib/events";
 import {
   getEmailSnapshot,
+  getEditionsSnapshot,
   getHomeSnapshot,
 } from "@/lib/public-snapshots";
 import type { EventItem } from "@/lib/types";
 
 export async function getHomepageData() {
-  // Public homepage: one compact snapshot key. Clustering runs on write
-  // (pull/import), not on every visitor GET.
-  const snap = await getHomeSnapshot();
+  // Public homepage: home snapshot + optional editions snapshot for Yesterday.
+  // Clustering runs on write (pull/import), not on every visitor GET.
+  // Never kv.list — only well-known public keys.
+  const [snap, editionsSnap] = await Promise.all([
+    getHomeSnapshot(),
+    getEditionsSnapshot(),
+  ]);
+
+  const yesterdayKey = detroitYesterdayKey();
+  const yesterdayEditionDate = editionsSnap.editions.some(
+    (e) => e.date === yesterdayKey,
+  )
+    ? yesterdayKey
+    : null;
 
   return {
     lead: snap.lead,
@@ -16,6 +29,7 @@ export async function getHomepageData() {
     weekendEvents: snap.weekendEvents,
     civic: snap.civic,
     alerts: snap.alerts,
+    yesterdayEditionDate,
   };
 }
 
