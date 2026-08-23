@@ -47,18 +47,19 @@ function eventOnEdition(event: EventItem, ed: EditionSnapshot): boolean {
 
 function emptyHint(source: Source, storyCount: number, eventCount: number): string {
   if (storyCount > 0 || eventCount > 0) return "";
-  if (source.pull_method === "facebook" || source.pull_method === "html") {
+  if (
+    source.pull_method === "facebook" ||
+    source.pull_method === "html" ||
+    source.pull_method === "none" ||
+    source.pull_method === "original"
+  ) {
     if (
-      source.id === "src_interlochen" ||
-      source.id === "src_tadl" ||
-      source.id === "src_visit_events"
+      source.id === "src_visit_events" ||
+      (source.last_pull_error && /bot-blocked|403/i.test(source.last_pull_error))
     ) {
-      return "No items yet. Run pull — or Need Traverse News to pull this URL on the live computer if the calendar is bot-blocked.";
+      return "No items yet. Run pull or this method is not fetched in v1 (html/facebook). Need Traverse News to pull this URL on the live computer if the calendar is bot-blocked.";
     }
     return "No items yet. Run pull or this method is not fetched in v1 (html/facebook).";
-  }
-  if (source.pull_method === "none" || source.pull_method === "original") {
-    return "No items yet. This method is not fetched in v1.";
   }
   return "No items yet. Run pull.";
 }
