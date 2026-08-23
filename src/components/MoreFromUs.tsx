@@ -6,7 +6,9 @@ export function MoreFromUs({ stories }: { stories: Story[] }) {
   if (stories.length === 0) return null;
   return (
     <section className="anim-rise anim-delay-2">
-      <h2 className="mb-5 font-serif text-2xl text-ink">More from us</h2>
+      <h2 className="mb-5 font-serif text-[1.85rem] leading-none tracking-tight text-ink md:text-[2.1rem]">
+        More from us
+      </h2>
       <div className="grid gap-8 md:grid-cols-3">
         {stories.map((story) => (
           <article key={story.id}>

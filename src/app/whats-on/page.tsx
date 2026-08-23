@@ -2,7 +2,12 @@ import { PublicShell } from "@/components/PublicShell";
 import { TonightBlock } from "@/components/TonightBlock";
 import { formatEventWhenParts } from "@/lib/dates";
 import { getAppData, listEvents } from "@/lib/data/store";
-import { dedupeEvents, isCivicEvent, looksLikeLowValueListing, selectTonightEvents } from "@/lib/events";
+import {
+  dedupeEvents,
+  isCivicEvent,
+  looksLikeLowValueListing,
+  selectTonightEvents,
+} from "@/lib/events";
 import type { EventItem } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -11,7 +16,9 @@ export const metadata = {
   title: "What's on",
 };
 
-function groupByDay(events: EventItem[]): Array<{ key: string; label: string; items: EventItem[] }> {
+function groupByDay(
+  events: EventItem[],
+): Array<{ key: string; label: string; items: EventItem[] }> {
   const groups = new Map<string, EventItem[]>();
   for (const event of events) {
     const { dayKey } = formatEventWhenParts(event.starts_at);
@@ -34,12 +41,11 @@ export default async function WhatsOnPage() {
   const data = await getAppData();
   const all = await listEvents();
   const featured = selectTonightEvents(all, data.sources, {
-    limit: 8,
+    limit: 6,
     horizonDays: 7,
     maxPerSource: 3,
   });
 
-  // Night-out only — civic meetings stay on /civic.
   const upcoming = dedupeEvents(all).filter(
     (e) =>
       new Date(e.starts_at).getTime() >= Date.now() - 60 * 60 * 1000 &&
@@ -49,39 +55,47 @@ export default async function WhatsOnPage() {
   const byDay = groupByDay(upcoming);
 
   return (
-    <PublicShell active="/whats-on">
-      <div className="mx-auto max-w-3xl">
-        <p className="text-[0.72rem] font-bold tracking-[0.14em] text-teal uppercase">
-          Night out
-        </p>
-        <h1 className="mt-2 font-serif text-[2.35rem] leading-none tracking-tight text-ink md:text-[2.75rem]">
-          What&apos;s on
-        </h1>
-        <p className="mt-3 max-w-xl text-[1.02rem] text-[#3a3a3a]">
-          Concerts, festivals, markets, library programs, and things to do.
-          School board and commission meetings live on Civic.
-        </p>
+    <PublicShell active="/whats-on" wide>
+      <p className="text-[0.72rem] font-bold tracking-[0.16em] text-teal uppercase">
+        Night out
+      </p>
+      <h1 className="mt-2 font-serif text-[2.75rem] leading-[0.95] tracking-tight text-ink md:text-[3.5rem]">
+        What&apos;s on
+      </h1>
+      <p className="mt-4 max-w-xl text-[1.05rem] text-[#3a3a3a]">
+        Concerts, festivals, markets, library programs. Meetings live on Civic.
+      </p>
 
-        <div className="mt-8">
-          <TonightBlock events={featured} />
-        </div>
+      <div className="mt-10 max-w-2xl">
+        <TonightBlock events={featured} limit={6} />
+      </div>
 
-        <div className="mt-12 space-y-10">
-          {byDay.map((group) => (
-            <section key={group.key}>
-              <h2 className="border-b-2 border-ink pb-2 font-serif text-2xl tracking-tight text-ink">
-                {group.label}
-              </h2>
-              <ul>
-                {group.items.map((event) => {
-                  const when = formatEventWhenParts(event.starts_at);
-                  return (
-                    <li key={event.id} className="border-t border-rule py-5 first:border-t-0">
-                      <p className="text-[0.95rem] font-bold tracking-[0.04em] text-teal uppercase">
-                        <span className="text-[1.2rem] tracking-tight">{when.time}</span>
+      <div className="mt-16 max-w-3xl space-y-12">
+        {byDay.map((group) => (
+          <section key={group.key}>
+            <h2 className="border-b-2 border-ink pb-3 font-serif text-[1.85rem] leading-none tracking-tight text-ink md:text-[2.2rem]">
+              {group.label}
+            </h2>
+            <ul>
+              {group.items.map((event) => {
+                const when = formatEventWhenParts(event.starts_at);
+                const timeParts = when.time.replace(/\s+/g, " ").split(" ");
+                return (
+                  <li
+                    key={event.id}
+                    className="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-4 border-t border-rule py-5 first:border-t-0 md:grid-cols-[6.5rem_minmax(0,1fr)]"
+                  >
+                    <div>
+                      <p className="font-serif text-[1.55rem] leading-none tracking-tight text-ink md:text-[1.75rem]">
+                        {timeParts[0]}
                       </p>
-                      <p className="mt-1 text-sm text-muted">{event.place}</p>
-                      <h3 className="mt-1.5 font-serif text-[1.35rem] leading-snug tracking-tight">
+                      <p className="mt-1 text-[0.65rem] font-bold tracking-[0.1em] text-teal uppercase">
+                        {timeParts[1] ?? ""}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[0.88rem] text-[#555]">{event.place}</p>
+                      <h3 className="mt-1 font-serif text-[1.35rem] leading-snug tracking-tight md:text-[1.45rem]">
                         {event.url ? (
                           <a
                             href={event.url}
@@ -95,20 +109,20 @@ export default async function WhatsOnPage() {
                           event.title
                         )}
                       </h3>
-                    </li>
-                  );
-                })}
-              </ul>
-            </section>
-          ))}
-          {byDay.length === 0 ? (
-            <p className="text-sm text-muted">
-              No community listings yet. Need Traverse News to pull Visit TC on
-              the live computer if the calendar is empty — we do not invent
-              events.
-            </p>
-          ) : null}
-        </div>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        ))}
+        {byDay.length === 0 ? (
+          <p className="text-sm text-muted">
+            No community listings yet. Need Traverse News to pull Visit TC on
+            the live computer if the calendar is empty — we do not invent
+            events.
+          </p>
+        ) : null}
       </div>
     </PublicShell>
   );

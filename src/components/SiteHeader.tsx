@@ -9,21 +9,32 @@ const NAV = [
 
 export function SiteHeader({ active = "/" }: { active?: string }) {
   return (
-    <header className="border-b border-rule">
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 md:px-6">
-        <Link href="/" className="font-serif text-[1.65rem] leading-none tracking-tight text-ink md:text-[1.85rem]">
-          traverse.news
-        </Link>
+    <header className="masthead">
+      <div className="mx-auto max-w-7xl px-4 pt-6 md:px-8 md:pt-8">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="min-w-0">
+            <p className="masthead-date">{formatHeaderDate()}</p>
+            <Link
+              href="/"
+              className="masthead-wordmark mt-2 block font-serif tracking-tight text-ink"
+            >
+              traverse.news
+            </Link>
+          </div>
+          <Link href="/email#signup" className="email-stamp shrink-0">
+            Morning email
+          </Link>
+        </div>
 
-        <nav className="hidden items-center gap-6 text-[0.95rem] text-ink md:flex">
+        <nav className="mt-6 hidden items-center gap-8 border-t border-ink/15 pt-4 md:flex">
           {NAV.map((item) => (
             <Link
               key={item.href}
               href={item.href}
               className={
                 active === item.href
-                  ? "font-semibold text-ink"
-                  : "text-[#333] hover:text-teal"
+                  ? "text-[0.95rem] font-bold tracking-[0.04em] text-ink"
+                  : "text-[0.95rem] tracking-[0.04em] text-[#333] hover:text-teal"
               }
             >
               {item.label}
@@ -31,34 +42,23 @@ export function SiteHeader({ active = "/" }: { active?: string }) {
           ))}
         </nav>
 
-        <div className="hidden items-center gap-3 md:flex">
-          <span className="text-sm text-muted">{formatHeaderDate()}</span>
-          <Link href="/email#signup" className="btn-teal whitespace-nowrap">
-            Get the morning email
-          </Link>
-        </div>
-
-        <div className="flex items-center gap-4 text-sm font-semibold text-teal md:hidden">
-          <Link href="/email">Search</Link>
-          <Link href="/whats-on">Menu</Link>
+        <div className="mt-5 flex gap-2 overflow-x-auto pb-1 md:hidden">
+          {NAV.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={
+                active === item.href
+                  ? "whitespace-nowrap bg-ink px-3 py-1.5 text-sm font-semibold text-white"
+                  : "whitespace-nowrap border border-rule px-3 py-1.5 text-sm text-[#444]"
+              }
+            >
+              {item.label}
+            </Link>
+          ))}
         </div>
       </div>
-
-      <div className="flex gap-2 overflow-x-auto px-4 pb-3 md:hidden">
-        {NAV.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={
-              active === item.href
-                ? "whitespace-nowrap bg-ink px-3 py-1.5 text-sm text-white"
-                : "whitespace-nowrap border border-rule px-3 py-1.5 text-sm text-[#444]"
-            }
-          >
-            {item.label}
-          </Link>
-        ))}
-      </div>
+      <div className="teal-band mt-6" aria-hidden />
     </header>
   );
 }
