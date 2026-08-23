@@ -2475,18 +2475,6 @@ a:hover {
   color: #7a7060;
 }
 
-.schools-district {
-  margin: 0;
-}
-
-.schools-district-hed {
-  margin: 0;
-}
-
-.schools-copy .schools-district {
-  display: none;
-}
-
 .schools-title {
   margin: 0.15rem 0 0;
   font-family: var(--font-source-serif), Georgia, serif;

@@ -251,6 +251,7 @@ curl -X POST https://traverse-news.nickperez.workers.dev/api/desk/stories/import
 - Auth: same as events import (`DESK_IMPORT_TOKEN` or `DEV_DESK_PASSWORD`).
 - Default `source_id`: `src_gt911`. Also accepts `src_ticker_fb` (Ticker Facebook alerts/breaking only).
 - Replaces that source’s story rows when `replace: true` (default). Does not wipe RSS / originals.
+- Hand-add from Desk **Alerts** (`/desk/alerts`): paste URL + title (+ optional dek), `replace: false`. If the URL is already on the strip, API returns `409` + `needsConfirm` until `confirm: true` (Replace) or the editor Skips.
 - RSS pulls preserve browser-imported alert stories for other source ids.
 
 ## Product rules (v1)
