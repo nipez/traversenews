@@ -169,7 +169,9 @@ export default async function EditSourcePage({ params }: Props) {
                       <p className="font-medium text-ink">{event.title}</p>
                     )}
                     <p className="mt-1 text-sm text-[#444]">
-                      {formatEventWhen(event.starts_at)}
+                      {formatEventWhen(event.starts_at, new Date(), {
+                        timeUnknown: event.time_unknown,
+                      })}
                       {event.place ? ` · ${event.place}` : ""}
                     </p>
                     {event.edition_dates.length > 0 ? (

@@ -1,5 +1,10 @@
 import { selectAroundTheBay } from "@/lib/around";
-import { dedupeEvents, isCivicEvent, selectTonightEvents } from "@/lib/events";
+import {
+  dedupeEvents,
+  eventInUpcomingWindow,
+  isCivicEvent,
+  selectTonightEvents,
+} from "@/lib/events";
 import { clusterStories } from "@/lib/pull/cluster";
 import type {
   AppData,
@@ -41,9 +46,10 @@ function civicForEdition(
   sources: { id: string; beat_id: string }[],
   nowMs: number,
 ): EventItem[] {
+  const now = new Date(nowMs);
   return dedupeEvents(events)
     .filter((e) => isCivicEvent(e, sources))
-    .filter((e) => new Date(e.starts_at).getTime() >= nowMs - 60 * 60 * 1000);
+    .filter((e) => eventInUpcomingWindow(e, now));
 }
 
 function toStoryCard(

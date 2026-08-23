@@ -1,5 +1,5 @@
 import { selectAroundTheBay } from "@/lib/around";
-import { dedupeEvents, isCivicEvent, selectTonightEvents } from "@/lib/events";
+import { dedupeEvents, eventInUpcomingWindow, isCivicEvent, selectTonightEvents } from "@/lib/events";
 import { clusterStories } from "@/lib/pull/cluster";
 import {
   getAppData,
@@ -51,9 +51,10 @@ export function civicEvents(
   sources: { id: string; beat_id: string }[],
   nowMs = Date.now(),
 ): EventItem[] {
+  const now = new Date(nowMs);
   return dedupeEvents(events)
     .filter((e) => isCivicEvent(e, sources))
-    .filter((e) => new Date(e.starts_at).getTime() >= nowMs - 60 * 60 * 1000);
+    .filter((e) => eventInUpcomingWindow(e, now));
 }
 
 export async function getEmailPreviewData() {

@@ -38,10 +38,15 @@ export function TonightBlock({
 
       <ul className="tonight-list">
         {shown.map((event) => {
-          const when = formatEventWhenParts(event.starts_at);
-          const timeParts = when.time.replace(/\s+/g, " ").split(" ");
-          const clock = timeParts[0] ?? when.time;
-          const meridiem = timeParts[1] ?? "";
+          const when = formatEventWhenParts(event.starts_at, new Date(), {
+            timeUnknown: event.time_unknown,
+          });
+          const hideClock = when.time === "—";
+          const timeParts = hideClock
+            ? []
+            : when.time.replace(/\s+/g, " ").split(" ");
+          const clock = hideClock ? "—" : (timeParts[0] ?? when.time);
+          const meridiem = hideClock ? "" : (timeParts[1] ?? "");
 
           return (
             <li key={event.id} className="tonight-row">

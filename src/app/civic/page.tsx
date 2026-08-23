@@ -15,9 +15,11 @@ function isCancelled(title: string) {
   return /\bcancell?ed\b/i.test(title);
 }
 
-function civicTime(iso: string): string {
-  const t = formatEventWhenParts(iso).time;
-  if (/^12:00\s*AM$/i.test(t.trim())) return "—";
+function civicTime(event: { starts_at: string; time_unknown?: boolean }): string {
+  const t = formatEventWhenParts(event.starts_at, new Date(), {
+    timeUnknown: event.time_unknown,
+  }).time;
+  if (t === "—" || /^12:00\s*AM$/i.test(t.trim())) return "—";
   return t;
 }
 
@@ -63,7 +65,7 @@ export default async function CivicPage() {
                   <p className="civic-agenda-title">{event.title}</p>
                   <p className="civic-agenda-place">{event.place}</p>
                 </div>
-                <p className="civic-agenda-time">{civicTime(event.starts_at)}</p>
+                <p className="civic-agenda-time">{civicTime(event)}</p>
               </li>
             );
           })}

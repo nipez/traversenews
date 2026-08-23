@@ -84,6 +84,12 @@ export type EventItem = {
   place: string;
   url: string | null;
   source_id: string;
+  /**
+   * True when the source gave a calendar date with no clock (e.g. "2026-08-23").
+   * Display must not invent noon — show an em dash, not 12:00 PM.
+   * starts_at is midnight America/Detroit for day sorting only.
+   */
+  time_unknown?: boolean;
 };
 
 export type Subscriber = {

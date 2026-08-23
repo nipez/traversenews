@@ -4,6 +4,7 @@ import { formatEventWhenParts } from "@/lib/dates";
 import { getAppData, listEvents } from "@/lib/data/store";
 import {
   dedupeEvents,
+  eventInUpcomingWindow,
   isCivicEvent,
   looksLikeLowValueListing,
   selectTonightEvents,
@@ -26,7 +27,9 @@ function groupByDay(
 }> {
   const groups = new Map<string, EventItem[]>();
   for (const event of events) {
-    const { dayKey } = formatEventWhenParts(event.starts_at);
+    const { dayKey } = formatEventWhenParts(event.starts_at, new Date(), {
+      timeUnknown: event.time_unknown,
+    });
     const list = groups.get(dayKey) ?? [];
     list.push(event);
     groups.set(dayKey, list);
@@ -45,6 +48,21 @@ function groupByDay(
   });
 }
 
+function eventClock(event: EventItem) {
+  const when = formatEventWhenParts(event.starts_at, new Date(), {
+    timeUnknown: event.time_unknown,
+  });
+  if (when.time === "—") {
+    return { when, clock: "—", meridiem: "" };
+  }
+  const timeParts = when.time.replace(/\s+/g, " ").split(" ");
+  return {
+    when,
+    clock: timeParts[0] ?? when.time,
+    meridiem: timeParts[1] ?? "",
+  };
+}
+
 export default async function WhatsOnPage() {
   const data = await getAppData();
   const all = await listEvents();
@@ -56,7 +74,7 @@ export default async function WhatsOnPage() {
 
   const upcoming = dedupeEvents(all).filter(
     (e) =>
-      new Date(e.starts_at).getTime() >= Date.now() - 60 * 60 * 1000 &&
+      eventInUpcomingWindow(e, new Date()) &&
       !isCivicEvent(e, data.sources) &&
       !looksLikeLowValueListing(e.title),
   );
@@ -87,15 +105,16 @@ export default async function WhatsOnPage() {
       <div className="events-featured mt-8">
         <div className="events-featured-inner">
           {featured.map((event) => {
-            const when = formatEventWhenParts(event.starts_at);
-            const timeParts = when.time.replace(/\s+/g, " ").split(" ");
+            const { when, clock, meridiem } = eventClock(event);
             return (
               <article key={event.id} className="min-w-0">
                 <p className="font-display text-[1.85rem] leading-none font-black tracking-tight text-ink md:text-[2.1rem]">
-                  {timeParts[0]}
-                  <span className="ml-1 text-[0.7rem] font-extrabold tracking-[0.08em] text-muted-2 uppercase">
-                    {timeParts[1]}
-                  </span>
+                  {clock}
+                  {meridiem ? (
+                    <span className="ml-1 text-[0.7rem] font-extrabold tracking-[0.08em] text-muted-2 uppercase">
+                      {meridiem}
+                    </span>
+                  ) : null}
                 </p>
                 <p className="mt-1 text-[0.65rem] font-extrabold tracking-[0.12em] text-muted-2 uppercase">
                   {when.dayLabel}
@@ -137,8 +156,7 @@ export default async function WhatsOnPage() {
             </div>
             <ul className="grid gap-0 sm:grid-cols-2">
               {group.items.map((event) => {
-                const when = formatEventWhenParts(event.starts_at);
-                const timeParts = when.time.replace(/\s+/g, " ").split(" ");
+                const { clock, meridiem } = eventClock(event);
                 return (
                   <li
                     key={event.id}
@@ -146,11 +164,13 @@ export default async function WhatsOnPage() {
                   >
                     <div>
                       <p className="font-display text-[1.35rem] leading-none font-black tracking-tight text-ink">
-                        {timeParts[0]}
+                        {clock}
                       </p>
-                      <p className="mt-1 text-[0.6rem] font-extrabold tracking-[0.1em] text-teal uppercase">
-                        {timeParts[1] ?? ""}
-                      </p>
+                      {meridiem ? (
+                        <p className="mt-1 text-[0.6rem] font-extrabold tracking-[0.1em] text-teal uppercase">
+                          {meridiem}
+                        </p>
+                      ) : null}
                     </div>
                     <div>
                       <p className="text-[0.8rem] text-muted">{event.place}</p>
