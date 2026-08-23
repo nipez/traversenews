@@ -5,7 +5,7 @@ import type { Source, Story } from "@/lib/types";
  * Homepage Alerts strip sources (Facebook tip wires).
  * Public safety / breaking only — never Overheard memes or Around the bay RSS.
  */
-export const ALERT_SOURCE_IDS = new Set(["src_gt911"]);
+export const ALERT_SOURCE_IDS = new Set(["src_gt911", "src_ticker_fb"]);
 
 export function isAlertSourceId(sourceId: string): boolean {
   return ALERT_SOURCE_IDS.has(sourceId);

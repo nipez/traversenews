@@ -312,6 +312,17 @@ const sources: Source[] = [
       "Official alerts only (outages, crashes, closures). Browser-pulled by Traverse News on the live computer. Do not dump the Facebook feed. No memes, hiring fluff, or unverified pile-ons. Empty Worker pull is OK.",
   },
   {
+    id: "src_ticker_fb",
+    name: "Ticker (Facebook)",
+    homepage: "https://www.facebook.com/TraverseCityTicker",
+    feed_url: "https://www.facebook.com/TraverseCityTicker",
+    pull_method: "facebook",
+    beat_id: "beat_public_safety",
+    enabled: true,
+    notes:
+      "Browser-pulled. Alerts/breaking only (crashes, outages, closures, developing). Not a dump of every Ticker FB post. Worker does not scrape FB. Separate from The Ticker RSS (src_ticker) — do not duplicate that firehose into Around the bay.",
+  },
+  {
     id: "src_tn",
     name: "traverse.news",
     homepage: "https://traverse.news",

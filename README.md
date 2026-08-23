@@ -228,7 +228,7 @@ curl -X POST https://traverse-news.nickperez.workers.dev/api/desk/events/import 
 
 ### Browser story import (Facebook alerts)
 
-Cloud Agents do not scrape Facebook. **Do not invent posts.** Traverse News pulls Grand Traverse 911 (and similar alert pages) on the live computer and POSTs here. The homepage **Alerts** strip shows `src_gt911` stories only; it stays hidden when empty.
+Cloud Agents do not scrape Facebook. **Do not invent posts.** Traverse News pulls Grand Traverse 911 and Ticker (Facebook) alert posts on the live computer and POSTs here. The homepage **Alerts** strip shows `src_gt911` and `src_ticker_fb` stories only (1–3 total, newest first); it stays hidden when both are empty. Separate from The Ticker RSS (`src_ticker`) Around the bay wire.
 
 ```bash
 curl -X POST https://traverse-news.nickperez.workers.dev/api/desk/stories/import \
@@ -249,7 +249,7 @@ curl -X POST https://traverse-news.nickperez.workers.dev/api/desk/stories/import
 ```
 
 - Auth: same as events import (`DESK_IMPORT_TOKEN` or `DEV_DESK_PASSWORD`).
-- Default `source_id`: `src_gt911`.
+- Default `source_id`: `src_gt911`. Also accepts `src_ticker_fb` (Ticker Facebook alerts/breaking only).
 - Replaces that source’s story rows when `replace: true` (default). Does not wipe RSS / originals.
 - RSS pulls preserve browser-imported alert stories for other source ids.
 
