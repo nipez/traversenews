@@ -245,7 +245,7 @@ a:hover {
 @media (min-width: 768px) {
   .hero-dek {
     font-size: 17px;
-    /* one line at desktop — never orphan “area.” */
+    /* one line at desktop — no wrap / no orphan */
     white-space: nowrap;
   }
 }
