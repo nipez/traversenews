@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { formatShortDate } from "@/lib/dates";
+import { formatPublicOriginalByline } from "@/lib/originals";
 import type { Story } from "@/lib/types";
 
 export function MoreFromUs({ stories }: { stories: Story[] }) {
@@ -26,7 +27,7 @@ export function MoreFromUs({ stories }: { stories: Story[] }) {
             </h3>
             <p className="mt-2 text-sm leading-relaxed text-[#444]">{story.dek}</p>
             <p className="mt-2 text-xs text-muted">
-              {story.byline ? `By ${story.byline}` : "By Desk"} ·{" "}
+              {formatPublicOriginalByline(story.byline)} ·{" "}
               {formatShortDate(story.published_at)}
             </p>
           </article>

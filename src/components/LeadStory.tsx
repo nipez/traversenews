@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { formatShortDate } from "@/lib/dates";
+import { formatPublicOriginalByline } from "@/lib/originals";
 import type { ClusteredStory, Story } from "@/lib/types";
 
 type Lead = ClusteredStory | Story;
@@ -35,7 +36,7 @@ export function LeadStory({ lead }: { lead: Lead }) {
       </h1>
       {lead.dek ? <p className="lead-dek">{lead.dek}</p> : null}
       <p className="lead-byline">
-        {lead.byline ? `By ${lead.byline}` : "By Desk"}
+        {formatPublicOriginalByline(lead.byline)}
         {" · "}
         {formatShortDate(lead.published_at)}
       </p>

@@ -180,7 +180,7 @@ Each successful `/api/pull` writes (or refreshes) today's edition snapshot in th
 - **Tonight & What's on** = night-out (concerts, markets, festivals, Visit TC, Interlochen, TADL). **Civic** = government + school board only. Meeting titles never lead What's on.
 - If there is no staff original, the homepage hero stays empty and **Around the bay** starts the page. Never promote another desk's crime story to the hero.
 - `src/lib/data/scrub.ts` strips known invented seed IDs from KV on load. Do not reintroduce those slugs or placeholder journalism.
-- **Desk originals workflow:** Nick drafts from a live pulled story (real title/dek/permalink → `source_urls[]`), edits in Desk, then publishes. Status is `draft | published`. Unpublished drafts never appear on the public site. Publish writes an `is_original` story (byline Nick Perez / Desk) shown as traverse.news reporting. Optional `POST /api/desk/originals/[id]/generate` uses `OPENAI_API_KEY` when set; without it, Nick writes the body himself. Generation must not invent quotes or facts beyond the cited source.
+- **Desk originals workflow:** Nick drafts from a live pulled story (real title/dek/permalink → `source_urls[]`), edits in Desk, then publishes. Status is `draft | published`. Unpublished drafts never appear on the public site. Publish writes an `is_original` story with public byline **By traverse.news** (staff name stays Desk-only). Optional `POST /api/desk/originals/[id]/generate` uses `OPENAI_API_KEY` when set; without it, Nick writes the body himself. Generation must not invent quotes or facts beyond the cited source.
 
 ## Desk originals
 
