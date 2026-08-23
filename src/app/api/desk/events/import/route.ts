@@ -23,6 +23,7 @@ export async function POST(request: Request) {
     events?: EventImportRow[];
     source_id?: string;
     replace?: boolean;
+    clear?: boolean;
   } | null;
 
   if (!body || !Array.isArray(body.events)) {
@@ -56,6 +57,21 @@ export async function POST(request: Request) {
         },
         { status: 400 },
       );
+    }
+    // Explicit clear only — never wipe on accidental empty POST.
+    if (body.replace !== false && body.clear === true) {
+      const target =
+        (typeof body.source_id === "string" && body.source_id.trim()) ||
+        "src_visit_events";
+      await replacePulledEvents([], [target]);
+      return NextResponse.json({
+        ok: true,
+        imported: 0,
+        skipped: [],
+        source_ids: [target],
+        replace: true,
+        message: `Cleared events for ${target}.`,
+      });
     }
     return NextResponse.json({
       ok: true,
