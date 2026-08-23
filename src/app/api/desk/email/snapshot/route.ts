@@ -47,6 +47,6 @@ export async function POST(request: Request) {
     civic: snapshot.civic.length,
     sports: snapshot.sports.length,
     url: `/email/${snapshot.date}`,
-    message: `Saved morning letter for ${snapshot.date}. Sending is not wired.`,
+    message: `Saved morning letter for ${snapshot.date}. Send with POST /api/desk/email/send.`,
   });
 }
