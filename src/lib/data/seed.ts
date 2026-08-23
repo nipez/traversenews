@@ -162,7 +162,7 @@ const sources: Source[] = [
     beat_id: "beat_events",
     enabled: true,
     notes:
-      "Community/concerts calendar (Simpleview). Cloud pulls often 403/empty JS — never invent listings. Need Traverse News to pull https://www.traversecity.com/events/ on the live computer and POST to /api/desk/events/import.",
+      "Community/concerts calendar (Simpleview). Cloud pulls often 403/empty JS — never invent listings. Need Traverse News to pull https://www.traversecity.com/events/ on the live computer and POST to /api/desk/events/import. Recurring rows: send recurrence_weekdays + recurrence_time (Detroit) or explicit occurrence ISO — never invent Sunday from a Saturday market.",
   },
   {
     id: "src_tart",

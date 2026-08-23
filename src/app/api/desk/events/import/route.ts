@@ -11,7 +11,12 @@ import {
  * Cloud agents often get 403 — Traverse News on a live computer POSTs here.
  * Never invents events; only saves what the client sends.
  *
- * Body: { events: [{ title, starts_at, place?, url?, source_id? }], source_id?, replace? }
+ * Body: {
+ *   events: [{ title, starts_at?, place?, url?, source_id?,
+ *              recurrence_weekdays?, recurrence_time?, recurrence_count? }],
+ *   source_id?, replace?, clear?
+ * }
+ * Naive starts_at = America/Detroit wall time. Recurring: weekdays + HH:mm — never invent tomorrow.
  * Auth: Desk cookie session OR Authorization: Bearer <DESK_IMPORT_TOKEN|DEV_DESK_PASSWORD>
  */
 export async function POST(request: Request) {

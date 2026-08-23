@@ -177,8 +177,8 @@ Each successful `/api/pull` writes (or refreshes) today's edition snapshot in th
 - Homepage originals / “More from us” stay **empty** until a real piece is saved in the Desk. Empty layout is correct; do not invent copy to make the page look full.
 - Around the bay and civic/events listings must come from a real RSS/ICS pull (real title, dek, permalink). If a pull has not run yet, show empty — not fabricated seed stories.
 - Around the bay filters lifestyle columns/briefs/calendars and **mixes desks** (about 3 slots max per outlet) so one feed cannot dominate the homepage.
-- **Tonight & What's on** prefer concerts/community/library listings (Interlochen + TADL HTML pulls, TART ICS). School board stacks stay on **Civic**. Visit TC’s public events calendar ([traversecity.com/events](https://www.traversecity.com/events/)) is often **bot-blocked (403)** or JS-only from datacenters — we **never invent fillers**. When stuck: **Need Traverse News to pull https://www.traversecity.com/events/ on the live computer**, then `POST /api/desk/events/import` (`source_id`: `src_visit_events`). See [`AGENTS.md`](./AGENTS.md).
-- If there is no staff original, the homepage lead may be empty or the first clustered live wire card, labeled **From other desks**, never as traverse.news reporting.
+- **Tonight & What's on** = night-out (concerts, markets, festivals, Visit TC, Interlochen, TADL). **Civic** = government + school board only. Meeting titles never lead What's on.
+- If there is no staff original, the homepage hero stays empty and **Around the bay** starts the page. Never promote another desk's crime story to the hero.
 - `src/lib/data/scrub.ts` strips known invented seed IDs from KV on load. Do not reintroduce those slugs or placeholder journalism.
 - **Desk originals workflow:** Nick drafts from a live pulled story (real title/dek/permalink → `source_urls[]`), edits in Desk, then publishes. Status is `draft | published`. Unpublished drafts never appear on the public site. Publish writes an `is_original` story (byline Nick Perez / Desk) shown as traverse.news reporting. Optional `POST /api/desk/originals/[id]/generate` uses `OPENAI_API_KEY` when set; without it, Nick writes the body himself. Generation must not invent quotes or facts beyond the cited source.
 
@@ -220,8 +220,11 @@ curl -X POST https://traverse-news.nickperez.workers.dev/api/desk/events/import 
 
 - Auth: Desk session cookie **or** `Authorization: Bearer` (`DESK_IMPORT_TOKEN` if set, else `DEV_DESK_PASSWORD`).
 - Default `source_id`: `src_visit_events` (Visit TC Events — sports, community, concerts).
+- `starts_at`: ISO with `Z`/offset, **or** naive `YYYY-MM-DDTHH:mm` treated as **America/Detroit** wall time (not Worker UTC). Relative words (`tomorrow`) are rejected.
+- Recurring markets/brunches: prefer `{ "recurrence_weekdays": ["Wed","Sat"], "recurrence_time": "07:30" }` — expands next Detroit occurrences. Do not invent a next-day one-off.
 - Replaces that source’s rows in KV when `replace: true` (default). Never invents missing titles/times — invalid rows are skipped.
 - First handoff URL: https://www.traversecity.com/events/
+- Do **not** re-import wrong Sunday rows for Saturday markets (Sara Hardy, Bubbly Brunch, etc.).
 
 ## Product rules (v1)
 
