@@ -273,7 +273,16 @@ export function formatStoryDateline(iso: string): string {
   return `${date}, ${time}`;
 }
 
-export function formatCivicDate(iso: string): { day: string; label: string } {
+export function formatCivicDate(iso: string): {
+  day: string;
+  label: string;
+  /** America/Detroit YYYY-MM for month section breaks. */
+  monthKey: string;
+  /** Full month name, e.g. September. */
+  monthName: string;
+  /** Uppercase month abbr, e.g. SEP. */
+  monthAbbr: string;
+} {
   const d = new Date(iso);
   const day = new Intl.DateTimeFormat("en-US", {
     timeZone: DETROIT,
@@ -285,7 +294,23 @@ export function formatCivicDate(iso: string): { day: string; label: string } {
     timeZone: DETROIT,
     day: "numeric",
   }).format(d);
-  return { day, label };
+  const monthKey = new Intl.DateTimeFormat("en-CA", {
+    timeZone: DETROIT,
+    year: "numeric",
+    month: "2-digit",
+  }).format(d);
+  const monthName = new Intl.DateTimeFormat("en-US", {
+    timeZone: DETROIT,
+    month: "long",
+  }).format(d);
+  const monthAbbr = new Intl.DateTimeFormat("en-US", {
+    timeZone: DETROIT,
+    month: "short",
+  })
+    .format(d)
+    .toUpperCase()
+    .replace(/\.$/, "");
+  return { day, label, monthKey, monthName, monthAbbr };
 }
 
 export function formatRelative(iso: string, now = new Date()): string {

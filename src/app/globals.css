@@ -885,7 +885,7 @@ a:hover {
   flex-shrink: 0;
   border: 1px solid #1c1712;
   text-align: center;
-  padding: 8px 2px;
+  padding: 8px 2px 6px;
   line-height: 1.05;
   background: #f4edde;
 }
@@ -906,6 +906,16 @@ a:hover {
   font-weight: 900;
   letter-spacing: -0.03em;
   color: #1c1712;
+}
+
+.civic-datebox-month {
+  margin-top: 2px;
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #c45c26;
 }
 
 .civic-copy {
