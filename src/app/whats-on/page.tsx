@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { PublicShell } from "@/components/PublicShell";
-import { formatEventWhenParts } from "@/lib/dates";
+import { detroitDayKey, formatEventWhenParts } from "@/lib/dates";
 import { getAppData, listEvents } from "@/lib/data/store";
 import {
   dedupeEvents,
@@ -8,6 +8,7 @@ import {
   isCivicEvent,
   looksLikeLowValueListing,
   selectTonightEvents,
+  venueKicker,
 } from "@/lib/events";
 import type { EventItem } from "@/lib/types";
 
@@ -17,12 +18,14 @@ export const metadata = {
   title: "Events",
 };
 
+const HORIZON_DAYS = 12;
+
 function groupByDay(
   events: EventItem[],
 ): Array<{
   key: string;
-  weekday: string;
   dayNum: string;
+  dayLabel: string;
   items: EventItem[];
 }> {
   const groups = new Map<string, EventItem[]>();
@@ -34,18 +37,32 @@ function groupByDay(
     list.push(event);
     groups.set(dayKey, list);
   }
-  return [...groups.entries()].map(([key, items]) => {
-    const d = new Date(items[0].starts_at);
-    const weekday = new Intl.DateTimeFormat("en-US", {
-      timeZone: "America/Detroit",
-      weekday: "long",
-    }).format(d);
-    const dayNum = new Intl.DateTimeFormat("en-US", {
-      timeZone: "America/Detroit",
-      day: "numeric",
-    }).format(d);
-    return { key, weekday, dayNum, items };
-  });
+
+  return [...groups.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([key, items]) => {
+      const sorted = [...items].sort((a, b) => {
+        // Timed first, then date-only; both chronological.
+        if (Boolean(a.time_unknown) !== Boolean(b.time_unknown)) {
+          return a.time_unknown ? 1 : -1;
+        }
+        return (
+          new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime()
+        );
+      });
+      const d = new Date(sorted[0].starts_at);
+      const dayNum = new Intl.DateTimeFormat("en-US", {
+        timeZone: "America/Detroit",
+        day: "numeric",
+      }).format(d);
+      const dayLabel = new Intl.DateTimeFormat("en-US", {
+        timeZone: "America/Detroit",
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+      }).format(d);
+      return { key, dayNum, dayLabel, items: sorted };
+    });
 }
 
 function eventClock(event: EventItem) {
@@ -63,145 +80,167 @@ function eventClock(event: EventItem) {
   };
 }
 
+/** Featured meta: "Tuesday 8/25 · Interlochen" */
+function featuredMeta(event: EventItem): string {
+  const d = new Date(event.starts_at);
+  const weekday = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Detroit",
+    weekday: "long",
+  }).format(d);
+  const md = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Detroit",
+    month: "numeric",
+    day: "numeric",
+  }).format(d);
+  return `${weekday} ${md} · ${venueKicker(event.place)}`;
+}
+
 export default async function WhatsOnPage() {
   const data = await getAppData();
   const all = await listEvents();
+  const now = new Date();
+
+  // Peach band: next 3 TIMED nights-out only — never date-only Opera as noon.
   const featured = selectTonightEvents(all, data.sources, {
+    now,
     limit: 3,
-    horizonDays: 10,
+    horizonDays: HORIZON_DAYS,
     maxPerSource: 2,
+    timedOnly: true,
   });
 
   const upcoming = dedupeEvents(all).filter(
     (e) =>
-      eventInUpcomingWindow(e, new Date()) &&
+      eventInUpcomingWindow(e, now, {
+        horizonMs: HORIZON_DAYS * 24 * 60 * 60 * 1000,
+      }) &&
       !isCivicEvent(e, data.sources) &&
       !looksLikeLowValueListing(e.title),
   );
   const byDay = groupByDay(upcoming);
+  const todayKey = detroitDayKey(now);
 
   return (
     <PublicShell active="/whats-on" header="compact">
-      <div className="events-hero-row">
-        <div>
-          <p className="text-[0.68rem] font-extrabold tracking-[0.16em] text-teal uppercase">
-            Night out
-          </p>
-          <h1 className="events-hed mt-2">Events</h1>
-          <p className="mt-3 max-w-md font-serif text-[1.05rem] text-muted-2">
-            Concerts, festivals, markets, library programs. Meetings live on
-            Civic Calendar.
-          </p>
-        </div>
-        <Image
-          src="/art/stamp-night.png"
-          alt=""
-          width={150}
-          height={150}
-          className="section-stamp-lg hidden shrink-0 sm:block"
-        />
-      </div>
+      <div className="events-page">
+        <header className="events-hero">
+          <div className="events-hero-copy">
+            <p className="events-kicker">Night out</p>
+            <h1 className="events-hed">Events</h1>
+            <p className="events-dek">
+              Concerts, festivals, markets, library programs. Meetings live on
+              Civic Calendar.
+            </p>
+          </div>
+          <Image
+            src="/art/stamp-night.png"
+            alt=""
+            width={150}
+            height={150}
+            className="events-stamp"
+          />
+        </header>
 
-      <div className="events-featured mt-8">
-        <div className="events-featured-inner">
-          {featured.map((event) => {
-            const { when, clock, meridiem } = eventClock(event);
-            return (
-              <article key={event.id} className="min-w-0">
-                <p className="font-display text-[1.85rem] leading-none font-black tracking-tight text-ink md:text-[2.1rem]">
-                  {clock}
-                  {meridiem ? (
-                    <span className="ml-1 text-[0.7rem] font-extrabold tracking-[0.08em] text-muted-2 uppercase">
-                      {meridiem}
-                    </span>
-                  ) : null}
-                </p>
-                <p className="mt-1 text-[0.65rem] font-extrabold tracking-[0.12em] text-muted-2 uppercase">
-                  {when.dayLabel}
-                </p>
-                <p className="mt-3 text-[0.8rem] text-muted-2">{event.place}</p>
-                <h2 className="mt-1 font-serif text-[1.2rem] leading-snug font-semibold text-ink md:text-[1.3rem]">
-                  {event.url ? (
-                    <a
-                      href={event.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="hover:text-teal"
-                    >
-                      {event.title}
-                    </a>
-                  ) : (
-                    event.title
-                  )}
-                </h2>
-              </article>
-            );
-          })}
-          {featured.length === 0 ? (
-            <p className="text-sm text-muted-2 col-span-full">
-              No featured night-out listings yet — we do not invent events.
+        <section className="events-featured" aria-label="Featured nights out">
+          <div className="events-featured-inner">
+            {featured.map((event) => {
+              const { clock, meridiem } = eventClock(event);
+              return (
+                <article key={event.id} className="events-featured-card">
+                  <p className="events-featured-time">
+                    {clock}
+                    {meridiem ? (
+                      <span className="events-featured-meridiem">
+                        {" "}
+                        {meridiem}
+                      </span>
+                    ) : null}
+                  </p>
+                  <p className="events-featured-meta">{featuredMeta(event)}</p>
+                  <h2 className="events-featured-title">
+                    {event.url ? (
+                      <a
+                        href={event.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {event.title} ↗
+                      </a>
+                    ) : (
+                      event.title
+                    )}
+                  </h2>
+                </article>
+              );
+            })}
+            {featured.length === 0 ? (
+              <p className="events-featured-empty">
+                No timed nights-out in the next couple of weeks — we do not
+                invent showtimes.
+              </p>
+            ) : null}
+          </div>
+        </section>
+
+        <div className="events-days">
+          {byDay.map((group) => (
+            <section
+              key={group.key}
+              className="events-day"
+              data-today={group.key === todayKey ? "true" : undefined}
+            >
+              <header className="events-day-head">
+                <p className="events-day-num">{group.dayNum}</p>
+                <p className="events-day-label">{group.dayLabel}</p>
+              </header>
+              <ul className="events-day-grid">
+                {group.items.map((event) => {
+                  const { clock, meridiem } = eventClock(event);
+                  return (
+                    <li key={event.id} className="events-row">
+                      <div className="events-row-when">
+                        <p className="events-row-time">
+                          {clock}
+                          {meridiem ? (
+                            <span className="events-row-meridiem">
+                              {" "}
+                              {meridiem}
+                            </span>
+                          ) : null}
+                        </p>
+                      </div>
+                      <div className="events-row-copy">
+                        <p className="events-row-venue">
+                          {venueKicker(event.place)}
+                        </p>
+                        <h3 className="events-row-title">
+                          {event.url ? (
+                            <a
+                              href={event.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              {event.title} ↗
+                            </a>
+                          ) : (
+                            event.title
+                          )}
+                        </h3>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          ))}
+          {byDay.length === 0 ? (
+            <p className="events-empty">
+              No community listings yet. Need Traverse News to pull Visit TC on
+              the live computer if the calendar is empty — we do not invent
+              events.
             </p>
           ) : null}
         </div>
-      </div>
-
-      <div className="mt-12 max-w-3xl space-y-12">
-        {byDay.map((group) => (
-          <section key={group.key}>
-            <div className="mb-4 flex items-end gap-3 border-b-2 border-ink pb-3">
-              <p className="day-num">{group.dayNum}</p>
-              <p className="pb-1 text-[0.85rem] font-extrabold tracking-[0.08em] text-muted-2 uppercase">
-                {group.weekday}
-              </p>
-            </div>
-            <ul className="grid gap-0 sm:grid-cols-2">
-              {group.items.map((event) => {
-                const { clock, meridiem } = eventClock(event);
-                return (
-                  <li
-                    key={event.id}
-                    className="grid grid-cols-[4.5rem_minmax(0,1fr)] gap-3 border-t border-rule py-4 first:border-t-0 sm:border-t"
-                  >
-                    <div>
-                      <p className="font-display text-[1.35rem] leading-none font-black tracking-tight text-ink">
-                        {clock}
-                      </p>
-                      {meridiem ? (
-                        <p className="mt-1 text-[0.6rem] font-extrabold tracking-[0.1em] text-teal uppercase">
-                          {meridiem}
-                        </p>
-                      ) : null}
-                    </div>
-                    <div>
-                      <p className="text-[0.8rem] text-muted">{event.place}</p>
-                      <h3 className="mt-1 font-serif text-[1.15rem] leading-snug font-semibold">
-                        {event.url ? (
-                          <a
-                            href={event.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="hover:text-teal"
-                          >
-                            {event.title} ↗
-                          </a>
-                        ) : (
-                          event.title
-                        )}
-                      </h3>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          </section>
-        ))}
-        {byDay.length === 0 ? (
-          <p className="text-sm text-muted">
-            No community listings yet. Need Traverse News to pull Visit TC on
-            the live computer if the calendar is empty — we do not invent
-            events.
-          </p>
-        ) : null}
       </div>
     </PublicShell>
   );
