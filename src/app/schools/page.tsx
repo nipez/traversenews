@@ -1,14 +1,7 @@
 import { DeskRail } from "@/components/DeskRail";
 import { PublicShell } from "@/components/PublicShell";
 import { SchoolsDistrictToggle } from "@/components/SchoolsDistrictToggle";
-import { getAppData } from "@/lib/data/store";
-import {
-  groupSchoolDaysByDistrict,
-  SCHOOL_DISTRICT_CALENDAR_PDF_URLS,
-  SCHOOL_DISTRICT_CALENDAR_URLS,
-  selectUpcomingSchoolDays,
-  sourceIdForDistrict,
-} from "@/lib/schools";
+import { getSchoolsPagePayload } from "@/lib/schools-page-cache";
 
 export const dynamic = "force-dynamic";
 
@@ -16,31 +9,12 @@ export const metadata = {
   title: "Schools",
 };
 
+/**
+ * Important dates by district. Payload is KV-cached (~15m) so cold
+ * custom-domain hits do not re-parse the full app_data blob (CF 1102).
+ */
 export default async function SchoolsPage() {
-  const data = await getAppData();
-  const upcoming = selectUpcomingSchoolDays(data.schools ?? []);
-  const grouped = groupSchoolDaysByDistrict(upcoming, { includeEmpty: false });
-
-  const districts = grouped.map((block) => {
-    const sourceId = sourceIdForDistrict(block.district);
-    const source = sourceId
-      ? data.sources.find((s) => s.id === sourceId)
-      : undefined;
-    const calendarUrl =
-      source?.calendar_url ||
-      SCHOOL_DISTRICT_CALENDAR_URLS[block.district] ||
-      null;
-    const calendarPdfUrl =
-      source?.calendar_pdf_url ||
-      SCHOOL_DISTRICT_CALENDAR_PDF_URLS[block.district] ||
-      null;
-    return {
-      district: block.district,
-      calendarUrl,
-      calendarPdfUrl,
-      months: block.months,
-    };
-  });
+  const { districts } = await getSchoolsPagePayload();
 
   return (
     <PublicShell active="/schools" header="compact">

@@ -8,6 +8,7 @@ import {
   upsertEmailEdition,
 } from "@/lib/email-editions";
 import { sanitizeStoredAthletics } from "@/lib/athletics";
+import { invalidateSchoolsPageCache } from "@/lib/schools-page-cache";
 import { sanitizeStoredSchools } from "@/lib/schools";
 import { dedupeEvents, sanitizeStoredEvents } from "@/lib/events";
 import {
@@ -392,6 +393,7 @@ export async function replaceSchoolCalendarItems(
     ...incoming.values(),
   ]).items;
   await saveStore(data);
+  await invalidateSchoolsPageCache();
 }
 
 export async function listEvents(): Promise<EventItem[]> {
