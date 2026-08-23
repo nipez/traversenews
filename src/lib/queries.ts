@@ -33,6 +33,7 @@ export async function getHomepageData() {
     limit: 6,
     horizonDays: 5,
     maxPerSource: 3,
+    timedOnly: true,
   });
 
   const civic = civicEvents(data.events, data.sources).slice(0, 6);

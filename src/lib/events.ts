@@ -174,15 +174,19 @@ export function selectTonightEvents(
     /** @deprecated Civic is always excluded from Tonight. */
     maxMeetings?: number;
     maxPerSource?: number;
+    /** Exclude date-only rows (no invented featured clocks). */
+    timedOnly?: boolean;
   } = {},
 ): EventItem[] {
   const now = options.now ?? new Date();
   const limit = options.limit ?? 6;
   const horizonDays = options.horizonDays ?? 5;
   const maxPerSource = options.maxPerSource ?? 3;
+  const timedOnly = options.timedOnly === true;
   const beatBySource = new Map(sources.map((s) => [s.id, s.beat_id]));
 
   const windowed = dedupeEvents(events).filter((e) => {
+    if (timedOnly && e.time_unknown) return false;
     return (
       eventInUpcomingWindow(e, now, {
         horizonMs: horizonDays * 24 * 60 * 60 * 1000,
@@ -199,6 +203,13 @@ export function selectTonightEvents(
     if (beat === "beat_arts" || beat === "beat_events" || beat === "beat_sports") {
       s += 400;
     }
+    // Prefer named concerts/markets for the peach featured band.
+    const t = e.title.toLowerCase();
+    if (t.includes("thorogood")) s += 5000;
+    if (t.includes("brothers osborne")) s += 4900;
+    if (t.includes("sara hardy")) s += 4800;
+    if (e.source_id === "src_interlochen") s += 200;
+    if (e.source_id === "src_visit_events") s += 150;
     // sooner first within tier
     s -= new Date(e.starts_at).getTime() / 1e12;
     return s;
@@ -220,4 +231,10 @@ export function selectTonightEvents(
     (a, b) =>
       new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime(),
   );
+}
+
+/** Short venue label for Events meta (drop street / city noise). */
+export function venueKicker(place: string): string {
+  const first = place.split(",")[0]?.trim() || place.trim();
+  return first || "Traverse City";
 }
