@@ -97,12 +97,6 @@ export function TipsForm({
             ) : null}
           </form>
         )}
-        <p className="mt-3 text-xs text-muted">
-          or{" "}
-          <a href="mailto:tips@traverse.news" className="underline-offset-2 hover:underline">
-            tips@traverse.news
-          </a>
-        </p>
       </div>
     );
   }
