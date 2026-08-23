@@ -3,6 +3,10 @@ import { getTraverseDataKv, STORE_KEY } from "@/lib/data/kv";
 import { isBannedOriginalSlug, scrubAppData } from "@/lib/data/scrub";
 import { STAFF_PUBLISHED_ORIGINALS, STAFF_UNPUBLISHED_DRAFTS } from "@/lib/data/staff-drafts";
 import { buildEditionSnapshot, upsertEdition } from "@/lib/editions";
+import {
+  buildEmailEditionSnapshot,
+  upsertEmailEdition,
+} from "@/lib/email-editions";
 import { sanitizeStoredAthletics } from "@/lib/athletics";
 import { dedupeEvents, sanitizeStoredEvents } from "@/lib/events";
 import {
@@ -14,6 +18,7 @@ import type {
   AppData,
   AthleticsGame,
   EditionSnapshot,
+  EmailEditionSnapshot,
   EventItem,
   OriginalDraft,
   Source,
@@ -45,6 +50,9 @@ function normalizeAppData(data: AppData): { data: AppData; scrubbed: boolean } {
   }
   if (!Array.isArray(data.athletics)) {
     data.athletics = [];
+  }
+  if (!Array.isArray(data.email_editions)) {
+    data.email_editions = [];
   }
 
   let catalogChanged = false;
@@ -372,6 +380,35 @@ export async function snapshotTodaysEdition(at = new Date()): Promise<EditionSna
   const data = await loadStore();
   const snapshot = buildEditionSnapshot(data, at);
   data.editions = upsertEdition(data.editions, snapshot);
+  await saveStore(data);
+  return snapshot;
+}
+
+export async function listEmailEditions(): Promise<EmailEditionSnapshot[]> {
+  const data = await loadStore();
+  return [...(data.email_editions ?? [])].sort((a, b) =>
+    b.date.localeCompare(a.date),
+  );
+}
+
+export async function getEmailEdition(
+  date: string,
+): Promise<EmailEditionSnapshot | undefined> {
+  const data = await loadStore();
+  return (data.email_editions ?? []).find((e) => e.date === date);
+}
+
+/**
+ * Capture / replace today's morning-email letter from the live mix.
+ * Does not send mail.
+ */
+export async function snapshotTodaysEmailEdition(
+  at = new Date(),
+): Promise<EmailEditionSnapshot> {
+  const data = await loadStore();
+  if (!Array.isArray(data.email_editions)) data.email_editions = [];
+  const snapshot = buildEmailEditionSnapshot(data, at);
+  data.email_editions = upsertEmailEdition(data.email_editions, snapshot);
   await saveStore(data);
   return snapshot;
 }

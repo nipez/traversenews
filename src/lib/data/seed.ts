@@ -428,6 +428,7 @@ export function createSeedData(): AppData {
     subscribers: [],
     last_pull_at: null,
     editions: [],
+    email_editions: [],
     drafts: [],
   };
 }

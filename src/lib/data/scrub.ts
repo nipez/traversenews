@@ -147,6 +147,11 @@ export function scrubAppData(data: AppData): { data: AppData; changed: boolean }
     }
   }
 
+  if (!Array.isArray(data.email_editions)) {
+    data.email_editions = [];
+    changed = true;
+  }
+
   data.editions = data.editions.map((ed) => {
     const scrubbed = scrubEdition(ed);
     if (scrubbed.changed) changed = true;

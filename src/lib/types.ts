@@ -157,19 +157,71 @@ export type EditionSnapshot = {
   civic: EditionEventCard[];
 };
 
+/** Compact story card inside a morning-email letter snapshot. */
+export type EmailStoryCard = {
+  title: string;
+  dek: string;
+  url: string;
+  sources: string[];
+  /** Record-Eagle paywall honesty mark. */
+  paywalled?: boolean;
+};
+
+export type EmailAlertCard = {
+  title: string;
+  dek: string;
+  url: string;
+  source_name: string;
+};
+
+export type EmailEventCard = {
+  title: string;
+  starts_at: string;
+  place: string;
+  url: string | null;
+  time_unknown?: boolean;
+};
+
+export type EmailSportsCard = {
+  title: string;
+  starts_at: string;
+  place: string;
+  url: string | null;
+  school: string;
+  time_unknown?: boolean;
+};
+
+/**
+ * Frozen morning-email letter for one America/Detroit date.
+ * Separate from homepage `editions` — this is the letter, not the Today rail.
+ */
+export type EmailEditionSnapshot = {
+  date: string;
+  captured_at: string;
+  lead: EmailStoryCard | null;
+  around: EmailStoryCard[];
+  alerts: EmailAlertCard[];
+  tonight: EmailEventCard[];
+  civic: EmailEventCard[];
+  /** Optional varsity slate for This week (2–4). */
+  sports: EmailSportsCard[];
+};
+
 export type AppData = {
   beats: Beat[];
   sources: Source[];
   stories: Story[];
   events: EventItem[];
   /**
-   * HS athletics games (Central / West). Not EventItems — never mix into
-   * Tonight / What's on / civic.
+   * HS athletics games (Central / West / St. Francis / TC Christian).
+   * Not EventItems — never mix into Tonight / What's on / civic.
    */
   athletics: AthleticsGame[];
   subscribers: Subscriber[];
   last_pull_at: string | null;
   editions: EditionSnapshot[];
+  /** Morning-email letter archive (Detroit date keys). Not sent mail. */
+  email_editions: EmailEditionSnapshot[];
   /** Desk originals workflow. Drafts are never public. */
   drafts: OriginalDraft[];
 };

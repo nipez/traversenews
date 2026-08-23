@@ -20,6 +20,8 @@ export type PullResult = {
   last_pull_at: string;
   persisted: "kv" | "file" | "memory";
   edition_date: string | null;
+  /** Morning-email letter date when capture succeeded (null if skipped). */
+  email_date: string | null;
 };
 
 /** Sources whose HTML listing pages we can turn into EventItems. */
@@ -128,6 +130,14 @@ export async function runPull(): Promise<PullResult> {
   await saveStore(store);
 
   const edition = await snapshotTodaysEdition(new Date());
+  let email_date: string | null = null;
+  try {
+    const { snapshotTodaysEmailEdition } = await import("@/lib/data/store");
+    const letter = await snapshotTodaysEmailEdition(new Date());
+    email_date = letter.date;
+  } catch {
+    // Letter capture is best-effort — never fail the pull over archive write.
+  }
 
   let persisted: PullResult["persisted"] = "memory";
   try {
@@ -149,5 +159,6 @@ export async function runPull(): Promise<PullResult> {
     last_pull_at: store.last_pull_at,
     persisted,
     edition_date: edition.date,
+    email_date,
   };
 }

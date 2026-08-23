@@ -1,6 +1,7 @@
 import { selectAroundTheBay } from "@/lib/around";
 import { selectAlerts } from "@/lib/alerts";
 import { dedupeEvents, eventInUpcomingWindow, isCivicEvent, selectTonightEvents } from "@/lib/events";
+import { buildEmailEditionSnapshot } from "@/lib/email-editions";
 import { clusterStories } from "@/lib/pull/cluster";
 import {
   getAppData,
@@ -61,44 +62,13 @@ export function civicEvents(
     .filter((e) => eventInUpcomingWindow(e, now));
 }
 
+/**
+ * Live morning-email preview — same mix as a captured letter snapshot.
+ * Does not invent copy; does not send mail.
+ */
 export async function getEmailPreviewData() {
-  const { around, weekendEvents, civic } = await getHomepageData();
+  await repairPublishedOriginalStories();
   const data = await getAppData();
-  const originals = data.stories
-    .filter((s) => s.is_original)
-    .sort(
-      (a, b) =>
-        new Date(b.published_at).getTime() - new Date(a.published_at).getTime(),
-    );
-  const featuredOriginal = originals[0] ?? null;
-  const oneToRead = featuredOriginal
-    ? null
-    : around[0] ?? null;
-
-  const rest = [
-    ...(featuredOriginal
-      ? [
-          {
-            title: featuredOriginal.title,
-            dek: featuredOriginal.dek,
-            sources: ["traverse.news"],
-            url: featuredOriginal.url,
-          },
-        ]
-      : []),
-    ...around.slice(0, featuredOriginal ? 5 : 6).map((c) => ({
-      title: c.title,
-      dek: c.dek,
-      sources: c.sources.map((s) => s.name),
-      url: c.url,
-    })),
-  ].slice(0, 6);
-
-  return {
-    featuredOriginal,
-    oneToRead,
-    rest,
-    weekendEvents: weekendEvents.slice(0, 3),
-    civic: civic.slice(0, 3),
-  };
+  const letter = buildEmailEditionSnapshot(data);
+  return { letter, live: true as const };
 }
