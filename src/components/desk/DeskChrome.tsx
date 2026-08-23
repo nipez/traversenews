@@ -14,6 +14,7 @@ export async function DeskChrome({
     | "sources"
     | "alerts"
     | "tips"
+    | "events"
     | "queue"
     | "originals"
     | "email"
@@ -35,6 +36,7 @@ export async function DeskChrome({
     { id: "sources", href: "/desk", label: "Sources" },
     { id: "alerts", href: "/desk/alerts", label: "Alerts" },
     { id: "tips", href: "/desk/tips", label: "Tips" },
+    { id: "events", href: "/desk/events", label: "Events" },
     { id: "queue", href: "/desk/queue", label: "Queue" },
     { id: "originals", href: "/desk/originals", label: "Originals" },
     { id: "editions", href: "/desk/editions", label: "Editions" },
