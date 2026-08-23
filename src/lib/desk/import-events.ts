@@ -3,7 +3,12 @@ import {
   isDateOnlyStartsAt,
   parseEventStartsAt,
 } from "@/lib/dates";
-import { isHsAthleticsEventSource, isSchoolCalendarSource, stableEventId } from "@/lib/events";
+import {
+  isCivicSource,
+  isHsAthleticsEventSource,
+  isSchoolCalendarSource,
+  stableEventId,
+} from "@/lib/events";
 import type { EventItem, Source } from "@/lib/types";
 
 export type EventImportRow = {
@@ -98,6 +103,15 @@ export function normalizeImportedEvents(
         index,
         reason:
           "District school calendars are /schools, not Events — POST /api/desk/schools/import",
+      });
+      return;
+    }
+    const source = byId.get(sourceId);
+    if (isCivicSource(source)) {
+      skipped.push({
+        index,
+        reason:
+          "Civic meetings belong on /civic — POST /api/desk/civic/import",
       });
       return;
     }

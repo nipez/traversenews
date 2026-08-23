@@ -107,6 +107,17 @@ export function dedupeEvents(events: EventItem[]): EventItem[] {
 
 const CIVIC_BEATS = new Set(["beat_government", "beat_schools"]);
 
+/** Explicit civic desks (even if beat was mis-tagged historically). */
+const CIVIC_SOURCE_IDS = new Set(["src_gt_cal", "src_civicweb", "src_leelanau_co"]);
+
+/** True when this source belongs on /civic, not /whats-on. */
+export function isCivicSource(
+  source: { id: string; beat_id: string } | undefined,
+): boolean {
+  if (!source) return false;
+  return CIVIC_BEATS.has(source.beat_id) || CIVIC_SOURCE_IDS.has(source.id);
+}
+
 /**
  * HS athletics calendars belong on Sports This week, never /whats-on.
  * Importing them as EventItem rows can balloon KV and 503 the Worker.
@@ -235,8 +246,9 @@ export function isCivicEvent(
   event: EventItem,
   sources: Array<{ id: string; beat_id: string }>,
 ): boolean {
-  const beat = sources.find((s) => s.id === event.source_id)?.beat_id ?? "";
-  return CIVIC_BEATS.has(beat) || looksLikeMeeting(event.title);
+  const source = sources.find((s) => s.id === event.source_id);
+  if (isCivicSource(source)) return true;
+  return looksLikeMeeting(event.title);
 }
 
 /**
