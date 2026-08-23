@@ -1,6 +1,29 @@
 "use client";
 
+import Link from "next/link";
 import { useState, type FormEvent } from "react";
+
+function SignupLegalNote({ tone }: { tone: "teal" | "ink" }) {
+  const link =
+    tone === "teal"
+      ? "font-bold underline-offset-2 hover:underline"
+      : "font-bold text-teal underline-offset-2 hover:underline";
+  const wrap =
+    tone === "teal" ? "mt-2 text-xs leading-relaxed opacity-90" : "mt-2 text-xs text-muted";
+
+  return (
+    <p className={wrap}>
+      We keep your address to send the morning letter. Unsubscribe anytime.{" "}
+      <Link href="/privacy" className={link}>
+        Privacy
+      </Link>
+      {" · "}
+      <Link href="/terms" className={link}>
+        Terms
+      </Link>
+    </p>
+  );
+}
 
 export function MorningScanSignup({
   variant = "sidebar",
@@ -60,6 +83,7 @@ export function MorningScanSignup({
         {status !== "idle" ? (
           <p className="mt-2 text-sm opacity-90">{message}</p>
         ) : null}
+        <SignupLegalNote tone="teal" />
       </section>
     );
   }
@@ -102,11 +126,12 @@ export function MorningScanSignup({
         </p>
       ) : (
         <p className="mt-2 text-sm">
-          <a href="/email" className="font-bold text-teal underline-offset-2 hover:underline">
+          <Link href="/email" className="font-bold text-teal underline-offset-2 hover:underline">
             See yesterday&apos;s
-          </a>
+          </Link>
         </p>
       )}
+      <SignupLegalNote tone="ink" />
     </section>
   );
 }

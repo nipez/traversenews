@@ -441,6 +441,19 @@ export async function addSubscriber(email: string): Promise<Subscriber> {
   return row;
 }
 
+/** Remove one morning-letter address from the subscriber list. Idempotent. */
+export async function removeSubscriber(
+  email: string,
+): Promise<{ email: string; removed: boolean }> {
+  const data = await loadStore();
+  const normalized = email.trim().toLowerCase();
+  const before = data.subscribers.length;
+  data.subscribers = data.subscribers.filter((s) => s.email !== normalized);
+  const removed = data.subscribers.length < before;
+  if (removed) await saveStore(data);
+  return { email: normalized, removed };
+}
+
 const TIPS_SOFT_CAP = 200;
 
 export async function addTip(input: {
