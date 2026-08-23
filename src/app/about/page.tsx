@@ -69,12 +69,11 @@ export default function AboutPage() {
 
             <h2>How we write</h2>
             <p>
-              Original reporting on this site is traverse.news reporting, under
-              Nick Perez. Drafts can be built from real public sources. They
-              stay in the Desk until they are published. We do not invent
-              people, quotes, crashes, or “organizers say” lines. If we use a
-              sentence that appeared in another outlet, we say so and we link
-              it.
+              Original reporting on this site is traverse.news reporting.
+              Drafts can be built from real public sources. They stay in the
+              Desk until they are published. We do not invent people, quotes,
+              crashes, or “organizers say” lines. If we use a sentence that
+              appeared in another outlet, we say so and we link it.
             </p>
             <p>
               When a story is a synthesis of the local record, the article ends
@@ -97,13 +96,12 @@ export default function AboutPage() {
 
             <h2>Who</h2>
             <p>
-              This is a Traverse City desk run by Nick Perez. Tips, corrections,
-              and things we missed:{" "}
+              This is a Traverse City desk. Tips, corrections, and things we
+              missed:{" "}
               <Link href="/tips" className="font-semibold text-teal hover:underline">
                 send a tip
               </Link>
-              {" · "}
-              <a href="mailto:nick@traverse.news">nick@traverse.news</a>.
+              .
             </p>
             <p>The newsroom is not public. The paper is.</p>
 
