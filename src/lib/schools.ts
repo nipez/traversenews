@@ -11,6 +11,113 @@ export const MAX_STORED_SCHOOLS = 120;
 
 export const SCHOOL_SOURCE_IDS = SCHOOL_CALENDAR_SOURCE_IDS;
 
+/**
+ * Keep /schools to important district dates only.
+ * Orientation, half days, no-school, breaks, conferences, first/last day,
+ * records day, graduation — not PTA nights, sports, or every elementary listing.
+ */
+const IMPORTANT_SCHOOL_MARKERS = [
+  "half day",
+  "half-day",
+  "halfday",
+  "no school",
+  "no-school",
+  "noschool",
+  "school closed",
+  "schools closed",
+  "closed for",
+  "spring break",
+  "winter break",
+  "holiday break",
+  "christmas break",
+  "thanksgiving break",
+  "mid-winter",
+  "midwinter",
+  "conference",
+  "conferences",
+  "parent-teacher",
+  "parent teacher",
+  "orientation",
+  "records day",
+  "record day",
+  "teacher work",
+  "professional development",
+  "pd day",
+  "in-service",
+  "inservice",
+  "first day",
+  "last day",
+  "graduation",
+  "commencement",
+  "exam day",
+  "exams",
+  "finals",
+  "count day",
+  "mlk",
+  "martin luther king",
+  "memorial day",
+  "labor day",
+  "good friday",
+  "holiday",
+];
+
+/** Noise that should never land on Important dates even if a marker matches. */
+const SCHOOL_NOISE_MARKERS = [
+  "pta",
+  "p.t.a",
+  "pfo",
+  "booster",
+  "athletic",
+  "athletics",
+  "varsity",
+  "jv ",
+  "football",
+  "soccer",
+  "basketball",
+  "volleyball",
+  "baseball",
+  "softball",
+  "wrestling",
+  "track meet",
+  "cross country",
+  "swim meet",
+  "game vs",
+  "vs.",
+  "open house social",
+  "book fair",
+  "spirit night",
+  "bingo",
+  "fundraiser",
+  "carnival",
+  "movie night",
+  "family fun",
+];
+
+/**
+ * True when the title looks like a district Important date.
+ * Never invents days — only classifies pulled titles.
+ */
+export function isImportantSchoolDate(title: string): boolean {
+  const t = title.toLowerCase().replace(/\s+/g, " ").trim();
+  if (!t) return false;
+  if (SCHOOL_NOISE_MARKERS.some((m) => t.includes(m))) {
+    const closure =
+      t.includes("no school") ||
+      t.includes("school closed") ||
+      t.includes("half day") ||
+      t.includes("break");
+    if (!closure) return false;
+  }
+  if (IMPORTANT_SCHOOL_MARKERS.some((m) => t.includes(m))) return true;
+  if (
+    /\b(first|last)\s+day\b/.test(t) &&
+    /\b(school|class|classes|students)\b/.test(t)
+  ) {
+    return true;
+  }
+  return false;
+}
+
 export type SchoolImportRow = {
   title: string;
   starts_at?: string;
@@ -55,13 +162,17 @@ export function stableSchoolId(sourceId: string, uid: string): string {
 
 /**
  * Keep school calendars in their own array. Soft-cap preferring upcoming.
+ * Drops non-important titles (PTA, sports, elementary firehose).
  * Never invents half days — only drops.
  */
 export function sanitizeStoredSchools(items: SchoolCalendarItem[]): {
   items: SchoolCalendarItem[];
   changed: boolean;
 } {
-  const allowed = items.filter((g) => SCHOOL_SOURCE_IDS.has(g.source_id));
+  const allowed = items.filter(
+    (g) =>
+      SCHOOL_SOURCE_IDS.has(g.source_id) && isImportantSchoolDate(g.title),
+  );
   const byId = new Map<string, SchoolCalendarItem>();
   for (const g of allowed) {
     byId.set(g.id, g);
@@ -94,7 +205,7 @@ export function sanitizeStoredSchools(items: SchoolCalendarItem[]): {
   return { items: next, changed };
 }
 
-/** Public /schools: from Detroit start-of-today forward (no invented days). */
+/** Public /schools: Important dates from Detroit start-of-today forward. */
 export function selectUpcomingSchoolDays(
   items: SchoolCalendarItem[],
   now = new Date(),
@@ -106,6 +217,28 @@ export function selectUpcomingSchoolDays(
       (a, b) =>
         new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime(),
     );
+}
+
+/** Important dates grouped by district, then month. */
+export function groupSchoolDaysByDistrict(
+  items: SchoolCalendarItem[],
+): Array<{
+  district: string;
+  months: Array<{ key: string; name: string; items: SchoolCalendarItem[] }>;
+}> {
+  const byDistrict = new Map<string, SchoolCalendarItem[]>();
+  for (const item of items) {
+    const list = byDistrict.get(item.district) ?? [];
+    list.push(item);
+    byDistrict.set(item.district, list);
+  }
+
+  return [...byDistrict.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([district, districtItems]) => ({
+      district,
+      months: groupSchoolDaysByMonth(districtItems),
+    }));
 }
 
 export function groupSchoolDaysByMonth(
@@ -147,7 +280,7 @@ export function groupSchoolDaysByMonth(
 
 /**
  * Normalize browser-pulled district calendar rows. Never invents half days.
- * Only SCHOOL_SOURCE_IDS — everything else is skipped.
+ * Only SCHOOL_SOURCE_IDS + Important-date titles — PTA/sports skipped.
  */
 export function normalizeImportedSchools(
   rows: SchoolImportRow[],
@@ -187,6 +320,14 @@ export function normalizeImportedSchools(
       skipped.push({ index, reason: `Unknown source_id: ${sourceId}` });
       return;
     }
+    if (!isImportantSchoolDate(title)) {
+      skipped.push({
+        index,
+        reason:
+          "Not an Important date (half day / no school / break / conference / orientation / first·last day / graduation). PTA and sports stay off /schools.",
+      });
+      return;
+    }
 
     const startsRaw =
       typeof row.starts_at === "string" ? row.starts_at.trim() : "";
@@ -211,7 +352,7 @@ export function normalizeImportedSchools(
     const place =
       typeof row.place === "string" && row.place.trim()
         ? row.place.trim()
-        : "Traverse City area";
+        : "";
     const url =
       typeof row.url === "string" && row.url.trim() ? row.url.trim() : null;
     const districtRaw =
@@ -227,7 +368,7 @@ export function normalizeImportedSchools(
       id: stableSchoolId(sourceId, uid),
       title,
       starts_at: starts.toISOString(),
-      place,
+      place: place || "District",
       url,
       source_id: sourceId,
       district,

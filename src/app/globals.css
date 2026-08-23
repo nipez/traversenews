@@ -2397,21 +2397,35 @@ a:hover {
   color: #7a7060;
 }
 
-.schools-months {
+.schools-districts {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 2.5rem;
+}
+
+.schools-district-hed {
+  margin: 0 0 1rem;
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-size: 1.5rem;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  color: #1c1712;
+}
+
+.schools-month + .schools-month {
+  margin-top: 1.25rem;
 }
 
 .schools-month-hed {
   margin: 0 0 0.75rem;
   font-family: var(--font-archivo), system-ui, sans-serif;
-  font-size: 1.1rem;
-  font-weight: 900;
-  letter-spacing: -0.02em;
-  color: #1c1712;
-  border-bottom: 2px solid #1c1712;
-  padding-bottom: 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #2a6f6c;
+  border-bottom: 1px solid #c8ba9a;
+  padding-bottom: 0.35rem;
 }
 
 .schools-list {
@@ -2463,12 +2477,14 @@ a:hover {
 
 .schools-district {
   margin: 0;
-  font-family: var(--font-archivo), system-ui, sans-serif;
-  font-size: 0.7rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: #2a6f6c;
+}
+
+.schools-district-hed {
+  margin: 0;
+}
+
+.schools-copy .schools-district {
+  display: none;
 }
 
 .schools-title {
