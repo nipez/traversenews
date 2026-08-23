@@ -22,6 +22,8 @@ export type Source = {
   beat_id: string;
   enabled: boolean;
   notes: string;
+  /** Official full calendar page/PDF for /schools (link out — do not host). */
+  calendar_url?: string | null;
   /** Last successful or attempted pull for this source (ISO). */
   last_pulled_at?: string | null;
   /** Last pull error message, if any. Cleared on success. */

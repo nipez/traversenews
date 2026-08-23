@@ -114,13 +114,15 @@ function normalizeAppData(data: AppData): { data: AppData; scrubbed: boolean } {
       existing.feed_url !== source.feed_url ||
       existing.pull_method !== source.pull_method ||
       existing.homepage !== source.homepage ||
-      existing.beat_id !== source.beat_id
+      existing.beat_id !== source.beat_id ||
+      (source.calendar_url ?? null) !== (existing.calendar_url ?? null)
     ) {
       existing.feed_url = source.feed_url;
       existing.pull_method = source.pull_method;
       existing.homepage = source.homepage;
       existing.beat_id = source.beat_id;
       existing.name = source.name;
+      existing.calendar_url = source.calendar_url ?? null;
       catalogChanged = true;
     }
   }

@@ -2400,14 +2400,54 @@ a:hover {
   gap: 2.75rem;
 }
 
+.schools-toggle {
+  margin-top: 0.25rem;
+}
+
+.schools-toggle-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0 0 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #1c1712;
+}
+
+.schools-toggle-tab {
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid #1c1712;
+  background: #f4edde;
+  color: #1c1712;
+  cursor: pointer;
+  color-scheme: only light;
+}
+
+.schools-toggle-tab:hover {
+  background: #efe6d4;
+  color: #1c1712;
+}
+
+.schools-toggle-tab-on {
+  background: #1c1712;
+  color: #f4edde;
+}
+
+.schools-toggle-tab-on:hover {
+  background: #1c1712;
+  color: #f4edde;
+}
+
 .schools-district {
   padding-top: 0.25rem;
-  border-top: 2px solid #1c1712;
 }
 
 .schools-district-head {
   margin: 0 0 1rem;
-  padding-top: 1rem;
 }
 
 .schools-district-kicker {
@@ -2434,6 +2474,21 @@ a:hover {
   font-family: var(--font-source-serif), Georgia, serif;
   font-size: 0.92rem;
   color: #52493c;
+}
+
+.schools-district-cal {
+  margin: 0.5rem 0 0;
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+.schools-district-cal a {
+  color: #2a6f6c;
+}
+
+.schools-district-cal a:hover {
+  color: #1f5553;
 }
 
 .schools-district-empty {
