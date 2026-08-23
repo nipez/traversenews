@@ -1,0 +1,32 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "traverse-news",
+  "main": "cloudflare-worker.ts",
+  "compatibility_date": "2026-08-04",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "services": [
+    {
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "traverse-news"
+    }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "TRAVERSE_DATA",
+      "id": "665b4f9653594140826d5789bd4ac8f3",
+      "preview_id": "1c73f5b6de2d420db8dd940d4e81484f"
+    }
+  ],
+  "vars": {
+    "NEXT_PUBLIC_SITE_URL": "https://traverse-news.nickperez.workers.dev"
+  },
+  "triggers": {
+    // Weekday 7:30am America/Detroit (EDT = UTC-4 → 11:30 UTC; EST = UTC-5 → 12:30 UTC).
+    // Fixed at 11:30 UTC for EDT mornings; adjust seasonally if needed.
+    "crons": ["30 11 * * 1-5"]
+  }
+}

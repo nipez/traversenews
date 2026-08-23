@@ -1,0 +1,41 @@
+import { DeskRail } from "@/components/DeskRail";
+import { PublicShell } from "@/components/PublicShell";
+import { SchoolsDistrictToggle } from "@/components/SchoolsDistrictToggle";
+import { getSchoolsPagePayload } from "@/lib/schools-page-cache";
+
+export const dynamic = "force-dynamic";
+
+export const metadata = {
+  title: "Schools",
+};
+
+/**
+ * Important dates by district from in-worker static JSON.
+ * No KV on this path (free-plan list/get caps).
+ */
+export default async function SchoolsPage() {
+  const { districts } = getSchoolsPagePayload();
+
+  return (
+    <PublicShell active="/schools" header="compact">
+      <div className="about-layout schools-layout">
+        <div className="about-essay schools-main">
+          <header className="schools-hero">
+            <p className="schools-kicker">Parents</p>
+            <h1 className="schools-hed">Schools</h1>
+            <p className="schools-dek">
+              Important dates by district — half days, no-school, orientation,
+              conferences, spring break, first and last day. Not PTA nights,
+              not sports, not every elementary listing. We do not invent half
+              days.
+            </p>
+          </header>
+
+          <SchoolsDistrictToggle districts={districts} />
+        </div>
+
+        <DeskRail active="/schools" />
+      </div>
+    </PublicShell>
+  );
+}
