@@ -126,12 +126,11 @@ export function scrubAppData(data: AppData): { data: AppData; changed: boolean }
   const filtered = data.events.filter((e) => !BANNED_EVENT_IDS.has(e.id));
   const sanitized = sanitizeStoredEvents(filtered);
   const nextEvents = sanitized.events;
-  const beforeIds = data.events.map((e) => e.id).sort().join(",");
-  const afterIds = nextEvents.map((e) => e.id).sort().join(",");
-  if (beforeIds !== afterIds || sanitized.changed) {
+  if (sanitized.changed || nextEvents.length !== data.events.length) {
     changed = true;
     data.events = nextEvents;
   } else {
+    // Same length and sanitize said unchanged — skip O(n log n) id-sort compare.
     data.events = nextEvents;
   }
 
