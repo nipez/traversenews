@@ -1,5 +1,6 @@
 import {
   expandDetroitWeekdayOccurrences,
+  isDateOnlyStartsAt,
   parseEventStartsAt,
 } from "@/lib/dates";
 import { stableEventId } from "@/lib/events";
@@ -37,18 +38,21 @@ function pushEvent(
   starts: Date,
   place: string,
   url: string | null,
+  timeUnknown = false,
 ) {
   const uid = url
     ? `${url}|${starts.toISOString()}`
     : `${title}|${starts.toISOString()}`;
-  imported.push({
+  const row: EventItem = {
     id: stableEventId(sourceId, uid),
     title,
     starts_at: starts.toISOString(),
     place,
     url,
     source_id: sourceId,
-  });
+  };
+  if (timeUnknown) row.time_unknown = true;
+  imported.push(row);
   sourceIds.add(sourceId);
 }
 
@@ -141,7 +145,17 @@ export function normalizeImportedEvents(
       return;
     }
 
-    pushEvent(imported, sourceIds, sourceId, title, starts, place, url);
+    // Date-only rows get midnight Detroit + time_unknown — never invent noon.
+    pushEvent(
+      imported,
+      sourceIds,
+      sourceId,
+      title,
+      starts,
+      place,
+      url,
+      isDateOnlyStartsAt(startsRaw),
+    );
   });
 
   return {

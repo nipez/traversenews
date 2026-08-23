@@ -16,7 +16,9 @@ import {
  *              recurrence_weekdays?, recurrence_time?, recurrence_count? }],
  *   source_id?, replace?, clear?
  * }
- * Naive starts_at = America/Detroit wall time. Recurring: weekdays + HH:mm — never invent tomorrow.
+ * Naive starts_at = America/Detroit wall time. Date-only YYYY-MM-DD → midnight
+ * Detroit + time_unknown (display shows — , never invents noon).
+ * Recurring: weekdays + HH:mm — never invent tomorrow.
  * Auth: Desk cookie session OR Authorization: Bearer <DESK_IMPORT_TOKEN|DEV_DESK_PASSWORD>
  */
 export async function POST(request: Request) {

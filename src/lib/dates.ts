@@ -89,10 +89,41 @@ export function detroitWallToUtc(
   return new Date(utcMs);
 }
 
+/** True when the import row is a calendar date with no clock (YYYY-MM-DD). */
+export function isDateOnlyStartsAt(raw: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(raw.trim());
+}
+
+/** Detroit calendar day key (YYYY-MM-DD) for an instant. */
+export function detroitDayKey(at: Date | string): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: DETROIT,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(typeof at === "string" ? new Date(at) : at);
+}
+
+/** True when the instant is 00:00 America/Detroit (date-only sort anchor). */
+export function isDetroitMidnight(iso: string): boolean {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return false;
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: DETROIT,
+    hour: "numeric",
+    minute: "numeric",
+    hourCycle: "h23",
+  }).formatToParts(d);
+  const hour = Number(parts.find((p) => p.type === "hour")?.value ?? "1");
+  const minute = Number(parts.find((p) => p.type === "minute")?.value ?? "1");
+  return hour === 0 && minute === 0;
+}
+
 /**
  * Parse an ISO / datetime for event import.
  * - With Z or ±offset: absolute instant.
  * - Naive `YYYY-MM-DDTHH:mm[:ss]`: America/Detroit wall time (not Worker UTC).
+ * - Date-only `YYYY-MM-DD`: midnight Detroit (not noon — never invent a showtime).
  * Never invents "tomorrow" from relative words.
  */
 export function parseEventStartsAt(raw: string): Date | null {
@@ -113,7 +144,7 @@ export function parseEventStartsAt(raw: string): Date | null {
       Number(m[1]),
       Number(m[2]),
       Number(m[3]),
-      m[4] != null ? Number(m[4]) : 12,
+      m[4] != null ? Number(m[4]) : 0,
       m[5] != null ? Number(m[5]) : 0,
       m[6] != null ? Number(m[6]) : 0,
     );
@@ -277,38 +308,39 @@ export function formatBayDay(iso: string): string {
   }).format(new Date(iso));
 }
 
-export function formatEventWhen(iso: string, now = new Date()): string {
-  const parts = formatEventWhenParts(iso, now);
+export function formatEventWhen(
+  iso: string,
+  now = new Date(),
+  opts?: { timeUnknown?: boolean },
+): string {
+  const parts = formatEventWhenParts(iso, now, opts);
   return `${parts.dayLabel}, ${parts.time}`;
 }
 
-/** Time-first parts for Tonight / What's on night-out UI. */
+/**
+ * Time-first parts for Tonight / What's on night-out UI.
+ * Date-only / midnight Detroit → time is "—" (never invent 12:00 PM).
+ */
 export function formatEventWhenParts(
   iso: string,
   now = new Date(),
+  opts?: { timeUnknown?: boolean },
 ): { dayLabel: string; time: string; dayKey: string } {
   const d = new Date(iso);
-  const detroitNow = new Intl.DateTimeFormat("en-CA", {
-    timeZone: DETROIT,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(now);
-  const detroitEvent = new Intl.DateTimeFormat("en-CA", {
-    timeZone: DETROIT,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(d);
+  const detroitNow = detroitDayKey(now);
+  const detroitEvent = detroitDayKey(d);
 
-  const time = new Intl.DateTimeFormat("en-US", {
-    timeZone: DETROIT,
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  })
-    .format(d)
-    .toUpperCase();
+  const hideClock = Boolean(opts?.timeUnknown) || isDetroitMidnight(iso);
+  const time = hideClock
+    ? "—"
+    : new Intl.DateTimeFormat("en-US", {
+        timeZone: DETROIT,
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      })
+        .format(d)
+        .toUpperCase();
 
   const [ny, nm, nd] = detroitNow.split("-").map(Number);
   const [ey, em, ed] = detroitEvent.split("-").map(Number);

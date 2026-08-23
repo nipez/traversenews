@@ -1,7 +1,36 @@
+import { detroitDayKey } from "@/lib/dates";
 import type { EventItem } from "@/lib/types";
 
 const DETROIT = "America/Detroit";
 
+/**
+ * Upcoming window for listings. Date-only (time_unknown) uses Detroit calendar
+ * day so midnight sort anchors stay visible all day — without inventing a clock.
+ */
+export function eventInUpcomingWindow(
+  event: EventItem,
+  now: Date,
+  options: { pastGraceMs?: number; horizonMs?: number } = {},
+): boolean {
+  const pastGraceMs = options.pastGraceMs ?? 60 * 60 * 1000;
+  const horizonMs = options.horizonMs;
+
+  if (event.time_unknown) {
+    const day = detroitDayKey(event.starts_at);
+    const today = detroitDayKey(now);
+    if (day < today) return false;
+    if (horizonMs != null) {
+      const endDay = detroitDayKey(new Date(now.getTime() + horizonMs));
+      if (day > endDay) return false;
+    }
+    return true;
+  }
+
+  const t = new Date(event.starts_at).getTime();
+  if (Number.isNaN(t) || t < now.getTime() - pastGraceMs) return false;
+  if (horizonMs != null && t > now.getTime() + horizonMs) return false;
+  return true;
+}
 /** Normalize place to the venue name (drop street noise for cross-feed matches). */
 export function normalizePlace(place: string): string {
   return place
@@ -154,10 +183,10 @@ export function selectTonightEvents(
   const beatBySource = new Map(sources.map((s) => [s.id, s.beat_id]));
 
   const windowed = dedupeEvents(events).filter((e) => {
-    const t = new Date(e.starts_at).getTime();
     return (
-      t >= now.getTime() - 60 * 60 * 1000 &&
-      t <= now.getTime() + horizonDays * 24 * 60 * 60 * 1000 &&
+      eventInUpcomingWindow(e, now, {
+        horizonMs: horizonDays * 24 * 60 * 60 * 1000,
+      }) &&
       !looksLikeLowValueListing(e.title) &&
       !isCivicEvent(e, sources)
     );
