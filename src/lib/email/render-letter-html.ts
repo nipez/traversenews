@@ -3,7 +3,7 @@ import {
   civicLabel,
   eventWhenLabel,
   letterHeaderDate,
-  shortDek,
+  letterItemBlurb,
   sportsWhenLabel,
 } from "@/lib/email/letter-format";
 import type { EmailEditionSnapshot } from "@/lib/types";
@@ -13,6 +13,9 @@ const FONT =
 const LINK = "#0563c1";
 const INK = "#111111";
 const MUTED = "#555555";
+
+/** Unique root id — exactly one per rendered letter. */
+export const LETTER_ROOT_ID = "traverse-morning-letter";
 
 function esc(s: string): string {
   return s
@@ -40,16 +43,23 @@ function storyBlock(opts: {
   dek?: string;
   outlet?: string;
 }): string {
-  const dek = opts.dek ? shortDek(opts.dek) : "";
-  const outlet = opts.outlet
-    ? `<p style="margin:6px 0 0;font-family:${FONT};font-size:13px;color:${MUTED};line-height:1.4">${esc(opts.outlet)}</p>`
+  const hasDek = Boolean(opts.dek?.replace(/\s+/g, " ").trim());
+  const blurb = letterItemBlurb({
+    title: opts.title,
+    dek: opts.dek,
+    source: opts.outlet,
+  });
+  // When there is no dek, the blurb already names the outlet ("From X: …").
+  const outlet =
+    opts.outlet && hasDek
+      ? `<p style="margin:8px 0 0;font-family:${FONT};font-size:13px;color:${MUTED};line-height:1.4">${esc(opts.outlet)}</p>`
+      : "";
+  const blurbHtml = blurb
+    ? `<p style="margin:8px 0 0;font-family:${FONT};font-size:15px;color:${INK};line-height:1.5">${esc(blurb)}</p>`
     : "";
-  const dekHtml = dek
-    ? `<p style="margin:6px 0 0;font-family:${FONT};font-size:15px;color:${INK};line-height:1.45">${esc(dek)}</p>`
-    : "";
-  return `<tr><td style="padding:0 0 18px;font-family:${FONT}">
+  return `<tr><td style="padding:0 0 20px;font-family:${FONT}">
   <a href="${esc(opts.url)}" style="color:${LINK};font-size:16px;font-weight:700;line-height:1.35;text-decoration:underline">${esc(opts.title)}</a>
-  ${dekHtml}
+  ${blurbHtml}
   ${outlet}
 </td></tr>`;
 }
@@ -70,9 +80,44 @@ export type RenderLetterOpts = {
 };
 
 /**
+ * If HTML somehow contains more than one letter root (e.g. an old digest
+ * concatenated under a new one), keep only the first. Never ship two digests.
+ */
+export function ensureOneLetterHtml(html: string): string {
+  const open = `id="${LETTER_ROOT_ID}"`;
+  const first = html.indexOf(open);
+  if (first < 0) return html;
+  const second = html.indexOf(open, first + open.length);
+  if (second < 0) return html;
+
+  // Prefer a complete document: keep head through first letter, drop the rest
+  // after the first letter's closing marker (or closing table if marker missing).
+  const markerEnd = "<!-- /traverse-morning-letter -->";
+  const endAt = html.indexOf(markerEnd, first);
+  if (endAt >= 0) {
+    const kept = html.slice(0, endAt + markerEnd.length);
+    // Close body/html if we sliced them off.
+    let out = kept;
+    if (!/<\/body>/i.test(out)) out += "\n</body>";
+    if (!/<\/html>/i.test(out)) out += "\n</html>";
+    return out;
+  }
+
+  // Fallback: cut before the second root id attribute's opening tag.
+  const tagStart = html.lastIndexOf("<", second);
+  if (tagStart > first) {
+    let out = html.slice(0, tagStart);
+    if (!/<\/body>/i.test(out)) out += "\n</body>";
+    if (!/<\/html>/i.test(out)) out += "\n</html>";
+    return out;
+  }
+  return html;
+}
+
+/**
  * Email-safe morning letter HTML (TLDR-scannable).
- * Pure string build from a snapshot — never invents copy.
- * Empty sections are omitted.
+ * Always one complete letter — never appends a second digest.
+ * Empty sections are omitted. Never invents copy.
  */
 export function renderMorningLetterHtml(
   letter: EmailEditionSnapshot,
@@ -210,11 +255,15 @@ export function renderMorningLetterHtml(
   <p style="margin:10px 0 0;font-size:12px;color:#777">Traverse City, Michigan · Weekdays and Saturdays · Single opt-in</p>
 </td></tr>`);
 
-  const bodyHtml = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;margin:0 auto;background:#ffffff;color:${INK}">
+  // Exactly one letter root. Callers must replace drafts with this document,
+  // never append under an older digest.
+  const bodyHtml = `<!-- traverse-morning-letter:${esc(letter.date)} -->
+<table id="${LETTER_ROOT_ID}" data-traverse-letter="${esc(letter.date)}" role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;margin:0 auto;background:#ffffff;color:${INK}">
 ${rows.join("\n")}
-</table>`;
+</table>
+<!-- /traverse-morning-letter -->`;
 
-  const html = `<!DOCTYPE html>
+  const htmlRaw = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
@@ -229,6 +278,17 @@ ${rows.join("\n")}
 </body>
 </html>`;
 
+  const html = ensureOneLetterHtml(htmlRaw);
+  const bodyOnly = (() => {
+    const start = html.indexOf(`<!-- traverse-morning-letter:`);
+    const endMarker = "<!-- /traverse-morning-letter -->";
+    const end = html.indexOf(endMarker);
+    if (start >= 0 && end > start) {
+      return html.slice(start, end + endMarker.length);
+    }
+    return bodyHtml;
+  })();
+
   const text = buildPlainText(letter, {
     subject,
     dateLabel,
@@ -239,7 +299,7 @@ ${rows.join("\n")}
     tips,
   });
 
-  return { subject, html, text, bodyHtml };
+  return { subject, html, text, bodyHtml: bodyOnly };
 }
 
 function buildPlainText(
@@ -265,16 +325,25 @@ function buildPlainText(
 
   if (letter.lead) {
     lines.push("⚡️ The one to read", letter.lead.title, letter.lead.url);
-    if (letter.lead.dek) lines.push(shortDek(letter.lead.dek));
+    lines.push(
+      letterItemBlurb({
+        title: letter.lead.title,
+        dek: letter.lead.dek,
+        source: "traverse.news",
+      }),
+    );
     lines.push("");
   }
 
   if (letter.around.length > 0) {
     lines.push("🌊 Around the bay");
     for (const item of letter.around.slice(0, 6)) {
+      const outlet = item.sources.join(" · ");
       lines.push(`• ${item.title}`);
-      if (item.dek) lines.push(`  ${shortDek(item.dek)}`);
-      lines.push(`  ${item.sources.join(" · ")}`);
+      lines.push(
+        `  ${letterItemBlurb({ title: item.title, dek: item.dek, source: outlet })}`,
+      );
+      lines.push(`  ${outlet}`);
       lines.push(`  ${item.url}`);
     }
     lines.push("");
@@ -284,7 +353,9 @@ function buildPlainText(
     lines.push("🚨 Alerts");
     for (const a of letter.alerts) {
       lines.push(`• ${a.title} (${a.source_name})`);
-      if (a.dek) lines.push(`  ${shortDek(a.dek)}`);
+      lines.push(
+        `  ${letterItemBlurb({ title: a.title, dek: a.dek, source: a.source_name })}`,
+      );
       lines.push(`  ${a.url}`);
     }
     lines.push("");

@@ -62,19 +62,23 @@ export function sportsWhenLabel(
 }
 
 /**
- * Keep deks to 1–2 short sentences for scannability.
+ * Keep deks to 2–3 short sentences for TLDR-style context.
  * Truncates only; never invents copy.
  */
-export function shortDek(dek: string, maxChars = 260): string {
+export function shortDek(
+  dek: string,
+  maxChars = 420,
+  maxSentences = 3,
+): string {
   const clean = dek.replace(/\s+/g, " ").trim();
   if (!clean) return "";
   const sentences = clean.match(/[^.!?]+[.!?]+|[^.!?]+$/g) ?? [clean];
   let out = "";
-  for (const raw of sentences.slice(0, 2)) {
+  for (const raw of sentences.slice(0, maxSentences)) {
     const s = raw.trim();
     if (!s) continue;
     const next = out ? `${out} ${s}` : s;
-    if (next.length > maxChars) break;
+    if (out && next.length > maxChars) break;
     out = next;
   }
   if (!out) out = clean;
@@ -82,6 +86,27 @@ export function shortDek(dek: string, maxChars = 260): string {
   const cut = out.slice(0, maxChars);
   const sp = cut.lastIndexOf(" ");
   return `${(sp > 40 ? cut.slice(0, sp) : cut).trim()}…`;
+}
+
+/**
+ * Blurb under a linked hed: 2–3 sentences from a real dek, or one factual
+ * sentence from title + outlet when the pull has no dek.
+ * Never invents quotes, motives, or extra facts.
+ */
+export function letterItemBlurb(opts: {
+  title: string;
+  dek?: string | null;
+  source?: string | null;
+}): string {
+  const dek = opts.dek?.replace(/\s+/g, " ").trim() ?? "";
+  if (dek) return shortDek(dek, 420, 3);
+
+  const title = opts.title.replace(/\s+/g, " ").trim();
+  if (!title) return "";
+  const source = opts.source?.replace(/\s+/g, " ").trim() ?? "";
+  const titled = /[.!?]$/.test(title) ? title : `${title}.`;
+  if (source) return `From ${source}: ${titled}`;
+  return titled;
 }
 
 const WEAK_TAIL =

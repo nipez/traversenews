@@ -81,6 +81,30 @@ function toAroundCard(
   };
 }
 
+function hasRealDek(dek: string): boolean {
+  return dek.replace(/\s+/g, " ").trim().length >= 20;
+}
+
+/**
+ * Around the bay: prefer clusters with real pulled text, then fill to 5–6.
+ * Never invents copy — thin city briefs still ship with title-only cards.
+ */
+function pickAroundForLetter<
+  T extends { dek: string },
+>(clusters: T[]): T[] {
+  const withText = clusters.filter((c) => hasRealDek(c.dek));
+  const thin = clusters.filter((c) => !hasRealDek(c.dek));
+  if (withText.length >= 5) return withText.slice(0, 6);
+  const picked = [...withText];
+  for (const c of thin) {
+    if (picked.length >= 5) break;
+    picked.push(c);
+  }
+  // If the wire is sparse, still show what we have (up to 6).
+  if (picked.length === 0) return clusters.slice(0, 6);
+  return picked.slice(0, 6);
+}
+
 function toEventCard(e: EventItem): EmailEventCard {
   const card: EmailEventCard = {
     title: e.title,
@@ -108,8 +132,8 @@ export function buildEmailEditionSnapshot(
     clusters.filter((c) => !c.is_original),
     { limit: 18, maxPerSource: 4, maxSports: 4, maxRecordEagle: 3 },
   );
-  // 4–6 wire items; free desks already preferred by selectAroundTheBay.
-  const around = aroundClusters.slice(0, 6).map(toAroundCard);
+  // Prefer items with real dek text; aim for 5–6 when the pull has them.
+  const around = pickAroundForLetter(aroundClusters).map(toAroundCard);
 
   const alerts: EmailAlertCard[] = selectAlerts(data.stories, data.sources, {
     limit: 2,

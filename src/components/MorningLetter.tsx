@@ -2,8 +2,9 @@ import { renderMorningLetterHtml } from "@/lib/email/render-letter-html";
 import type { EmailEditionSnapshot } from "@/lib/types";
 
 /**
- * Morning letter body — same HTML the send pipeline uses.
+ * Morning letter body — same single HTML letter the send pipeline uses.
  * White / system-sans / blue-link TLDR layout (not the cream public site).
+ * Renders exactly one letter; never stacks a second digest.
  */
 export function MorningLetter({
   letter,
@@ -36,11 +37,12 @@ export function MorningLetter({
   });
 
   return (
-    <div className="morning-letter-frame">
+    <div className="morning-letter-frame" data-traverse-letter={letter.date}>
       <p className="morning-letter-subject" aria-label="Subject line preview">
         <span className="morning-letter-subject-label">Subject</span>
         {subject}
       </p>
+      {/* Single letter root only — do not nest a second digest here. */}
       <div
         className="morning-letter-body"
         dangerouslySetInnerHTML={{ __html: bodyHtml }}
@@ -49,7 +51,7 @@ export function MorningLetter({
         <p className="morning-letter-meta">Archive copy (not sent)</p>
       ) : (
         <p className="morning-letter-meta">
-          Live mix preview · same layout as the letter
+          Live mix preview · same single letter as send
         </p>
       )}
     </div>
