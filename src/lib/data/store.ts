@@ -3,7 +3,13 @@ import { getTraverseDataKv, STORE_KEY } from "@/lib/data/kv";
 import { isBannedOriginalSlug, scrubAppData } from "@/lib/data/scrub";
 import { STAFF_PUBLISHED_ORIGINALS, STAFF_UNPUBLISHED_DRAFTS } from "@/lib/data/staff-drafts";
 import { buildEditionSnapshot, upsertEdition } from "@/lib/editions";
-import { dedupeEvents } from "@/lib/events";
+import {
+  buildEmailEditionSnapshot,
+  upsertEmailEdition,
+} from "@/lib/email-editions";
+import { sanitizeStoredAthletics } from "@/lib/athletics";
+import { sanitizeStoredSchools } from "@/lib/schools";
+import { dedupeEvents, sanitizeStoredEvents } from "@/lib/events";
 import {
   DEFAULT_ORIGINAL_BYLINE,
   storyFromPublishedDraft,
@@ -11,9 +17,12 @@ import {
 } from "@/lib/originals";
 import type {
   AppData,
+  AthleticsGame,
   EditionSnapshot,
+  EmailEditionSnapshot,
   EventItem,
   OriginalDraft,
+  SchoolCalendarItem,
   Source,
   Story,
   Subscriber,
@@ -40,6 +49,15 @@ function normalizeAppData(data: AppData): { data: AppData; scrubbed: boolean } {
   }
   if (!Array.isArray(data.drafts)) {
     data.drafts = [];
+  }
+  if (!Array.isArray(data.athletics)) {
+    data.athletics = [];
+  }
+  if (!Array.isArray(data.schools)) {
+    data.schools = [];
+  }
+  if (!Array.isArray(data.email_editions)) {
+    data.email_editions = [];
   }
 
   let catalogChanged = false;
@@ -291,7 +309,63 @@ export async function replacePulledEvents(
   for (const event of events) {
     incoming.set(event.id, event);
   }
-  data.events = dedupeEvents([...kept, ...incoming.values()]);
+  data.events = sanitizeStoredEvents(
+    dedupeEvents([...kept, ...incoming.values()]),
+  ).events;
+  await saveStore(data);
+}
+
+/**
+ * Replace athletics games for the given sources (or all incoming source ids).
+ * Never writes into `events` — HS calendars stay on `athletics` only.
+ */
+export async function replaceAthleticsGames(
+  games: AthleticsGame[],
+  pulledSourceIds?: string[],
+): Promise<void> {
+  const data = await loadStore();
+  if (!Array.isArray(data.athletics)) data.athletics = [];
+  const sourceIds = new Set(
+    pulledSourceIds && pulledSourceIds.length > 0
+      ? pulledSourceIds
+      : games.map((g) => g.source_id),
+  );
+  const kept = data.athletics.filter((g) => !sourceIds.has(g.source_id));
+  const incoming = new Map<string, AthleticsGame>();
+  for (const game of games) {
+    incoming.set(game.id, game);
+  }
+  data.athletics = sanitizeStoredAthletics([
+    ...kept,
+    ...incoming.values(),
+  ]).games;
+  await saveStore(data);
+}
+
+/**
+ * Replace district school-calendar rows for the given sources.
+ * Never writes into `events`.
+ */
+export async function replaceSchoolCalendarItems(
+  items: SchoolCalendarItem[],
+  pulledSourceIds?: string[],
+): Promise<void> {
+  const data = await loadStore();
+  if (!Array.isArray(data.schools)) data.schools = [];
+  const sourceIds = new Set(
+    pulledSourceIds && pulledSourceIds.length > 0
+      ? pulledSourceIds
+      : items.map((g) => g.source_id),
+  );
+  const kept = data.schools.filter((g) => !sourceIds.has(g.source_id));
+  const incoming = new Map<string, SchoolCalendarItem>();
+  for (const item of items) {
+    incoming.set(item.id, item);
+  }
+  data.schools = sanitizeStoredSchools([
+    ...kept,
+    ...incoming.values(),
+  ]).items;
   await saveStore(data);
 }
 
@@ -338,6 +412,35 @@ export async function snapshotTodaysEdition(at = new Date()): Promise<EditionSna
   const data = await loadStore();
   const snapshot = buildEditionSnapshot(data, at);
   data.editions = upsertEdition(data.editions, snapshot);
+  await saveStore(data);
+  return snapshot;
+}
+
+export async function listEmailEditions(): Promise<EmailEditionSnapshot[]> {
+  const data = await loadStore();
+  return [...(data.email_editions ?? [])].sort((a, b) =>
+    b.date.localeCompare(a.date),
+  );
+}
+
+export async function getEmailEdition(
+  date: string,
+): Promise<EmailEditionSnapshot | undefined> {
+  const data = await loadStore();
+  return (data.email_editions ?? []).find((e) => e.date === date);
+}
+
+/**
+ * Capture / replace today's morning-email letter from the live mix.
+ * Does not send mail.
+ */
+export async function snapshotTodaysEmailEdition(
+  at = new Date(),
+): Promise<EmailEditionSnapshot> {
+  const data = await loadStore();
+  if (!Array.isArray(data.email_editions)) data.email_editions = [];
+  const snapshot = buildEmailEditionSnapshot(data, at);
+  data.email_editions = upsertEmailEdition(data.email_editions, snapshot);
   await saveStore(data);
   return snapshot;
 }

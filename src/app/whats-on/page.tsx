@@ -9,6 +9,7 @@ import {
   looksLikeLowValueListing,
   selectTonightEvents,
   venueKicker,
+  isHsAthleticsEventSource,
 } from "@/lib/events";
 import type { EventItem } from "@/lib/types";
 
@@ -111,6 +112,7 @@ export default async function WhatsOnPage() {
 
   const upcoming = dedupeEvents(all).filter(
     (e) =>
+      !isHsAthleticsEventSource(e.source_id) &&
       eventInUpcomingWindow(e, now, {
         horizonMs: HORIZON_DAYS * 24 * 60 * 60 * 1000,
       }) &&

@@ -54,6 +54,20 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Never let OS dark mode turn the paper brown/black */
+@media (prefers-color-scheme: dark) {
+  html,
+  body,
+  .site-shell,
+  .stage,
+  .story-page,
+  .about-layout {
+    color-scheme: only light !important;
+    background-color: #f4edde !important;
+    color: #1c1712 !important;
+  }
+}
+
 a {
   color: inherit;
   text-decoration: none;
@@ -706,6 +720,21 @@ a:hover {
   text-transform: uppercase;
   color: #1c1712;
   background: #f4edde;
+}
+
+/* Honest meter label — Record-Eagle cards only. */
+.paywall-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  border: 1px solid #1c1712;
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #1c1712;
+  background: #e4d8c4;
 }
 
 /* Tonight peach well */
@@ -1454,7 +1483,7 @@ a:hover {
   bottom: 0;
   z-index: 40;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   background: var(--ink);
   border-top: 1px solid var(--ink);
 }
@@ -1857,6 +1886,132 @@ a:hover {
   color: #52493c;
 }
 
+/* This week — Central / West slate (athletics store, not Events) */
+.sports-week {
+  margin: 0 0 2.25rem;
+  padding: 1.1rem 1.15rem 1.2rem;
+  border: 1px solid #1c1712;
+  background: #f4edde;
+}
+
+.sports-week-hed {
+  margin: 0;
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-size: 1.35rem;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  color: #1c1712;
+}
+
+.sports-week-dek {
+  margin: 0.35rem 0 0;
+  font-family: var(--font-source-serif), Georgia, serif;
+  font-size: 0.92rem;
+  line-height: 1.35;
+  color: #52493c;
+}
+
+.sports-week-empty {
+  margin: 1rem 0 0;
+  font-family: var(--font-source-serif), Georgia, serif;
+  font-size: 0.95rem;
+  color: #7a7060;
+}
+
+.sports-week-days {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.sports-week-day-label {
+  margin: 0 0 0.45rem;
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #2a6f6c;
+}
+
+.sports-week-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.sports-week-link {
+  display: grid;
+  grid-template-columns: 4.5rem 6.5rem 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 0.65rem;
+  row-gap: 0.15rem;
+  text-decoration: none;
+  color: inherit;
+}
+
+.sports-week-nolink {
+  cursor: default;
+}
+
+@media (max-width: 560px) {
+  .sports-week-link {
+    grid-template-columns: 3.75rem 5.25rem 1fr;
+  }
+}
+
+.sports-week-time {
+  grid-column: 1;
+  grid-row: 1;
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #1c1712;
+}
+
+.sports-week-school {
+  grid-column: 2;
+  grid-row: 1;
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #2a6f6c;
+}
+
+.sports-week-title {
+  grid-column: 3;
+  grid-row: 1;
+  font-family: var(--font-source-serif), Georgia, serif;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: #1c1712;
+}
+
+.sports-week-title-varsity {
+  font-weight: 800;
+}
+
+.sports-week-place {
+  grid-column: 3;
+  grid-row: 2;
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #7a7060;
+}
+
+.sports-week-link:hover .sports-week-title {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .sports-section + .sports-section {
   margin-top: 2.5rem;
 }
@@ -1937,4 +2092,431 @@ a:hover {
 .sports-foot a {
   font-weight: 800;
   color: #2a6f6c;
+}
+
+/* ——— Story page: wide hed, measure body, filled rail ——— */
+.story-page {
+  color-scheme: only light;
+  background-color: #f4edde;
+  color: #1c1712;
+  padding-bottom: 3rem;
+}
+
+.story-hero {
+  max-width: none;
+  margin: 0 0 2rem;
+  padding-bottom: 0.5rem;
+}
+
+.story-hed {
+  margin: 10px 0 0;
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-weight: 900;
+  font-size: clamp(2rem, 4.5vw, 3.25rem);
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+  color: #1c1712;
+}
+
+.story-dek {
+  margin: 1rem 0 0;
+  max-width: 42rem;
+  font-family: var(--font-source-serif), Georgia, serif;
+  font-size: 1.2rem;
+  line-height: 1.4;
+  color: #52493c;
+}
+
+.story-byline {
+  margin-top: 1rem;
+  color: #52493c;
+}
+
+.story-byline strong {
+  color: #1c1712;
+}
+
+.story-layout {
+  display: grid;
+  gap: 2.5rem;
+  align-items: start;
+  color-scheme: only light;
+  background-color: #f4edde;
+}
+
+@media (min-width: 960px) {
+  .story-layout {
+    /* Body stays ~half / measure; rail fills the other half */
+    grid-template-columns: minmax(0, 36rem) minmax(280px, 1fr);
+    gap: 3rem;
+  }
+}
+
+.story-main {
+  min-width: 0;
+  max-width: 36rem;
+}
+
+.story-figure {
+  margin: 0 0 1.5rem;
+}
+
+.story-figure-img {
+  display: block;
+  width: 100%;
+  border: 1px solid #1c1712;
+}
+
+.story-figure-cap {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  color: #7a7060;
+}
+
+.story-prose {
+  margin-top: 0;
+}
+
+.story-record {
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #c8ba9a;
+}
+
+.story-record-hed {
+  margin: 0;
+  font-family: var(--font-source-serif), Georgia, serif;
+  font-size: 1.25rem;
+  color: #1c1712;
+}
+
+.story-record-list {
+  margin: 0.75rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.story-record-list li {
+  margin: 0 0 0.5rem;
+  font-size: 0.875rem;
+}
+
+.story-record-name {
+  font-weight: 700;
+  color: #1c1712;
+}
+
+.story-record-url {
+  color: #2a6f6c;
+  word-break: break-all;
+}
+
+.story-record-url:hover {
+  text-decoration: underline;
+}
+
+.story-tips {
+  margin-top: 2.5rem;
+  padding: 1rem;
+  border: 1px solid #1c1712;
+  background: #f4edde;
+  color-scheme: only light;
+}
+
+.story-tips-kicker {
+  margin: 0;
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #7a7060;
+}
+
+.story-tips-copy {
+  margin: 0.5rem 0 0;
+  font-family: var(--font-source-serif), Georgia, serif;
+  font-size: 0.9rem;
+  color: #52493c;
+}
+
+.story-tips-copy a {
+  font-weight: 700;
+  color: #2a6f6c;
+}
+
+.story-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+  color-scheme: only light;
+}
+
+.story-rail .civic-card,
+.story-rail .tonight-well {
+  background-color: #f4edde;
+  color-scheme: only light;
+}
+
+.story-rail-card {
+  border: 1px solid #1c1712;
+  background: #f4edde;
+  color-scheme: only light;
+}
+
+.story-rail-email {
+  padding: 0;
+  overflow: hidden;
+}
+
+.story-rail-email .signup-teal {
+  border: none;
+  margin: 0;
+}
+
+.story-ad-well {
+  border: 1px dashed #c8ba9a;
+  background: #efe6d4;
+  min-height: 120px;
+  padding: 1rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.25rem;
+  color-scheme: only light;
+}
+
+.story-ad-label {
+  margin: 0;
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #7a7060;
+}
+
+.story-ad-hint {
+  margin: 0;
+  font-family: var(--font-source-serif), Georgia, serif;
+  font-size: 0.9rem;
+  color: #7a7060;
+}
+
+.story-also {
+  margin-top: 3.5rem;
+  padding-top: 2rem;
+  border-top: 2px solid #1c1712;
+}
+
+.story-also-list {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+}
+
+.story-also-item {
+  border-top: 1px solid #c8ba9a;
+  padding: 1rem 0;
+}
+
+.story-also-link {
+  font-family: var(--font-source-serif), Georgia, serif;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1c1712;
+}
+
+.story-also-link:hover {
+  color: #2a6f6c;
+}
+
+.story-also-sources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.site-shell:has(.story-page) .stage {
+  background-color: #f4edde;
+  color-scheme: only light;
+}
+
+/* ——— Schools (district academic calendars) ——— */
+.schools-main {
+  max-width: none;
+}
+
+.schools-hero {
+  margin-bottom: 2rem;
+}
+
+.schools-kicker {
+  margin: 0;
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #2a6f6c;
+}
+
+.schools-hed {
+  margin: 8px 0 0;
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-weight: 900;
+  font-size: 56px;
+  line-height: 0.92;
+  letter-spacing: -0.045em;
+  color: #1c1712;
+}
+
+@media (min-width: 768px) {
+  .schools-hed {
+    font-size: 80px;
+  }
+}
+
+.schools-dek {
+  margin: 14px 0 0;
+  max-width: 36rem;
+  font-family: var(--font-source-serif), Georgia, serif;
+  font-size: 18px;
+  line-height: 1.4;
+  color: #52493c;
+}
+
+.schools-empty {
+  margin: 0;
+  padding: 1.25rem 0;
+  border-top: 2px solid #1c1712;
+  font-family: var(--font-source-serif), Georgia, serif;
+  font-size: 1rem;
+  color: #7a7060;
+}
+
+.schools-districts {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+.schools-district-hed {
+  margin: 0 0 1rem;
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-size: 1.5rem;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  color: #1c1712;
+}
+
+.schools-month + .schools-month {
+  margin-top: 1.25rem;
+}
+
+.schools-month-hed {
+  margin: 0 0 0.75rem;
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #2a6f6c;
+  border-bottom: 1px solid #c8ba9a;
+  padding-bottom: 0.35rem;
+}
+
+.schools-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.schools-row {
+  display: grid;
+  grid-template-columns: 4.25rem 1fr auto;
+  gap: 0.85rem;
+  align-items: start;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid #c8ba9a;
+}
+
+.schools-datebox {
+  border: 1px solid #1c1712;
+  background: #f4edde;
+  text-align: center;
+  padding: 0.35rem 0.2rem;
+  color-scheme: only light;
+}
+
+.schools-datebox-dow {
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #2a6f6c;
+}
+
+.schools-datebox-day {
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-size: 1.25rem;
+  font-weight: 900;
+  line-height: 1;
+  color: #1c1712;
+}
+
+.schools-datebox-month {
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #7a7060;
+}
+
+.schools-district {
+  margin: 0;
+}
+
+.schools-district-hed {
+  margin: 0;
+}
+
+.schools-copy .schools-district {
+  display: none;
+}
+
+.schools-title {
+  margin: 0.15rem 0 0;
+  font-family: var(--font-source-serif), Georgia, serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: #1c1712;
+}
+
+.schools-title a:hover {
+  color: #2a6f6c;
+  text-decoration: underline;
+}
+
+.schools-place {
+  margin: 0.2rem 0 0;
+  font-size: 0.8rem;
+  color: #7a7060;
+}
+
+.schools-time {
+  margin: 0;
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #1c1712;
+  white-space: nowrap;
+}
+
+.site-shell:has(.schools-layout) .stage {
+  background-color: #f4edde;
+  color-scheme: only light;
 }

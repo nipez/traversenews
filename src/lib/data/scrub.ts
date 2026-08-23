@@ -1,5 +1,7 @@
 import type { AppData, EditionSnapshot, EditionStoryCard, Story } from "@/lib/types";
-import { dedupeEvents } from "@/lib/events";
+import { sanitizeStoredAthletics } from "@/lib/athletics";
+import { sanitizeStoredSchools } from "@/lib/schools";
+import { sanitizeStoredEvents } from "@/lib/events";
 
 /** Invented seed copy that must never appear as reporting. See README → Editorial. */
 export const BANNED_ORIGINAL_SLUGS = new Set([
@@ -122,14 +124,46 @@ export function scrubAppData(data: AppData): { data: AppData; changed: boolean }
   }
 
   const filtered = data.events.filter((e) => !BANNED_EVENT_IDS.has(e.id));
-  const nextEvents = dedupeEvents(filtered);
+  const sanitized = sanitizeStoredEvents(filtered);
+  const nextEvents = sanitized.events;
   const beforeIds = data.events.map((e) => e.id).sort().join(",");
   const afterIds = nextEvents.map((e) => e.id).sort().join(",");
-  if (beforeIds !== afterIds) {
+  if (beforeIds !== afterIds || sanitized.changed) {
     changed = true;
     data.events = nextEvents;
   } else {
     data.events = nextEvents;
+  }
+
+  if (!Array.isArray(data.athletics)) {
+    data.athletics = [];
+    changed = true;
+  } else {
+    const ath = sanitizeStoredAthletics(data.athletics);
+    if (ath.changed) {
+      changed = true;
+      data.athletics = ath.games;
+    } else {
+      data.athletics = ath.games;
+    }
+  }
+
+  if (!Array.isArray(data.schools)) {
+    data.schools = [];
+    changed = true;
+  } else {
+    const sch = sanitizeStoredSchools(data.schools);
+    if (sch.changed) {
+      changed = true;
+      data.schools = sch.items;
+    } else {
+      data.schools = sch.items;
+    }
+  }
+
+  if (!Array.isArray(data.email_editions)) {
+    data.email_editions = [];
+    changed = true;
   }
 
   data.editions = data.editions.map((ed) => {

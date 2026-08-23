@@ -92,6 +92,38 @@ export type EventItem = {
   time_unknown?: boolean;
 };
 
+/**
+ * HS athletics slate for Sports This week (greater bay).
+ * Stored separately from `events` so a season calendar cannot balloon /whats-on.
+ */
+export type AthleticsGame = {
+  id: string;
+  title: string;
+  starts_at: string;
+  place: string;
+  url: string | null;
+  source_id: string;
+  /** Display label: Central, West, Elk Rapids, etc. */
+  school: string;
+  time_unknown?: boolean;
+};
+
+/**
+ * District academic calendar rows for /schools (no-school, half days, breaks).
+ * Never mixed into Events or Civic.
+ */
+export type SchoolCalendarItem = {
+  id: string;
+  title: string;
+  starts_at: string;
+  place: string;
+  url: string | null;
+  source_id: string;
+  /** District label, e.g. TCAPS, Elk Rapids. */
+  district: string;
+  time_unknown?: boolean;
+};
+
 export type Subscriber = {
   email: string;
   created_at: string;
@@ -141,14 +173,76 @@ export type EditionSnapshot = {
   civic: EditionEventCard[];
 };
 
+/** Compact story card inside a morning-email letter snapshot. */
+export type EmailStoryCard = {
+  title: string;
+  dek: string;
+  url: string;
+  sources: string[];
+  /** Record-Eagle paywall honesty mark. */
+  paywalled?: boolean;
+};
+
+export type EmailAlertCard = {
+  title: string;
+  dek: string;
+  url: string;
+  source_name: string;
+};
+
+export type EmailEventCard = {
+  title: string;
+  starts_at: string;
+  place: string;
+  url: string | null;
+  time_unknown?: boolean;
+};
+
+export type EmailSportsCard = {
+  title: string;
+  starts_at: string;
+  place: string;
+  url: string | null;
+  school: string;
+  time_unknown?: boolean;
+};
+
+/**
+ * Frozen morning-email letter for one America/Detroit date.
+ * Separate from homepage `editions` — this is the letter, not the Today rail.
+ */
+export type EmailEditionSnapshot = {
+  date: string;
+  captured_at: string;
+  lead: EmailStoryCard | null;
+  around: EmailStoryCard[];
+  alerts: EmailAlertCard[];
+  tonight: EmailEventCard[];
+  civic: EmailEventCard[];
+  /** Optional varsity slate for This week (2–4). */
+  sports: EmailSportsCard[];
+};
+
 export type AppData = {
   beats: Beat[];
   sources: Source[];
   stories: Story[];
   events: EventItem[];
+  /**
+   * HS athletics games (greater bay). Not EventItems — never mix into
+   * Tonight / What's on / civic.
+   */
+  athletics: AthleticsGame[];
+  /**
+   * District academic calendars for /schools. Not EventItems — never mix
+   * into Tonight / What's on / civic.
+   */
+  schools: SchoolCalendarItem[];
   subscribers: Subscriber[];
   last_pull_at: string | null;
   editions: EditionSnapshot[];
+  /** Morning-email letter archive (Detroit date keys). Not sent mail. */
+  email_editions: EmailEditionSnapshot[];
   /** Desk originals workflow. Drafts are never public. */
   drafts: OriginalDraft[];
 };

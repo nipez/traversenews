@@ -107,6 +107,85 @@ export function dedupeEvents(events: EventItem[]): EventItem[] {
 
 const CIVIC_BEATS = new Set(["beat_government", "beat_schools"]);
 
+/**
+ * HS athletics calendars belong on Sports This week, never /whats-on.
+ * Importing them as EventItem rows can balloon KV and 503 the Worker.
+ */
+export const HS_ATHLETICS_EVENT_SOURCE_IDS = new Set([
+  "src_tcc_ath",
+  "src_tcw_ath",
+  "src_tcsf_ath",
+  "src_tcch_ath",
+  "src_elk_ath",
+  "src_suttons_ath",
+  "src_leland_ath",
+  "src_glenlake_ath",
+  "src_kingsley_ath",
+]);
+
+/**
+ * District academic calendars belong on /schools, never Events or Civic.
+ */
+export const SCHOOL_CALENDAR_SOURCE_IDS = new Set([
+  "src_tcaps_cal",
+  "src_gtacs_cal",
+  "src_elk_cal",
+  "src_suttons_cal",
+  "src_leland_cal",
+  "src_glenlake_cal",
+  "src_kingsley_cal",
+  "src_tcch_cal",
+]);
+
+export function isHsAthleticsEventSource(sourceId: string): boolean {
+  return HS_ATHLETICS_EVENT_SOURCE_IDS.has(sourceId);
+}
+
+export function isSchoolCalendarSource(sourceId: string): boolean {
+  return SCHOOL_CALENDAR_SOURCE_IDS.has(sourceId);
+}
+
+/** Soft ceiling so a fat import cannot take down public pages. */
+export const MAX_STORED_EVENTS = 250;
+
+/**
+ * Drop athletics + school calendars and trim oldest past rows when over the soft ceiling.
+ * Never invents listings — only removes.
+ */
+export function sanitizeStoredEvents(events: EventItem[]): {
+  events: EventItem[];
+  changed: boolean;
+} {
+  const without = events.filter(
+    (e) =>
+      !isHsAthleticsEventSource(e.source_id) &&
+      !isSchoolCalendarSource(e.source_id),
+  );
+  let next = dedupeEvents(without);
+  let changed =
+    next.length !== events.length ||
+    next.map((e) => e.id).join(",") !== events.map((e) => e.id).join(",");
+
+  if (next.length > MAX_STORED_EVENTS) {
+    const now = Date.now();
+    // Prefer keeping upcoming; drop oldest past first.
+    const upcoming = next.filter(
+      (e) => new Date(e.starts_at).getTime() >= now - 6 * 60 * 60 * 1000,
+    );
+    const past = next
+      .filter((e) => new Date(e.starts_at).getTime() < now - 6 * 60 * 60 * 1000)
+      .sort(
+        (a, b) =>
+          new Date(b.starts_at).getTime() - new Date(a.starts_at).getTime(),
+      );
+    const room = Math.max(0, MAX_STORED_EVENTS - upcoming.length);
+    next = dedupeEvents([...upcoming, ...past.slice(0, room)]);
+    changed = true;
+  }
+
+  return { events: next, changed };
+}
+
 /** Prefer these desks for Tonight / What's on. */
 const NIGHT_OUT_SOURCES = new Set([
   "src_visit_events",
@@ -186,6 +265,7 @@ export function selectTonightEvents(
   const beatBySource = new Map(sources.map((s) => [s.id, s.beat_id]));
 
   const windowed = dedupeEvents(events).filter((e) => {
+    if (isHsAthleticsEventSource(e.source_id)) return false;
     if (timedOnly && e.time_unknown) return false;
     return (
       eventInUpcomingWindow(e, now, {
