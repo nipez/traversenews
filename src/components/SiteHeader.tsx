@@ -5,7 +5,8 @@ import { formatHeaderDate } from "@/lib/dates";
 const NAV = [
   { href: "/", label: "Today" },
   { href: "/whats-on", label: "Events" },
-  { href: "/civic", label: "Civic Calendar" },
+  { href: "/civic", label: "Civic" },
+  { href: "/sports", label: "Sports" },
 ] as const;
 
 function Wordmark({
