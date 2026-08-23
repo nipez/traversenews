@@ -113,6 +113,8 @@ const SPORTS_SOURCE_IDS = new Set([
   "src_re_prep",
   "src_tcc_ath",
   "src_tcw_ath",
+  "src_tcsf_ath",
+  "src_tcch_ath",
 ]);
 
 /** Prefer these free desks for Around the bay (not Record-Eagle). */

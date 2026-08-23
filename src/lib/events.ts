@@ -114,6 +114,8 @@ const CIVIC_BEATS = new Set(["beat_government", "beat_schools"]);
 export const HS_ATHLETICS_EVENT_SOURCE_IDS = new Set([
   "src_tcc_ath",
   "src_tcw_ath",
+  "src_tcsf_ath",
+  "src_tcch_ath",
 ]);
 
 export function isHsAthleticsEventSource(sourceId: string): boolean {

@@ -11,7 +11,7 @@ import { getAppData, replaceAthleticsGames } from "@/lib/data/store";
  * Stored on AppData.athletics — NEVER written into events (that 503'd the Worker).
  *
  * Body: {
- *   games: [{ title, starts_at, place?, url?, source_id: src_tcc_ath|src_tcw_ath, school? }],
+ *   games: [{ title, starts_at, place?, url?, source_id: src_tcc_ath|src_tcw_ath|src_tcsf_ath|src_tcch_ath, school? }],
  *   replace?: true,
  *   clear?: true,
  *   source_id?
@@ -61,7 +61,7 @@ export async function POST(request: Request) {
         {
           error: "No valid athletics games to import",
           skipped,
-          hint: "Each row needs title, starts_at, and source_id src_tcc_ath|src_tcw_ath. Do not invent games.",
+          hint: "Each row needs title, starts_at, and source_id src_tcc_ath|src_tcw_ath|src_tcsf_ath|src_tcch_ath. Do not invent games.",
         },
         { status: 400 },
       );
@@ -71,7 +71,7 @@ export async function POST(request: Request) {
         (typeof body.source_id === "string" && body.source_id.trim()) || "";
       const targets = target
         ? [target]
-        : ["src_tcc_ath", "src_tcw_ath"];
+        : ["src_tcc_ath", "src_tcw_ath", "src_tcsf_ath", "src_tcch_ath"];
       await replaceAthleticsGames([], targets);
       return NextResponse.json({
         ok: true,

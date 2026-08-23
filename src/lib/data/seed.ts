@@ -380,6 +380,28 @@ const sources: Source[] = [
       "Big Teams calendar — Sports This week only via POST /api/desk/athletics/import. Never import game rows into events/KV.",
   },
   {
+    id: "src_tcsf_ath",
+    name: "St. Francis Athletics",
+    homepage: "https://stfrancisgladiators.bigteams.com/main/calendar",
+    feed_url: "https://stfrancisgladiators.bigteams.com/main/calendar",
+    pull_method: "html",
+    beat_id: "beat_hs_sports",
+    enabled: true,
+    notes:
+      "Gladiators Big Teams calendar — Sports This week via POST /api/desk/athletics/import. Never import into events/KV.",
+  },
+  {
+    id: "src_tcch_ath",
+    name: "TC Christian Athletics",
+    homepage: "https://www.tcchristian.org/athletics",
+    feed_url: null,
+    pull_method: "none",
+    beat_id: "beat_hs_sports",
+    enabled: true,
+    notes:
+      "Sabres. tcchristian.org/athletics has no dated public list yet — calendar URL TBD. Games only via POST /api/desk/athletics/import when a real schedule is pulled. Do not invent games.",
+  },
+  {
     id: "src_tn",
     name: "traverse.news",
     homepage: "https://traverse.news",

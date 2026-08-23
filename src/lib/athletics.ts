@@ -32,6 +32,8 @@ export type AthleticsImportResult = {
 export function schoolFromSourceId(sourceId: string): string {
   if (sourceId === "src_tcc_ath") return "Central";
   if (sourceId === "src_tcw_ath") return "West";
+  if (sourceId === "src_tcsf_ath") return "St. Francis";
+  if (sourceId === "src_tcch_ath") return "TC Christian";
   return "Prep";
 }
 
@@ -153,7 +155,8 @@ export function groupAthleticsByDay(
 
 /**
  * Normalize browser-pulled athletics rows. Never invents games.
- * Only src_tcc_ath / src_tcw_ath — everything else is skipped.
+ * Only HS athletics source_ids (Central, West, St. Francis, TC Christian).
+ * Everything else is skipped — never invents games.
  */
 export function normalizeImportedAthletics(
   rows: AthleticsImportRow[],
@@ -174,13 +177,17 @@ export function normalizeImportedAthletics(
     const sourceId =
       typeof row.source_id === "string" ? row.source_id.trim() : "";
     if (!sourceId) {
-      skipped.push({ index, reason: "Missing source_id (src_tcc_ath|src_tcw_ath)" });
+      skipped.push({
+        index,
+        reason:
+          "Missing source_id (src_tcc_ath|src_tcw_ath|src_tcsf_ath|src_tcch_ath)",
+      });
       return;
     }
     if (!ATHLETICS_SOURCE_IDS.has(sourceId)) {
       skipped.push({
         index,
-        reason: `source_id must be src_tcc_ath or src_tcw_ath (got ${sourceId})`,
+        reason: `source_id must be an HS athletics desk (got ${sourceId})`,
       });
       return;
     }

@@ -46,8 +46,8 @@ function ThisWeekSlate({ games }: { games: AthleticsGame[] }) {
     <section className="sports-week" aria-label="This week">
       <h2 className="sports-week-hed">This week</h2>
       <p className="sports-week-dek">
-        Traverse City Central and TC West — from the Big Teams calendars. Links
-        out; we do not invent kickoffs.
+        Traverse City Central, West, St. Francis, and TC Christian — from the
+        athletics calendars. Links out; we do not invent kickoffs.
       </p>
       {days.length === 0 ? (
         <p className="sports-week-empty">No games on the calendar this week.</p>
