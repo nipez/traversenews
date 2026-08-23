@@ -476,8 +476,10 @@ const sources: Source[] = [
     beat_id: "beat_schools",
     enabled: true,
     calendar_url: "https://www.tcaps.net/page/district-board-calendar",
+    calendar_pdf_url:
+      "https://files-backend.assets.thrillshare.com/documents/asset/uploaded_file/5656/Tcaps/634b1fa5-4fd0-445c-8504-16ecf5f8a427/25-26-REVISED-Calendars-1.28.26.pdf?disposition=inline",
     notes:
-      "District academic calendar (no-school, half days, conferences). /schools via POST /api/desk/schools/import. Never Events. Full calendar: board page (prefer current year PDF when posted).",
+      "District academic calendar (no-school, half days, conferences). /schools via POST /api/desk/schools/import. Never Events. Full calendar: board page + year PDF (prefer 26–27 when posted).",
   },
   {
     id: "src_gtacs_cal",

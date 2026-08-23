@@ -115,7 +115,8 @@ function normalizeAppData(data: AppData): { data: AppData; scrubbed: boolean } {
       existing.pull_method !== source.pull_method ||
       existing.homepage !== source.homepage ||
       existing.beat_id !== source.beat_id ||
-      (source.calendar_url ?? null) !== (existing.calendar_url ?? null)
+      (source.calendar_url ?? null) !== (existing.calendar_url ?? null) ||
+      (source.calendar_pdf_url ?? null) !== (existing.calendar_pdf_url ?? null)
     ) {
       existing.feed_url = source.feed_url;
       existing.pull_method = source.pull_method;
@@ -123,6 +124,7 @@ function normalizeAppData(data: AppData): { data: AppData; scrubbed: boolean } {
       existing.beat_id = source.beat_id;
       existing.name = source.name;
       existing.calendar_url = source.calendar_url ?? null;
+      existing.calendar_pdf_url = source.calendar_pdf_url ?? null;
       catalogChanged = true;
     }
   }
