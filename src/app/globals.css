@@ -2603,7 +2603,7 @@ a:hover {
 }
 
 .schools-district-head {
-  margin: 0 0 1rem;
+  margin: 0 0 1.15rem;
 }
 
 .schools-district-kicker {
@@ -2632,19 +2632,49 @@ a:hover {
   color: #52493c;
 }
 
-.schools-district-cal {
-  margin: 0.5rem 0 0;
+.schools-district-sources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin: 0.9rem 0 0;
+  padding: 0 0 1.1rem;
+  border-bottom: 1px solid #d9cfb8;
+}
+
+.schools-source-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.55rem;
+  padding: 0.55rem 0.95rem;
+  border: 1.5px solid #1c1712;
+  background: #f3cfae;
+  color: #1c1712;
   font-family: var(--font-archivo), system-ui, sans-serif;
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-decoration: none;
+  line-height: 1.1;
+  color-scheme: only light;
 }
 
-.schools-district-cal a {
-  color: #2a6f6c;
+.schools-source-btn:hover {
+  background: #e8b98a;
+  color: #1c1712;
+  text-decoration: none;
 }
 
-.schools-district-cal a:hover {
-  color: #1f5553;
+.schools-source-btn-pdf {
+  background: #f4edde;
+  border-color: #c45c26;
+  color: #8a3a12;
+}
+
+.schools-source-btn-pdf:hover {
+  background: #f3cfae;
+  color: #8a3a12;
 }
 
 .schools-district-empty {

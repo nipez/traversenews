@@ -106,31 +106,30 @@ export function SchoolsDistrictToggle({
               {count} important date{count === 1 ? "" : "s"}
             </p>
             {selected.calendarUrl || selected.calendarPdfUrl ? (
-              <p className="schools-district-cal">
+              <div className="schools-district-sources" aria-label="Official calendars">
                 {selected.calendarUrl ? (
                   <a
+                    className="schools-source-btn"
                     href={selected.calendarUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    Full calendar →
+                    Full calendar
+                    <span aria-hidden="true"> →</span>
                   </a>
-                ) : null}
-                {selected.calendarUrl && selected.calendarPdfUrl ? (
-                  <span className="schools-district-cal-sep" aria-hidden>
-                    {" · "}
-                  </span>
                 ) : null}
                 {selected.calendarPdfUrl ? (
                   <a
+                    className="schools-source-btn schools-source-btn-pdf"
                     href={selected.calendarPdfUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    Year PDF →
+                    Year PDF
+                    <span aria-hidden="true"> →</span>
                   </a>
                 ) : null}
-              </p>
+              </div>
             ) : null}
           </header>
 
