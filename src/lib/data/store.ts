@@ -41,6 +41,13 @@ function cloneSeed(): AppData {
   return structuredClone(createSeedData());
 }
 
+/** Seed catalog once per isolate — normalize used to rebuild it on every KV load. */
+let seedCatalog: AppData | null = null;
+function getSeedCatalog(): AppData {
+  if (!seedCatalog) seedCatalog = createSeedData();
+  return seedCatalog;
+}
+
 function siteOrigin(): string {
   return (
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
@@ -72,7 +79,7 @@ function normalizeAppData(data: AppData): { data: AppData; scrubbed: boolean } {
   }
 
   let catalogChanged = false;
-  const seed = createSeedData();
+  const seed = getSeedCatalog();
 
   // Merge new beats from seed (e.g. Public safety) without dropping Desk order tweaks.
   if (!Array.isArray(data.beats)) {

@@ -3,14 +3,12 @@ import { selectAlerts } from "@/lib/alerts";
 import { dedupeEvents, eventInUpcomingWindow, isCivicEvent, selectTonightEvents } from "@/lib/events";
 import { buildEmailEditionSnapshot } from "@/lib/email-editions";
 import { clusterStories } from "@/lib/pull/cluster";
-import {
-  getAppData,
-  repairPublishedOriginalStories,
-} from "@/lib/data/store";
+import { getAppData } from "@/lib/data/store";
 import type { ClusteredStory, EventItem, Story } from "@/lib/types";
 
 export async function getHomepageData() {
-  await repairPublishedOriginalStories();
+  // Public homepage: one store load. Do not repair/write drafts here —
+  // that path burned Worker CPU on cold custom-domain hits (CF 1102).
   const data = await getAppData();
   const clusters = clusterStories(data.stories, data.sources);
   const originals = clusters.filter((c) => c.is_original);
@@ -67,7 +65,6 @@ export function civicEvents(
  * Does not invent copy; does not send mail.
  */
 export async function getEmailPreviewData() {
-  await repairPublishedOriginalStories();
   const data = await getAppData();
   const letter = buildEmailEditionSnapshot(data);
   return { letter, live: true as const };

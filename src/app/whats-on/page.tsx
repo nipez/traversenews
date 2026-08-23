@@ -2,7 +2,7 @@ import Image from "next/image";
 import { EventTipsForm } from "@/components/EventTipsForm";
 import { PublicShell } from "@/components/PublicShell";
 import { detroitDayKey, formatEventWhenParts } from "@/lib/dates";
-import { getAppData, listEvents } from "@/lib/data/store";
+import { getAppData } from "@/lib/data/store";
 import {
   dedupeEvents,
   eventInUpcomingWindow,
@@ -101,7 +101,7 @@ function featuredMeta(event: EventItem): string {
 
 export default async function WhatsOnPage() {
   const data = await getAppData();
-  const all = await listEvents();
+  const all = data.events;
   const now = new Date();
 
   // Peach band: next 3 TIMED nights-out only — never date-only Opera as noon.
