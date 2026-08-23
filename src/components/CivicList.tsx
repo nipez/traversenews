@@ -55,6 +55,7 @@ export function CivicList({
               <div className="civic-datebox">
                 <div className="civic-datebox-dow">{d.day}</div>
                 <div className="civic-datebox-day">{d.label}</div>
+                <div className="civic-datebox-month">{d.monthAbbr}</div>
               </div>
               <div className="civic-copy">
                 <p className="civic-title">{event.title}</p>

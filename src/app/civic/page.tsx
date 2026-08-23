@@ -4,6 +4,7 @@ import { PublicShell } from "@/components/PublicShell";
 import { formatCivicDate, formatEventWhenParts } from "@/lib/dates";
 import { getAppData } from "@/lib/data/store";
 import { civicEvents } from "@/lib/queries";
+import type { EventItem } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -23,9 +24,28 @@ function civicTime(event: { starts_at: string; time_unknown?: boolean }): string
   return t;
 }
 
+type CivicRow =
+  | { kind: "month"; key: string; name: string }
+  | { kind: "event"; event: EventItem };
+
+function withMonthHeadings(events: EventItem[]): CivicRow[] {
+  const rows: CivicRow[] = [];
+  let lastMonth = "";
+  for (const event of events) {
+    const d = formatCivicDate(event.starts_at);
+    if (d.monthKey !== lastMonth) {
+      rows.push({ kind: "month", key: d.monthKey, name: d.monthName });
+      lastMonth = d.monthKey;
+    }
+    rows.push({ kind: "event", event });
+  }
+  return rows;
+}
+
 export default async function CivicPage() {
   const data = await getAppData();
   const events = civicEvents(data.events, data.sources);
+  const rows = withMonthHeadings(events);
 
   return (
     <PublicShell active="/civic" header="compact">
@@ -49,7 +69,15 @@ export default async function CivicPage() {
 
       <div className="civic-page-grid">
         <ul className="civic-agenda">
-          {events.map((event) => {
+          {rows.map((row) => {
+            if (row.kind === "month") {
+              return (
+                <li key={`month-${row.key}`} className="civic-month-hed">
+                  {row.name}
+                </li>
+              );
+            }
+            const event = row.event;
             const d = formatCivicDate(event.starts_at);
             const cancelled = isCancelled(event.title);
             return (
@@ -60,6 +88,7 @@ export default async function CivicPage() {
                 <div className="civic-datebox">
                   <div className="civic-datebox-dow">{d.day}</div>
                   <div className="civic-datebox-day">{d.label}</div>
+                  <div className="civic-datebox-month">{d.monthAbbr}</div>
                 </div>
                 <div className="civic-agenda-copy">
                   <p className="civic-agenda-title">{event.title}</p>
