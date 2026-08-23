@@ -25,6 +25,33 @@ function Wordmark({
   );
 }
 
+function NavInkBar({ active }: { active: string }) {
+  return (
+    <div className="nav-ink-bar">
+      <div className="nav-ink-bar-inner">
+        <nav className="nav-links" aria-label="Primary">
+          {NAV.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={
+                active === item.href
+                  ? "nav-link nav-link-active-chip"
+                  : "nav-link"
+              }
+            >
+              {item.label}
+            </Link>
+          ))}
+        </nav>
+        <Link href="/email#signup" className="btn-email">
+          Morning email
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 export function SiteHeader({
   active = "/",
   variant = "compact",
@@ -61,59 +88,19 @@ export function SiteHeader({
           </div>
         </div>
 
-        <div className="nav-ink-bar">
-          <div className="nav-ink-bar-inner">
-            <nav className="nav-links" aria-label="Primary">
-              {NAV.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={
-                    active === item.href
-                      ? "nav-link nav-link-active-chip"
-                      : "nav-link"
-                  }
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </nav>
-            <Link href="/email#signup" className="btn-email">
-              Morning email
-            </Link>
-          </div>
-        </div>
+        <NavInkBar active={active} />
       </header>
     );
   }
 
   return (
-    <header className="header-compact">
-      <div className="header-compact-row">
-        <Link href="/">
+    <header className="site-header-interior">
+      <div className="interior-mast">
+        <Link href="/" className="interior-wordmark">
           <Wordmark />
         </Link>
-        <div className="header-compact-actions">
-          <nav className="nav-boxed" aria-label="Primary">
-            {NAV.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={
-                  active === item.href
-                    ? "nav-link nav-link-active-fill"
-                    : "nav-link"
-                }
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
-          <Link href="/email#signup" className="btn-email">
-            Morning email
-          </Link>
-        </div>
       </div>
+      <NavInkBar active={active} />
     </header>
   );
 }
