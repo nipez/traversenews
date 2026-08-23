@@ -24,6 +24,10 @@
   "vars": {
     "NEXT_PUBLIC_SITE_URL": "https://traverse-news.nickperez.workers.dev"
   },
+  // Secrets (set with `npx wrangler secret put <NAME>` — never commit values):
+  //   RESEND_API_KEY — Resend sending-only key, domain-restricted to traverse.news
+  //   DEV_DESK_PASSWORD, DEV_DESK_EMAIL — Desk demo auth
+  //   OPENAI_API_KEY — optional Desk originals assist
   "triggers": {
     // Weekday 7:30am America/Detroit (EDT = UTC-4 → 11:30 UTC; EST = UTC-5 → 12:30 UTC).
     // Fixed at 11:30 UTC for EDT mornings; adjust seasonally if needed.
