@@ -2,7 +2,7 @@ import { PublicShell } from "@/components/PublicShell";
 import { TonightBlock } from "@/components/TonightBlock";
 import { formatEventWhenParts } from "@/lib/dates";
 import { getAppData, listEvents } from "@/lib/data/store";
-import { dedupeEvents, isCivicEvent, selectTonightEvents } from "@/lib/events";
+import { dedupeEvents, isCivicEvent, looksLikeLowValueListing, selectTonightEvents } from "@/lib/events";
 import type { EventItem } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -43,7 +43,8 @@ export default async function WhatsOnPage() {
   const upcoming = dedupeEvents(all).filter(
     (e) =>
       new Date(e.starts_at).getTime() >= Date.now() - 60 * 60 * 1000 &&
-      !isCivicEvent(e, data.sources),
+      !isCivicEvent(e, data.sources) &&
+      !looksLikeLowValueListing(e.title),
   );
   const byDay = groupByDay(upcoming);
 

@@ -236,7 +236,8 @@ const sources: Source[] = [
     pull_method: "html",
     beat_id: "beat_events",
     enabled: true,
-    notes: "HTML listing pull for library programs.",
+    notes:
+      "HTML upcoming list — no public ICS. Pull parses each event page JSON-LD startDate (Detroit offset). Never invent noon; CLOSED/renovation listings dropped.",
   },
   {
     id: "src_dennos",

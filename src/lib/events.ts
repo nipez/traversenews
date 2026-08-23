@@ -109,13 +109,16 @@ export function looksLikeMeeting(title: string): boolean {
   );
 }
 
-function looksLikeLowValueListing(title: string): boolean {
+export function looksLikeLowValueListing(title: string): boolean {
   const t = title.toLowerCase();
   return (
     t.includes("closed for renovation") ||
+    t.includes("closed for hvac") ||
     t.includes("library - closed") ||
+    /\bclosed\b/.test(t) && /\blibrary\b/.test(t) ||
     t.includes("submission window") ||
-    t.includes("all day exhibit")
+    t.includes("all day exhibit") ||
+    t.includes("(submission window")
   );
 }
 

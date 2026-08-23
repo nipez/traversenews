@@ -1,4 +1,5 @@
-import { stableEventId } from "@/lib/events";
+import { detroitWallToUtc } from "@/lib/dates";
+import { looksLikeLowValueListing, stableEventId } from "@/lib/events";
 import type { EventItem, Source } from "@/lib/types";
 
 const MONTHS: Record<string, number> = {
@@ -45,52 +46,37 @@ function stripTags(s: string): string {
   return decodeEntities(s.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim());
 }
 
-/** Parse "Saturday, August 22, 2026 - 6:30 p.m. ET" into an ISO instant (Detroit-ish). */
+/**
+ * Parse "Saturday, August 22, 2026 - 6:30 p.m. ET" into an ISO instant.
+ * Missing clock time → null (never invent noon).
+ */
 export function parseLooseEventWhen(raw: string, now = new Date()): Date | null {
   const text = stripTags(raw);
   const m = text.match(
-    /([A-Za-z]+)\s+(\d{1,2}),?\s+(\d{4})(?:\s*[-–]\s*(\d{1,2}):(\d{2})\s*([ap])\.?m\.?)?/i,
+    /([A-Za-z]+)\s+(\d{1,2}),?\s+(\d{4})\s*[-–]\s*(\d{1,2}):(\d{2})\s*([ap])\.?m\.?/i,
   );
   if (!m) return null;
   const month = MONTHS[m[1].toLowerCase()];
   if (month === undefined) return null;
   const day = Number(m[2]);
   const year = Number(m[3]);
-  let hour = 12;
-  let minute = 0;
-  if (m[4]) {
-    hour = Number(m[4]) % 12;
-    minute = Number(m[5]);
-    if ((m[6] || "a").toLowerCase() === "p") hour += 12;
-  }
-  // Treat listed local times as America/Detroit by composing a UTC offset guess
-  // via Date with explicit parts in local... Workers are UTC, so build as Z and
-  // subtract typical EDT (-4) / EST (-5) from the listed wall time.
-  const offsetHours = isLikelyEdt(year, month, day) ? 4 : 5;
-  const utc = Date.UTC(year, month, day, hour + offsetHours, minute, 0);
-  const d = new Date(utc);
+  let hour = Number(m[4]) % 12;
+  const minute = Number(m[5]);
+  if (m[6].toLowerCase() === "p") hour += 12;
+  const d = detroitWallToUtc(year, month + 1, day, hour, minute, 0);
   if (Number.isNaN(d.getTime())) return null;
-  // Ignore ancient / far-future parse mistakes
   if (Math.abs(d.getTime() - now.getTime()) > 1000 * 60 * 60 * 24 * 400) {
     return null;
   }
   return d;
 }
 
-function isLikelyEdt(year: number, month: number, day: number): boolean {
-  // Rough US DST window: second Sunday March → first Sunday November.
-  const march = new Date(Date.UTC(year, 2, 1));
-  const nov = new Date(Date.UTC(year, 10, 1));
-  const secondSunMarch =
-    1 + ((7 - march.getUTCDay()) % 7) + 7;
-  const firstSunNov = 1 + ((7 - nov.getUTCDay()) % 7);
-  const n = month * 100 + day;
-  return n >= 2 * 100 + secondSunMarch && n < 10 * 100 + firstSunNov;
-}
-
 function withinHorizon(d: Date, now: Date): boolean {
   const t = d.getTime();
-  return t >= now.getTime() - 1000 * 60 * 60 * 12 && t <= now.getTime() + 1000 * 60 * 60 * 24 * 45;
+  return (
+    t >= now.getTime() - 1000 * 60 * 60 * 12 &&
+    t <= now.getTime() + 1000 * 60 * 60 * 24 * 45
+  );
 }
 
 function parseInterlochen(html: string, source: Source, now: Date): EventItem[] {
@@ -109,24 +95,8 @@ function parseInterlochen(html: string, source: Source, now: Date): EventItem[] 
       logistics.match(/event__date[^>]*>([\s\S]*?)<\//i)?.[1] ??
       logistics.match(/(\w+day,\s+[A-Za-z]+\s+\d{1,2},?\s+\d{4}[\s\S]{0,40})/i)?.[1] ??
       "";
-    const when = parseLooseEventWhen(dateText || titleM[0], now);
-    // Fallback: date embedded in slug …-2026-08-25
-    let starts = when;
-    if (!starts) {
-      const slugDate = href.match(/(\d{4})-(\d{2})-(\d{2})/);
-      if (slugDate) {
-        starts = new Date(
-          Date.UTC(
-            Number(slugDate[1]),
-            Number(slugDate[2]) - 1,
-            Number(slugDate[3]),
-            23,
-            0,
-            0,
-          ),
-        );
-      }
-    }
+    const starts = parseLooseEventWhen(dateText || "", now);
+    // Slug date alone has no clock — skip rather than invent 7pm/noon.
     if (!starts || !withinHorizon(starts, now)) continue;
     const url = href.startsWith("http")
       ? href
@@ -149,41 +119,105 @@ function parseInterlochen(html: string, source: Source, now: Date): EventItem[] 
   return out;
 }
 
-function parseTadl(html: string, source: Source, now: Date): EventItem[] {
+/** Parse TADL listing aria-label clock: "@ 2:00pm" / "@ 12:00pm". Not "@ 12:00am". */
+function parseTadlAriaClock(label: string): {
+  year: number;
+  month: number;
+  day: number;
+  hour: number;
+  minute: number;
+} | null {
+  const m = label.match(
+    /([A-Za-z]+)\s+(\d{1,2}),?\s+(\d{4})\s*@\s*(\d{1,2}):(\d{2})\s*(am|pm)/i,
+  );
+  if (!m) return null;
+  const month = MONTHS[m[1].toLowerCase()];
+  if (month === undefined) return null;
+  const hour12 = Number(m[4]);
+  const minute = Number(m[5]);
+  const ap = m[6].toLowerCase();
+  // All-day / closed placeholders often use 12:00am — not a real showtime.
+  if (ap === "am" && hour12 === 12 && minute === 0) return null;
+  let hour = hour12 % 12;
+  if (ap === "pm") hour += 12;
+  return {
+    year: Number(m[3]),
+    month: month + 1,
+    day: Number(m[2]),
+    hour,
+    minute,
+  };
+}
+
+function extractJsonLdStart(html: string): {
+  start: Date;
+  name: string | null;
+  place: string | null;
+} | null {
+  const blocks = html.match(
+    /<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi,
+  );
+  if (!blocks) return null;
+  for (const block of blocks) {
+    const raw = block.replace(/^[\s\S]*?>/, "").replace(/<\/script>$/i, "");
+    try {
+      const data = JSON.parse(raw) as
+        | Record<string, unknown>
+        | Array<Record<string, unknown>>;
+      const nodes = Array.isArray(data) ? data : [data];
+      for (const node of nodes) {
+        const type = String(node["@type"] ?? "");
+        if (!/event/i.test(type)) continue;
+        const startRaw = node.startDate;
+        if (typeof startRaw !== "string" || !startRaw.trim()) continue;
+        // Require an explicit clock — date-only would be noon-risk; skip.
+        if (!/T\d{2}:\d{2}/.test(startRaw)) continue;
+        const start = new Date(startRaw);
+        if (Number.isNaN(start.getTime())) continue;
+        const name = typeof node.name === "string" ? stripTags(node.name) : null;
+        let place: string | null = null;
+        const loc = node.location;
+        if (typeof loc === "string") place = loc;
+        else if (loc && typeof loc === "object") {
+          const locObj = loc as { name?: string; address?: unknown };
+          if (typeof locObj.name === "string") place = locObj.name;
+        }
+        return { start, name, place };
+      }
+    } catch {
+      // try next block
+    }
+  }
+  return null;
+}
+
+type TadlListing = {
+  title: string;
+  url: string;
+  placeHint: string;
+  ariaLabel: string;
+};
+
+function collectTadlListings(html: string): TadlListing[] {
   const articles = html.match(
     /<article[^>]*class="[^"]*event-card[^"]*"[\s\S]*?<\/article>/gi,
   );
   if (!articles) return [];
-  const out: EventItem[] = [];
+  const out: TadlListing[] = [];
   for (const article of articles) {
-    const link =
-      article.match(
-        /<a\b[^>]*class="[^"]*lc-event__link[^"]*"[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/i,
-      ) ||
-      article.match(
-        /<a\b[^>]*href="([^"]+)"[^>]*class="[^"]*lc-event__link[^"]*"[^>]*>([\s\S]*?)<\/a>/i,
-      );
+    const link = article.match(
+      /<a\b([^>]*class="[^"]*lc-event__link[^"]*"[^>]*)>([\s\S]*?)<\/a>/i,
+    );
     if (!link) continue;
-    const href = link[1].trim();
+    const attrs = link[1];
+    const href = attrs.match(/\bhref=["']([^"']+)["']/i)?.[1]?.trim();
+    if (!href) continue;
+    const aria = decodeEntities(
+      attrs.match(/\baria-label=["']([^"']+)["']/i)?.[1] ?? "",
+    );
     const title = stripTags(link[2]);
-    if (!title) continue;
+    if (!title || looksLikeLowValueListing(title)) continue;
 
-    const monthRaw =
-      article.match(/lc-date-icon__item--month[^>]*>([\s\S]*?)<\//i)?.[1] ?? "";
-    const dayRaw =
-      article.match(/lc-date-icon__item--day[^>]*>([\s\S]*?)<\//i)?.[1] ?? "";
-    const yearRaw =
-      article.match(/lc-date-icon__item--year[^>]*>([\s\S]*?)<\//i)?.[1] ?? "";
-    const monthToken = stripTags(monthRaw).toLowerCase().split(/[^a-z]+/)[0];
-    const month = MONTHS[monthToken];
-    const day = Number(stripTags(dayRaw));
-    const year =
-      Number(stripTags(yearRaw)) ||
-      now.getFullYear();
-    if (month === undefined || !Number.isFinite(day) || day < 1) continue;
-
-    const starts = new Date(Date.UTC(year, month, day, 16, 0, 0));
-    if (!withinHorizon(starts, now)) continue;
     const place =
       stripTags(
         article.match(/lc-event__location[^>]*>([\s\S]*?)<\//i)?.[1] ??
@@ -191,16 +225,90 @@ function parseTadl(html: string, source: Source, now: Date): EventItem[] {
           "",
       ) || "TADL";
     const url = href.startsWith("http") ? href : `https://www.tadl.org${href}`;
-    out.push({
+    out.push({ title, url, placeHint: place, ariaLabel: aria });
+  }
+  return out;
+}
+
+/**
+ * TADL upcoming page is HTML (not ICS). Prefer each event page's JSON-LD
+ * startDate (includes America/Detroit offset). Never invent noon.
+ */
+async function parseTadl(
+  html: string,
+  source: Source,
+  now: Date,
+): Promise<EventItem[]> {
+  const listings = collectTadlListings(html);
+  const out: EventItem[] = [];
+
+  async function resolveOne(listing: TadlListing): Promise<EventItem | null> {
+    let starts: Date | null = null;
+    let place = listing.placeHint;
+    let title = listing.title;
+
+    try {
+      const res = await fetch(listing.url, {
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (compatible; traverse.news-puller/1.0; +https://traverse.news)",
+          Accept: "text/html,application/xhtml+xml",
+        },
+        redirect: "follow",
+      });
+      if (res.ok) {
+        const page = await res.text();
+        const ld = extractJsonLdStart(page);
+        if (ld) {
+          starts = ld.start;
+          if (ld.name) title = ld.name;
+          if (ld.place) place = ld.place;
+        }
+      }
+    } catch {
+      // fall through to aria-label clock
+    }
+
+    if (!starts) {
+      const clock = parseTadlAriaClock(listing.ariaLabel);
+      if (!clock) return null;
+      starts = detroitWallToUtc(
+        clock.year,
+        clock.month,
+        clock.day,
+        clock.hour,
+        clock.minute,
+        0,
+      );
+    }
+
+    if (!withinHorizon(starts, now)) return null;
+    if (looksLikeLowValueListing(title)) return null;
+
+    return {
       id: stableEventId(source.id, `${title}|${starts.toISOString()}`),
       title,
       starts_at: starts.toISOString(),
       place,
-      url,
+      url: listing.url,
       source_id: source.id,
-    });
+    };
   }
-  return out;
+
+  // Bound concurrency so a library listing page does not stampede.
+  const chunkSize = 5;
+  for (let i = 0; i < listings.length; i += chunkSize) {
+    const chunk = listings.slice(i, i + chunkSize);
+    const settled = await Promise.all(chunk.map((l) => resolveOne(l)));
+    for (const item of settled) {
+      if (item) out.push(item);
+    }
+  }
+
+  return out.sort(
+    (a, b) =>
+      new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime(),
+  );
 }
 
 /**
@@ -230,7 +338,6 @@ export async function pullHtmlEvents(
     redirect: "follow",
   });
   if (!res.ok) {
-    // Bot walls (Visit TC / Simpleview) — empty is correct; do not invent events.
     if (res.status === 403 || res.status === 401 || res.status === 429) {
       return { events: [], bot_blocked: true, status: res.status };
     }
@@ -253,17 +360,15 @@ export async function pullHtmlEvents(
   if (host.includes("interlochen.org") || source.id === "src_interlochen") {
     events = parseInterlochen(html, source, now);
   } else if (host.includes("tadl.org") || source.id === "src_tadl") {
-    events = parseTadl(html, source, now);
+    events = await parseTadl(html, source, now);
   } else if (
     host.includes("traversecity.com") ||
     source.id === "src_visit_events"
   ) {
-    // JS calendar shell — cloud fetch rarely yields listings.
     events = [];
     if (!/<script/i.test(html) && html.length < 2000) {
       return { events: [], bot_blocked: true, status: res.status };
     }
-    // Empty parse of a JS-rendered Simpleview page: treat as blocked for handoff.
     return {
       events: [],
       bot_blocked: true,
