@@ -13,6 +13,7 @@ import {
   isHsAthleticsEventSource,
 } from "@/lib/events";
 import type { EventItem } from "@/lib/types";
+import { GOING_OUT } from "@/lib/useful-local";
 
 export const dynamic = "force-dynamic";
 
@@ -146,6 +147,21 @@ export default async function WhatsOnPage() {
             className="events-stamp"
           />
         </header>
+
+        <p className="events-going-out">
+          <span className="events-going-out-label">Going out</span>
+          {GOING_OUT.map((link) => (
+            <a
+              key={link.href}
+              href={link.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="events-going-out-link"
+            >
+              {link.label}
+            </a>
+          ))}
+        </p>
 
         <section className="events-featured" aria-label="Featured nights out">
           <div className="events-featured-inner">
