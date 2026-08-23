@@ -2,16 +2,8 @@ import Image from "next/image";
 import { EventTipsForm } from "@/components/EventTipsForm";
 import { PublicShell } from "@/components/PublicShell";
 import { detroitDayKey, formatEventWhenParts } from "@/lib/dates";
-import { getAppData } from "@/lib/data/store";
-import {
-  dedupeEvents,
-  eventInUpcomingWindow,
-  isCivicEvent,
-  looksLikeLowValueListing,
-  selectTonightEvents,
-  venueKicker,
-  isHsAthleticsEventSource,
-} from "@/lib/events";
+import { venueKicker } from "@/lib/events";
+import { getEventsSnapshot } from "@/lib/public-snapshots";
 import type { EventItem } from "@/lib/types";
 import { GOING_OUT } from "@/lib/useful-local";
 import Link from "next/link";
@@ -21,8 +13,6 @@ export const dynamic = "force-dynamic";
 export const metadata = {
   title: "Events",
 };
-
-const HORIZON_DAYS = 12;
 
 function groupByDay(
   events: EventItem[],
@@ -46,7 +36,6 @@ function groupByDay(
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([key, items]) => {
       const sorted = [...items].sort((a, b) => {
-        // Timed first, then date-only; both chronological.
         if (Boolean(a.time_unknown) !== Boolean(b.time_unknown)) {
           return a.time_unknown ? 1 : -1;
         }
@@ -100,30 +89,10 @@ function featuredMeta(event: EventItem): string {
 }
 
 export default async function WhatsOnPage() {
-  const data = await getAppData();
-  const all = data.events;
-  const now = new Date();
-
-  // Peach band: next 3 TIMED nights-out only — never date-only Opera as noon.
-  const featured = selectTonightEvents(all, data.sources, {
-    now,
-    limit: 3,
-    horizonDays: HORIZON_DAYS,
-    maxPerSource: 2,
-    timedOnly: true,
-  });
-
-  const upcoming = dedupeEvents(all).filter(
-    (e) =>
-      !isHsAthleticsEventSource(e.source_id) &&
-      eventInUpcomingWindow(e, now, {
-        horizonMs: HORIZON_DAYS * 24 * 60 * 60 * 1000,
-      }) &&
-      !isCivicEvent(e, data.sources) &&
-      !looksLikeLowValueListing(e.title),
-  );
-  const byDay = groupByDay(upcoming);
-  const todayKey = detroitDayKey(now);
+  const snap = await getEventsSnapshot();
+  const featured = snap.featured;
+  const byDay = groupByDay(snap.upcoming);
+  const todayKey = detroitDayKey(new Date());
 
   return (
     <PublicShell active="/whats-on" header="compact">

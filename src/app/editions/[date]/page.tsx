@@ -9,7 +9,7 @@ import {
   formatEditionLabel,
   isValidEditionDate,
 } from "@/lib/editions";
-import { getEdition } from "@/lib/data/store";
+import { getEditionsSnapshot } from "@/lib/public-snapshots";
 import type { ClusteredStory, EventItem } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -25,7 +25,8 @@ export async function generateMetadata({ params }: Props) {
 export default async function EditionPage({ params }: Props) {
   const { date } = await params;
   if (!isValidEditionDate(date)) notFound();
-  const edition = await getEdition(date);
+  const snap = await getEditionsSnapshot();
+  const edition = snap.editions.find((e) => e.date === date);
   if (!edition) notFound();
 
   const lead = edition.lead

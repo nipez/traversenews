@@ -4,12 +4,13 @@ import { PublicShell } from "@/components/PublicShell";
 import {
   groupAthleticsByDay,
   isVarsityGameTitle,
-  selectThisWeekAthletics,
 } from "@/lib/athletics";
 import { formatBayDay, formatEventWhenParts } from "@/lib/dates";
-import { getAppData } from "@/lib/data/store";
 import { isRecordEagleStory } from "@/lib/paywall";
-import { selectSportsStories, type SportsStory } from "@/lib/sports";
+import {
+  getSportsSnapshot,
+  type PublicSportsStoryCard,
+} from "@/lib/public-snapshots";
 import type { AthleticsGame } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -107,7 +108,7 @@ function ThisWeekSlate({ games }: { games: AthleticsGame[] }) {
   );
 }
 
-function SportsList({ items }: { items: SportsStory[] }) {
+function SportsList({ items }: { items: PublicSportsStoryCard[] }) {
   if (items.length === 0) {
     return (
       <p className="sports-empty">
@@ -142,17 +143,9 @@ function SportsList({ items }: { items: SportsStory[] }) {
 }
 
 export default async function SportsPage() {
-  const data = await getAppData();
-  const weekGames = selectThisWeekAthletics(data.athletics ?? []);
-  const all = selectSportsStories(data.stories, data.sources, { limit: 40 });
-  const seen = new Set<string>();
-  const unique: typeof all = [];
-  for (const item of all) {
-    const key = item.title.trim().toLowerCase();
-    if (seen.has(key)) continue;
-    seen.add(key);
-    unique.push(item);
-  }
+  const snap = await getSportsSnapshot();
+  const weekGames = snap.weekGames;
+  const unique = snap.stories;
   const varsity = unique.filter((s) => s.beat_id === "beat_sports");
   const prepOnly = unique.filter((s) => s.beat_id === "beat_hs_sports");
   const showHsSubhead = varsity.length > 0 && prepOnly.length > 0;

@@ -5,17 +5,17 @@ import { MorningScanSignup } from "@/components/MorningScanSignup";
 import { TipsForm } from "@/components/TipsForm";
 import { TonightBlock } from "@/components/TonightBlock";
 import { formatStoryDateline } from "@/lib/dates";
-import { selectAroundTheBay } from "@/lib/around";
-import { getAppData, getOriginalBySlug } from "@/lib/data/store";
-import { selectTonightEvents } from "@/lib/events";
-import { civicEvents } from "@/lib/queries";
-import { clusterStories } from "@/lib/pull/cluster";
+import {
+  getHomeSnapshot,
+  getOriginalsSnapshot,
+  homeRailFromSnapshot,
+  type PublicOriginalCard,
+} from "@/lib/public-snapshots";
 import { sourceLinksFromUrls } from "@/lib/source-links";
 import { PUBLIC_ORIGINAL_BYLINE } from "@/lib/originals";
 import {
   isQuotedParagraph,
   readTimeMinutes,
-  storySectionLabel,
   stripOuterQuotes,
 } from "@/lib/story-display";
 
@@ -23,9 +23,14 @@ export const dynamic = "force-dynamic";
 
 type Props = { params: Promise<{ slug: string }> };
 
+async function loadOriginal(slug: string): Promise<PublicOriginalCard | null> {
+  const snap = await getOriginalsSnapshot();
+  return snap.bySlug[slug] ?? null;
+}
+
 export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
-  const story = await getOriginalBySlug(slug);
+  const story = await loadOriginal(slug);
   if (!story) return { title: "Story" };
   return {
     title: story.title,
@@ -36,36 +41,18 @@ export async function generateMetadata({ params }: Props) {
 
 export default async function StoryPage({ params }: Props) {
   const { slug } = await params;
-  const story = await getOriginalBySlug(slug);
+  const story = await loadOriginal(slug);
   if (!story) notFound();
 
-  const data = await getAppData();
-  const civic = civicEvents(data.events, data.sources).slice(0, 4);
-  // Concerts / markets only — same featured pool as Events, never HS athletics.
-  const tonight = selectTonightEvents(data.events, data.sources, {
-    limit: 4,
-    horizonDays: 12,
-    maxPerSource: 2,
-    timedOnly: true,
-  });
-  const also = selectAroundTheBay(
-    clusterStories(data.stories, data.sources).filter((c) => !c.is_original),
-    { limit: 5, maxPerSource: 2, maxSports: 2, maxRecordEagle: 1 },
-  );
+  // Rail + also-covered from home snapshot (second thin get — no full store).
+  const home = await getHomeSnapshot();
+  const { civic, tonight, also } = homeRailFromSnapshot(home);
 
   const paragraphs = (story.body ?? "").split(/\n\n+/).filter(Boolean);
-  const section = storySectionLabel(story, data.sources, data.beats);
+  const section = story.section;
   const readMins = readTimeMinutes(story.body);
   const dateline = formatStoryDateline(story.published_at);
-
-  const draft = data.drafts.find(
-    (d) =>
-      d.published_story_id === story.id ||
-      (d.slug != null && d.slug === story.slug),
-  );
-  const sourceLinks = sourceLinksFromUrls(
-    story.source_urls?.length ? story.source_urls : draft?.source_urls,
-  );
+  const sourceLinks = sourceLinksFromUrls(story.source_urls);
 
   const captionParts = [story.image_caption, story.image_credit]
     .map((p) => p?.trim())
@@ -75,7 +62,6 @@ export default async function StoryPage({ params }: Props) {
   return (
     <PublicShell active="/" header="compact">
       <div className="story-page">
-        {/* Full-bleed hed — wide above the two columns */}
         <header className="story-hero">
           <div className="lead-kicker-row">
             <span className="lead-sq" aria-hidden />
@@ -164,7 +150,6 @@ export default async function StoryPage({ params }: Props) {
             <div className="story-rail-card story-rail-email">
               <MorningScanSignup variant="teal" />
             </div>
-            {/* Reserved for ads later — no fake sponsors. */}
             <div className="story-ad-well" aria-hidden="true">
               <p className="story-ad-label">Advertising</p>
               <p className="story-ad-hint">Reserved</p>

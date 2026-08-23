@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { PublicShell } from "@/components/PublicShell";
-import { listEmailEditions } from "@/lib/data/store";
 import { formatEmailEditionLabel } from "@/lib/email-editions";
+import { getEmailArchiveSnapshot } from "@/lib/public-snapshots";
 
 export const dynamic = "force-dynamic";
 
@@ -10,7 +10,8 @@ export const metadata = {
 };
 
 export default async function EmailArchivePage() {
-  const editions = await listEmailEditions();
+  const snap = await getEmailArchiveSnapshot();
+  const editions = snap.letters;
 
   return (
     <PublicShell active="/" header="compact">

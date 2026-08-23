@@ -2,8 +2,7 @@ import Image from "next/image";
 import { MorningScanSignup } from "@/components/MorningScanSignup";
 import { PublicShell } from "@/components/PublicShell";
 import { formatCivicDate, formatEventWhenParts } from "@/lib/dates";
-import { getAppData } from "@/lib/data/store";
-import { civicEvents } from "@/lib/queries";
+import { getCivicSnapshot } from "@/lib/public-snapshots";
 import type { EventItem } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -43,8 +42,8 @@ function withMonthHeadings(events: EventItem[]): CivicRow[] {
 }
 
 export default async function CivicPage() {
-  const data = await getAppData();
-  const events = civicEvents(data.events, data.sources);
+  const snap = await getCivicSnapshot();
+  const events = snap.events;
   const rows = withMonthHeadings(events);
 
   return (

@@ -23,7 +23,6 @@ export default async function EditSourcePage({ params }: Props) {
   for (const card of [
     ...(homepage.lead ? [homepage.lead] : []),
     ...homepage.around,
-    ...homepage.moreFromUs,
   ]) {
     if (card.url) homepageStoryUrls.add(card.url);
     homepageStoryIds.add(card.id);

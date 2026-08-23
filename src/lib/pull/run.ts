@@ -5,6 +5,7 @@ import {
   replacePulledStories,
   saveStore,
   snapshotTodaysEdition,
+  withSkippedPublicSnapshots,
 } from "@/lib/data/store";
 import { isInventedStory, keepRealOriginals } from "@/lib/data/scrub";
 import { pullHtmlEvents } from "@/lib/pull/html-events";
@@ -32,6 +33,21 @@ const HTML_EVENT_SOURCE_IDS = new Set([
 ]);
 
 export async function runPull(): Promise<PullResult> {
+  return withSkippedPublicSnapshots(async () => {
+    const result = await runPullInner();
+    // One snapshot rebuild after the whole pull (not per intermediate save).
+    try {
+      const store = await loadStore();
+      const { writeAllPublicSnapshots } = await import("@/lib/public-snapshots");
+      await writeAllPublicSnapshots(store);
+    } catch {
+      // Best-effort — pull already persisted app_data.
+    }
+    return result;
+  });
+}
+
+async function runPullInner(): Promise<PullResult> {
   const data = await loadStore();
   const enabled = data.sources.filter((s) => s.enabled);
   const errors: Array<{ source: string; error: string }> = [];

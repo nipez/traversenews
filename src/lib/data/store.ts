@@ -35,7 +35,25 @@ import { stableEventId } from "@/lib/events";
 
 const globalStore = globalThis as typeof globalThis & {
   __traverseStore?: AppData;
+  __traverseSkipPublicSnapshots?: number;
 };
+
+/**
+ * Batch desk/cron writes without rebuilding public snapshots on every
+ * intermediate saveStore. Caller must rebuild once afterward.
+ */
+export async function withSkippedPublicSnapshots<T>(
+  fn: () => Promise<T>,
+): Promise<T> {
+  globalStore.__traverseSkipPublicSnapshots =
+    (globalStore.__traverseSkipPublicSnapshots ?? 0) + 1;
+  try {
+    return await fn();
+  } finally {
+    globalStore.__traverseSkipPublicSnapshots =
+      (globalStore.__traverseSkipPublicSnapshots ?? 1) - 1;
+  }
+}
 
 function cloneSeed(): AppData {
   return structuredClone(createSeedData());
@@ -235,6 +253,8 @@ export async function loadStore(): Promise<AppData> {
 /**
  * Persist to KV when bound (Workers / wrangler preview). Always update memory.
  * Also writes `.data/store.json` during local Node/`next dev` when possible.
+ * After a successful write, rebuilds compact public page snapshots so visitor
+ * GETs never re-cluster the full store.
  */
 export async function saveStore(data: AppData): Promise<void> {
   globalStore.__traverseStore = data;
@@ -244,6 +264,14 @@ export async function saveStore(data: AppData): Promise<void> {
   } else {
     // Keep a local copy when developing against remote/preview bindings.
     await writeLocalFileStore(data);
+  }
+  try {
+    if (!(globalStore.__traverseSkipPublicSnapshots ?? 0)) {
+      const { writeAllPublicSnapshots } = await import("@/lib/public-snapshots");
+      await writeAllPublicSnapshots(data);
+    }
+  } catch {
+    // Snapshot rebuild is best-effort — never fail a Desk save over cache.
   }
 }
 
