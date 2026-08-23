@@ -46,8 +46,9 @@ function ThisWeekSlate({ games }: { games: AthleticsGame[] }) {
     <section className="sports-week" aria-label="This week">
       <h2 className="sports-week-hed">This week</h2>
       <p className="sports-week-dek">
-        Traverse City Central, West, St. Francis, and TC Christian — from the
-        athletics calendars. Links out; we do not invent kickoffs.
+        Greater bay prep — Central, West, St. Francis, TC Christian, Elk
+        Rapids, Suttons Bay, Leland, Glen Lake, Kingsley. Links out; we do not
+        invent kickoffs.
       </p>
       {days.length === 0 ? (
         <p className="sports-week-empty">No games on the calendar this week.</p>
@@ -165,8 +166,8 @@ export default async function SportsPage() {
             <h1 className="sports-hed">Sports</h1>
             <p className="sports-dek">
               Headlines from 9&amp;10 Sports, Record-Eagle Sports, and local
-              prep. They link out — we do not reprint game stories or invent
-              scores.
+              prep across the greater bay. They link out — we do not reprint
+              game stories or invent scores.
             </p>
           </header>
 

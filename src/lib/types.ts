@@ -93,8 +93,8 @@ export type EventItem = {
 };
 
 /**
- * HS athletics slate (TC Central / TC West). Stored separately from `events`
- * so a season calendar cannot balloon /whats-on or 503 the Worker.
+ * HS athletics slate for Sports This week (greater bay).
+ * Stored separately from `events` so a season calendar cannot balloon /whats-on.
  */
 export type AthleticsGame = {
   id: string;
@@ -103,8 +103,24 @@ export type AthleticsGame = {
   place: string;
   url: string | null;
   source_id: string;
-  /** Display label: Central or West. */
+  /** Display label: Central, West, Elk Rapids, etc. */
   school: string;
+  time_unknown?: boolean;
+};
+
+/**
+ * District academic calendar rows for /schools (no-school, half days, breaks).
+ * Never mixed into Events or Civic.
+ */
+export type SchoolCalendarItem = {
+  id: string;
+  title: string;
+  starts_at: string;
+  place: string;
+  url: string | null;
+  source_id: string;
+  /** District label, e.g. TCAPS, Elk Rapids. */
+  district: string;
   time_unknown?: boolean;
 };
 
@@ -213,10 +229,15 @@ export type AppData = {
   stories: Story[];
   events: EventItem[];
   /**
-   * HS athletics games (Central / West / St. Francis / TC Christian).
-   * Not EventItems — never mix into Tonight / What's on / civic.
+   * HS athletics games (greater bay). Not EventItems — never mix into
+   * Tonight / What's on / civic.
    */
   athletics: AthleticsGame[];
+  /**
+   * District academic calendars for /schools. Not EventItems — never mix
+   * into Tonight / What's on / civic.
+   */
+  schools: SchoolCalendarItem[];
   subscribers: Subscriber[];
   last_pull_at: string | null;
   editions: EditionSnapshot[];

@@ -115,6 +115,11 @@ const SPORTS_SOURCE_IDS = new Set([
   "src_tcw_ath",
   "src_tcsf_ath",
   "src_tcch_ath",
+  "src_elk_ath",
+  "src_suttons_ath",
+  "src_leland_ath",
+  "src_glenlake_ath",
+  "src_kingsley_ath",
 ]);
 
 /** Prefer these free desks for Around the bay (not Record-Eagle). */

@@ -8,6 +8,7 @@ import {
   upsertEmailEdition,
 } from "@/lib/email-editions";
 import { sanitizeStoredAthletics } from "@/lib/athletics";
+import { sanitizeStoredSchools } from "@/lib/schools";
 import { dedupeEvents, sanitizeStoredEvents } from "@/lib/events";
 import {
   DEFAULT_ORIGINAL_BYLINE,
@@ -21,6 +22,7 @@ import type {
   EmailEditionSnapshot,
   EventItem,
   OriginalDraft,
+  SchoolCalendarItem,
   Source,
   Story,
   Subscriber,
@@ -50,6 +52,9 @@ function normalizeAppData(data: AppData): { data: AppData; scrubbed: boolean } {
   }
   if (!Array.isArray(data.athletics)) {
     data.athletics = [];
+  }
+  if (!Array.isArray(data.schools)) {
+    data.schools = [];
   }
   if (!Array.isArray(data.email_editions)) {
     data.email_editions = [];
@@ -334,6 +339,33 @@ export async function replaceAthleticsGames(
     ...kept,
     ...incoming.values(),
   ]).games;
+  await saveStore(data);
+}
+
+/**
+ * Replace district school-calendar rows for the given sources.
+ * Never writes into `events`.
+ */
+export async function replaceSchoolCalendarItems(
+  items: SchoolCalendarItem[],
+  pulledSourceIds?: string[],
+): Promise<void> {
+  const data = await loadStore();
+  if (!Array.isArray(data.schools)) data.schools = [];
+  const sourceIds = new Set(
+    pulledSourceIds && pulledSourceIds.length > 0
+      ? pulledSourceIds
+      : items.map((g) => g.source_id),
+  );
+  const kept = data.schools.filter((g) => !sourceIds.has(g.source_id));
+  const incoming = new Map<string, SchoolCalendarItem>();
+  for (const item of items) {
+    incoming.set(item.id, item);
+  }
+  data.schools = sanitizeStoredSchools([
+    ...kept,
+    ...incoming.values(),
+  ]).items;
   await saveStore(data);
 }
 

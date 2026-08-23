@@ -1,5 +1,6 @@
 import type { AppData, EditionSnapshot, EditionStoryCard, Story } from "@/lib/types";
 import { sanitizeStoredAthletics } from "@/lib/athletics";
+import { sanitizeStoredSchools } from "@/lib/schools";
 import { sanitizeStoredEvents } from "@/lib/events";
 
 /** Invented seed copy that must never appear as reporting. See README → Editorial. */
@@ -144,6 +145,19 @@ export function scrubAppData(data: AppData): { data: AppData; changed: boolean }
       data.athletics = ath.games;
     } else {
       data.athletics = ath.games;
+    }
+  }
+
+  if (!Array.isArray(data.schools)) {
+    data.schools = [];
+    changed = true;
+  } else {
+    const sch = sanitizeStoredSchools(data.schools);
+    if (sch.changed) {
+      changed = true;
+      data.schools = sch.items;
+    } else {
+      data.schools = sch.items;
     }
   }
 

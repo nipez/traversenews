@@ -1483,7 +1483,7 @@ a:hover {
   bottom: 0;
   z-index: 40;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   background: var(--ink);
   border-top: 1px solid var(--ink);
 }
@@ -1946,7 +1946,7 @@ a:hover {
 
 .sports-week-link {
   display: grid;
-  grid-template-columns: 4.5rem 5.75rem 1fr;
+  grid-template-columns: 4.5rem 6.5rem 1fr;
   grid-template-rows: auto auto;
   column-gap: 0.65rem;
   row-gap: 0.15rem;
@@ -1960,7 +1960,7 @@ a:hover {
 
 @media (max-width: 560px) {
   .sports-week-link {
-    grid-template-columns: 3.75rem 4.75rem 1fr;
+    grid-template-columns: 3.75rem 5.25rem 1fr;
   }
 }
 
@@ -2340,6 +2340,167 @@ a:hover {
 }
 
 .site-shell:has(.story-page) .stage {
+  background-color: #f4edde;
+  color-scheme: only light;
+}
+
+/* ——— Schools (district academic calendars) ——— */
+.schools-main {
+  max-width: none;
+}
+
+.schools-hero {
+  margin-bottom: 2rem;
+}
+
+.schools-kicker {
+  margin: 0;
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #2a6f6c;
+}
+
+.schools-hed {
+  margin: 8px 0 0;
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-weight: 900;
+  font-size: 56px;
+  line-height: 0.92;
+  letter-spacing: -0.045em;
+  color: #1c1712;
+}
+
+@media (min-width: 768px) {
+  .schools-hed {
+    font-size: 80px;
+  }
+}
+
+.schools-dek {
+  margin: 14px 0 0;
+  max-width: 36rem;
+  font-family: var(--font-source-serif), Georgia, serif;
+  font-size: 18px;
+  line-height: 1.4;
+  color: #52493c;
+}
+
+.schools-empty {
+  margin: 0;
+  padding: 1.25rem 0;
+  border-top: 2px solid #1c1712;
+  font-family: var(--font-source-serif), Georgia, serif;
+  font-size: 1rem;
+  color: #7a7060;
+}
+
+.schools-months {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.schools-month-hed {
+  margin: 0 0 0.75rem;
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-size: 1.1rem;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  color: #1c1712;
+  border-bottom: 2px solid #1c1712;
+  padding-bottom: 0.4rem;
+}
+
+.schools-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.schools-row {
+  display: grid;
+  grid-template-columns: 4.25rem 1fr auto;
+  gap: 0.85rem;
+  align-items: start;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid #c8ba9a;
+}
+
+.schools-datebox {
+  border: 1px solid #1c1712;
+  background: #f4edde;
+  text-align: center;
+  padding: 0.35rem 0.2rem;
+  color-scheme: only light;
+}
+
+.schools-datebox-dow {
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #2a6f6c;
+}
+
+.schools-datebox-day {
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-size: 1.25rem;
+  font-weight: 900;
+  line-height: 1;
+  color: #1c1712;
+}
+
+.schools-datebox-month {
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #7a7060;
+}
+
+.schools-district {
+  margin: 0;
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #2a6f6c;
+}
+
+.schools-title {
+  margin: 0.15rem 0 0;
+  font-family: var(--font-source-serif), Georgia, serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: #1c1712;
+}
+
+.schools-title a:hover {
+  color: #2a6f6c;
+  text-decoration: underline;
+}
+
+.schools-place {
+  margin: 0.2rem 0 0;
+  font-size: 0.8rem;
+  color: #7a7060;
+}
+
+.schools-time {
+  margin: 0;
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #1c1712;
+  white-space: nowrap;
+}
+
+.site-shell:has(.schools-layout) .stage {
   background-color: #f4edde;
   color-scheme: only light;
 }

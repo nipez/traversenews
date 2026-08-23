@@ -30,11 +30,28 @@ export type AthleticsImportResult = {
 };
 
 export function schoolFromSourceId(sourceId: string): string {
-  if (sourceId === "src_tcc_ath") return "Central";
-  if (sourceId === "src_tcw_ath") return "West";
-  if (sourceId === "src_tcsf_ath") return "St. Francis";
-  if (sourceId === "src_tcch_ath") return "TC Christian";
-  return "Prep";
+  switch (sourceId) {
+    case "src_tcc_ath":
+      return "Central";
+    case "src_tcw_ath":
+      return "West";
+    case "src_tcsf_ath":
+      return "St. Francis";
+    case "src_tcch_ath":
+      return "TC Christian";
+    case "src_elk_ath":
+      return "Elk Rapids";
+    case "src_suttons_ath":
+      return "Suttons Bay";
+    case "src_leland_ath":
+      return "Leland";
+    case "src_glenlake_ath":
+      return "Glen Lake";
+    case "src_kingsley_ath":
+      return "Kingsley";
+    default:
+      return "Prep";
+  }
 }
 
 export function stableAthleticsId(sourceId: string, uid: string): string {
@@ -155,8 +172,8 @@ export function groupAthleticsByDay(
 
 /**
  * Normalize browser-pulled athletics rows. Never invents games.
- * Only HS athletics source_ids (Central, West, St. Francis, TC Christian).
- * Everything else is skipped — never invents games.
+ * Only HS athletics source_ids (greater bay). Everything else is skipped.
+ * tcctrojans.net calendars map to src_tcc_ath (Central).
  */
 export function normalizeImportedAthletics(
   rows: AthleticsImportRow[],
@@ -180,7 +197,7 @@ export function normalizeImportedAthletics(
       skipped.push({
         index,
         reason:
-          "Missing source_id (src_tcc_ath|src_tcw_ath|src_tcsf_ath|src_tcch_ath)",
+          "Missing source_id (src_tcc_ath|src_tcw_ath|… greater-bay athletics)",
       });
       return;
     }

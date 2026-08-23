@@ -66,6 +66,16 @@ export function DeskRail({
             </Link>
           </li>
           <li>
+            <Link
+              href="/schools"
+              className={
+                active === "/schools" ? "about-rail-nav-active" : undefined
+              }
+            >
+              Schools
+            </Link>
+          </li>
+          <li>
             <Link href="/#alerts">Alerts</Link>
           </li>
           <li>

@@ -1,23 +1,22 @@
 import { NextResponse } from "next/server";
 import { isDeskRequestAuthed } from "@/lib/auth";
 import {
+  ATHLETICS_SOURCE_IDS,
   normalizeImportedAthletics,
   type AthleticsImportRow,
 } from "@/lib/athletics";
 import { getAppData, replaceAthleticsGames } from "@/lib/data/store";
 
 /**
- * Accept browser-pulled HS athletics games (TC Central / TC West).
- * Stored on AppData.athletics — NEVER written into events (that 503'd the Worker).
+ * Accept browser-pulled HS athletics games (greater bay).
+ * Stored on AppData.athletics — NEVER written into events.
  *
  * Body: {
- *   games: [{ title, starts_at, place?, url?, source_id: src_tcc_ath|src_tcw_ath|src_tcsf_ath|src_tcch_ath, school? }],
- *   replace?: true,
- *   clear?: true,
- *   source_id?
+ *   games: [{ title, starts_at, place?, url?, source_id, school? }],
+ *   replace?: true, clear?: true, source_id?
  * }
  * Naive starts_at = America/Detroit. Soft cap ~80. Never invents games.
- * Auth: Desk cookie OR Authorization: Bearer <DESK_IMPORT_TOKEN|DEV_DESK_PASSWORD>
+ * Auth: Desk cookie OR Authorization: Bearer desk
  */
 export async function POST(request: Request) {
   if (!(await isDeskRequestAuthed(request))) {
@@ -32,7 +31,6 @@ export async function POST(request: Request) {
     clear?: boolean;
   } | null;
 
-  // Accept `games` (preferred) or `events` alias so packs aren't rejected for naming.
   const rows = Array.isArray(body?.games)
     ? body!.games
     : Array.isArray(body?.events)
@@ -61,7 +59,7 @@ export async function POST(request: Request) {
         {
           error: "No valid athletics games to import",
           skipped,
-          hint: "Each row needs title, starts_at, and source_id src_tcc_ath|src_tcw_ath|src_tcsf_ath|src_tcch_ath. Do not invent games.",
+          hint: "Each row needs title, starts_at, and an HS athletics source_id. Do not invent games.",
         },
         { status: 400 },
       );
@@ -69,9 +67,7 @@ export async function POST(request: Request) {
     if (body.replace !== false && body.clear === true) {
       const target =
         (typeof body.source_id === "string" && body.source_id.trim()) || "";
-      const targets = target
-        ? [target]
-        : ["src_tcc_ath", "src_tcw_ath", "src_tcsf_ath", "src_tcch_ath"];
+      const targets = target ? [target] : [...ATHLETICS_SOURCE_IDS];
       await replaceAthleticsGames([], targets);
       return NextResponse.json({
         ok: true,

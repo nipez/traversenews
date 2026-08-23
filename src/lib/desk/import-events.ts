@@ -3,7 +3,7 @@ import {
   isDateOnlyStartsAt,
   parseEventStartsAt,
 } from "@/lib/dates";
-import { isHsAthleticsEventSource, stableEventId } from "@/lib/events";
+import { isHsAthleticsEventSource, isSchoolCalendarSource, stableEventId } from "@/lib/events";
 import type { EventItem, Source } from "@/lib/types";
 
 export type EventImportRow = {
@@ -89,7 +89,15 @@ export function normalizeImportedEvents(
       skipped.push({
         index,
         reason:
-          "HS athletics calendars are Sports wire, not Events — do not import games as EventItem rows",
+          "HS athletics calendars are Sports wire, not Events — POST /api/desk/athletics/import",
+      });
+      return;
+    }
+    if (isSchoolCalendarSource(sourceId)) {
+      skipped.push({
+        index,
+        reason:
+          "District school calendars are /schools, not Events — POST /api/desk/schools/import",
       });
       return;
     }
