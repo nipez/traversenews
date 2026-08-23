@@ -2,9 +2,11 @@ import { notFound } from "next/navigation";
 import { PublicShell } from "@/components/PublicShell";
 import { CivicList } from "@/components/CivicList";
 import { MorningScanSignup } from "@/components/MorningScanSignup";
+import { TonightBlock } from "@/components/TonightBlock";
 import { formatStoryDateline } from "@/lib/dates";
 import { selectAroundTheBay } from "@/lib/around";
 import { getAppData, getOriginalBySlug } from "@/lib/data/store";
+import { selectTonightEvents } from "@/lib/events";
 import { civicEvents } from "@/lib/queries";
 import { clusterStories } from "@/lib/pull/cluster";
 import { sourceLinksFromUrls } from "@/lib/source-links";
@@ -33,9 +35,16 @@ export default async function StoryPage({ params }: Props) {
 
   const data = await getAppData();
   const civic = civicEvents(data.events, data.sources).slice(0, 4);
+  // Concerts / markets only — same featured pool as Events, never HS athletics.
+  const tonight = selectTonightEvents(data.events, data.sources, {
+    limit: 4,
+    horizonDays: 12,
+    maxPerSource: 2,
+    timedOnly: true,
+  });
   const also = selectAroundTheBay(
     clusterStories(data.stories, data.sources).filter((c) => !c.is_original),
-    { limit: 5, maxPerSource: 2 },
+    { limit: 5, maxPerSource: 2, maxSports: 2, maxRecordEagle: 1 },
   );
 
   const paragraphs = (story.body ?? "").split(/\n\n+/).filter(Boolean);
@@ -59,8 +68,9 @@ export default async function StoryPage({ params }: Props) {
 
   return (
     <PublicShell active="/" header="compact">
-      <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_280px]">
-        <article className="min-w-0">
+      <div className="story-page">
+        {/* Full-bleed hed — wide above the two columns */}
+        <header className="story-hero">
           <div className="lead-kicker-row">
             <span className="lead-sq" aria-hidden />
             <p className="lead-kicker">
@@ -68,117 +78,126 @@ export default async function StoryPage({ params }: Props) {
               traverse.news reporting
             </p>
           </div>
-          <h1 className="mt-3 font-display text-[2rem] leading-[1.05] font-black tracking-tight text-ink md:text-[2.75rem]">
-            {story.title}
-          </h1>
-          {story.dek ? (
-            <p className="mt-4 max-w-2xl font-serif text-lg leading-relaxed text-muted-2">
-              {story.dek}
-            </p>
-          ) : null}
-          <p className="lead-byline mt-4">
-            By <strong className="text-ink">{story.byline ?? "Desk"}</strong>
+          <h1 className="story-hed">{story.title}</h1>
+          {story.dek ? <p className="story-dek">{story.dek}</p> : null}
+          <p className="lead-byline story-byline">
+            By <strong>{story.byline ?? "Desk"}</strong>
             {" · "}
             {dateline}
             {readMins ? ` · ${readMins} min read` : null}
           </p>
+        </header>
 
-          {story.image_url ? (
-            <figure className="mt-6 max-w-2xl">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={story.image_url}
-                alt=""
-                className="w-full border border-ink"
-              />
-              {captionLine ? (
-                <figcaption className="mt-2 text-sm text-muted">
-                  {captionLine}
-                </figcaption>
-              ) : null}
-            </figure>
-          ) : null}
+        <div className="story-layout">
+          <article className="story-main">
+            {story.image_url ? (
+              <figure className="story-figure">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={story.image_url}
+                  alt=""
+                  className="story-figure-img"
+                />
+                {captionLine ? (
+                  <figcaption className="story-figure-cap">
+                    {captionLine}
+                  </figcaption>
+                ) : null}
+              </figure>
+            ) : null}
 
-          <div className="prose-article mt-8 max-w-2xl">
-            {paragraphs.map((p) =>
-              isQuotedParagraph(p) ? (
-                <blockquote key={p.slice(0, 40)} className="pull-quote">
-                  {stripOuterQuotes(p)}
-                </blockquote>
-              ) : (
-                <p key={p.slice(0, 40)}>{p}</p>
-              ),
-            )}
-          </div>
+            <div className="prose-article story-prose">
+              {paragraphs.map((p) =>
+                isQuotedParagraph(p) ? (
+                  <blockquote key={p.slice(0, 40)} className="pull-quote">
+                    {stripOuterQuotes(p)}
+                  </blockquote>
+                ) : (
+                  <p key={p.slice(0, 40)}>{p}</p>
+                ),
+              )}
+            </div>
 
-          {sourceLinks.length > 0 ? (
-            <section className="mt-10 max-w-2xl border-t border-rule pt-6">
-              <h2 className="font-serif text-xl text-ink">From the local record</h2>
-              <ul className="mt-3 space-y-2">
-                {sourceLinks.map((link) => (
-                  <li key={link.url} className="text-sm">
-                    <span className="font-semibold text-ink">{link.name}</span>
-                    {" · "}
-                    <a
-                      href={link.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-teal break-all hover:underline"
-                    >
-                      {link.url.replace(/^https?:\/\//, "").replace(/\/$/, "")}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ) : null}
+            {sourceLinks.length > 0 ? (
+              <section className="story-record">
+                <h2 className="story-record-hed">From the local record</h2>
+                <ul className="story-record-list">
+                  {sourceLinks.map((link) => (
+                    <li key={link.url}>
+                      <span className="story-record-name">{link.name}</span>
+                      {" · "}
+                      <a
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="story-record-url"
+                      >
+                        {link.url
+                          .replace(/^https?:\/\//, "")
+                          .replace(/\/$/, "")}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ) : null}
 
-          <div className="mt-10 max-w-2xl border border-ink p-4">
-            <p className="text-[0.65rem] font-extrabold tracking-[0.1em] text-muted uppercase">
-              Corrections & tips
-            </p>
-            <p className="mt-2 font-serif text-sm text-muted-2">
-              Spot an error?{" "}
-              <a className="font-bold text-teal" href="mailto:nick@traverse.news">
-                nick@traverse.news
-              </a>
-            </p>
-          </div>
-        </article>
+            <div className="story-tips">
+              <p className="story-tips-kicker">Corrections & tips</p>
+              <p className="story-tips-copy">
+                Spot an error?{" "}
+                <a href="mailto:nick@traverse.news">nick@traverse.news</a>
+              </p>
+            </div>
+          </article>
 
-        <aside className="space-y-5">
-          <CivicList events={civic} showStamp linkLabel="Calendar" limit={4} />
-          <MorningScanSignup variant="teal" />
-        </aside>
-      </div>
+          <aside className="story-rail" aria-label="Alongside this story">
+            <CivicList
+              events={civic}
+              showStamp
+              linkLabel="Calendar"
+              limit={4}
+            />
+            <TonightBlock events={tonight} limit={4} showStamp />
+            <div className="story-rail-card story-rail-email">
+              <MorningScanSignup variant="teal" />
+            </div>
+            {/* Reserved for ads later — no fake sponsors. */}
+            <div className="story-ad-well" aria-hidden="true">
+              <p className="story-ad-label">Advertising</p>
+              <p className="story-ad-hint">Reserved</p>
+            </div>
+          </aside>
+        </div>
 
-      <section className="mt-14 border-t-2 border-ink pt-8">
-        <h2 className="bay-hed">Also being covered</h2>
-        <ul className="mt-4">
-          {also.map((item) => (
-            <li key={item.id} className="border-t border-rule py-4">
-              <a
-                href={item.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-serif text-lg font-semibold text-ink hover:text-teal"
-              >
-                {item.title}{" "}
-                <span className="text-muted" aria-hidden>
-                  ↗
-                </span>
-              </a>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {item.sources.map((s) => (
-                  <span key={s.id} className="source-box">
-                    {s.name}
+        <section className="story-also">
+          <h2 className="bay-hed">Also being covered</h2>
+          <ul className="story-also-list">
+            {also.map((item) => (
+              <li key={item.id} className="story-also-item">
+                <a
+                  href={item.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="story-also-link"
+                >
+                  {item.title}{" "}
+                  <span className="text-muted" aria-hidden>
+                    ↗
                   </span>
-                ))}
-              </div>
-            </li>
-          ))}
-        </ul>
-      </section>
+                </a>
+                <div className="story-also-sources">
+                  {item.sources.map((s) => (
+                    <span key={s.id} className="source-box">
+                      {s.name}
+                    </span>
+                  ))}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      </div>
     </PublicShell>
   );
 }
