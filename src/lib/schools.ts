@@ -222,6 +222,15 @@ export const SCHOOL_DISTRICT_ORDER = [
 ] as const;
 
 /**
+ * Public chip / toggle / section heading. Data keys (e.g. Grand Traverse
+ * Academy, src_gta_cal) stay unchanged so imports and JSON do not break.
+ */
+export function schoolDistrictPublicLabel(district: string): string {
+  if (district === "Grand Traverse Academy") return "GT Academy";
+  return district;
+}
+
+/**
  * Official full calendars (link out only — do not host/reprint PDFs).
  * From Traverse News district map; do not invent URLs.
  */

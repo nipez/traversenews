@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { formatCivicDate, formatEventWhenParts } from "@/lib/dates";
+import { schoolDistrictPublicLabel } from "@/lib/schools";
 import type { SchoolCalendarItem } from "@/lib/types";
 
 export type SchoolsDistrictBlock = {
@@ -76,6 +77,7 @@ export function SchoolsDistrictToggle({
       >
         {tabs.map((block) => {
           const on = block.district === selected?.district;
+          const label = schoolDistrictPublicLabel(block.district);
           return (
             <button
               key={block.district}
@@ -87,7 +89,7 @@ export function SchoolsDistrictToggle({
               }
               onClick={() => setActive(block.district)}
             >
-              {block.district}
+              {label}
             </button>
           );
         })}
@@ -97,11 +99,13 @@ export function SchoolsDistrictToggle({
         <section
           className="schools-district"
           role="tabpanel"
-          aria-label={selected.district}
+          aria-label={schoolDistrictPublicLabel(selected.district)}
         >
           <header className="schools-district-head">
             <p className="schools-district-kicker">District</p>
-            <h2 className="schools-district-hed">{selected.district}</h2>
+            <h2 className="schools-district-hed">
+              {schoolDistrictPublicLabel(selected.district)}
+            </h2>
             <p className="schools-district-meta">
               {count} important date{count === 1 ? "" : "s"}
             </p>
