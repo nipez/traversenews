@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Archivo, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
+
+/** Exact GA4 Measurement ID — do not invent a second ID. */
+const GA_MEASUREMENT_ID = "G-H554KXZD5B";
 
 const archivo = Archivo({
   subsets: ["latin"],
@@ -40,6 +44,13 @@ export default function RootLayout({
       </head>
       <body className={`${archivo.variable} ${sourceSerif.variable} antialiased`}>
         {children}
+        <Script
+          src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
+          strategy="afterInteractive"
+        />
+        <Script id="ga4-gtag" strategy="afterInteractive">
+          {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_MEASUREMENT_ID}');`}
+        </Script>
       </body>
     </html>
   );
