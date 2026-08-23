@@ -2,6 +2,7 @@ import Link from "next/link";
 import { MorningLetter } from "@/components/MorningLetter";
 import { MorningScanSignup } from "@/components/MorningScanSignup";
 import { PublicShell } from "@/components/PublicShell";
+import { isResendConfigured } from "@/lib/email/resend";
 import { getEmailPreviewData } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
@@ -11,14 +12,19 @@ export const metadata = {
 };
 
 export default async function EmailPreviewPage() {
-  const { letter } = await getEmailPreviewData();
+  const [{ letter }, sendingLive] = await Promise.all([
+    getEmailPreviewData(),
+    isResendConfigured(),
+  ]);
 
   return (
     <PublicShell active="/" header="compact">
       <div className="mx-auto max-w-2xl">
         <div className="flex flex-wrap items-baseline justify-between gap-3">
           <p className="text-sm text-muted">
-            Preview only. Sending is not wired up yet.
+            {sendingLive
+              ? "Sending is on; mornings go out from letter@traverse.news."
+              : "Preview only. Sending is not wired up yet."}
           </p>
           <Link
             href="/email/archive"

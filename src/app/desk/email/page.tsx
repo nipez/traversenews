@@ -19,9 +19,28 @@ export default async function DeskEmailPage() {
       <div className="mx-auto max-w-3xl px-4 py-10 md:px-6">
         <h1 className="font-serif text-3xl">Email</h1>
         <p className="mt-2 text-[#444]">
-          Send pipeline comes later. Preview the morning scan, archive dated
-          letters, and collect addresses now. Do not invent a letter.
+          Resend sends the live morning letter from{" "}
+          <code className="bg-paper-2 px-1">letter@traverse.news</code>. Default
+          desk send is a single test to nickperez@gmail.com — never the full
+          list unless you pass{" "}
+          <code className="bg-paper-2 px-1">audience: subscribers</code>. Do not
+          invent a letter.
         </p>
+
+        <section className="mt-8">
+          <h2 className="font-display text-lg font-black tracking-tight">
+            Send
+          </h2>
+          <p className="mt-1 text-sm text-muted">
+            <code className="bg-paper-2 px-1">POST /api/desk/email/send</code>{" "}
+            (Bearer desk). Omit body for the nick test;{" "}
+            <code className="bg-paper-2 px-1">
+              {`{ "audience": "subscribers" }`}
+            </code>{" "}
+            for the signup list. Needs Worker secret{" "}
+            <code className="bg-paper-2 px-1">RESEND_API_KEY</code>.
+          </p>
+        </section>
 
         <section className="mt-8">
           <h2 className="font-display text-lg font-black tracking-tight">
@@ -32,8 +51,7 @@ export default async function DeskEmailPage() {
             <code className="bg-paper-2 px-1">POST /api/subscribe</code>
             {" · "}
             {subscribers.length} stored
-            {subscribers.length ? "" : " (none yet)"}. No Mailchimp export —
-            sending is not wired.
+            {subscribers.length ? "" : " (none yet)"}.
           </p>
 
           {subscribers.length === 0 ? (

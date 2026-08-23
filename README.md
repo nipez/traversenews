@@ -51,7 +51,7 @@ Public: `/`, `/whats-on`, `/civic`, `/story/[slug]`, `/email`
 
 Desk: `/desk/login`, `/desk`, `/desk/sources/new`, `/desk/sources/[id]`, `/desk/originals`, `/desk/originals/new`, `/desk/originals/[id]`, plus Queue / Email / Editions
 
-API: `POST /api/subscribe`, `GET|POST /api/pull`, Desk CRUD under `/api/desk/*` (including `/api/desk/originals`, `POST /api/desk/sources/research`, `POST /api/desk/events/import`)
+API: `POST /api/subscribe`, `GET|POST /api/pull`, Desk CRUD under `/api/desk/*` (including `/api/desk/originals`, `POST /api/desk/sources/research`, `POST /api/desk/events/import`, `POST /api/desk/email/snapshot`, `POST /api/desk/email/send`)
 
 ## Environment
 
@@ -64,6 +64,7 @@ See `.env.example`.
 | `SUPABASE_SERVICE_ROLE_KEY` | Optional admin key |
 | `DEV_DESK_PASSWORD` | Local Desk password when Supabase is unset |
 | `DEV_DESK_EMAIL` | Local Desk email |
+| `RESEND_API_KEY` | Resend sending-only key (Worker secret). From: `letter@traverse.news` |
 | `NEXT_PUBLIC_SITE_URL` | Canonical site URL |
 
 Without Supabase vars the app seeds **beats and sources** only (empty stories/events), then fills the public site from `/api/pull`. Desk edits persist to `.data/store.json` during `next dev` / Node. On Cloudflare Workers, `TRAVERSE_DATA` KV holds the durable store.
@@ -154,7 +155,10 @@ Secrets already set on the Worker for Desk demo mode: `DEV_DESK_PASSWORD`, `DEV_
 npx wrangler secret put NEXT_PUBLIC_SUPABASE_URL
 npx wrangler secret put NEXT_PUBLIC_SUPABASE_ANON_KEY
 npx wrangler secret put SUPABASE_SERVICE_ROLE_KEY
+npx wrangler secret put RESEND_API_KEY
 ```
+
+Morning letter send (Desk): `POST /api/desk/email/send` with Bearer desk. Omit body → test to `nickperez@gmail.com` only. `{ "audience": "subscribers" }` → signup list. Never blasts on deploy or cron.
 
 OpenNext deploys this app as a **Worker with static assets** (not classic Pages). Point a custom domain at the Worker in the Cloudflare dashboard when you want traverse.news on it.
 

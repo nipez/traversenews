@@ -228,7 +228,11 @@ export function MorningLetter({
           </Link>
         </p>
         <p className="mt-2 text-xs">
-          Traverse City, Michigan · Unsubscribe · Weekdays and Saturdays
+          Traverse City, Michigan ·{" "}
+          <Link href="/email#signup" className="font-bold text-teal">
+            Unsubscribe
+          </Link>{" "}
+          · Weekdays and Saturdays
           {mode === "archive" ? " · Archive copy (not sent)" : null}
         </p>
         {mode === "preview" ? (
