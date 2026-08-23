@@ -269,6 +269,14 @@ export function formatRelative(iso: string, now = new Date()): string {
   }).format(d);
 }
 
+/** Around the bay day label — always weekday short (Fri), never “15h ago”. */
+export function formatBayDay(iso: string): string {
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: DETROIT,
+    weekday: "short",
+  }).format(new Date(iso));
+}
+
 export function formatEventWhen(iso: string, now = new Date()): string {
   const parts = formatEventWhenParts(iso, now);
   return `${parts.dayLabel}, ${parts.time}`;

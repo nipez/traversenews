@@ -27,13 +27,11 @@ export default async function CivicPage() {
 
   return (
     <PublicShell active="/civic" header="compact">
-      <div className="flex items-start justify-between gap-4">
+      <div className="civic-page-head">
         <div>
-          <p className="text-[0.68rem] font-extrabold tracking-[0.16em] text-muted uppercase">
-            Agenda
-          </p>
-          <h1 className="page-hed-civic mt-2">Civic Calendar</h1>
-          <p className="mt-3 max-w-lg font-serif text-[1.05rem] text-muted-2">
+          <p className="civic-kicker">Agenda</p>
+          <h1 className="page-hed-civic">Civic Calendar</h1>
+          <p className="civic-page-dek">
             City, county, and school board meetings. Concerts and markets are on
             Events.
           </p>
@@ -41,53 +39,43 @@ export default async function CivicPage() {
         <Image
           src="/art/stamp-civic.png"
           alt=""
-          width={110}
-          height={110}
-          className="section-stamp shrink-0 sm:w-[130px] sm:h-[130px]"
+          width={130}
+          height={130}
+          className="section-stamp-lg shrink-0"
         />
       </div>
 
-      <div className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start">
-        <ul className="border-t-2 border-ink">
+      <div className="civic-page-grid">
+        <ul className="civic-agenda">
           {events.map((event) => {
             const d = formatCivicDate(event.starts_at);
             const cancelled = isCancelled(event.title);
             return (
               <li
                 key={event.id}
-                className={`grid grid-cols-[3.25rem_minmax(0,1fr)_auto] items-start gap-3 border-b border-ink/30 py-4 ${
-                  cancelled ? "cancelled" : ""
-                }`}
+                className={`civic-agenda-row ${cancelled ? "cancelled" : ""}`.trim()}
               >
                 <div className="civic-datebox">
                   <div className="civic-datebox-dow">{d.day}</div>
                   <div className="civic-datebox-day">{d.label}</div>
                 </div>
-                <div className="min-w-0">
-                  <p className="font-display text-[1.05rem] leading-snug font-bold text-ink md:text-[1.15rem]">
-                    {event.title}
-                  </p>
-                  <p className="mt-1 text-sm text-muted">{event.place}</p>
+                <div className="civic-agenda-copy">
+                  <p className="civic-agenda-title">{event.title}</p>
+                  <p className="civic-agenda-place">{event.place}</p>
                 </div>
-                <p className="pt-1 text-right text-xs font-extrabold tracking-wide text-muted-2 uppercase">
-                  {civicTime(event.starts_at)}
-                </p>
+                <p className="civic-agenda-time">{civicTime(event.starts_at)}</p>
               </li>
             );
           })}
           {events.length === 0 ? (
-            <li className="py-6 text-sm text-muted">
-              No upcoming meetings in the pull yet.
-            </li>
+            <li className="civic-empty">No upcoming meetings in the pull yet.</li>
           ) : null}
         </ul>
 
-        <aside className="space-y-5">
-          <div className="border border-ink p-4">
-            <h2 className="font-display text-sm font-extrabold tracking-[0.08em] text-ink uppercase">
-              Where this comes from
-            </h2>
-            <p className="mt-2 font-serif text-sm leading-relaxed text-muted-2">
+        <aside className="civic-page-rail">
+          <div className="civic-rail-card">
+            <h2 className="civic-rail-hed">Where this comes from</h2>
+            <p className="civic-rail-copy">
               Meeting listings are pulled from city, county, and school board
               calendars. We do not invent agendas or invent times.
             </p>

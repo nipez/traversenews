@@ -1,4 +1,4 @@
-import { formatRelative } from "@/lib/dates";
+import { formatBayDay } from "@/lib/dates";
 import type { ClusteredStory } from "@/lib/types";
 
 /** Around the bay — title first, then source pills. Real pulled stories only. */
@@ -7,7 +7,10 @@ export function AroundTheBay({ items }: { items: ClusteredStory[] }) {
 
   return (
     <section className="bay-section">
-      <h2 className="bay-hed">Around the bay</h2>
+      <div className="bay-head">
+        <h2 className="bay-hed">Around the bay</h2>
+        <p className="bay-kicker">Headlines link out — we don’t reprint</p>
+      </div>
       {shown.length === 0 ? (
         <p className="bay-empty">
           No live wire yet. Run a pull — we do not invent headlines.
@@ -22,22 +25,14 @@ export function AroundTheBay({ items }: { items: ClusteredStory[] }) {
                 rel="noopener noreferrer"
                 className="bay-item-link"
               >
-                <h3 className="bay-title">
-                  {item.title}
-                  <span className="bay-arrow" aria-hidden>
-                    {" "}
-                    ↗
-                  </span>
-                </h3>
+                <h3 className="bay-title">{item.title}</h3>
                 <div className="bay-meta">
                   {item.sources.slice(0, 2).map((s) => (
                     <span key={s.id} className="source-box">
                       {s.name}
                     </span>
                   ))}
-                  <span className="bay-rel">
-                    {formatRelative(item.published_at)}
-                  </span>
+                  <span className="bay-rel">{formatBayDay(item.published_at)}</span>
                 </div>
               </a>
             </li>

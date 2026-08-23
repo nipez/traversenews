@@ -31,6 +31,43 @@ const JUNK_PATH_MARKERS = [
   "/entertainment/horoscope",
 ];
 
+/** Civic calendar / board listings that must not appear in Around the bay. */
+const CIVIC_STORY_MARKERS = [
+  "economic development corporation",
+  "planning commission",
+  "zoning board",
+  "school board",
+  "board of commissioners",
+  "city commission",
+  "township board",
+  "county board",
+  "board study session",
+  "board curriculum",
+  "board finance",
+  "board executive",
+  "community connection event",
+];
+
+function looksLikeCivicListing(input: {
+  title: string;
+  dek?: string;
+  url: string;
+}): boolean {
+  const blob = `${input.title} ${input.dek ?? ""}`.toLowerCase();
+  if (CIVIC_STORY_MARKERS.some((m) => blob.includes(m))) return true;
+  try {
+    const u = new URL(input.url);
+    const host = u.hostname.toLowerCase();
+    const path = `${u.pathname}${u.search}`.toLowerCase();
+    if (host.includes("gtcountymi.gov") && path.includes("calendar")) return true;
+    if (path.includes("civicweb") || path.includes("/meetings/")) return true;
+    if (/eid=\d+/i.test(u.search)) return true;
+  } catch {
+    // ignore
+  }
+  return false;
+}
+
 const LOCAL_PLACE_MARKERS = [
   "traverse city",
   "grand traverse",
@@ -152,6 +189,7 @@ export function selectAroundTheBay(
     .filter((c) => !c.is_original)
     .filter((c) => !isOutletHomepageUrl(c.url))
     .filter((c) => !isLifestyleJunk(c))
+    .filter((c) => !looksLikeCivicListing(c))
     .sort((a, b) => {
       const diff = clusterScore(b) - clusterScore(a);
       if (diff !== 0) return diff;
