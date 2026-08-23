@@ -371,13 +371,13 @@ const sources: Source[] = [
   {
     id: "src_tcw_ath",
     name: "TC West Athletics",
-    homepage: "https://www.tcwathletics.com/main/calendar",
-    feed_url: "https://www.tcwathletics.com/main/calendar",
+    homepage: "https://tcwathletics.com/",
+    feed_url: "https://tcwathletics.com/main/calendar",
     pull_method: "html",
     beat_id: "beat_hs_sports",
     enabled: true,
     notes:
-      "Titans. Sports This week via POST /api/desk/athletics/import. Never import into events/KV.",
+      "Titans (tcwathletics.com, same Big Teams family as tcctrojans.net). Sports This week via POST /api/desk/athletics/import. Never invent games or import into events/KV.",
   },
   {
     id: "src_tcsf_ath",
