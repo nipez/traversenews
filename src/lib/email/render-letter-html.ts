@@ -34,8 +34,24 @@ function abs(base: string, pathOrUrl: string): string {
   return `${root}/${pathOrUrl}`;
 }
 
-function sectionHeading(emoji: string, label: string): string {
-  return `<tr><td style="padding:28px 0 10px;font-family:${FONT};font-size:15px;font-weight:700;color:${INK};line-height:1.3">${emoji}&nbsp;&nbsp;${esc(label)}</td></tr>`;
+function sectionHeading(
+  emoji: string,
+  label: string,
+  href?: string | null,
+): string {
+  const labelHtml = href
+    ? `<a href="${esc(href)}" style="color:${INK};font-weight:700;text-decoration:underline">${esc(label)}</a>`
+    : esc(label);
+  return `<tr><td style="padding:28px 0 10px;font-family:${FONT};font-size:15px;font-weight:700;color:${INK};line-height:1.3">${emoji}&nbsp;&nbsp;${labelHtml}</td></tr>`;
+}
+
+/** Linked title when we have a real URL; plain strong text otherwise. Never invents hrefs. */
+function titledLink(title: string, url: string | null | undefined, site: string): string {
+  const trimmed = typeof url === "string" ? url.trim() : "";
+  if (trimmed) {
+    return `<a href="${esc(abs(site, trimmed))}" style="color:${LINK};font-weight:700;text-decoration:underline">${esc(title)}</a>`;
+  }
+  return `<strong style="font-weight:700">${esc(title)}</strong>`;
 }
 
 function storyBlock(opts: {
@@ -144,6 +160,10 @@ export function renderMorningLetterHtml(
   const tips = abs(site, opts.tipsUrl ?? "/tips");
   const local = abs(site, opts.localUrl ?? "/local");
   const schoolsHref = abs(site, opts.schoolsUrl ?? "/schools");
+  const homeHref = abs(site, "/");
+  const whatsOnHref = abs(site, "/whats-on");
+  const civicHref = abs(site, "/civic");
+  const sportsHref = abs(site, "/sports");
 
   const rows: string[] = [];
 
@@ -173,7 +193,7 @@ export function renderMorningLetterHtml(
   }
 
   if (letter.around.length > 0) {
-    rows.push(sectionHeading("🌊", "Around the bay"));
+    rows.push(sectionHeading("🌊", "Around the bay", homeHref));
     for (const item of letter.around.slice(0, 6)) {
       const outlet = [
         item.sources.join(" · "),
@@ -207,61 +227,50 @@ export function renderMorningLetterHtml(
   }
 
   if (letter.tonight.length > 0) {
-    rows.push(sectionHeading("🌙", "Tonight / What's on"));
+    rows.push(sectionHeading("🌙", "Tonight / What's on", whatsOnHref));
     for (const e of letter.tonight) {
       const when = esc(eventWhenLabel(e.starts_at, e.time_unknown));
-      const title = e.url
-        ? `<a href="${esc(abs(site, e.url))}" style="color:${LINK};font-weight:700;text-decoration:underline">${esc(e.title)}</a>`
-        : `<strong style="font-weight:700">${esc(e.title)}</strong>`;
       rows.push(
         lineItem(
-          `<strong>${when}</strong> · ${title}${e.place ? ` · ${esc(e.place)}` : ""}`,
+          `<strong>${when}</strong> · ${titledLink(e.title, e.url, site)}${e.place ? ` · ${esc(e.place)}` : ""}`,
         ),
       );
     }
   }
 
   if (letter.civic.length > 0) {
-    rows.push(sectionHeading("🏛️", "Civic this week"));
+    rows.push(sectionHeading("🏛️", "Civic this week", civicHref));
     for (const e of letter.civic) {
       rows.push(
         lineItem(
-          `<strong>${esc(civicLabel(e.starts_at))}</strong> · ${esc(e.title)}${e.place ? ` · ${esc(e.place)}` : ""}`,
+          `<strong>${esc(civicLabel(e.starts_at))}</strong> · ${titledLink(e.title, e.url, site)}${e.place ? ` · ${esc(e.place)}` : ""}`,
         ),
       );
     }
   }
 
   if (letter.sports.length > 0) {
-    rows.push(sectionHeading("🏈", "Sports this week"));
+    rows.push(sectionHeading("🏈", "Sports this week", sportsHref));
     for (const g of letter.sports) {
       const when = esc(sportsWhenLabel(g.starts_at, g.time_unknown));
-      const title = g.url
-        ? `<a href="${esc(abs(site, g.url))}" style="color:${LINK};font-weight:700;text-decoration:underline">${esc(g.title)}</a>`
-        : `<strong style="font-weight:700">${esc(g.title)}</strong>`;
       rows.push(
-        lineItem(`<strong>${when}</strong> · ${esc(g.school)} · ${title}`),
+        lineItem(
+          `<strong>${when}</strong> · ${esc(g.school)} · ${titledLink(g.title, g.url, site)}`,
+        ),
       );
     }
   }
 
   if (letter.schools) {
-    rows.push(sectionHeading("🎒", "Schools"));
-    const beat = esc(
-      schoolsBeatLabel({
-        starts_at: letter.schools.starts_at,
-        district: letter.schools.district,
-        title: letter.schools.title,
-      }),
-    );
-    const titleBit = letter.schools.url
-      ? `<a href="${esc(abs(site, letter.schools.url))}" style="color:${LINK};font-weight:700;text-decoration:underline">${beat}</a>`
-      : `<strong style="font-weight:700">${beat}</strong>`;
-    rows.push(
-      lineItem(
-        `${titleBit}<br/><a href="${esc(schoolsHref)}" style="color:${LINK};font-size:13px;text-decoration:underline">More on /schools</a>`,
-      ),
-    );
+    rows.push(sectionHeading("🎒", "Schools", schoolsHref));
+    const beat = schoolsBeatLabel({
+      starts_at: letter.schools.starts_at,
+      district: letter.schools.district,
+      title: letter.schools.title,
+    });
+    // Prefer the item's source URL; if none, leave the beat unlinked (section head still goes to /schools).
+    const beatHtml = titledLink(beat, letter.schools.url, site);
+    rows.push(lineItem(beatHtml));
   }
 
   rows.push(`<tr><td style="padding:28px 0 0;border-top:1px solid #e5e5e5;font-family:${FONT};font-size:13px;color:${MUTED};line-height:1.6">
