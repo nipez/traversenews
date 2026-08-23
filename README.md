@@ -45,7 +45,7 @@ Public: `/`, `/whats-on`, `/civic`, `/story/[slug]`, `/email`
 
 Desk: `/desk/login`, `/desk`, `/desk/sources/new`, `/desk/sources/[id]`, `/desk/originals`, `/desk/originals/new`, `/desk/originals/[id]`, plus Queue / Email / Editions
 
-API: `POST /api/subscribe`, `GET|POST /api/pull`, Desk CRUD under `/api/desk/*` (including `/api/desk/originals`)
+API: `POST /api/subscribe`, `GET|POST /api/pull`, Desk CRUD under `/api/desk/*` (including `/api/desk/originals`, `POST /api/desk/sources/research`)
 
 ## Environment
 
@@ -184,6 +184,10 @@ Each successful `/api/pull` writes (or refreshes) today's edition snapshot in th
 4. Optional: **Generate from source** if `OPENAI_API_KEY` is configured (still review — no invented quotes).
 5. **Publish** → public `/story/[slug]` + homepage lead / More from us.
 6. **Unpublish** or delete removes it from the public site.
+
+### Smart add (sources)
+
+On `/desk` and `/desk/sources/new`: paste a URL → **Research** → review card (name, homepage, feed, method, beat, enabled, notes) → **Add source** or **Skip**. Never silent insert. Detects RSS/Atom/ICS when present; otherwise `html`. Facebook → tip wire. Duplicates flagged by host/feed.
 
 ## Product rules (v1)
 

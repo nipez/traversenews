@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { DeskChrome } from "@/components/desk/DeskChrome";
+import { SmartAddSource } from "@/components/desk/SmartAddSource";
 import { beatSourceCounts } from "@/lib/data/seed";
 import { getAppData } from "@/lib/data/store";
 
@@ -77,6 +78,10 @@ export default async function DeskSourcesPage({ searchParams }: Props) {
                 Add source
               </Link>
             </div>
+          </div>
+
+          <div className="mt-5">
+            <SmartAddSource beats={data.beats} compact />
           </div>
 
           <div className="mt-6 overflow-x-auto">
