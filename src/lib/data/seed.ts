@@ -677,12 +677,14 @@ const sources: Source[] = [
     name: "Glen Lake schools calendar",
     homepage: "https://www.glenlakeschools.org/",
     feed_url: null,
-    pull_method: "ics",
+    pull_method: "html",
     beat_id: "beat_schools",
     enabled: true,
-    calendar_url:
-      "https://www.glenlakeschools.org/documents/school/district-calendar/269495",
-    notes: "District academic calendar. /schools via POST /api/desk/schools/import.",
+    calendar_url: "https://www.glenlakeschools.org/article/2707579",
+    calendar_pdf_url:
+      "https://files-backend.assets.thrillshare.com/documents/asset/uploaded_file/2689/Glcs/f996b50e-0d7e-4fff-ab3b-6ea9f9bf78b9/2026-2027-Calendar-Final.pdf",
+    notes:
+      "Maple City / Glen Arbor / Empire. /schools via POST /api/desk/schools/import. Do not invent dates.",
   },
   {
     id: "src_kingsley_cal",
@@ -707,6 +709,117 @@ const sources: Source[] = [
     calendar_url: "https://www.tcchristian.org/parents/",
     notes:
       "Academic calendar (not athletics). /schools via POST /api/desk/schools/import.",
+  },
+  {
+    id: "src_northport_cal",
+    name: "Northport schools calendar",
+    homepage: "https://northportps.org/",
+    feed_url: null,
+    pull_method: "html",
+    beat_id: "beat_schools",
+    enabled: true,
+    calendar_url: "https://northportps.org/about-us/district-calendar/",
+    calendar_pdf_url:
+      "https://northportps-cdn.fxbrt.com/downloads/documents/2026-2027_district_calendar.pdf",
+    notes:
+      "Northport Public School. /schools via POST /api/desk/schools/import. Do not invent dates (Back to School Night has no day on the PDF).",
+  },
+  {
+    id: "src_benzie_cal",
+    name: "Benzie Central schools calendar",
+    homepage: "https://benzieschools.net/",
+    feed_url: null,
+    pull_method: "html",
+    beat_id: "beat_schools",
+    enabled: true,
+    calendar_url: "https://benzieschools.net/district/calendar/",
+    calendar_pdf_url:
+      "https://benzieschools.net/downloads/district/calendars/2026-2027_district_calendar_final.pdf",
+    notes:
+      "Benzie County Central Schools. Chip: Benzie Central. /schools import only.",
+  },
+  {
+    id: "src_frankfort_cal",
+    name: "Frankfort-Elberta schools calendar",
+    homepage: "https://www.frankfort.k12.mi.us/",
+    feed_url: null,
+    pull_method: "html",
+    beat_id: "beat_schools",
+    enabled: true,
+    calendar_url: "https://www.frankfort.k12.mi.us/home/district-calendar",
+    calendar_pdf_url:
+      "https://drive.google.com/file/d/1I16lXVMXA1CD80LfihAWShXlpJZ61vnO/view",
+    notes:
+      "Frankfort-Elberta Area Schools. Tentative calendar (updated June 15, 2026). Do not invent early-release clock times.",
+  },
+  {
+    id: "src_buckley_cal",
+    name: "Buckley schools calendar",
+    homepage: "https://www.buckleyschools.com/",
+    feed_url: null,
+    pull_method: "html",
+    beat_id: "beat_schools",
+    enabled: true,
+    calendar_url: "https://www.buckleyschools.com/about/school-calendar/",
+    calendar_pdf_url:
+      "https://www.buckleyschools.com/wp-content/uploads/2026/02/26-27-calendar.pdf",
+    notes:
+      "Buckley Community Schools. Half-day dismissal 11:35am is on the calendar page.",
+  },
+  {
+    id: "src_kalkaska_cal",
+    name: "Kalkaska schools calendar",
+    homepage: "https://www.kpschools.com/",
+    feed_url: null,
+    pull_method: "html",
+    beat_id: "beat_schools",
+    enabled: true,
+    calendar_url: "https://www.kpschools.com/vnews/display.v/ART/6a3014b861c36",
+    calendar_pdf_url:
+      "https://www.kpschools.com/vimages/shared/vnews/stories/6a3014b861c36/Student%20-%20Parent%202026-2027%20Calendar%205-18-2026.pdf",
+    notes: "Kalkaska Public Schools. /schools via POST /api/desk/schools/import.",
+  },
+  {
+    id: "src_forest_cal",
+    name: "Forest Area schools calendar",
+    homepage: "https://forestarea.org/",
+    feed_url: null,
+    pull_method: "html",
+    beat_id: "beat_schools",
+    enabled: true,
+    calendar_url:
+      "https://forestarea.org/downloads/district_files/fa_school_calendar_2026-2027.pdf",
+    calendar_pdf_url:
+      "https://forestarea.org/downloads/district_files/fa_school_calendar_2026-2027.pdf",
+    notes:
+      "Forest Area Community Schools (Fife Lake / Rapid City / South Boardman). Not forestareaschools.org (Pennsylvania). Print May 24 Memorial Day as on the PDF.",
+  },
+  {
+    id: "src_mancelona_cal",
+    name: "Mancelona schools calendar",
+    homepage: "https://www.mancelonaschools.org/",
+    feed_url: null,
+    pull_method: "html",
+    beat_id: "beat_schools",
+    enabled: true,
+    calendar_url:
+      "https://www.mancelonaschools.org/downloads/district/2026-27_academic_calendar_-_board_approved_4_14_26.pdf",
+    calendar_pdf_url:
+      "https://www.mancelonaschools.org/downloads/district/2026-27_academic_calendar_-_board_approved_4_14_26.pdf",
+    notes:
+      "Mancelona Public Schools. Board approved 4/14/26. /schools import only.",
+  },
+  {
+    id: "src_centrallake_cal",
+    name: "Central Lake schools calendar",
+    homepage: "https://centrallake.org/",
+    feed_url: null,
+    pull_method: "html",
+    beat_id: "beat_schools",
+    enabled: true,
+    calendar_url: "https://centrallake.org/pub/news/posts/2145",
+    notes:
+      "Central Lake Public Schools — first day only (Aug 26, 2026 early release; time not stated). Do not fill the rest from Char-Em ISD.",
   },
   {
     id: "src_tn",

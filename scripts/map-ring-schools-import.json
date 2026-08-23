@@ -1,0 +1,2081 @@
+[
+  {
+    "source_id": "src_glenlake_cal",
+    "district": "Glen Lake",
+    "replace": true,
+    "events": [
+      {
+        "title": "Teacher Work Day / Open House",
+        "starts_at": "2026-08-26T18:00",
+        "source_id": "src_glenlake_cal",
+        "district": "Glen Lake"
+      },
+      {
+        "title": "First day (students half day) — 11:30 AM dismissal",
+        "starts_at": "2026-08-31T11:30",
+        "source_id": "src_glenlake_cal",
+        "district": "Glen Lake"
+      },
+      {
+        "title": "No school",
+        "starts_at": "2026-09-04",
+        "source_id": "src_glenlake_cal",
+        "district": "Glen Lake"
+      },
+      {
+        "title": "Labor Day — no school",
+        "starts_at": "2026-09-07",
+        "source_id": "src_glenlake_cal",
+        "district": "Glen Lake"
+      },
+      {
+        "title": "P/T conferences",
+        "starts_at": "2026-10-14T17:00",
+        "source_id": "src_glenlake_cal",
+        "district": "Glen Lake"
+      },
+      {
+        "title": "Half day students; P/T conferences — 12:30-3:30 & 5-8 (11:30 AM dismissal)",
+        "starts_at": "2026-10-15T11:30",
+        "source_id": "src_glenlake_cal",
+        "district": "Glen Lake"
+      },
+      {
+        "title": "No school",
+        "starts_at": "2026-10-16",
+        "source_id": "src_glenlake_cal",
+        "district": "Glen Lake"
+      },
+      {
+        "title": "Students off / staff PD",
+        "starts_at": "2026-11-02",
+        "source_id": "src_glenlake_cal",
+        "district": "Glen Lake"
+      },
+      {
+        "title": "Half day students and staff",
+        "starts_at": "2026-11-25",
+        "source_id": "src_glenlake_cal",
+        "district": "Glen Lake"
+      },
+      {
+        "title": "Thanksgiving break — no school",
+        "starts_at": "2026-11-26",
+        "source_id": "src_glenlake_cal",
+        "district": "Glen Lake"
+      },
+      {
+        "title": "Thanksgiving break — no school",
+        "starts_at": "2026-11-27",
+        "source_id": "src_glenlake_cal",
+        "district": "Glen Lake"
+      },
+      {
+        "title": "Winter recess — no school",
+        "starts_at": "2026-12-21",
+        "source_id": "src_glenlake_cal",
+        "district": "Glen Lake"
+      },
+      {
+        "title": "Winter recess — no school",
+        "starts_at": "2026-12-22",
+        "source_id": "src_glenlake_cal",
+        "district": "Glen Lake"
+      },
+      {
+        "title": "Winter recess — no school",
+        "starts_at": "2026-12-23",
+        "source_id": "src_glenlake_cal",
+        "district": "Glen Lake"
+      },
+      {
+        "title": "Winter recess — no school",
+        "starts_at": "2026-12-24",
+        "source_id": "src_glenlake_cal",
+        "district": "Glen Lake"
+      },
+      {
+        "title": "Winter recess — no school",
+        "starts_at": "2026-12-25",
+        "source_id": "src_glenlake_cal",
+        "district": "Glen Lake"
+      },
+      {
+        "title": "Winter recess — no school",
+        "starts_at": "2026-12-26",
+        "source_id": "src_glenlake_cal",
+        "district": "Glen Lake"
+      },
+      {
+        "title": "Winter recess — no school",
+        "starts_at": "2026-12-27",
+        "source_id": "src_glenlake_cal",
+        "district": "Glen Lake"
+      },
+      {
+        "title": "Winter recess — no school",
+        "starts_at": "2026-12-28",
+        "source_id": "src_glenlake_cal",
+        "district": "Glen Lake"
+      },
+      {
+        "title": "Winter recess — no school",
+        "starts_at": "2026-12-29",
+        "source_id": "src_glenlake_cal",
+        "district": "Glen Lake"
+      },
+      {
+        "title": "Winter recess — no school",
+        "starts_at": "2026-12-30",
+        "source_id": "src_glenlake_cal",
+        "district": "Glen Lake"
+      },
+      {
+        "title": "Winter recess — no school",
+        "starts_at": "2026-12-31",
+        "source_id": "src_glenlake_cal",
+        "district": "Glen Lake"
+      },
+      {
+        "title": "Winter recess — no school",
+        "starts_at": "2027-01-01",
+        "source_id": "src_glenlake_cal",
+        "district": "Glen Lake"
+      },
+      {
+        "title": "MLK Day — no school",
+        "starts_at": "2027-01-18",
+        "source_id": "src_glenlake_cal",
+        "district": "Glen Lake"
+      },
+      {
+        "title": "Half day students / full day staff",
+        "starts_at": "2027-01-21",
+        "source_id": "src_glenlake_cal",
+        "district": "Glen Lake"
+      },
+      {
+        "title": "Half day students / full day staff",
+        "starts_at": "2027-01-22",
+        "source_id": "src_glenlake_cal",
+        "district": "Glen Lake"
+      },
+      {
+        "title": "P/T conferences",
+        "starts_at": "2027-02-11T17:00",
+        "source_id": "src_glenlake_cal",
+        "district": "Glen Lake"
+      },
+      {
+        "title": "Half day students and staff",
+        "starts_at": "2027-02-12",
+        "source_id": "src_glenlake_cal",
+        "district": "Glen Lake"
+      },
+      {
+        "title": "Presidents' Day — no school",
+        "starts_at": "2027-02-15",
+        "source_id": "src_glenlake_cal",
+        "district": "Glen Lake"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-03-26",
+        "source_id": "src_glenlake_cal",
+        "district": "Glen Lake"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-03-27",
+        "source_id": "src_glenlake_cal",
+        "district": "Glen Lake"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-03-28",
+        "source_id": "src_glenlake_cal",
+        "district": "Glen Lake"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-03-29",
+        "source_id": "src_glenlake_cal",
+        "district": "Glen Lake"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-03-30",
+        "source_id": "src_glenlake_cal",
+        "district": "Glen Lake"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-03-31",
+        "source_id": "src_glenlake_cal",
+        "district": "Glen Lake"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-04-01",
+        "source_id": "src_glenlake_cal",
+        "district": "Glen Lake"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-04-02",
+        "source_id": "src_glenlake_cal",
+        "district": "Glen Lake"
+      },
+      {
+        "title": "Half day students / full day staff",
+        "starts_at": "2027-04-16",
+        "source_id": "src_glenlake_cal",
+        "district": "Glen Lake"
+      },
+      {
+        "title": "Memorial Day — no school",
+        "starts_at": "2027-05-31",
+        "source_id": "src_glenlake_cal",
+        "district": "Glen Lake"
+      },
+      {
+        "title": "Last day students (half day) — 11:30 am dismissal",
+        "starts_at": "2027-06-11T11:30",
+        "source_id": "src_glenlake_cal",
+        "district": "Glen Lake"
+      }
+    ]
+  },
+  {
+    "source_id": "src_northport_cal",
+    "district": "Northport",
+    "replace": true,
+    "events": [
+      {
+        "title": "No school — PD #1",
+        "starts_at": "2026-09-01",
+        "source_id": "src_northport_cal",
+        "district": "Northport"
+      },
+      {
+        "title": "No school — PD #2",
+        "starts_at": "2026-09-02",
+        "source_id": "src_northport_cal",
+        "district": "Northport"
+      },
+      {
+        "title": "Labor Day — no school",
+        "starts_at": "2026-09-07",
+        "source_id": "src_northport_cal",
+        "district": "Northport"
+      },
+      {
+        "title": "First day of school",
+        "starts_at": "2026-09-08",
+        "source_id": "src_northport_cal",
+        "district": "Northport"
+      },
+      {
+        "title": "Evening conferences",
+        "starts_at": "2026-10-28",
+        "source_id": "src_northport_cal",
+        "district": "Northport"
+      },
+      {
+        "title": "Half day students / half day conferences",
+        "starts_at": "2026-10-29",
+        "source_id": "src_northport_cal",
+        "district": "Northport"
+      },
+      {
+        "title": "No school everyone",
+        "starts_at": "2026-10-30",
+        "source_id": "src_northport_cal",
+        "district": "Northport"
+      },
+      {
+        "title": "No school — Region PD",
+        "starts_at": "2026-11-02",
+        "source_id": "src_northport_cal",
+        "district": "Northport"
+      },
+      {
+        "title": "Half day everyone",
+        "starts_at": "2026-11-25",
+        "source_id": "src_northport_cal",
+        "district": "Northport"
+      },
+      {
+        "title": "Thanksgiving — no school",
+        "starts_at": "2026-11-26",
+        "source_id": "src_northport_cal",
+        "district": "Northport"
+      },
+      {
+        "title": "No school everyone",
+        "starts_at": "2026-11-27",
+        "source_id": "src_northport_cal",
+        "district": "Northport"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2026-12-19",
+        "source_id": "src_northport_cal",
+        "district": "Northport"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2026-12-20",
+        "source_id": "src_northport_cal",
+        "district": "Northport"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2026-12-21",
+        "source_id": "src_northport_cal",
+        "district": "Northport"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2026-12-22",
+        "source_id": "src_northport_cal",
+        "district": "Northport"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2026-12-23",
+        "source_id": "src_northport_cal",
+        "district": "Northport"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2026-12-24",
+        "source_id": "src_northport_cal",
+        "district": "Northport"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2026-12-25",
+        "source_id": "src_northport_cal",
+        "district": "Northport"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2026-12-26",
+        "source_id": "src_northport_cal",
+        "district": "Northport"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2026-12-27",
+        "source_id": "src_northport_cal",
+        "district": "Northport"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2026-12-28",
+        "source_id": "src_northport_cal",
+        "district": "Northport"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2026-12-29",
+        "source_id": "src_northport_cal",
+        "district": "Northport"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2026-12-30",
+        "source_id": "src_northport_cal",
+        "district": "Northport"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2026-12-31",
+        "source_id": "src_northport_cal",
+        "district": "Northport"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2027-01-01",
+        "source_id": "src_northport_cal",
+        "district": "Northport"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2027-01-02",
+        "source_id": "src_northport_cal",
+        "district": "Northport"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2027-01-03",
+        "source_id": "src_northport_cal",
+        "district": "Northport"
+      },
+      {
+        "title": "School resumes",
+        "starts_at": "2027-01-04",
+        "source_id": "src_northport_cal",
+        "district": "Northport"
+      },
+      {
+        "title": "M.L. King Day — no school",
+        "starts_at": "2027-01-18",
+        "source_id": "src_northport_cal",
+        "district": "Northport"
+      },
+      {
+        "title": "Exams",
+        "starts_at": "2027-01-20",
+        "source_id": "src_northport_cal",
+        "district": "Northport"
+      },
+      {
+        "title": "Exams",
+        "starts_at": "2027-01-21",
+        "source_id": "src_northport_cal",
+        "district": "Northport"
+      },
+      {
+        "title": "Exams — half day students / half day records; semester ends",
+        "starts_at": "2027-01-22",
+        "source_id": "src_northport_cal",
+        "district": "Northport"
+      },
+      {
+        "title": "Half day students / half day conferences",
+        "starts_at": "2027-02-18",
+        "source_id": "src_northport_cal",
+        "district": "Northport"
+      },
+      {
+        "title": "No school everyone",
+        "starts_at": "2027-02-19",
+        "source_id": "src_northport_cal",
+        "district": "Northport"
+      },
+      {
+        "title": "No school — PD #4",
+        "starts_at": "2027-02-22",
+        "source_id": "src_northport_cal",
+        "district": "Northport"
+      },
+      {
+        "title": "Half day students / half day PD",
+        "starts_at": "2027-03-16",
+        "source_id": "src_northport_cal",
+        "district": "Northport"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-03-26",
+        "source_id": "src_northport_cal",
+        "district": "Northport"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-03-27",
+        "source_id": "src_northport_cal",
+        "district": "Northport"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-03-28",
+        "source_id": "src_northport_cal",
+        "district": "Northport"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-03-29",
+        "source_id": "src_northport_cal",
+        "district": "Northport"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-03-30",
+        "source_id": "src_northport_cal",
+        "district": "Northport"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-03-31",
+        "source_id": "src_northport_cal",
+        "district": "Northport"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-04-01",
+        "source_id": "src_northport_cal",
+        "district": "Northport"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-04-02",
+        "source_id": "src_northport_cal",
+        "district": "Northport"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-04-03",
+        "source_id": "src_northport_cal",
+        "district": "Northport"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-04-04",
+        "source_id": "src_northport_cal",
+        "district": "Northport"
+      },
+      {
+        "title": "School resumes",
+        "starts_at": "2027-04-05",
+        "source_id": "src_northport_cal",
+        "district": "Northport"
+      },
+      {
+        "title": "Half day students / half day PD",
+        "starts_at": "2027-04-20",
+        "source_id": "src_northport_cal",
+        "district": "Northport"
+      },
+      {
+        "title": "Memorial Day — no school everyone",
+        "starts_at": "2027-05-31",
+        "source_id": "src_northport_cal",
+        "district": "Northport"
+      },
+      {
+        "title": "Exams",
+        "starts_at": "2027-06-09",
+        "source_id": "src_northport_cal",
+        "district": "Northport"
+      },
+      {
+        "title": "Half day student exams / half day records",
+        "starts_at": "2027-06-10",
+        "source_id": "src_northport_cal",
+        "district": "Northport"
+      },
+      {
+        "title": "Half day student exams / half day records",
+        "starts_at": "2027-06-11",
+        "source_id": "src_northport_cal",
+        "district": "Northport"
+      },
+      {
+        "title": "Last day of school",
+        "starts_at": "2027-06-11",
+        "source_id": "src_northport_cal",
+        "district": "Northport"
+      }
+    ]
+  },
+  {
+    "source_id": "src_benzie_cal",
+    "district": "Benzie Central",
+    "replace": true,
+    "events": [
+      {
+        "title": "First day students",
+        "starts_at": "2026-08-31",
+        "source_id": "src_benzie_cal",
+        "district": "Benzie Central"
+      },
+      {
+        "title": "No school",
+        "starts_at": "2026-09-04",
+        "source_id": "src_benzie_cal",
+        "district": "Benzie Central"
+      },
+      {
+        "title": "Labor Day — no school",
+        "starts_at": "2026-09-07",
+        "source_id": "src_benzie_cal",
+        "district": "Benzie Central"
+      },
+      {
+        "title": "Half day PD",
+        "starts_at": "2026-09-11",
+        "source_id": "src_benzie_cal",
+        "district": "Benzie Central"
+      },
+      {
+        "title": "Half day PD",
+        "starts_at": "2026-09-25",
+        "source_id": "src_benzie_cal",
+        "district": "Benzie Central"
+      },
+      {
+        "title": "P/T conferences; half days",
+        "starts_at": "2026-10-08",
+        "source_id": "src_benzie_cal",
+        "district": "Benzie Central"
+      },
+      {
+        "title": "P/T conferences; half days",
+        "starts_at": "2026-10-09",
+        "source_id": "src_benzie_cal",
+        "district": "Benzie Central"
+      },
+      {
+        "title": "RSDD — no school students",
+        "starts_at": "2026-11-02",
+        "source_id": "src_benzie_cal",
+        "district": "Benzie Central"
+      },
+      {
+        "title": "Thanksgiving break — no school",
+        "starts_at": "2026-11-25",
+        "source_id": "src_benzie_cal",
+        "district": "Benzie Central"
+      },
+      {
+        "title": "Thanksgiving break — no school",
+        "starts_at": "2026-11-26",
+        "source_id": "src_benzie_cal",
+        "district": "Benzie Central"
+      },
+      {
+        "title": "Thanksgiving break — no school",
+        "starts_at": "2026-11-27",
+        "source_id": "src_benzie_cal",
+        "district": "Benzie Central"
+      },
+      {
+        "title": "Half day PD",
+        "starts_at": "2026-12-04",
+        "source_id": "src_benzie_cal",
+        "district": "Benzie Central"
+      },
+      {
+        "title": "Holiday break — no school",
+        "starts_at": "2026-12-21",
+        "source_id": "src_benzie_cal",
+        "district": "Benzie Central"
+      },
+      {
+        "title": "Holiday break — no school",
+        "starts_at": "2026-12-22",
+        "source_id": "src_benzie_cal",
+        "district": "Benzie Central"
+      },
+      {
+        "title": "Holiday break — no school",
+        "starts_at": "2026-12-23",
+        "source_id": "src_benzie_cal",
+        "district": "Benzie Central"
+      },
+      {
+        "title": "Holiday break — no school",
+        "starts_at": "2026-12-24",
+        "source_id": "src_benzie_cal",
+        "district": "Benzie Central"
+      },
+      {
+        "title": "Holiday break — no school",
+        "starts_at": "2026-12-25",
+        "source_id": "src_benzie_cal",
+        "district": "Benzie Central"
+      },
+      {
+        "title": "Holiday break — no school",
+        "starts_at": "2026-12-26",
+        "source_id": "src_benzie_cal",
+        "district": "Benzie Central"
+      },
+      {
+        "title": "Holiday break — no school",
+        "starts_at": "2026-12-27",
+        "source_id": "src_benzie_cal",
+        "district": "Benzie Central"
+      },
+      {
+        "title": "Holiday break — no school",
+        "starts_at": "2026-12-28",
+        "source_id": "src_benzie_cal",
+        "district": "Benzie Central"
+      },
+      {
+        "title": "Holiday break — no school",
+        "starts_at": "2026-12-29",
+        "source_id": "src_benzie_cal",
+        "district": "Benzie Central"
+      },
+      {
+        "title": "Holiday break — no school",
+        "starts_at": "2026-12-30",
+        "source_id": "src_benzie_cal",
+        "district": "Benzie Central"
+      },
+      {
+        "title": "Holiday break — no school",
+        "starts_at": "2026-12-31",
+        "source_id": "src_benzie_cal",
+        "district": "Benzie Central"
+      },
+      {
+        "title": "Holiday break — no school",
+        "starts_at": "2027-01-01",
+        "source_id": "src_benzie_cal",
+        "district": "Benzie Central"
+      },
+      {
+        "title": "School resumes",
+        "starts_at": "2027-01-04",
+        "source_id": "src_benzie_cal",
+        "district": "Benzie Central"
+      },
+      {
+        "title": "Half day records",
+        "starts_at": "2027-01-22",
+        "source_id": "src_benzie_cal",
+        "district": "Benzie Central"
+      },
+      {
+        "title": "Half day PD",
+        "starts_at": "2027-02-12",
+        "source_id": "src_benzie_cal",
+        "district": "Benzie Central"
+      },
+      {
+        "title": "No school",
+        "starts_at": "2027-02-15",
+        "source_id": "src_benzie_cal",
+        "district": "Benzie Central"
+      },
+      {
+        "title": "P/T conferences; half days",
+        "starts_at": "2027-03-11",
+        "source_id": "src_benzie_cal",
+        "district": "Benzie Central"
+      },
+      {
+        "title": "P/T conferences; half days",
+        "starts_at": "2027-03-12",
+        "source_id": "src_benzie_cal",
+        "district": "Benzie Central"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-03-26",
+        "source_id": "src_benzie_cal",
+        "district": "Benzie Central"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-03-27",
+        "source_id": "src_benzie_cal",
+        "district": "Benzie Central"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-03-28",
+        "source_id": "src_benzie_cal",
+        "district": "Benzie Central"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-03-29",
+        "source_id": "src_benzie_cal",
+        "district": "Benzie Central"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-03-30",
+        "source_id": "src_benzie_cal",
+        "district": "Benzie Central"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-03-31",
+        "source_id": "src_benzie_cal",
+        "district": "Benzie Central"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-04-01",
+        "source_id": "src_benzie_cal",
+        "district": "Benzie Central"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-04-02",
+        "source_id": "src_benzie_cal",
+        "district": "Benzie Central"
+      },
+      {
+        "title": "School resumes",
+        "starts_at": "2027-04-05",
+        "source_id": "src_benzie_cal",
+        "district": "Benzie Central"
+      },
+      {
+        "title": "Half day PD",
+        "starts_at": "2027-04-23",
+        "source_id": "src_benzie_cal",
+        "district": "Benzie Central"
+      },
+      {
+        "title": "Half day PD",
+        "starts_at": "2027-05-28",
+        "source_id": "src_benzie_cal",
+        "district": "Benzie Central"
+      },
+      {
+        "title": "Memorial Day — no school",
+        "starts_at": "2027-05-31",
+        "source_id": "src_benzie_cal",
+        "district": "Benzie Central"
+      },
+      {
+        "title": "Last day (tentative); half day records",
+        "starts_at": "2027-06-09",
+        "source_id": "src_benzie_cal",
+        "district": "Benzie Central"
+      }
+    ]
+  },
+  {
+    "source_id": "src_frankfort_cal",
+    "district": "Frankfort-Elberta",
+    "replace": true,
+    "events": [
+      {
+        "title": "1st student day",
+        "starts_at": "2026-09-08",
+        "source_id": "src_frankfort_cal",
+        "district": "Frankfort-Elberta"
+      },
+      {
+        "title": "Early release",
+        "starts_at": "2026-09-30",
+        "source_id": "src_frankfort_cal",
+        "district": "Frankfort-Elberta"
+      },
+      {
+        "title": "PT conferences",
+        "starts_at": "2026-10-14",
+        "source_id": "src_frankfort_cal",
+        "district": "Frankfort-Elberta"
+      },
+      {
+        "title": "PT conferences",
+        "starts_at": "2026-10-15",
+        "source_id": "src_frankfort_cal",
+        "district": "Frankfort-Elberta"
+      },
+      {
+        "title": "RSDD — no school",
+        "starts_at": "2026-11-02",
+        "source_id": "src_frankfort_cal",
+        "district": "Frankfort-Elberta"
+      },
+      {
+        "title": "Early release",
+        "starts_at": "2026-11-18",
+        "source_id": "src_frankfort_cal",
+        "district": "Frankfort-Elberta"
+      },
+      {
+        "title": "Thanksgiving — no school",
+        "starts_at": "2026-11-26",
+        "source_id": "src_frankfort_cal",
+        "district": "Frankfort-Elberta"
+      },
+      {
+        "title": "Thanksgiving — no school",
+        "starts_at": "2026-11-27",
+        "source_id": "src_frankfort_cal",
+        "district": "Frankfort-Elberta"
+      },
+      {
+        "title": "Early release",
+        "starts_at": "2026-12-09",
+        "source_id": "src_frankfort_cal",
+        "district": "Frankfort-Elberta"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2026-12-21",
+        "source_id": "src_frankfort_cal",
+        "district": "Frankfort-Elberta"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2026-12-22",
+        "source_id": "src_frankfort_cal",
+        "district": "Frankfort-Elberta"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2026-12-23",
+        "source_id": "src_frankfort_cal",
+        "district": "Frankfort-Elberta"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2026-12-24",
+        "source_id": "src_frankfort_cal",
+        "district": "Frankfort-Elberta"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2026-12-25",
+        "source_id": "src_frankfort_cal",
+        "district": "Frankfort-Elberta"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2026-12-26",
+        "source_id": "src_frankfort_cal",
+        "district": "Frankfort-Elberta"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2026-12-27",
+        "source_id": "src_frankfort_cal",
+        "district": "Frankfort-Elberta"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2026-12-28",
+        "source_id": "src_frankfort_cal",
+        "district": "Frankfort-Elberta"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2026-12-29",
+        "source_id": "src_frankfort_cal",
+        "district": "Frankfort-Elberta"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2026-12-30",
+        "source_id": "src_frankfort_cal",
+        "district": "Frankfort-Elberta"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2026-12-31",
+        "source_id": "src_frankfort_cal",
+        "district": "Frankfort-Elberta"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2027-01-01",
+        "source_id": "src_frankfort_cal",
+        "district": "Frankfort-Elberta"
+      },
+      {
+        "title": "School resumes",
+        "starts_at": "2027-01-04",
+        "source_id": "src_frankfort_cal",
+        "district": "Frankfort-Elberta"
+      },
+      {
+        "title": "End of 1st semester",
+        "starts_at": "2027-01-22",
+        "source_id": "src_frankfort_cal",
+        "district": "Frankfort-Elberta"
+      },
+      {
+        "title": "Early release",
+        "starts_at": "2027-01-27",
+        "source_id": "src_frankfort_cal",
+        "district": "Frankfort-Elberta"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2027-02-12",
+        "source_id": "src_frankfort_cal",
+        "district": "Frankfort-Elberta"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2027-02-15",
+        "source_id": "src_frankfort_cal",
+        "district": "Frankfort-Elberta"
+      },
+      {
+        "title": "PT conferences",
+        "starts_at": "2027-03-11",
+        "source_id": "src_frankfort_cal",
+        "district": "Frankfort-Elberta"
+      },
+      {
+        "title": "Early release",
+        "starts_at": "2027-03-17",
+        "source_id": "src_frankfort_cal",
+        "district": "Frankfort-Elberta"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-03-26",
+        "source_id": "src_frankfort_cal",
+        "district": "Frankfort-Elberta"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-03-27",
+        "source_id": "src_frankfort_cal",
+        "district": "Frankfort-Elberta"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-03-28",
+        "source_id": "src_frankfort_cal",
+        "district": "Frankfort-Elberta"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-03-29",
+        "source_id": "src_frankfort_cal",
+        "district": "Frankfort-Elberta"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-03-30",
+        "source_id": "src_frankfort_cal",
+        "district": "Frankfort-Elberta"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-03-31",
+        "source_id": "src_frankfort_cal",
+        "district": "Frankfort-Elberta"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-04-01",
+        "source_id": "src_frankfort_cal",
+        "district": "Frankfort-Elberta"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-04-02",
+        "source_id": "src_frankfort_cal",
+        "district": "Frankfort-Elberta"
+      },
+      {
+        "title": "School resumes",
+        "starts_at": "2027-04-05",
+        "source_id": "src_frankfort_cal",
+        "district": "Frankfort-Elberta"
+      },
+      {
+        "title": "Early release",
+        "starts_at": "2027-04-21",
+        "source_id": "src_frankfort_cal",
+        "district": "Frankfort-Elberta"
+      },
+      {
+        "title": "Early release",
+        "starts_at": "2027-05-19",
+        "source_id": "src_frankfort_cal",
+        "district": "Frankfort-Elberta"
+      },
+      {
+        "title": "Memorial Day — no school",
+        "starts_at": "2027-05-31",
+        "source_id": "src_frankfort_cal",
+        "district": "Frankfort-Elberta"
+      },
+      {
+        "title": "Tentative last day",
+        "starts_at": "2027-06-16",
+        "source_id": "src_frankfort_cal",
+        "district": "Frankfort-Elberta"
+      }
+    ]
+  },
+  {
+    "source_id": "src_kalkaska_cal",
+    "district": "Kalkaska",
+    "replace": true,
+    "events": [
+      {
+        "title": "First day for students",
+        "starts_at": "2026-08-25",
+        "source_id": "src_kalkaska_cal",
+        "district": "Kalkaska"
+      },
+      {
+        "title": "No school",
+        "starts_at": "2026-09-04",
+        "source_id": "src_kalkaska_cal",
+        "district": "Kalkaska"
+      },
+      {
+        "title": "No school — Labor Day",
+        "starts_at": "2026-09-07",
+        "source_id": "src_kalkaska_cal",
+        "district": "Kalkaska"
+      },
+      {
+        "title": "No school — staff PD",
+        "starts_at": "2026-09-25",
+        "source_id": "src_kalkaska_cal",
+        "district": "Kalkaska"
+      },
+      {
+        "title": "Half day students; K–5 conferences (afternoon and evening)",
+        "starts_at": "2026-10-22",
+        "source_id": "src_kalkaska_cal",
+        "district": "Kalkaska"
+      },
+      {
+        "title": "No school",
+        "starts_at": "2026-10-23",
+        "source_id": "src_kalkaska_cal",
+        "district": "Kalkaska"
+      },
+      {
+        "title": "No school — teacher work day / RSDD",
+        "starts_at": "2026-11-02",
+        "source_id": "src_kalkaska_cal",
+        "district": "Kalkaska"
+      },
+      {
+        "title": "Evening conferences — secondary 6-12",
+        "starts_at": "2026-11-03",
+        "source_id": "src_kalkaska_cal",
+        "district": "Kalkaska"
+      },
+      {
+        "title": "Evening conferences — secondary 6-12",
+        "starts_at": "2026-11-05",
+        "source_id": "src_kalkaska_cal",
+        "district": "Kalkaska"
+      },
+      {
+        "title": "Thanksgiving break begins — no school",
+        "starts_at": "2026-11-25",
+        "source_id": "src_kalkaska_cal",
+        "district": "Kalkaska"
+      },
+      {
+        "title": "Thanksgiving break — no school",
+        "starts_at": "2026-11-26",
+        "source_id": "src_kalkaska_cal",
+        "district": "Kalkaska"
+      },
+      {
+        "title": "Thanksgiving break — no school",
+        "starts_at": "2026-11-27",
+        "source_id": "src_kalkaska_cal",
+        "district": "Kalkaska"
+      },
+      {
+        "title": "Thanksgiving break — no school",
+        "starts_at": "2026-11-28",
+        "source_id": "src_kalkaska_cal",
+        "district": "Kalkaska"
+      },
+      {
+        "title": "Thanksgiving break — no school",
+        "starts_at": "2026-11-29",
+        "source_id": "src_kalkaska_cal",
+        "district": "Kalkaska"
+      },
+      {
+        "title": "School resumes",
+        "starts_at": "2026-11-30",
+        "source_id": "src_kalkaska_cal",
+        "district": "Kalkaska"
+      },
+      {
+        "title": "Winter break begins — no school",
+        "starts_at": "2026-12-21",
+        "source_id": "src_kalkaska_cal",
+        "district": "Kalkaska"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2026-12-22",
+        "source_id": "src_kalkaska_cal",
+        "district": "Kalkaska"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2026-12-23",
+        "source_id": "src_kalkaska_cal",
+        "district": "Kalkaska"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2026-12-24",
+        "source_id": "src_kalkaska_cal",
+        "district": "Kalkaska"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2026-12-25",
+        "source_id": "src_kalkaska_cal",
+        "district": "Kalkaska"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2026-12-26",
+        "source_id": "src_kalkaska_cal",
+        "district": "Kalkaska"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2026-12-27",
+        "source_id": "src_kalkaska_cal",
+        "district": "Kalkaska"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2026-12-28",
+        "source_id": "src_kalkaska_cal",
+        "district": "Kalkaska"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2026-12-29",
+        "source_id": "src_kalkaska_cal",
+        "district": "Kalkaska"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2026-12-30",
+        "source_id": "src_kalkaska_cal",
+        "district": "Kalkaska"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2026-12-31",
+        "source_id": "src_kalkaska_cal",
+        "district": "Kalkaska"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2027-01-01",
+        "source_id": "src_kalkaska_cal",
+        "district": "Kalkaska"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2027-01-02",
+        "source_id": "src_kalkaska_cal",
+        "district": "Kalkaska"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2027-01-03",
+        "source_id": "src_kalkaska_cal",
+        "district": "Kalkaska"
+      },
+      {
+        "title": "School resumes",
+        "starts_at": "2027-01-04",
+        "source_id": "src_kalkaska_cal",
+        "district": "Kalkaska"
+      },
+      {
+        "title": "No school — staff PD",
+        "starts_at": "2027-01-18",
+        "source_id": "src_kalkaska_cal",
+        "district": "Kalkaska"
+      },
+      {
+        "title": "Exams — half day",
+        "starts_at": "2027-01-21",
+        "source_id": "src_kalkaska_cal",
+        "district": "Kalkaska"
+      },
+      {
+        "title": "Exams — half day; end of first semester",
+        "starts_at": "2027-01-22",
+        "source_id": "src_kalkaska_cal",
+        "district": "Kalkaska"
+      },
+      {
+        "title": "No school — staff PD",
+        "starts_at": "2027-02-12",
+        "source_id": "src_kalkaska_cal",
+        "district": "Kalkaska"
+      },
+      {
+        "title": "No school",
+        "starts_at": "2027-02-15",
+        "source_id": "src_kalkaska_cal",
+        "district": "Kalkaska"
+      },
+      {
+        "title": "Evening conferences; K-5",
+        "starts_at": "2027-03-24",
+        "source_id": "src_kalkaska_cal",
+        "district": "Kalkaska"
+      },
+      {
+        "title": "Spring break begins — no school",
+        "starts_at": "2027-03-26",
+        "source_id": "src_kalkaska_cal",
+        "district": "Kalkaska"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-03-27",
+        "source_id": "src_kalkaska_cal",
+        "district": "Kalkaska"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-03-28",
+        "source_id": "src_kalkaska_cal",
+        "district": "Kalkaska"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-03-29",
+        "source_id": "src_kalkaska_cal",
+        "district": "Kalkaska"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-03-30",
+        "source_id": "src_kalkaska_cal",
+        "district": "Kalkaska"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-03-31",
+        "source_id": "src_kalkaska_cal",
+        "district": "Kalkaska"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-04-01",
+        "source_id": "src_kalkaska_cal",
+        "district": "Kalkaska"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-04-02",
+        "source_id": "src_kalkaska_cal",
+        "district": "Kalkaska"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-04-03",
+        "source_id": "src_kalkaska_cal",
+        "district": "Kalkaska"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-04-04",
+        "source_id": "src_kalkaska_cal",
+        "district": "Kalkaska"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-04-05",
+        "source_id": "src_kalkaska_cal",
+        "district": "Kalkaska"
+      },
+      {
+        "title": "School resumes",
+        "starts_at": "2027-04-06",
+        "source_id": "src_kalkaska_cal",
+        "district": "Kalkaska"
+      },
+      {
+        "title": "No school — Trout Friday",
+        "starts_at": "2027-04-23",
+        "source_id": "src_kalkaska_cal",
+        "district": "Kalkaska"
+      },
+      {
+        "title": "No school — staff PD",
+        "starts_at": "2027-04-26",
+        "source_id": "src_kalkaska_cal",
+        "district": "Kalkaska"
+      },
+      {
+        "title": "No school",
+        "starts_at": "2027-05-28",
+        "source_id": "src_kalkaska_cal",
+        "district": "Kalkaska"
+      },
+      {
+        "title": "No school — Memorial Day",
+        "starts_at": "2027-05-31",
+        "source_id": "src_kalkaska_cal",
+        "district": "Kalkaska"
+      },
+      {
+        "title": "School resumes",
+        "starts_at": "2027-06-01",
+        "source_id": "src_kalkaska_cal",
+        "district": "Kalkaska"
+      },
+      {
+        "title": "Half day",
+        "starts_at": "2027-06-08",
+        "source_id": "src_kalkaska_cal",
+        "district": "Kalkaska"
+      },
+      {
+        "title": "Half day; last day of school",
+        "starts_at": "2027-06-09",
+        "source_id": "src_kalkaska_cal",
+        "district": "Kalkaska"
+      }
+    ]
+  },
+  {
+    "source_id": "src_forest_cal",
+    "district": "Forest Area",
+    "replace": true,
+    "events": [
+      {
+        "title": "Half day — first day of school",
+        "starts_at": "2026-08-31",
+        "source_id": "src_forest_cal",
+        "district": "Forest Area"
+      },
+      {
+        "title": "No staff or students — no school",
+        "starts_at": "2026-09-04",
+        "source_id": "src_forest_cal",
+        "district": "Forest Area"
+      },
+      {
+        "title": "No staff or students — no school",
+        "starts_at": "2026-09-07",
+        "source_id": "src_forest_cal",
+        "district": "Forest Area"
+      },
+      {
+        "title": "Half day — staff PD",
+        "starts_at": "2026-09-30",
+        "source_id": "src_forest_cal",
+        "district": "Forest Area"
+      },
+      {
+        "title": "Half day — conferences",
+        "starts_at": "2026-10-15",
+        "source_id": "src_forest_cal",
+        "district": "Forest Area"
+      },
+      {
+        "title": "Half day — conferences",
+        "starts_at": "2026-10-16",
+        "source_id": "src_forest_cal",
+        "district": "Forest Area"
+      },
+      {
+        "title": "RSDD — no students",
+        "starts_at": "2026-11-02",
+        "source_id": "src_forest_cal",
+        "district": "Forest Area"
+      },
+      {
+        "title": "Thanksgiving — no school",
+        "starts_at": "2026-11-25",
+        "source_id": "src_forest_cal",
+        "district": "Forest Area"
+      },
+      {
+        "title": "Thanksgiving — no school",
+        "starts_at": "2026-11-26",
+        "source_id": "src_forest_cal",
+        "district": "Forest Area"
+      },
+      {
+        "title": "Thanksgiving — no school",
+        "starts_at": "2026-11-27",
+        "source_id": "src_forest_cal",
+        "district": "Forest Area"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2026-12-21",
+        "source_id": "src_forest_cal",
+        "district": "Forest Area"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2026-12-22",
+        "source_id": "src_forest_cal",
+        "district": "Forest Area"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2026-12-23",
+        "source_id": "src_forest_cal",
+        "district": "Forest Area"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2026-12-24",
+        "source_id": "src_forest_cal",
+        "district": "Forest Area"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2026-12-25",
+        "source_id": "src_forest_cal",
+        "district": "Forest Area"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2026-12-26",
+        "source_id": "src_forest_cal",
+        "district": "Forest Area"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2026-12-27",
+        "source_id": "src_forest_cal",
+        "district": "Forest Area"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2026-12-28",
+        "source_id": "src_forest_cal",
+        "district": "Forest Area"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2026-12-29",
+        "source_id": "src_forest_cal",
+        "district": "Forest Area"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2026-12-30",
+        "source_id": "src_forest_cal",
+        "district": "Forest Area"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2026-12-31",
+        "source_id": "src_forest_cal",
+        "district": "Forest Area"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2027-01-01",
+        "source_id": "src_forest_cal",
+        "district": "Forest Area"
+      },
+      {
+        "title": "School resumes",
+        "starts_at": "2027-01-04",
+        "source_id": "src_forest_cal",
+        "district": "Forest Area"
+      },
+      {
+        "title": "Half days — end of 1st semester",
+        "starts_at": "2027-01-21",
+        "source_id": "src_forest_cal",
+        "district": "Forest Area"
+      },
+      {
+        "title": "Half days — end of 1st semester",
+        "starts_at": "2027-01-22",
+        "source_id": "src_forest_cal",
+        "district": "Forest Area"
+      },
+      {
+        "title": "Half day — staff PD",
+        "starts_at": "2027-02-03",
+        "source_id": "src_forest_cal",
+        "district": "Forest Area"
+      },
+      {
+        "title": "Midwinter break — no school",
+        "starts_at": "2027-02-12",
+        "source_id": "src_forest_cal",
+        "district": "Forest Area"
+      },
+      {
+        "title": "Staff PD day — no school",
+        "starts_at": "2027-02-15",
+        "source_id": "src_forest_cal",
+        "district": "Forest Area"
+      },
+      {
+        "title": "Full day (conferences after hours)",
+        "starts_at": "2027-03-10",
+        "source_id": "src_forest_cal",
+        "district": "Forest Area"
+      },
+      {
+        "title": "Full day (conferences after hours)",
+        "starts_at": "2027-03-11",
+        "source_id": "src_forest_cal",
+        "district": "Forest Area"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-03-26",
+        "source_id": "src_forest_cal",
+        "district": "Forest Area"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-03-27",
+        "source_id": "src_forest_cal",
+        "district": "Forest Area"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-03-28",
+        "source_id": "src_forest_cal",
+        "district": "Forest Area"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-03-29",
+        "source_id": "src_forest_cal",
+        "district": "Forest Area"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-03-30",
+        "source_id": "src_forest_cal",
+        "district": "Forest Area"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-03-31",
+        "source_id": "src_forest_cal",
+        "district": "Forest Area"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-04-01",
+        "source_id": "src_forest_cal",
+        "district": "Forest Area"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-04-02",
+        "source_id": "src_forest_cal",
+        "district": "Forest Area"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-04-03",
+        "source_id": "src_forest_cal",
+        "district": "Forest Area"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-04-04",
+        "source_id": "src_forest_cal",
+        "district": "Forest Area"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-04-05",
+        "source_id": "src_forest_cal",
+        "district": "Forest Area"
+      },
+      {
+        "title": "Half day — Trout Friday",
+        "starts_at": "2027-04-23",
+        "source_id": "src_forest_cal",
+        "district": "Forest Area"
+      },
+      {
+        "title": "Half day — staff PD",
+        "starts_at": "2027-05-05",
+        "source_id": "src_forest_cal",
+        "district": "Forest Area"
+      },
+      {
+        "title": "Memorial Day - No School",
+        "starts_at": "2027-05-24",
+        "source_id": "src_forest_cal",
+        "district": "Forest Area"
+      },
+      {
+        "title": "Half day — end of 2nd semester",
+        "starts_at": "2027-06-08",
+        "source_id": "src_forest_cal",
+        "district": "Forest Area"
+      },
+      {
+        "title": "Half day — end of 2nd semester",
+        "starts_at": "2027-06-09",
+        "source_id": "src_forest_cal",
+        "district": "Forest Area"
+      }
+    ]
+  },
+  {
+    "source_id": "src_mancelona_cal",
+    "district": "Mancelona",
+    "replace": true,
+    "events": [
+      {
+        "title": "PD / Meet the Teacher",
+        "starts_at": "2026-08-27",
+        "source_id": "src_mancelona_cal",
+        "district": "Mancelona"
+      },
+      {
+        "title": "Full day of school (first student day)",
+        "starts_at": "2026-09-01",
+        "source_id": "src_mancelona_cal",
+        "district": "Mancelona"
+      },
+      {
+        "title": "No school (Labor Day recess)",
+        "starts_at": "2026-09-04",
+        "source_id": "src_mancelona_cal",
+        "district": "Mancelona"
+      },
+      {
+        "title": "No school (Labor Day recess)",
+        "starts_at": "2026-09-07",
+        "source_id": "src_mancelona_cal",
+        "district": "Mancelona"
+      },
+      {
+        "title": "School resumes",
+        "starts_at": "2026-09-08",
+        "source_id": "src_mancelona_cal",
+        "district": "Mancelona"
+      },
+      {
+        "title": "Half day students; parent teacher conferences",
+        "starts_at": "2026-11-05",
+        "source_id": "src_mancelona_cal",
+        "district": "Mancelona"
+      },
+      {
+        "title": "PD (no students) — no school",
+        "starts_at": "2026-11-06",
+        "source_id": "src_mancelona_cal",
+        "district": "Mancelona"
+      },
+      {
+        "title": "Thanksgiving recess — no school",
+        "starts_at": "2026-11-25",
+        "source_id": "src_mancelona_cal",
+        "district": "Mancelona"
+      },
+      {
+        "title": "Thanksgiving recess — no school",
+        "starts_at": "2026-11-26",
+        "source_id": "src_mancelona_cal",
+        "district": "Mancelona"
+      },
+      {
+        "title": "Thanksgiving recess — no school",
+        "starts_at": "2026-11-27",
+        "source_id": "src_mancelona_cal",
+        "district": "Mancelona"
+      },
+      {
+        "title": "School resumes",
+        "starts_at": "2026-11-30",
+        "source_id": "src_mancelona_cal",
+        "district": "Mancelona"
+      },
+      {
+        "title": "Full day; winter recess end of day",
+        "starts_at": "2026-12-22",
+        "source_id": "src_mancelona_cal",
+        "district": "Mancelona"
+      },
+      {
+        "title": "School resumes",
+        "starts_at": "2027-01-04",
+        "source_id": "src_mancelona_cal",
+        "district": "Mancelona"
+      },
+      {
+        "title": "No school (mid-winter recess)",
+        "starts_at": "2027-02-15",
+        "source_id": "src_mancelona_cal",
+        "district": "Mancelona"
+      },
+      {
+        "title": "Half day students; parent teacher conferences",
+        "starts_at": "2027-03-04",
+        "source_id": "src_mancelona_cal",
+        "district": "Mancelona"
+      },
+      {
+        "title": "PD (no students) — no school",
+        "starts_at": "2027-03-05",
+        "source_id": "src_mancelona_cal",
+        "district": "Mancelona"
+      },
+      {
+        "title": "Full day; spring recess end of day",
+        "starts_at": "2027-03-25",
+        "source_id": "src_mancelona_cal",
+        "district": "Mancelona"
+      },
+      {
+        "title": "School resumes",
+        "starts_at": "2027-04-05",
+        "source_id": "src_mancelona_cal",
+        "district": "Mancelona"
+      },
+      {
+        "title": "No school (Memorial Day recess)",
+        "starts_at": "2027-05-31",
+        "source_id": "src_mancelona_cal",
+        "district": "Mancelona"
+      },
+      {
+        "title": "Last day (full day)",
+        "starts_at": "2027-06-10",
+        "source_id": "src_mancelona_cal",
+        "district": "Mancelona"
+      }
+    ]
+  },
+  {
+    "source_id": "src_buckley_cal",
+    "district": "Buckley",
+    "replace": true,
+    "events": [
+      {
+        "title": "Kindergarten Open House",
+        "starts_at": "2026-08-25",
+        "source_id": "src_buckley_cal",
+        "district": "Buckley"
+      },
+      {
+        "title": "1-12 Open House",
+        "starts_at": "2026-08-26",
+        "source_id": "src_buckley_cal",
+        "district": "Buckley"
+      },
+      {
+        "title": "First day half day / staff PD",
+        "starts_at": "2026-08-31T11:35",
+        "source_id": "src_buckley_cal",
+        "district": "Buckley"
+      },
+      {
+        "title": "No school",
+        "starts_at": "2026-09-04",
+        "source_id": "src_buckley_cal",
+        "district": "Buckley"
+      },
+      {
+        "title": "Labor Day — no school",
+        "starts_at": "2026-09-07",
+        "source_id": "src_buckley_cal",
+        "district": "Buckley"
+      },
+      {
+        "title": "No school / staff PD",
+        "starts_at": "2026-11-02",
+        "source_id": "src_buckley_cal",
+        "district": "Buckley"
+      },
+      {
+        "title": "Parent/Teacher Conference",
+        "starts_at": "2026-11-11",
+        "source_id": "src_buckley_cal",
+        "district": "Buckley"
+      },
+      {
+        "title": "Parent/Teacher Conference",
+        "starts_at": "2026-11-12",
+        "source_id": "src_buckley_cal",
+        "district": "Buckley"
+      },
+      {
+        "title": "No school",
+        "starts_at": "2026-11-13",
+        "source_id": "src_buckley_cal",
+        "district": "Buckley"
+      },
+      {
+        "title": "Thanksgiving — no school",
+        "starts_at": "2026-11-26",
+        "source_id": "src_buckley_cal",
+        "district": "Buckley"
+      },
+      {
+        "title": "Thanksgiving — no school",
+        "starts_at": "2026-11-27",
+        "source_id": "src_buckley_cal",
+        "district": "Buckley"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2026-12-21",
+        "source_id": "src_buckley_cal",
+        "district": "Buckley"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2026-12-22",
+        "source_id": "src_buckley_cal",
+        "district": "Buckley"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2026-12-23",
+        "source_id": "src_buckley_cal",
+        "district": "Buckley"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2026-12-24",
+        "source_id": "src_buckley_cal",
+        "district": "Buckley"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2026-12-25",
+        "source_id": "src_buckley_cal",
+        "district": "Buckley"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2026-12-26",
+        "source_id": "src_buckley_cal",
+        "district": "Buckley"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2026-12-27",
+        "source_id": "src_buckley_cal",
+        "district": "Buckley"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2026-12-28",
+        "source_id": "src_buckley_cal",
+        "district": "Buckley"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2026-12-29",
+        "source_id": "src_buckley_cal",
+        "district": "Buckley"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2026-12-30",
+        "source_id": "src_buckley_cal",
+        "district": "Buckley"
+      },
+      {
+        "title": "Winter break — no school",
+        "starts_at": "2026-12-31",
+        "source_id": "src_buckley_cal",
+        "district": "Buckley"
+      },
+      {
+        "title": "School resumes",
+        "starts_at": "2027-01-04",
+        "source_id": "src_buckley_cal",
+        "district": "Buckley"
+      },
+      {
+        "title": "Half day / teacher work day",
+        "starts_at": "2027-01-22T11:35",
+        "source_id": "src_buckley_cal",
+        "district": "Buckley"
+      },
+      {
+        "title": "No school / staff PD",
+        "starts_at": "2027-02-15",
+        "source_id": "src_buckley_cal",
+        "district": "Buckley"
+      },
+      {
+        "title": "PT conferences as needed",
+        "starts_at": "2027-02-25",
+        "source_id": "src_buckley_cal",
+        "district": "Buckley"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-03-26",
+        "source_id": "src_buckley_cal",
+        "district": "Buckley"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-03-27",
+        "source_id": "src_buckley_cal",
+        "district": "Buckley"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-03-28",
+        "source_id": "src_buckley_cal",
+        "district": "Buckley"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-03-29",
+        "source_id": "src_buckley_cal",
+        "district": "Buckley"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-03-30",
+        "source_id": "src_buckley_cal",
+        "district": "Buckley"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-03-31",
+        "source_id": "src_buckley_cal",
+        "district": "Buckley"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-04-01",
+        "source_id": "src_buckley_cal",
+        "district": "Buckley"
+      },
+      {
+        "title": "Spring break — no school",
+        "starts_at": "2027-04-02",
+        "source_id": "src_buckley_cal",
+        "district": "Buckley"
+      },
+      {
+        "title": "School resumes",
+        "starts_at": "2027-04-05",
+        "source_id": "src_buckley_cal",
+        "district": "Buckley"
+      },
+      {
+        "title": "Memorial Day — no school",
+        "starts_at": "2027-05-31",
+        "source_id": "src_buckley_cal",
+        "district": "Buckley"
+      },
+      {
+        "title": "Last day half day",
+        "starts_at": "2027-06-10T11:35",
+        "source_id": "src_buckley_cal",
+        "district": "Buckley"
+      }
+    ]
+  },
+  {
+    "source_id": "src_centrallake_cal",
+    "district": "Central Lake",
+    "replace": true,
+    "events": [
+      {
+        "title": "First day of school; early release",
+        "starts_at": "2026-08-26",
+        "source_id": "src_centrallake_cal",
+        "district": "Central Lake"
+      }
+    ]
+  }
+]

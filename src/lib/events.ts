@@ -147,6 +147,14 @@ export const SCHOOL_CALENDAR_SOURCE_IDS = new Set([
   "src_glenlake_cal",
   "src_kingsley_cal",
   "src_tcch_cal",
+  "src_northport_cal",
+  "src_benzie_cal",
+  "src_frankfort_cal",
+  "src_buckley_cal",
+  "src_kalkaska_cal",
+  "src_forest_cal",
+  "src_mancelona_cal",
+  "src_centrallake_cal",
 ]);
 
 export function isHsAthleticsEventSource(sourceId: string): boolean {

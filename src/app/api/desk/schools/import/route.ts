@@ -16,7 +16,7 @@ import {
  *   source_id?, replace?: true, clear?: true
  * }
  * Naive starts_at = America/Detroit. Date-only → time_unknown (display —).
- * Soft cap ~120. Never invents half days.
+ * Soft cap ~500. Never invents half days.
  * Auth: Desk cookie OR Authorization: Bearer desk
  */
 export async function POST(request: Request) {

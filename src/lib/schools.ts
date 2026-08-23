@@ -6,8 +6,8 @@ import {
 import { SCHOOL_CALENDAR_SOURCE_IDS, shortHash } from "@/lib/events";
 import type { SchoolCalendarItem, Source } from "@/lib/types";
 
-/** Soft ceiling for district academic calendar rows (not a full season dump). */
-export const MAX_STORED_SCHOOLS = 120;
+/** Soft ceiling for bay-ring Important dates (not a full season dump). */
+export const MAX_STORED_SCHOOLS = 500;
 
 export const SCHOOL_SOURCE_IDS = SCHOOL_CALENDAR_SOURCE_IDS;
 
@@ -20,43 +20,66 @@ const IMPORTANT_SCHOOL_MARKERS = [
   "half day",
   "half-day",
   "halfday",
+  "early release",
   "no school",
   "no-school",
   "noschool",
   "school closed",
   "schools closed",
   "closed for",
+  "students off",
   "spring break",
   "winter break",
   "holiday break",
   "christmas break",
   "thanksgiving break",
+  "winter recess",
+  "spring recess",
+  "thanksgiving recess",
+  "labor day recess",
   "mid-winter",
   "midwinter",
+  "midwinter break",
+  "recess",
   "conference",
   "conferences",
   "parent-teacher",
   "parent teacher",
+  "parent/teacher",
   "orientation",
+  "open house",
+  "meet the teacher",
   "records day",
   "record day",
   "teacher work",
   "professional development",
   "pd day",
+  "staff pd",
+  "region pd",
+  "rsdd",
   "in-service",
   "inservice",
   "first day",
   "last day",
+  "1st student day",
+  "first student day",
+  "school resumes",
   "graduation",
   "commencement",
   "exam day",
   "exams",
   "finals",
+  "semester",
   "count day",
   "mlk",
+  "m.l. king",
   "martin luther king",
   "memorial day",
   "labor day",
+  "presidents",
+  "president's day",
+  "presidents' day",
+  "trout friday",
   "good friday",
   "holiday",
 ];
@@ -153,14 +176,31 @@ export function districtFromSourceId(sourceId: string): string {
       return "Kingsley";
     case "src_tcch_cal":
       return "TC Christian";
+    case "src_northport_cal":
+      return "Northport";
+    case "src_benzie_cal":
+      return "Benzie Central";
+    case "src_frankfort_cal":
+      return "Frankfort-Elberta";
+    case "src_buckley_cal":
+      return "Buckley";
+    case "src_kalkaska_cal":
+      return "Kalkaska";
+    case "src_forest_cal":
+      return "Forest Area";
+    case "src_mancelona_cal":
+      return "Mancelona";
+    case "src_centrallake_cal":
+      return "Central Lake";
     default:
       return "Schools";
   }
 }
 
 /**
- * Display order on /schools. TCAPS first; GTACS (Catholic) is not the
- * same as Grand Traverse Academy (charter, mygta.us).
+ * Display order on /schools. TCAPS first; then existing chips; then bay-ring
+ * map districts. GTACS (Catholic) is not Grand Traverse Academy (charter).
+ * Suttons Bay stays out of the public chip row (no readable 26–27 calendar).
  */
 export const SCHOOL_DISTRICT_ORDER = [
   "TCAPS",
@@ -168,10 +208,17 @@ export const SCHOOL_DISTRICT_ORDER = [
   "TC Christian",
   "Grand Traverse Academy",
   "Elk Rapids",
-  "Suttons Bay",
   "Leland",
-  "Glen Lake",
   "Kingsley",
+  "Glen Lake",
+  "Northport",
+  "Benzie Central",
+  "Frankfort-Elberta",
+  "Buckley",
+  "Kalkaska",
+  "Forest Area",
+  "Mancelona",
+  "Central Lake",
 ] as const;
 
 /**
@@ -185,15 +232,22 @@ export const SCHOOL_DISTRICT_CALENDAR_URLS: Record<string, string> = {
   "Grand Traverse Academy": "https://www.mygta.us/",
   "Elk Rapids":
     "https://elkrapids-cdn.fxbrt.com/downloads/district_files/final_year_at_a_glance_26-27_with_dates.pdf",
-  "Suttons Bay":
-    "https://suttonsbayschools.com/en-US/school-academic-calendar-1da89303",
   Leland:
     "https://files.smartsites.parentsquare.com/11216/lps_academic_calendar_2026-2027.pdf",
-  "Glen Lake":
-    "https://www.glenlakeschools.org/documents/school/district-calendar/269495",
+  "Glen Lake": "https://www.glenlakeschools.org/article/2707579",
   Kingsley:
     "https://www.kingsleyschools.org/_files/ugd/0f375c_05a1e9ae39684525acde9690e13c96e9.pdf",
   "TC Christian": "https://www.tcchristian.org/parents/",
+  Northport: "https://northportps.org/about-us/district-calendar/",
+  "Benzie Central": "https://benzieschools.net/district/calendar/",
+  "Frankfort-Elberta": "https://www.frankfort.k12.mi.us/home/district-calendar",
+  Buckley: "https://www.buckleyschools.com/about/school-calendar/",
+  Kalkaska: "https://www.kpschools.com/vnews/display.v/ART/6a3014b861c36",
+  "Forest Area":
+    "https://forestarea.org/downloads/district_files/fa_school_calendar_2026-2027.pdf",
+  Mancelona:
+    "https://www.mancelonaschools.org/downloads/district/2026-27_academic_calendar_-_board_approved_4_14_26.pdf",
+  "Central Lake": "https://centrallake.org/pub/news/posts/2145",
 };
 
 /**
@@ -203,6 +257,22 @@ export const SCHOOL_DISTRICT_CALENDAR_URLS: Record<string, string> = {
 export const SCHOOL_DISTRICT_CALENDAR_PDF_URLS: Record<string, string> = {
   TCAPS:
     "https://files-backend.assets.thrillshare.com/documents/asset/uploaded_file/5656/Tcaps/634b1fa5-4fd0-445c-8504-16ecf5f8a427/25-26-REVISED-Calendars-1.28.26.pdf?disposition=inline",
+  "Glen Lake":
+    "https://files-backend.assets.thrillshare.com/documents/asset/uploaded_file/2689/Glcs/f996b50e-0d7e-4fff-ab3b-6ea9f9bf78b9/2026-2027-Calendar-Final.pdf",
+  Northport:
+    "https://northportps-cdn.fxbrt.com/downloads/documents/2026-2027_district_calendar.pdf",
+  "Benzie Central":
+    "https://benzieschools.net/downloads/district/calendars/2026-2027_district_calendar_final.pdf",
+  "Frankfort-Elberta":
+    "https://drive.google.com/file/d/1I16lXVMXA1CD80LfihAWShXlpJZ61vnO/view",
+  Buckley:
+    "https://www.buckleyschools.com/wp-content/uploads/2026/02/26-27-calendar.pdf",
+  Kalkaska:
+    "https://www.kpschools.com/vimages/shared/vnews/stories/6a3014b861c36/Student%20-%20Parent%202026-2027%20Calendar%205-18-2026.pdf",
+  "Forest Area":
+    "https://forestarea.org/downloads/district_files/fa_school_calendar_2026-2027.pdf",
+  Mancelona:
+    "https://www.mancelonaschools.org/downloads/district/2026-27_academic_calendar_-_board_approved_4_14_26.pdf",
 };
 
 export function sourceIdForDistrict(district: string): string | null {
@@ -225,6 +295,22 @@ export function sourceIdForDistrict(district: string): string | null {
       return "src_kingsley_cal";
     case "TC Christian":
       return "src_tcch_cal";
+    case "Northport":
+      return "src_northport_cal";
+    case "Benzie Central":
+      return "src_benzie_cal";
+    case "Frankfort-Elberta":
+      return "src_frankfort_cal";
+    case "Buckley":
+      return "src_buckley_cal";
+    case "Kalkaska":
+      return "src_kalkaska_cal";
+    case "Forest Area":
+      return "src_forest_cal";
+    case "Mancelona":
+      return "src_mancelona_cal";
+    case "Central Lake":
+      return "src_centrallake_cal";
     default:
       return null;
   }
