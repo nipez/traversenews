@@ -5,6 +5,7 @@ import {
   isCivicEvent,
   selectTonightEvents,
 } from "@/lib/events";
+import { PUBLIC_ORIGINAL_BYLINE } from "@/lib/originals";
 import { clusterStories } from "@/lib/pull/cluster";
 import type {
   AppData,
@@ -66,7 +67,7 @@ function toStoryCard(
     url: item.url,
     published_at: item.published_at,
     sources,
-    byline: item.byline,
+    byline: item.is_original ? PUBLIC_ORIGINAL_BYLINE : item.byline,
     slug: item.slug,
     is_original: item.is_original,
   };

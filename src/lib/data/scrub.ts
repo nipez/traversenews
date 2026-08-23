@@ -2,6 +2,9 @@ import type { AppData, EditionSnapshot, EditionStoryCard, Story } from "@/lib/ty
 import { sanitizeStoredAthletics } from "@/lib/athletics";
 import { sanitizeStoredSchools } from "@/lib/schools";
 import { sanitizeStoredEvents } from "@/lib/events";
+import {
+  PUBLIC_ORIGINAL_BYLINE,
+} from "@/lib/originals";
 
 /** Invented seed copy that must never appear as reporting. See README → Editorial. */
 export const BANNED_ORIGINAL_SLUGS = new Set([
@@ -123,6 +126,14 @@ export function scrubAppData(data: AppData): { data: AppData; changed: boolean }
     data.stories = nextStories;
   }
 
+  // Public originals never carry a staff name (Nick Perez, etc.).
+  data.stories = data.stories.map((s) => {
+    if (!s.is_original) return s;
+    if (s.byline === PUBLIC_ORIGINAL_BYLINE) return s;
+    changed = true;
+    return { ...s, byline: PUBLIC_ORIGINAL_BYLINE };
+  });
+
   const filtered = data.events.filter((e) => !BANNED_EVENT_IDS.has(e.id));
   const sanitized = sanitizeStoredEvents(filtered);
   const nextEvents = sanitized.events;
@@ -210,6 +221,9 @@ function scrubEdition(edition: EditionSnapshot): {
   let lead = edition.lead;
   if (hadInventedLead) {
     lead = null;
+    changed = true;
+  } else if (lead?.is_original && lead.byline !== PUBLIC_ORIGINAL_BYLINE) {
+    lead = { ...lead, byline: PUBLIC_ORIGINAL_BYLINE };
     changed = true;
   }
 

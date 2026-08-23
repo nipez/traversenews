@@ -11,6 +11,7 @@ import { selectTonightEvents } from "@/lib/events";
 import { civicEvents } from "@/lib/queries";
 import { clusterStories } from "@/lib/pull/cluster";
 import { sourceLinksFromUrls } from "@/lib/source-links";
+import { PUBLIC_ORIGINAL_BYLINE } from "@/lib/originals";
 import {
   isQuotedParagraph,
   readTimeMinutes,
@@ -26,7 +27,11 @@ export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
   const story = await getOriginalBySlug(slug);
   if (!story) return { title: "Story" };
-  return { title: story.title, description: story.dek };
+  return {
+    title: story.title,
+    description: story.dek,
+    authors: [{ name: PUBLIC_ORIGINAL_BYLINE }],
+  };
 }
 
 export default async function StoryPage({ params }: Props) {
@@ -82,7 +87,7 @@ export default async function StoryPage({ params }: Props) {
           <h1 className="story-hed">{story.title}</h1>
           {story.dek ? <p className="story-dek">{story.dek}</p> : null}
           <p className="lead-byline story-byline">
-            By <strong>{story.byline ?? "Desk"}</strong>
+            By <strong>{PUBLIC_ORIGINAL_BYLINE}</strong>
             {" · "}
             {dateline}
             {readMins ? ` · ${readMins} min read` : null}

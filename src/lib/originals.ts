@@ -1,7 +1,37 @@
 import { newId, slugify } from "@/lib/ids";
 import type { ClusteredStory, OriginalDraft, Story } from "@/lib/types";
 
+/** Desk-only default when Nick starts a draft. Never show on the public paper. */
 export const DEFAULT_ORIGINAL_BYLINE = "Nick Perez";
+
+/**
+ * Public credit on homepage / story / editions.
+ * Displayed as "By traverse.news" — no staff name.
+ */
+export const PUBLIC_ORIGINAL_BYLINE = "traverse.news";
+
+const PRIVATE_BYLINES = new Set(
+  ["nick perez", "nick", "perez", "desk", "staff"].map((s) => s.toLowerCase()),
+);
+
+/** True when a stored byline must not appear on the public site. */
+export function isPrivateStaffByline(byline: string | null | undefined): boolean {
+  const t = byline?.trim().toLowerCase();
+  if (!t) return true;
+  if (PRIVATE_BYLINES.has(t)) return true;
+  if (t.includes("perez")) return true;
+  return false;
+}
+
+/** Byline string stored on public `is_original` stories. */
+export function publicOriginalByline(_raw?: string | null): string {
+  return PUBLIC_ORIGINAL_BYLINE;
+}
+
+/** Full public credit line: "By traverse.news". */
+export function formatPublicOriginalByline(_raw?: string | null): string {
+  return `By ${PUBLIC_ORIGINAL_BYLINE}`;
+}
 
 export function uniqueOriginalSlug(
   title: string,
@@ -78,7 +108,8 @@ export function storyFromPublishedDraft(
     image_url: imageUrl,
     image_credit: imageUrl ? draft.image_credit?.trim() || null : null,
     image_caption: imageUrl ? draft.image_caption?.trim() || null : null,
-    byline: draft.byline.trim() || DEFAULT_ORIGINAL_BYLINE,
+    // Public story always gets the desk credit — draft may still say Nick.
+    byline: PUBLIC_ORIGINAL_BYLINE,
     slug,
     section: draft.section?.trim() || null,
     source_urls: draft.source_urls.map((u) => u.trim()).filter(Boolean),
@@ -89,5 +120,5 @@ export const EDITORIAL_CHECKLIST = [
   "No new quotes — only wording that appears in a cited source",
   "No new facts, crashes, officials, or “organizers say” lines",
   "Every claim is supported by source_urls[] (real permalinks)",
-  "Byline is staff (Nick Perez / Desk), not invented attribution",
+  "Public byline is the desk credit (By traverse.news), not a staff name",
 ] as const;
