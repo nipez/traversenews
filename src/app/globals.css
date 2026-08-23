@@ -262,8 +262,8 @@ a:hover {
   font-size: 15px;
   line-height: 1.35;
   color: #f4edde;
-  /* Avoid a lone last word on phones (e.g. "schools.") */
-  text-wrap: pretty;
+  /* Even line lengths on phones — avoids a stub last line */
+  text-wrap: balance;
 }
 
 @media (max-width: 389px) {
@@ -3196,6 +3196,18 @@ a:hover {
   /* Morning letter: a bit less side padding on narrow phones */
   .morning-letter {
     padding: 1rem !important;
+  }
+
+  .morning-letter-head {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .morning-letter-date {
+    max-width: 100%;
+    text-align: right;
+    line-height: 1.35;
+    letter-spacing: 0.06em;
   }
 
   .prose-article img,
