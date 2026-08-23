@@ -622,7 +622,19 @@ const sources: Source[] = [
     calendar_url:
       "https://gtacs.org/wp-content/uploads/2026/07/Academic-Calendar-2026-27.pdf",
     notes:
-      "Grand Traverse Area Catholic Schools district calendar. /schools import only. Do not invent half days.",
+      "Grand Traverse Area Catholic Schools district calendar. /schools import only. Do not invent half days. Not Grand Traverse Academy (src_gta_cal / mygta.us).",
+  },
+  {
+    id: "src_gta_cal",
+    name: "Grand Traverse Academy calendar",
+    homepage: "https://www.mygta.us/",
+    feed_url: null,
+    pull_method: "html",
+    beat_id: "beat_schools",
+    enabled: true,
+    calendar_url: "https://www.mygta.us/",
+    notes:
+      "Charter school (mygta.us). Not GTACS Catholic. /schools via POST /api/desk/schools/import. Do not invent dates.",
   },
   {
     id: "src_elk_cal",

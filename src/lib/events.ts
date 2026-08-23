@@ -140,6 +140,7 @@ export const HS_ATHLETICS_EVENT_SOURCE_IDS = new Set([
 export const SCHOOL_CALENDAR_SOURCE_IDS = new Set([
   "src_tcaps_cal",
   "src_gtacs_cal",
+  "src_gta_cal",
   "src_elk_cal",
   "src_suttons_cal",
   "src_leland_cal",

@@ -139,6 +139,8 @@ export function districtFromSourceId(sourceId: string): string {
       return "TCAPS";
     case "src_gtacs_cal":
       return "GTACS";
+    case "src_gta_cal":
+      return "Grand Traverse Academy";
     case "src_elk_cal":
       return "Elk Rapids";
     case "src_suttons_cal":
@@ -157,22 +159,20 @@ export function districtFromSourceId(sourceId: string): string {
 }
 
 /**
- * Display order on /schools. TCAPS first even when short; GTACS next;
- * then bay neighbors. Never hide an empty district — show the hed + empty line.
+ * Display order on /schools. TCAPS first; GTACS (Catholic) is not the
+ * same as Grand Traverse Academy (charter, mygta.us).
  */
 export const SCHOOL_DISTRICT_ORDER = [
   "TCAPS",
   "GTACS",
+  "TC Christian",
+  "Grand Traverse Academy",
   "Elk Rapids",
   "Suttons Bay",
   "Leland",
   "Glen Lake",
   "Kingsley",
-  "TC Christian",
 ] as const;
-
-/** Always-on toggle tabs (even when empty). Neighbors appear when they have rows. */
-export const SCHOOL_TOGGLE_ALWAYS = ["TCAPS", "GTACS"] as const;
 
 /**
  * Official full calendars (link out only — do not host/reprint PDFs).
@@ -182,6 +182,7 @@ export const SCHOOL_DISTRICT_CALENDAR_URLS: Record<string, string> = {
   TCAPS: "https://www.tcaps.net/page/district-board-calendar",
   GTACS:
     "https://gtacs.org/wp-content/uploads/2026/07/Academic-Calendar-2026-27.pdf",
+  "Grand Traverse Academy": "https://www.mygta.us/",
   "Elk Rapids":
     "https://elkrapids-cdn.fxbrt.com/downloads/district_files/final_year_at_a_glance_26-27_with_dates.pdf",
   "Suttons Bay":
@@ -210,6 +211,8 @@ export function sourceIdForDistrict(district: string): string | null {
       return "src_tcaps_cal";
     case "GTACS":
       return "src_gtacs_cal";
+    case "Grand Traverse Academy":
+      return "src_gta_cal";
     case "Elk Rapids":
       return "src_elk_cal";
     case "Suttons Bay":
@@ -290,7 +293,7 @@ export function selectUpcomingSchoolDays(
     );
 }
 
-/** Important dates grouped by district, then month. */
+/** Important dates grouped by district, then month. Empty districts omitted unless includeEmpty. */
 export function groupSchoolDaysByDistrict(
   items: SchoolCalendarItem[],
   options: { includeEmpty?: boolean } = {},

@@ -19,7 +19,7 @@ export const metadata = {
 export default async function SchoolsPage() {
   const data = await getAppData();
   const upcoming = selectUpcomingSchoolDays(data.schools ?? []);
-  const grouped = groupSchoolDaysByDistrict(upcoming, { includeEmpty: true });
+  const grouped = groupSchoolDaysByDistrict(upcoming, { includeEmpty: false });
 
   const districts = grouped.map((block) => {
     const sourceId = sourceIdForDistrict(block.district);
