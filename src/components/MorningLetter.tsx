@@ -223,9 +223,9 @@ export function MorningLetter({
       <div className="mt-8 border-t-2 border-ink pt-4 text-sm text-muted">
         <p>
           Send us a tip:{" "}
-          <a className="font-bold text-teal" href="mailto:tips@traverse.news">
-            tips@traverse.news
-          </a>
+          <Link href="/tips" className="font-bold text-teal">
+            traverse.news/tips
+          </Link>
         </p>
         <p className="mt-2 text-xs">
           Traverse City, Michigan · Unsubscribe · Weekdays and Saturdays

@@ -9,7 +9,7 @@ export function SiteFooter() {
         </Link>
         <nav>
           <Link href="/about">About</Link>
-          <a href="mailto:tips@traverse.news">Tips</a>
+          <Link href="/tips">Tips</Link>
           <Link href="/editions">Editions</Link>
           <Link href="/email">Morning email</Link>
         </nav>

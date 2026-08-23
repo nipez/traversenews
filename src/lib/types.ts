@@ -129,6 +129,16 @@ export type Subscriber = {
   created_at: string;
 };
 
+/** Reader tip / correction. Desk-only until staff act — never auto-published. */
+export type Tip = {
+  id: string;
+  body: string;
+  name: string | null;
+  email: string | null;
+  url: string | null;
+  created_at: string;
+};
+
 export type ClusteredStory = {
   id: string;
   title: string;
@@ -239,6 +249,8 @@ export type AppData = {
    */
   schools: SchoolCalendarItem[];
   subscribers: Subscriber[];
+  /** Public tip form submissions. Newest first in Desk. */
+  tips: Tip[];
   last_pull_at: string | null;
   editions: EditionSnapshot[];
   /** Morning-email letter archive (Detroit date keys). Not sent mail. */

@@ -565,6 +565,7 @@ export function createSeedData(): AppData {
     athletics: [],
     schools: [],
     subscribers: [],
+    tips: [],
     last_pull_at: null,
     editions: [],
     email_editions: [],

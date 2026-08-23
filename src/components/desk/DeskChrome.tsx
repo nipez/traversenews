@@ -13,6 +13,7 @@ export async function DeskChrome({
   active?:
     | "sources"
     | "alerts"
+    | "tips"
     | "queue"
     | "originals"
     | "email"
@@ -33,6 +34,7 @@ export async function DeskChrome({
   const nav = [
     { id: "sources", href: "/desk", label: "Sources" },
     { id: "alerts", href: "/desk/alerts", label: "Alerts" },
+    { id: "tips", href: "/desk/tips", label: "Tips" },
     { id: "queue", href: "/desk/queue", label: "Queue" },
     { id: "originals", href: "/desk/originals", label: "Originals" },
     { id: "editions", href: "/desk/editions", label: "Editions" },
