@@ -5,7 +5,7 @@ import { useState, type FormEvent } from "react";
 export function MorningScanSignup({
   variant = "sidebar",
 }: {
-  variant?: "sidebar" | "box" | "inline";
+  variant?: "sidebar" | "box" | "inline" | "teal";
 }) {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "ok" | "err">("idle");
@@ -31,17 +31,52 @@ export function MorningScanSignup({
     }
   }
 
+  if (variant === "teal") {
+    return (
+      <section id="signup" className="signup-teal">
+        <h2 className="font-display text-lg font-black tracking-tight">
+          The morning scan
+        </h2>
+        <p className="mt-2 text-sm leading-relaxed opacity-90">
+          The whole town in one email — weekdays and Saturdays.
+        </p>
+        <form onSubmit={onSubmit} className="mt-3 flex gap-2">
+          <input
+            className="input"
+            type="email"
+            required
+            placeholder="you@email.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            aria-label="Email"
+          />
+          <button
+            type="submit"
+            className="shrink-0 border border-ink bg-paper px-3 text-sm font-extrabold text-ink uppercase"
+          >
+            Join
+          </button>
+        </form>
+        {status !== "idle" ? (
+          <p className="mt-2 text-sm opacity-90">{message}</p>
+        ) : null}
+      </section>
+    );
+  }
+
   const wrap =
     variant === "box"
-      ? "border border-rule bg-paper-2 p-4"
+      ? "border border-ink bg-paper-2 p-4"
       : variant === "inline"
         ? ""
-        : "";
+        : "border border-ink p-4";
 
   return (
     <section id="signup" className={wrap}>
-      <h2 className="font-serif text-xl text-ink">The morning scan</h2>
-      <p className="mt-2 text-sm leading-relaxed text-[#444]">
+      <h2 className="font-display text-xl font-black tracking-tight text-ink">
+        The morning scan
+      </h2>
+      <p className="mt-2 font-serif text-sm leading-relaxed text-muted-2">
         Everything above, in one email, before you go out. Weekday mornings and
         Saturdays.
       </p>
@@ -67,7 +102,7 @@ export function MorningScanSignup({
         </p>
       ) : (
         <p className="mt-2 text-sm">
-          <a href="/email" className="text-teal underline-offset-2 hover:underline">
+          <a href="/email" className="font-bold text-teal underline-offset-2 hover:underline">
             See yesterday&apos;s
           </a>
         </p>

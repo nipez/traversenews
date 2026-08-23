@@ -5,23 +5,18 @@ import { MobileBottomNav } from "@/components/MobileBottomNav";
 export function PublicShell({
   children,
   active = "/",
-  wide = false,
+  header = "compact",
 }: {
   children: React.ReactNode;
   active?: string;
-  /** Homepage uses a wider stage; interior pages can stay slightly tighter. */
+  header?: "hero" | "compact";
+  /** @deprecated kept for call-site compat */
   wide?: boolean;
 }) {
   return (
     <div className="site-shell pb-mobile-nav">
-      <SiteHeader active={active} />
-      <main
-        className={`mx-auto px-4 py-8 md:px-8 md:py-10 ${
-          wide ? "max-w-7xl" : "max-w-6xl"
-        }`}
-      >
-        {children}
-      </main>
+      <SiteHeader active={active} variant={header} />
+      <main className="stage">{children}</main>
       <SiteFooter />
       <MobileBottomNav active={active} />
     </div>

@@ -1,6 +1,5 @@
 import Image from "next/image";
 import { PublicShell } from "@/components/PublicShell";
-import { TonightBlock } from "@/components/TonightBlock";
 import { formatEventWhenParts } from "@/lib/dates";
 import { getAppData, listEvents } from "@/lib/data/store";
 import {
@@ -19,7 +18,12 @@ export const metadata = {
 
 function groupByDay(
   events: EventItem[],
-): Array<{ key: string; label: string; items: EventItem[] }> {
+): Array<{
+  key: string;
+  weekday: string;
+  dayNum: string;
+  items: EventItem[];
+}> {
   const groups = new Map<string, EventItem[]>();
   for (const event of events) {
     const { dayKey } = formatEventWhenParts(event.starts_at);
@@ -28,13 +32,16 @@ function groupByDay(
     groups.set(dayKey, list);
   }
   return [...groups.entries()].map(([key, items]) => {
-    const label = new Intl.DateTimeFormat("en-US", {
+    const d = new Date(items[0].starts_at);
+    const weekday = new Intl.DateTimeFormat("en-US", {
       timeZone: "America/Detroit",
       weekday: "long",
-      month: "long",
+    }).format(d);
+    const dayNum = new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/Detroit",
       day: "numeric",
-    }).format(new Date(items[0].starts_at));
-    return { key, label, items };
+    }).format(d);
+    return { key, weekday, dayNum, items };
   });
 }
 
@@ -42,9 +49,9 @@ export default async function WhatsOnPage() {
   const data = await getAppData();
   const all = await listEvents();
   const featured = selectTonightEvents(all, data.sources, {
-    limit: 6,
-    horizonDays: 7,
-    maxPerSource: 3,
+    limit: 3,
+    horizonDays: 10,
+    maxPerSource: 2,
   });
 
   const upcoming = dedupeEvents(all).filter(
@@ -56,59 +63,98 @@ export default async function WhatsOnPage() {
   const byDay = groupByDay(upcoming);
 
   return (
-    <PublicShell active="/whats-on" wide>
-      <div className="flex items-start gap-4">
+    <PublicShell active="/whats-on" header="compact">
+      <div className="events-hero-row">
+        <div>
+          <p className="text-[0.68rem] font-extrabold tracking-[0.16em] text-teal uppercase">
+            Night out
+          </p>
+          <h1 className="events-hed mt-2">Events</h1>
+          <p className="mt-3 max-w-md font-serif text-[1.05rem] text-muted-2">
+            Concerts, festivals, markets, library programs. Meetings live on
+            Civic Calendar.
+          </p>
+        </div>
         <Image
           src="/art/stamp-night.png"
           alt=""
-          width={88}
-          height={88}
-          className="section-stamp hidden shrink-0 sm:block"
+          width={150}
+          height={150}
+          className="section-stamp-lg hidden shrink-0 sm:block"
         />
-        <div>
-          <p className="text-[0.72rem] font-bold tracking-[0.16em] text-teal uppercase">
-            Night out
-          </p>
-          <h1 className="mt-2 font-serif text-[2.75rem] leading-[0.95] tracking-tight text-ink md:text-[3.5rem]">
-            Events
-          </h1>
-          <p className="mt-4 max-w-xl text-[1.05rem] text-[#3a3a3a]">
-            Concerts, festivals, markets, library programs. Meetings live on Civic
-            Calendar.
-          </p>
+      </div>
+
+      <div className="events-featured mt-8">
+        <div className="events-featured-inner">
+          {featured.map((event) => {
+            const when = formatEventWhenParts(event.starts_at);
+            const timeParts = when.time.replace(/\s+/g, " ").split(" ");
+            return (
+              <article key={event.id} className="min-w-0">
+                <p className="font-display text-[1.85rem] leading-none font-black tracking-tight text-ink md:text-[2.1rem]">
+                  {timeParts[0]}
+                  <span className="ml-1 text-[0.7rem] font-extrabold tracking-[0.08em] text-muted-2 uppercase">
+                    {timeParts[1]}
+                  </span>
+                </p>
+                <p className="mt-1 text-[0.65rem] font-extrabold tracking-[0.12em] text-muted-2 uppercase">
+                  {when.dayLabel}
+                </p>
+                <p className="mt-3 text-[0.8rem] text-muted-2">{event.place}</p>
+                <h2 className="mt-1 font-serif text-[1.2rem] leading-snug font-semibold text-ink md:text-[1.3rem]">
+                  {event.url ? (
+                    <a
+                      href={event.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:text-teal"
+                    >
+                      {event.title}
+                    </a>
+                  ) : (
+                    event.title
+                  )}
+                </h2>
+              </article>
+            );
+          })}
+          {featured.length === 0 ? (
+            <p className="text-sm text-muted-2 col-span-full">
+              No featured night-out listings yet — we do not invent events.
+            </p>
+          ) : null}
         </div>
       </div>
 
-      <div className="mt-10 max-w-2xl">
-        <TonightBlock events={featured} limit={6} showStamp={false} />
-      </div>
-
-      <div className="mt-16 max-w-3xl space-y-12">
+      <div className="mt-12 max-w-3xl space-y-12">
         {byDay.map((group) => (
           <section key={group.key}>
-            <h2 className="border-b-2 border-ink pb-3 font-serif text-[1.85rem] leading-none tracking-tight text-ink md:text-[2.2rem]">
-              {group.label}
-            </h2>
-            <ul>
+            <div className="mb-4 flex items-end gap-3 border-b-2 border-ink pb-3">
+              <p className="day-num">{group.dayNum}</p>
+              <p className="pb-1 text-[0.85rem] font-extrabold tracking-[0.08em] text-muted-2 uppercase">
+                {group.weekday}
+              </p>
+            </div>
+            <ul className="grid gap-0 sm:grid-cols-2">
               {group.items.map((event) => {
                 const when = formatEventWhenParts(event.starts_at);
                 const timeParts = when.time.replace(/\s+/g, " ").split(" ");
                 return (
                   <li
                     key={event.id}
-                    className="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-4 border-t border-rule py-5 first:border-t-0 md:grid-cols-[6.5rem_minmax(0,1fr)]"
+                    className="grid grid-cols-[4.5rem_minmax(0,1fr)] gap-3 border-t border-rule py-4 first:border-t-0 sm:border-t"
                   >
                     <div>
-                      <p className="font-serif text-[1.55rem] leading-none tracking-tight text-ink md:text-[1.75rem]">
+                      <p className="font-display text-[1.35rem] leading-none font-black tracking-tight text-ink">
                         {timeParts[0]}
                       </p>
-                      <p className="mt-1 text-[0.65rem] font-bold tracking-[0.1em] text-teal uppercase">
+                      <p className="mt-1 text-[0.6rem] font-extrabold tracking-[0.1em] text-teal uppercase">
                         {timeParts[1] ?? ""}
                       </p>
                     </div>
                     <div>
-                      <p className="text-[0.88rem] text-[#555]">{event.place}</p>
-                      <h3 className="mt-1 font-serif text-[1.35rem] leading-snug tracking-tight md:text-[1.45rem]">
+                      <p className="text-[0.8rem] text-muted">{event.place}</p>
+                      <h3 className="mt-1 font-serif text-[1.15rem] leading-snug font-semibold">
                         {event.url ? (
                           <a
                             href={event.url}

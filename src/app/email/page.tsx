@@ -1,6 +1,5 @@
 import { PublicShell } from "@/components/PublicShell";
 import { MorningScanSignup } from "@/components/MorningScanSignup";
-import { TonightBlock } from "@/components/TonightBlock";
 import { emailDateLabel } from "@/lib/dates";
 import { getEmailPreviewData } from "@/lib/queries";
 
@@ -11,96 +10,105 @@ export const metadata = {
 };
 
 export default async function EmailPreviewPage() {
-  const { featuredOriginal, oneToRead, rest, weekendEvents, civic } =
+  const { featuredOriginal, rest, weekendEvents, civic } =
     await getEmailPreviewData();
 
-  const subjectLead =
-    oneToRead?.title.split(/[,:—]/)[0] ??
-    featuredOriginal?.title.split(/[,:—]/)[0] ??
-    "Saturday in Traverse City";
+  const wireOnly = rest.filter((r) => r.title !== featuredOriginal?.title);
 
   return (
-    <PublicShell active="/">
+    <PublicShell active="/" header="compact">
       <div className="mx-auto max-w-2xl">
         <p className="text-sm text-muted">
           Preview only. Sending is not wired up yet.
         </p>
 
-        <div className="mt-4 border border-rule bg-white/70 p-5 md:p-8">
-          <div className="flex items-baseline justify-between gap-3 border-b border-rule pb-3">
-            <p className="font-serif text-xl">traverse.news</p>
-            <p className="text-[0.68rem] font-semibold tracking-[0.06em] text-muted uppercase">
+        <div className="mt-4 border border-ink bg-paper p-5 md:p-8">
+          <div className="flex items-baseline justify-between gap-3 border-b-2 border-ink pb-3">
+            <p className="wordmark wordmark-ink text-[1.4rem]">
+              traverse<span className="wordmark-dot">.</span>news
+            </p>
+            <p className="text-[0.65rem] font-extrabold tracking-[0.08em] text-muted uppercase">
               {emailDateLabel()}
             </p>
           </div>
 
-          <p className="mt-5 font-serif text-[1.05rem] leading-relaxed text-[#333]">
+          <p className="mt-5 font-serif text-[1.05rem] leading-relaxed text-muted-2">
             {featuredOriginal
-              ? `Good morning. Start with our reporting (${subjectLead}), then the wires and what's on tonight.`
-              : oneToRead
-                ? `Good morning. Here's what other desks are covering (${subjectLead}), then what's on tonight.`
-                : `Good morning. Here's what's on tonight — more from the wires after the next pull.`}
+              ? "Good morning. Start with our reporting, then the rest of the town and what's on tonight."
+              : "Good morning. Here's the rest of the town from other desks, then what's on tonight."}
           </p>
 
           {featuredOriginal ? (
-            <div className="mt-6 border border-rule bg-paper-2 p-4">
-              <p className="text-[0.68rem] font-semibold tracking-[0.08em] text-teal uppercase">
-                The one to read
-              </p>
-              <h2 className="mt-2 font-serif text-2xl leading-snug">
+            <div className="mt-6 border border-ink bg-peach p-4">
+              <div className="lead-kicker-row">
+                <span className="lead-sq" aria-hidden />
+                <p className="lead-kicker">The one to read</p>
+              </div>
+              <h2 className="mt-2 font-display text-2xl leading-snug font-black tracking-tight">
                 <a href={featuredOriginal.url}>{featuredOriginal.title}</a>
               </h2>
-              <p className="mt-2 text-sm text-[#444]">{featuredOriginal.dek}</p>
+              {featuredOriginal.dek ? (
+                <p className="mt-2 font-serif text-sm text-muted-2">
+                  {featuredOriginal.dek}
+                </p>
+              ) : null}
               <div className="mt-3">
-                <span className="source-pill text-teal">traverse.news</span>
-              </div>
-            </div>
-          ) : oneToRead ? (
-            <div className="mt-6 border border-rule bg-paper-2 p-4">
-              <p className="text-[0.68rem] font-semibold tracking-[0.08em] text-teal uppercase">
-                The one to read
-              </p>
-              <h2 className="mt-2 font-serif text-2xl leading-snug">
-                <a href={oneToRead.url} target="_blank" rel="noopener noreferrer">
-                  {oneToRead.title}
-                </a>
-              </h2>
-              <p className="mt-2 text-sm text-[#444]">{oneToRead.dek}</p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {oneToRead.sources.map((s) => (
-                  <span key={s.id} className="source-pill text-teal">
-                    {s.name}
-                  </span>
-                ))}
+                <span className="source-box">traverse.news</span>
               </div>
             </div>
           ) : null}
 
-          <p className="mt-8 text-[0.68rem] font-semibold tracking-[0.08em] text-muted uppercase">
+          <p className="mt-8 text-[0.65rem] font-extrabold tracking-[0.1em] text-muted uppercase">
             The rest of the town
           </p>
           <ul className="mt-2">
-            {rest
-              .filter((r) => r.title !== featuredOriginal?.title)
-              .map((item) => (
-                <li key={item.title} className="border-t border-rule py-4">
-                  <h3 className="font-serif text-lg leading-snug">
-                    <a href={item.url}>{item.title}</a>
-                  </h3>
-                  <p className="mt-1 text-sm text-[#444]">{item.dek}</p>
-                  <p className="mt-2 text-sm text-teal">
-                    {item.sources.join(" · ")}
-                  </p>
-                </li>
-              ))}
+            {(featuredOriginal ? wireOnly : rest).map((item) => (
+              <li key={item.title} className="border-t border-rule py-4">
+                <h3 className="font-serif text-lg leading-snug font-semibold">
+                  <a href={item.url}>{item.title}</a>
+                </h3>
+                {item.dek ? (
+                  <p className="mt-1 text-sm text-muted-2">{item.dek}</p>
+                ) : null}
+                <p className="mt-2 text-sm font-bold text-teal">
+                  {item.sources.join(" · ")}
+                </p>
+              </li>
+            ))}
+            {rest.length === 0 && !featuredOriginal ? (
+              <li className="border-t border-rule py-4 text-sm text-muted">
+                No wire yet — we do not invent stories.
+              </li>
+            ) : null}
           </ul>
 
-          <div className="mt-6">
-            <TonightBlock events={weekendEvents} />
+          <div className="mt-6 border border-ink bg-peach p-4">
+            <p className="text-[0.65rem] font-extrabold tracking-[0.1em] text-ink uppercase">
+              Tonight
+            </p>
+            <ul className="mt-2 space-y-2 text-sm">
+              {weekendEvents.map((e) => (
+                <li key={e.id}>
+                  <strong className="font-display">
+                    {new Date(e.starts_at).toLocaleString("en-US", {
+                      timeZone: "America/Detroit",
+                      weekday: "short",
+                      hour: "numeric",
+                      minute: "2-digit",
+                    })}
+                  </strong>
+                  {" — "}
+                  {e.title}. {e.place}
+                </li>
+              ))}
+              {weekendEvents.length === 0 ? (
+                <li className="text-muted">No night-out listings yet.</li>
+              ) : null}
+            </ul>
           </div>
 
           <div className="mt-6">
-            <p className="text-[0.68rem] font-semibold tracking-[0.08em] text-teal uppercase">
+            <p className="text-[0.65rem] font-extrabold tracking-[0.1em] text-teal uppercase">
               Civic this week
             </p>
             <ul className="mt-2 space-y-2 text-sm">
@@ -108,6 +116,7 @@ export default async function EmailPreviewPage() {
                 <li key={e.id}>
                   <strong>
                     {new Date(e.starts_at).toLocaleDateString("en-US", {
+                      timeZone: "America/Detroit",
                       weekday: "short",
                       day: "numeric",
                     })}
@@ -119,10 +128,10 @@ export default async function EmailPreviewPage() {
             </ul>
           </div>
 
-          <div className="mt-8 border-t border-rule pt-4 text-sm text-muted">
+          <div className="mt-8 border-t-2 border-ink pt-4 text-sm text-muted">
             <p>
               Send us a tip:{" "}
-              <a className="font-semibold text-teal" href="mailto:tips@traverse.news">
+              <a className="font-bold text-teal" href="mailto:tips@traverse.news">
                 tips@traverse.news
               </a>
             </p>

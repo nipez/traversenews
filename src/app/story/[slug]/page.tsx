@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PublicShell } from "@/components/PublicShell";
 import { CivicList } from "@/components/CivicList";
+import { MorningScanSignup } from "@/components/MorningScanSignup";
 import { formatStoryDateline } from "@/lib/dates";
 import { selectAroundTheBay } from "@/lib/around";
 import { getAppData, getOriginalBySlug } from "@/lib/data/store";
@@ -33,7 +34,7 @@ export default async function StoryPage({ params }: Props) {
   const data = await getAppData();
   const civic = civicEvents(data.events, data.sources).slice(0, 4);
   const also = selectAroundTheBay(
-    clusterStories(data.stories, data.sources),
+    clusterStories(data.stories, data.sources).filter((c) => !c.is_original),
     { limit: 5, maxPerSource: 2 },
   );
 
@@ -43,48 +44,25 @@ export default async function StoryPage({ params }: Props) {
   const dateline = formatStoryDateline(story.published_at);
 
   return (
-    <PublicShell active="/">
-      <div className="grid gap-10 lg:grid-cols-[88px_minmax(0,1fr)_280px]">
-        <aside className="hidden lg:block">
-          <p className="text-[0.68rem] font-semibold tracking-[0.08em] text-muted uppercase">
-            Share
-          </p>
-          <ul className="mt-3 space-y-2 text-sm text-[#444]">
-            <li>
-              <a href={`/story/${story.slug}`}>Copy link</a>
-            </li>
-            <li>
-              <a
-                href={`mailto:?subject=${encodeURIComponent(story.title)}&body=${encodeURIComponent(`https://traverse.news/story/${story.slug}`)}`}
-              >
-                Email
-              </a>
-            </li>
-            <li>
-              <Link href={`/story/${story.slug}`}>Print</Link>
-            </li>
-          </ul>
-        </aside>
-
+    <PublicShell active="/" header="compact">
+      <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_280px]">
         <article className="min-w-0">
-          <p className="text-[0.72rem] font-semibold tracking-[0.08em] text-teal uppercase">
-            {section ? (
-              <>
-                ● {section}
-                {" · "}
-              </>
-            ) : null}
-            traverse.news reporting
-          </p>
-          <h1 className="mt-3 font-serif text-[2rem] leading-[1.12] text-ink md:text-[2.6rem]">
+          <div className="lead-kicker-row">
+            <span className="lead-sq" aria-hidden />
+            <p className="lead-kicker">
+              {section ? `${section} · ` : null}
+              traverse.news reporting
+            </p>
+          </div>
+          <h1 className="mt-3 font-display text-[2rem] leading-[1.05] font-black tracking-tight text-ink md:text-[2.75rem]">
             {story.title}
           </h1>
           {story.dek ? (
-            <p className="mt-4 max-w-2xl font-serif text-lg leading-relaxed text-[#333]">
+            <p className="mt-4 max-w-2xl font-serif text-lg leading-relaxed text-muted-2">
               {story.dek}
             </p>
           ) : null}
-          <p className="mt-4 text-sm text-muted">
+          <p className="lead-byline mt-4">
             By <strong className="text-ink">{story.byline ?? "Desk"}</strong>
             {" · "}
             {dateline}
@@ -92,7 +70,7 @@ export default async function StoryPage({ params }: Props) {
           </p>
 
           {story.image_url ? (
-            <figure className="mt-6">
+            <figure className="mt-6 border border-ink">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={story.image_url} alt="" className="w-full" />
             </figure>
@@ -110,35 +88,27 @@ export default async function StoryPage({ params }: Props) {
             )}
           </div>
 
-          <div className="mt-10 max-w-2xl border border-rule bg-paper-2 p-4">
-            <p className="text-[0.68rem] font-semibold tracking-[0.08em] text-muted uppercase">
+          <div className="mt-10 max-w-2xl border border-ink p-4">
+            <p className="text-[0.65rem] font-extrabold tracking-[0.1em] text-muted uppercase">
               Corrections & tips
             </p>
-            <p className="mt-2 text-sm text-[#333]">
+            <p className="mt-2 font-serif text-sm text-muted-2">
               Spot an error?{" "}
-              <a className="text-teal" href="mailto:nick@traverse.news">
+              <a className="font-bold text-teal" href="mailto:nick@traverse.news">
                 nick@traverse.news
               </a>
             </p>
           </div>
         </article>
 
-        <aside className="space-y-6">
-          <div className="border border-rule bg-white/60 p-4">
-            <CivicList events={civic} />
-          </div>
-          <div className="border border-rule bg-paper-2 p-4">
-            <h2 className="font-serif text-xl">The morning scan</h2>
-            <p className="mt-2 text-sm text-[#444]">The whole town in one email.</p>
-            <Link href="/email" className="btn-ghost mt-3 inline-flex bg-[#2a2a2a] text-white">
-              See it
-            </Link>
-          </div>
+        <aside className="space-y-5">
+          <CivicList events={civic} showStamp linkLabel="Calendar" limit={4} />
+          <MorningScanSignup variant="teal" />
         </aside>
       </div>
 
-      <section className="mt-14 border-t border-rule pt-8">
-        <h2 className="font-serif text-2xl">Also being covered</h2>
+      <section className="mt-14 border-t-2 border-ink pt-8">
+        <h2 className="bay-hed">Also being covered</h2>
         <ul className="mt-4">
           {also.map((item) => (
             <li key={item.id} className="border-t border-rule py-4">
@@ -146,7 +116,7 @@ export default async function StoryPage({ params }: Props) {
                 href={item.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-semibold text-ink hover:text-teal"
+                className="font-serif text-lg font-semibold text-ink hover:text-teal"
               >
                 {item.title}{" "}
                 <span className="text-muted" aria-hidden>
@@ -155,7 +125,7 @@ export default async function StoryPage({ params }: Props) {
               </a>
               <div className="mt-2 flex flex-wrap gap-2">
                 {item.sources.map((s) => (
-                  <span key={s.id} className="source-pill">
+                  <span key={s.id} className="source-box">
                     {s.name}
                   </span>
                 ))}
