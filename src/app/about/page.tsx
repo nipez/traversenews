@@ -110,8 +110,8 @@ export default function AboutPage() {
 
             <h2>Useful local</h2>
             <p>
-              Standing directories we maintain elsewhere. They are not reprints of
-              this site, and we do not paste their catalogs here.
+              Outbound links for the bay — Nick’s directories plus a few standing
+              local stops. We do not paste their catalogs here.
             </p>
             <ul className="about-useful-list">
               {USEFUL_LOCAL.map((link) => (
