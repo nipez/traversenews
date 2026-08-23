@@ -8,9 +8,12 @@ import {
 } from "@/lib/schools";
 import type { SchoolCalendarItem, Source } from "@/lib/types";
 
-const SCHOOLS_PAGE_CACHE_KEY = "cache:schools.page:v1";
+/** Precomputed /schools districts — one small KV get on public hits. */
+const SCHOOLS_PAGE_CACHE_KEY = "cache:schools.page:v2";
+/** Slim schools + calendar URL fields — avoid parsing full app_data on miss. */
+const SCHOOLS_SLICE_CACHE_KEY = "cache:schools.slice:v2";
 /** Minutes — keep /schools off full-store normalize on every hit (CF 1102). */
-const SCHOOLS_PAGE_TTL_SECONDS = 15 * 60;
+const SCHOOLS_PAGE_TTL_SECONDS = 30 * 60;
 
 export type SchoolsPageDistrict = {
   district: string;
@@ -28,43 +31,68 @@ export type SchoolsPagePayload = {
   cached_at: string;
 };
 
-type SchoolsSlice = {
-  schools?: SchoolCalendarItem[];
-  sources?: Array<
-    Pick<Source, "id" | "calendar_url" | "calendar_pdf_url">
-  >;
+export type SchoolsSlice = {
+  schools: SchoolCalendarItem[];
+  sources: Array<Pick<Source, "id" | "calendar_url" | "calendar_pdf_url">>;
 };
 
+function emptySlice(): SchoolsSlice {
+  return { schools: [], sources: [] };
+}
+
+function sliceFromAppDataBlob(raw: string): SchoolsSlice {
+  const data = JSON.parse(raw) as {
+    schools?: SchoolCalendarItem[];
+    sources?: Array<
+      Pick<Source, "id" | "calendar_url" | "calendar_pdf_url">
+    >;
+  };
+  return {
+    schools: Array.isArray(data.schools) ? data.schools : [],
+    sources: Array.isArray(data.sources)
+      ? data.sources.map((s) => ({
+          id: s.id,
+          calendar_url: s.calendar_url ?? null,
+          calendar_pdf_url: s.calendar_pdf_url ?? null,
+        }))
+      : [],
+  };
+}
+
 /**
- * One KV get of app_data; parse only schools + calendar URL fields.
- * No normalize / scrub / save — public /schools stays cheap.
+ * Prefer the slim slice key. Fall back to one app_data read (no normalize).
+ * Never writes the full store.
  */
 export async function loadSchoolsSlice(): Promise<SchoolsSlice> {
   const kv = await getTraverseDataKv();
-  if (!kv) return {};
+  if (!kv) return emptySlice();
   try {
+    const slim = await kv.get(SCHOOLS_SLICE_CACHE_KEY, "text");
+    if (slim) {
+      const parsed = JSON.parse(slim) as SchoolsSlice;
+      if (parsed && Array.isArray(parsed.schools)) {
+        return {
+          schools: parsed.schools,
+          sources: Array.isArray(parsed.sources) ? parsed.sources : [],
+        };
+      }
+    }
+
     const raw = await kv.get(STORE_KEY, "text");
-    if (!raw) return {};
-    const data = JSON.parse(raw) as SchoolsSlice;
-    return {
-      schools: Array.isArray(data.schools) ? data.schools : [],
-      sources: Array.isArray(data.sources)
-        ? data.sources.map((s) => ({
-            id: s.id,
-            calendar_url: s.calendar_url ?? null,
-            calendar_pdf_url: s.calendar_pdf_url ?? null,
-          }))
-        : [],
-    };
+    if (!raw) return emptySlice();
+    const slice = sliceFromAppDataBlob(raw);
+    // Warm slim key so later misses stay off the fat blob.
+    await writeSchoolsSliceCache(slice);
+    return slice;
   } catch {
-    return {};
+    return emptySlice();
   }
 }
 
 export function buildSchoolsPagePayload(slice: SchoolsSlice): SchoolsPagePayload {
-  const upcoming = selectUpcomingSchoolDays(slice.schools ?? []);
+  const upcoming = selectUpcomingSchoolDays(slice.schools);
   const grouped = groupSchoolDaysByDistrict(upcoming, { includeEmpty: false });
-  const byId = new Map((slice.sources ?? []).map((s) => [s.id, s]));
+  const byId = new Map(slice.sources.map((s) => [s.id, s]));
 
   const districts = grouped.map((block) => {
     const sourceId = sourceIdForDistrict(block.district);
@@ -119,17 +147,41 @@ export async function writeCachedSchoolsPage(
   }
 }
 
-/** Drop cached /schools payload after Desk import so new dates show promptly. */
-export async function invalidateSchoolsPageCache(): Promise<void> {
+export async function writeSchoolsSliceCache(slice: SchoolsSlice): Promise<void> {
   const kv = await getTraverseDataKv();
   if (!kv) return;
   try {
-    await kv.put(SCHOOLS_PAGE_CACHE_KEY, "", { expirationTtl: 1 });
+    await kv.put(SCHOOLS_SLICE_CACHE_KEY, JSON.stringify(slice), {
+      expirationTtl: SCHOOLS_PAGE_TTL_SECONDS,
+    });
   } catch {
     // ignore
   }
 }
 
+/**
+ * After Desk import: write slim slice + warm page payload so the next
+ * public GET is a single small KV read (no app_data parse).
+ */
+export async function refreshSchoolsPageCaches(slice: SchoolsSlice): Promise<void> {
+  const payload = buildSchoolsPagePayload(slice);
+  await writeSchoolsSliceCache(slice);
+  await writeCachedSchoolsPage(payload);
+}
+
+/** @deprecated Prefer refreshSchoolsPageCaches after import. */
+export async function invalidateSchoolsPageCache(): Promise<void> {
+  const kv = await getTraverseDataKv();
+  if (!kv) return;
+  try {
+    await kv.put(SCHOOLS_PAGE_CACHE_KEY, "", { expirationTtl: 1 });
+    await kv.put(SCHOOLS_SLICE_CACHE_KEY, "", { expirationTtl: 1 });
+  } catch {
+    // ignore
+  }
+}
+
+/** Public /schools: cached districts only. Never full-store normalize. */
 export async function getSchoolsPagePayload(): Promise<SchoolsPagePayload> {
   const cached = await readCachedSchoolsPage();
   if (cached) return cached;
@@ -140,4 +192,8 @@ export async function getSchoolsPagePayload(): Promise<SchoolsPagePayload> {
   return payload;
 }
 
-export { SCHOOLS_PAGE_CACHE_KEY, SCHOOLS_PAGE_TTL_SECONDS };
+export {
+  SCHOOLS_PAGE_CACHE_KEY,
+  SCHOOLS_SLICE_CACHE_KEY,
+  SCHOOLS_PAGE_TTL_SECONDS,
+};
