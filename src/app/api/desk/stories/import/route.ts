@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isAlertSourceId } from "@/lib/alerts";
 import { isDeskRequestAuthed } from "@/lib/auth";
 import {
   getAppData,
@@ -9,15 +10,23 @@ import {
   type StoryImportRow,
 } from "@/lib/desk/import-stories";
 
+function normalizeAlertUrl(url: string): string {
+  return url.trim().replace(/\/+$/, "").toLowerCase();
+}
+
 /**
  * Accept browser-pulled story lists (Facebook alerts: Grand Traverse 911, etc.).
  * Never invents posts — only saves what the client sends.
  *
  * Body: {
  *   stories: [{ title, url, dek?, published_at?, source_id? }],
- *   source_id?, replace?, clear?
+ *   source_id?, replace?, clear?, confirm?
  * }
  * Auth: Desk cookie session OR Authorization: Bearer <DESK_IMPORT_TOKEN|DEV_DESK_PASSWORD>
+ *
+ * Hand-add (replace: false): if an alert URL is already in the strip and confirm
+ * is not true, returns 409 with needsConfirm so Desk can Skip or Replace.
+ * Bulk pull (replace: true) replaces that source’s rows and skips the gate.
  */
 export async function POST(request: Request) {
   if (!(await isDeskRequestAuthed(request))) {
@@ -29,6 +38,7 @@ export async function POST(request: Request) {
     source_id?: string;
     replace?: boolean;
     clear?: boolean;
+    confirm?: boolean;
   } | null;
 
   if (!body || !Array.isArray(body.stories)) {
@@ -89,20 +99,75 @@ export async function POST(request: Request) {
 
   const replace = body.replace !== false;
   const targets = source_ids;
+  const confirm = body.confirm === true;
 
-  if (replace) {
-    await replaceStoriesForSources(imported, targets);
-  } else {
-    const existing = data.stories.filter((s) => targets.includes(s.source_id));
-    await replaceStoriesForSources([...existing, ...imported], targets);
+  if (!replace) {
+    const incomingUrls = new Set(
+      imported.map((s) => normalizeAlertUrl(s.url)).filter(Boolean),
+    );
+    const existingAlerts = data.stories.filter(
+      (s) => !s.is_original && isAlertSourceId(s.source_id),
+    );
+    const duplicates = existingAlerts.filter((s) =>
+      incomingUrls.has(normalizeAlertUrl(s.url)),
+    );
+
+    if (duplicates.length > 0 && !confirm) {
+      return NextResponse.json(
+        {
+          error: "URL already in the Alerts strip",
+          needsConfirm: true,
+          duplicates: duplicates.map((s) => ({
+            id: s.id,
+            title: s.title,
+            url: s.url,
+            source_id: s.source_id,
+          })),
+          message:
+            "That URL is already on the Alerts strip. Confirm to replace, or skip.",
+        },
+        { status: 409 },
+      );
+    }
+
+    const dropUrls = confirm
+      ? new Set(imported.map((s) => normalizeAlertUrl(s.url)))
+      : null;
+    // On confirm replace, drop the old alert row even if source_id differs.
+    const otherAlertSources = confirm
+      ? existingAlerts
+          .filter((s) => dropUrls?.has(normalizeAlertUrl(s.url)))
+          .map((s) => s.source_id)
+          .filter((id) => !targets.includes(id))
+      : [];
+    const mergeTargets = [...new Set([...targets, ...otherAlertSources])];
+    const existing = data.stories.filter((s) =>
+      mergeTargets.includes(s.source_id),
+    );
+    const kept = dropUrls
+      ? existing.filter((s) => !dropUrls.has(normalizeAlertUrl(s.url)))
+      : existing;
+    await replaceStoriesForSources([...kept, ...imported], mergeTargets);
+
+    return NextResponse.json({
+      ok: true,
+      imported: imported.length,
+      skipped,
+      source_ids: targets,
+      replace: false,
+      confirmed: confirm && duplicates.length > 0,
+      message: `Saved ${imported.length} browser-pulled story(ies) to KV.`,
+    });
   }
+
+  await replaceStoriesForSources(imported, targets);
 
   return NextResponse.json({
     ok: true,
     imported: imported.length,
     skipped,
     source_ids: targets,
-    replace,
+    replace: true,
     message: `Saved ${imported.length} browser-pulled story(ies) to KV.`,
   });
 }
