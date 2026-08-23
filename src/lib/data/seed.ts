@@ -323,6 +323,63 @@ const sources: Source[] = [
       "Browser-pulled. Alerts/breaking only (crashes, outages, closures, developing). Not a dump of every Ticker FB post. Worker does not scrape FB. Separate from The Ticker RSS (src_ticker) — do not duplicate that firehose into Around the bay.",
   },
   {
+    id: "src_910_sports",
+    name: "9&10 Sports",
+    homepage: "https://www.9and10news.com/sports/",
+    feed_url:
+      "https://www.9and10news.com/arc/outboundfeeds/rss/category/sports/?outputType=xml",
+    pull_method: "rss",
+    beat_id: "beat_sports",
+    enabled: true,
+    notes: "Headlines only. Local and regional sports including TC Central.",
+  },
+  {
+    id: "src_re_sports",
+    name: "Record-Eagle Sports",
+    homepage: "https://www.record-eagle.com/sports/",
+    feed_url:
+      "https://www.record-eagle.com/search/?f=rss&t=article&c=sports",
+    pull_method: "rss",
+    beat_id: "beat_sports",
+    enabled: true,
+    notes:
+      "Metered. Headlines and short dek only — never the body.",
+  },
+  {
+    id: "src_re_prep",
+    name: "Record-Eagle Local Sports",
+    homepage: "https://www.record-eagle.com/sports/local_sports/",
+    feed_url:
+      "https://www.record-eagle.com/search/?f=rss&t=article&c=sports/local_sports",
+    pull_method: "rss",
+    beat_id: "beat_hs_sports",
+    enabled: true,
+    notes:
+      "Prep/local (Trojans, TCSF, Glen Lake). Headlines and short dek only — never the body.",
+  },
+  {
+    id: "src_tcc_ath",
+    name: "TC Central Athletics",
+    homepage: "https://tccathletics.net/main/calendar",
+    feed_url: "https://tccathletics.net/main/calendar",
+    pull_method: "html",
+    beat_id: "beat_hs_sports",
+    enabled: true,
+    notes:
+      "Big Teams calendar. No public RSS. Browser-pull later; empty Worker pull is OK.",
+  },
+  {
+    id: "src_tcw_ath",
+    name: "TC West Athletics",
+    homepage: "https://www.tcwathletics.com/main/calendar",
+    feed_url: "https://www.tcwathletics.com/main/calendar",
+    pull_method: "html",
+    beat_id: "beat_hs_sports",
+    enabled: true,
+    notes:
+      "Big Teams calendar. No public RSS. Browser-pull later; empty Worker pull is OK.",
+  },
+  {
     id: "src_tn",
     name: "traverse.news",
     homepage: "https://traverse.news",
