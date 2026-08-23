@@ -4,6 +4,7 @@ import {
   eventWhenLabel,
   letterHeaderDate,
   letterItemBlurb,
+  schoolsBeatLabel,
   sportsWhenLabel,
 } from "@/lib/email/letter-format";
 import type { EmailEditionSnapshot } from "@/lib/types";
@@ -49,7 +50,6 @@ function storyBlock(opts: {
     dek: opts.dek,
     source: opts.outlet,
   });
-  // When there is no dek, the blurb already names the outlet ("From X: …").
   const outlet =
     opts.outlet && hasDek
       ? `<p style="margin:8px 0 0;font-family:${FONT};font-size:13px;color:${MUTED};line-height:1.4">${esc(opts.outlet)}</p>`
@@ -69,14 +69,14 @@ function lineItem(htmlInner: string): string {
 }
 
 export type RenderLetterOpts = {
-  /** Absolute site origin for email sends. Empty = relative links (web embed). */
   siteUrl: string;
   unsubscribeUrl: string;
-  /** /email or /email/YYYY-MM-DD */
   viewOnlineUrl: string;
   privacyUrl?: string;
   termsUrl?: string;
   tipsUrl?: string;
+  localUrl?: string;
+  schoolsUrl?: string;
 };
 
 /**
@@ -90,20 +90,15 @@ export function ensureOneLetterHtml(html: string): string {
   const second = html.indexOf(open, first + open.length);
   if (second < 0) return html;
 
-  // Prefer a complete document: keep head through first letter, drop the rest
-  // after the first letter's closing marker (or closing table if marker missing).
   const markerEnd = "<!-- /traverse-morning-letter -->";
   const endAt = html.indexOf(markerEnd, first);
   if (endAt >= 0) {
-    const kept = html.slice(0, endAt + markerEnd.length);
-    // Close body/html if we sliced them off.
-    let out = kept;
+    let out = html.slice(0, endAt + markerEnd.length);
     if (!/<\/body>/i.test(out)) out += "\n</body>";
     if (!/<\/html>/i.test(out)) out += "\n</html>";
     return out;
   }
 
-  // Fallback: cut before the second root id attribute's opening tag.
   const tagStart = html.lastIndexOf("<", second);
   if (tagStart > first) {
     let out = html.slice(0, tagStart);
@@ -114,15 +109,31 @@ export function ensureOneLetterHtml(html: string): string {
   return html;
 }
 
+/** Older archived letters may omit `schools` — treat as empty. */
+function normalizeLetter(
+  letter: EmailEditionSnapshot,
+): EmailEditionSnapshot {
+  return {
+    ...letter,
+    around: letter.around ?? [],
+    alerts: letter.alerts ?? [],
+    tonight: letter.tonight ?? [],
+    civic: letter.civic ?? [],
+    sports: letter.sports ?? [],
+    schools: letter.schools ?? null,
+  };
+}
+
 /**
  * Email-safe morning letter HTML (TLDR-scannable).
  * Always one complete letter — never appends a second digest.
  * Empty sections are omitted. Never invents copy.
  */
 export function renderMorningLetterHtml(
-  letter: EmailEditionSnapshot,
+  letterIn: EmailEditionSnapshot,
   opts: RenderLetterOpts,
 ): { subject: string; html: string; text: string; bodyHtml: string } {
+  const letter = normalizeLetter(letterIn);
   const site = opts.siteUrl.replace(/\/$/, "");
   const subject = buildMorningLetterSubject(letter);
   const dateLabel = letterHeaderDate(letter);
@@ -131,10 +142,11 @@ export function renderMorningLetterHtml(
   const privacy = abs(site, opts.privacyUrl ?? "/privacy");
   const terms = abs(site, opts.termsUrl ?? "/terms");
   const tips = abs(site, opts.tipsUrl ?? "/tips");
+  const local = abs(site, opts.localUrl ?? "/local");
+  const schoolsHref = abs(site, opts.schoolsUrl ?? "/schools");
 
   const rows: string[] = [];
 
-  // Header
   rows.push(`<tr><td style="padding:0 0 4px;font-family:${FONT}">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
     <tr>
@@ -148,7 +160,6 @@ export function renderMorningLetterHtml(
 
   rows.push(`<tr><td style="padding:4px 0 0;font-family:${FONT};font-size:13px;color:${MUTED};border-bottom:1px solid #e5e5e5;padding-bottom:16px">${esc(dateLabel)}</td></tr>`);
 
-  // ⚡️ The one to read
   if (letter.lead) {
     rows.push(sectionHeading("⚡️", "The one to read"));
     rows.push(
@@ -161,7 +172,6 @@ export function renderMorningLetterHtml(
     );
   }
 
-  // 🌊 Around the bay
   if (letter.around.length > 0) {
     rows.push(sectionHeading("🌊", "Around the bay"));
     for (const item of letter.around.slice(0, 6)) {
@@ -182,7 +192,6 @@ export function renderMorningLetterHtml(
     }
   }
 
-  // 🚨 Alerts
   if (letter.alerts.length > 0) {
     rows.push(sectionHeading("🚨", "Alerts"));
     for (const a of letter.alerts) {
@@ -197,7 +206,6 @@ export function renderMorningLetterHtml(
     }
   }
 
-  // 🌙 Tonight / What's on
   if (letter.tonight.length > 0) {
     rows.push(sectionHeading("🌙", "Tonight / What's on"));
     for (const e of letter.tonight) {
@@ -213,7 +221,6 @@ export function renderMorningLetterHtml(
     }
   }
 
-  // 🏛️ Civic this week
   if (letter.civic.length > 0) {
     rows.push(sectionHeading("🏛️", "Civic this week"));
     for (const e of letter.civic) {
@@ -225,7 +232,6 @@ export function renderMorningLetterHtml(
     }
   }
 
-  // 🏈 Sports this week
   if (letter.sports.length > 0) {
     rows.push(sectionHeading("🏈", "Sports this week"));
     for (const g of letter.sports) {
@@ -234,16 +240,36 @@ export function renderMorningLetterHtml(
         ? `<a href="${esc(abs(site, g.url))}" style="color:${LINK};font-weight:700;text-decoration:underline">${esc(g.title)}</a>`
         : `<strong style="font-weight:700">${esc(g.title)}</strong>`;
       rows.push(
-        lineItem(
-          `<strong>${when}</strong> · ${esc(g.school)} · ${title}${g.place ? ` · ${esc(g.place)}` : ""}`,
-        ),
+        lineItem(`<strong>${when}</strong> · ${esc(g.school)} · ${title}`),
       );
     }
   }
 
-  // Footer
+  if (letter.schools) {
+    rows.push(sectionHeading("🎒", "Schools"));
+    const beat = esc(
+      schoolsBeatLabel({
+        starts_at: letter.schools.starts_at,
+        district: letter.schools.district,
+        title: letter.schools.title,
+      }),
+    );
+    const titleBit = letter.schools.url
+      ? `<a href="${esc(abs(site, letter.schools.url))}" style="color:${LINK};font-weight:700;text-decoration:underline">${beat}</a>`
+      : `<strong style="font-weight:700">${beat}</strong>`;
+    rows.push(
+      lineItem(
+        `${titleBit}<br/><a href="${esc(schoolsHref)}" style="color:${LINK};font-size:13px;text-decoration:underline">More on /schools</a>`,
+      ),
+    );
+  }
+
   rows.push(`<tr><td style="padding:28px 0 0;border-top:1px solid #e5e5e5;font-family:${FONT};font-size:13px;color:${MUTED};line-height:1.6">
   <p style="margin:0">
+    Nights out and useful local →
+    <a href="${esc(local)}" style="color:${LINK};text-decoration:underline">traverse.news/local</a>
+  </p>
+  <p style="margin:12px 0 0">
     <a href="${esc(unsub)}" style="color:${LINK};text-decoration:underline">Unsubscribe</a>
     &nbsp;·&nbsp;
     <a href="${esc(privacy)}" style="color:${LINK};text-decoration:underline">Privacy</a>
@@ -255,8 +281,6 @@ export function renderMorningLetterHtml(
   <p style="margin:10px 0 0;font-size:12px;color:#777">Traverse City, Michigan · Weekdays and Saturdays · Single opt-in</p>
 </td></tr>`);
 
-  // Exactly one letter root. Callers must replace drafts with this document,
-  // never append under an older digest.
   const bodyHtml = `<!-- traverse-morning-letter:${esc(letter.date)} -->
 <table id="${LETTER_ROOT_ID}" data-traverse-letter="${esc(letter.date)}" role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;margin:0 auto;background:#ffffff;color:${INK}">
 ${rows.join("\n")}
@@ -297,6 +321,8 @@ ${rows.join("\n")}
     privacy,
     terms,
     tips,
+    local,
+    schoolsHref,
   });
 
   return { subject, html, text, bodyHtml: bodyOnly };
@@ -312,6 +338,8 @@ function buildPlainText(
     privacy: string;
     terms: string;
     tips: string;
+    local: string;
+    schoolsHref: string;
   },
 ): string {
   const lines: string[] = [
@@ -389,7 +417,21 @@ function buildPlainText(
     lines.push("");
   }
 
+  if (letter.schools) {
+    lines.push("🎒 Schools");
+    lines.push(
+      `• ${schoolsBeatLabel({
+        starts_at: letter.schools.starts_at,
+        district: letter.schools.district,
+        title: letter.schools.title,
+      })}`,
+    );
+    lines.push(`  ${meta.schoolsHref}`);
+    lines.push("");
+  }
+
   lines.push(
+    `Nights out and useful local → ${meta.local}`,
     `Unsubscribe: ${meta.unsub}`,
     `Privacy: ${meta.privacy}`,
     `Terms: ${meta.terms}`,

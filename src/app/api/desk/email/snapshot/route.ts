@@ -48,6 +48,9 @@ export async function POST(request: Request) {
     tonight: snapshot.tonight.length,
     civic: snapshot.civic.length,
     sports: snapshot.sports.length,
+    schools: snapshot.schools
+      ? `${snapshot.schools.district}: ${snapshot.schools.title}`
+      : null,
     url: `/email/${snapshot.date}`,
     message: `Saved morning letter for ${snapshot.date}. Sending is not wired.`,
   });

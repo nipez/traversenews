@@ -243,6 +243,15 @@ export type EmailSportsCard = {
   time_unknown?: boolean;
 };
 
+/** One upcoming Important date beat for the morning letter (/schools). */
+export type EmailSchoolsCard = {
+  title: string;
+  starts_at: string;
+  district: string;
+  url: string | null;
+  time_unknown?: boolean;
+};
+
 /**
  * Frozen morning-email letter for one America/Detroit date.
  * Separate from homepage `editions` — this is the letter, not the Today rail.
@@ -255,8 +264,10 @@ export type EmailEditionSnapshot = {
   alerts: EmailAlertCard[];
   tonight: EmailEventCard[];
   civic: EmailEventCard[];
-  /** Optional varsity slate for This week (2–4). */
+  /** Optional varsity slate for This week (3–4). */
   sports: EmailSportsCard[];
+  /** Next upcoming official Important date across districts, or null. */
+  schools: EmailSchoolsCard | null;
 };
 
 export type AppData = {

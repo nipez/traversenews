@@ -62,6 +62,29 @@ export function sportsWhenLabel(
 }
 
 /**
+ * Schools beat line from a real Important date — never invents the day.
+ * Shape: "Tue Sep 8 · TCAPS: First day of school for students"
+ */
+export function schoolsBeatLabel(opts: {
+  starts_at: string;
+  district: string;
+  title: string;
+}): string {
+  const when = new Intl.DateTimeFormat("en-US", {
+    timeZone: DETROIT,
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  })
+    .format(new Date(opts.starts_at))
+    .replace(",", "");
+  const district = opts.district.replace(/\s+/g, " ").trim();
+  const title = opts.title.replace(/\s+/g, " ").trim();
+  if (district) return `${when} · ${district}: ${title}`;
+  return `${when} · ${title}`;
+}
+
+/**
  * Keep deks to 2–3 short sentences for TLDR-style context.
  * Truncates only; never invents copy.
  */
@@ -249,17 +272,28 @@ export function buildMorningLetterSubject(
     });
   }
 
-  if (letter.sports[0] && bits.length < 3) {
+  if (letter.sports?.[0] && bits.length < 3) {
     bits.push({
       text: sportsSubjectBit(letter.sports[0]),
       emoji: "🏈",
     });
   }
 
-  if (letter.civic[0] && bits.length < 2) {
+  if (letter.civic?.[0] && bits.length < 2) {
     bits.push({
       text: shortHeadline(letter.civic[0].title, 40),
       emoji: "🏛️",
+    });
+  }
+
+  if (letter.schools && bits.length < 3) {
+    const s = letter.schools;
+    const label = s.district
+      ? `${s.district} ${shortHeadline(s.title, 28)}`
+      : shortHeadline(s.title, 36);
+    bits.push({
+      text: shortHeadline(label, 42),
+      emoji: "🎒",
     });
   }
 

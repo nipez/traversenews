@@ -107,6 +107,13 @@ export default async function DeskEmailPage() {
                   {letter.tonight.length
                     ? ` · ${letter.tonight.length} tonight`
                     : ""}
+                  {letter.civic.length
+                    ? ` · ${letter.civic.length} civic`
+                    : ""}
+                  {letter.sports?.length
+                    ? ` · ${letter.sports.length} sports`
+                    : ""}
+                  {letter.schools ? " · schools" : ""}
                 </p>
               </li>
             ))}
