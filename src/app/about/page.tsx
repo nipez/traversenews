@@ -50,30 +50,48 @@ export default function AboutPage() {
               reprint their stories.
             </p>
             <p>
-              <strong>Events</strong> is concerts, markets, library programs,
-              and nights out. <strong>Civic Calendar</strong> is boards and
-              government only. We pull from public listings. If a source does
-              not print a time, we leave the time blank. We do not invent noon,
-              “tomorrow,” or a show that is not on the calendar.
+              <Link href="/whats-on">
+                <strong>Events</strong>
+              </Link>{" "}
+              is concerts, markets, library programs, and nights out.{" "}
+              <Link href="/civic">
+                <strong>Civic</strong>
+              </Link>{" "}
+              is boards and government only.{" "}
+              <Link href="/schools">
+                <strong>Schools</strong>
+              </Link>{" "}
+              is important district dates — calendars you can trust, not every
+              bake sale.{" "}
+              <Link href="/sports">
+                <strong>Sports</strong>
+              </Link>{" "}
+              is area games and sports headlines.{" "}
+              <Link href="/local">
+                <strong>Local</strong>
+              </Link>{" "}
+              is useful outbound directories: where to look when you need a
+              number, a map, or an office. We pull from public listings. If a
+              source does not print a time, we leave it blank.
             </p>
             <p>
-              <strong>Alerts</strong> is breaking and official: Grand Traverse
-              911 and the Ticker’s Facebook when the post is a crash, outage,
-              closure, or warning. It is not a Facebook dump and it is not
-              Overheard.
+              <Link href="/#alerts">
+                <strong>Alerts</strong>
+              </Link>{" "}
+              is official only: crashes, outages, closures, and warnings —
+              Grand Traverse 911 and the same class of notice from the Ticker
+              when it is that kind of post. It is not a Facebook firehose.
             </p>
             <p>
-              <strong>Morning email</strong> is the same desk in your inbox. One
-              pass before the day starts.
+              <strong>Morning email</strong> is the same paper in your inbox.
+              One pass before the day starts.
             </p>
 
             <h2>How we write</h2>
             <p>
-              Original reporting on this site is traverse.news reporting.
-              Drafts can be built from real public sources. They stay in the
-              Desk until they are published. We do not invent people, quotes,
-              crashes, or “organizers say” lines. If we use a sentence that
-              appeared in another outlet, we say so and we link it.
+              Original reporting on this site is traverse.news reporting. We do
+              not invent people, quotes, crashes, or events. If a sentence came
+              from another outlet, we say so and we link it.
             </p>
             <p>
               When a story is a synthesis of the local record, the article ends
@@ -86,9 +104,9 @@ export default function AboutPage() {
               anyone else with a wall stay as headline, dek, and a link.
             </p>
             <p>
-              We will not empty Overheard in TC onto the homepage. That group is
-              a tip wire. Complaint pile-ons, doxxing, and unverified
-              accusations stay off the public site.
+              We will not dump group-chat accusations onto the homepage.
+              Complaint pile-ons, doxxing, and unverified claims stay off the
+              public site.
             </p>
             <p>
               We will not publish a calendar item we cannot point back to.
@@ -97,20 +115,20 @@ export default function AboutPage() {
             <h2>Who</h2>
             <p>
               This is a Traverse City desk. Tips, corrections, and things we
-              missed:{" "}
+              missed go through the{" "}
               <Link href="/tips" className="font-semibold text-teal hover:underline">
-                send a tip
+                tip form
               </Link>
-              .
+              {" "}
+              on this site — or the one in the rail.
             </p>
-            <p>The newsroom is not public. The paper is.</p>
 
             <h2>Useful local</h2>
             <p>
               Standing outbound directories and places live on{" "}
               <Link href="/local">Useful local</Link>
-              {" — "}
-              not Events, and not news.
+              . Not news. Not Events. Just the links you reach for twice a
+              week.
             </p>
           </div>
         </article>
