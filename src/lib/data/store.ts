@@ -1,7 +1,7 @@
 import { createSeedData } from "@/lib/data/seed";
 import { getTraverseDataKv, STORE_KEY } from "@/lib/data/kv";
 import { isBannedOriginalSlug, scrubAppData } from "@/lib/data/scrub";
-import { STAFF_UNPUBLISHED_DRAFTS } from "@/lib/data/staff-drafts";
+import { STAFF_PUBLISHED_ORIGINALS, STAFF_UNPUBLISHED_DRAFTS } from "@/lib/data/staff-drafts";
 import { buildEditionSnapshot, upsertEdition } from "@/lib/editions";
 import { dedupeEvents } from "@/lib/events";
 import {
@@ -326,7 +326,50 @@ export async function ensureStaffUnpublishedDrafts(): Promise<void> {
     });
   }
 
+  await ensurePublishedStaffOriginals();
   await repairPublishedOriginalStories();
+}
+
+/**
+ * Nick already hit Publish on these — keep status=published and the matching
+ * is_original Story in the same store publishDraft uses.
+ */
+export async function ensurePublishedStaffOriginals(): Promise<void> {
+  for (const staff of STAFF_PUBLISHED_ORIGINALS) {
+    const data = await loadStore();
+    const existing = data.drafts.find((d) => d.id === staff.id);
+    const slug = staff.slug?.trim();
+    if (!slug || isBannedOriginalSlug(slug)) continue;
+
+    const hasStory = data.stories.some(
+      (s) => s.is_original && (s.slug === slug || s.id === staff.published_story_id),
+    );
+
+    if (existing?.status === "published" && hasStory) continue;
+
+    // Upsert full copy first (may still be draft if a prior ensure clobbered it).
+    await upsertDraft({
+      ...staff,
+      ...existing,
+      id: staff.id,
+      title: existing?.title?.trim() || staff.title,
+      dek: existing?.dek?.trim() || staff.dek,
+      body: existing?.body?.trim() ? existing.body : staff.body,
+      section: existing?.section?.trim() || staff.section,
+      byline: existing?.byline?.trim() || staff.byline,
+      slug,
+      source_urls:
+        existing?.source_urls?.length ? existing.source_urls : staff.source_urls,
+      status: existing?.status === "published" ? "published" : "draft",
+      published_story_id: existing?.published_story_id ?? null,
+      published_at: existing?.published_at ?? null,
+      created_at: existing?.created_at ?? staff.created_at,
+    });
+
+    if (existing?.status !== "published" || !hasStory) {
+      await publishDraft(staff.id);
+    }
+  }
 }
 
 /** If a draft is published but its is_original Story is missing, recreate it. */
