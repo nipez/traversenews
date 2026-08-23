@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { USEFUL_LOCAL } from "@/lib/useful-local";
 
 export function SiteFooter() {
   return (
@@ -17,22 +16,6 @@ export function SiteFooter() {
         <p className="text-sm text-muted">
           © 2026 · Traverse City, Michigan
         </p>
-      </div>
-      <div className="site-footer-useful">
-        <p className="site-footer-useful-label">Useful local</p>
-        <ul className="site-footer-useful-list">
-          {USEFUL_LOCAL.map((link) => (
-            <li key={link.href}>
-              <a
-                href={link.href}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {link.label}
-              </a>
-            </li>
-          ))}
-        </ul>
       </div>
     </footer>
   );
