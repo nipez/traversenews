@@ -8,9 +8,10 @@ export function SiteFooter() {
           traverse<span className="wordmark-dot">.</span>news
         </Link>
         <nav>
-          <Link href="/email">About</Link>
+          <Link href="/about">About</Link>
           <a href="mailto:tips@traverse.news">Tips</a>
           <Link href="/editions">Editions</Link>
+          <Link href="/email">Morning email</Link>
         </nav>
         <p className="text-sm text-muted">
           © 2026 · Traverse City, Michigan
