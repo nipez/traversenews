@@ -109,12 +109,14 @@ function normalizeAppData(data: AppData): { data: AppData; scrubbed: boolean } {
       catalogChanged = true;
       continue;
     }
-    // Keep Desk enable/notes; refresh feed wiring for known catalog rows.
+    // Keep Desk enable; refresh feed wiring + notes for known catalog rows.
     if (
       existing.feed_url !== source.feed_url ||
       existing.pull_method !== source.pull_method ||
       existing.homepage !== source.homepage ||
       existing.beat_id !== source.beat_id ||
+      existing.name !== source.name ||
+      existing.notes !== source.notes ||
       (source.calendar_url ?? null) !== (existing.calendar_url ?? null) ||
       (source.calendar_pdf_url ?? null) !== (existing.calendar_pdf_url ?? null)
     ) {
@@ -123,6 +125,7 @@ function normalizeAppData(data: AppData): { data: AppData; scrubbed: boolean } {
       existing.homepage = source.homepage;
       existing.beat_id = source.beat_id;
       existing.name = source.name;
+      existing.notes = source.notes;
       existing.calendar_url = source.calendar_url ?? null;
       existing.calendar_pdf_url = source.calendar_pdf_url ?? null;
       catalogChanged = true;

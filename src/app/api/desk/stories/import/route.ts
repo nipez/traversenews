@@ -102,15 +102,19 @@ export async function POST(request: Request) {
   const confirm = body.confirm === true;
 
   if (!replace) {
+    const alertTargets = targets.filter((id) => isAlertSourceId(id));
     const incomingUrls = new Set(
       imported.map((s) => normalizeAlertUrl(s.url)).filter(Boolean),
     );
     const existingAlerts = data.stories.filter(
       (s) => !s.is_original && isAlertSourceId(s.source_id),
     );
-    const duplicates = existingAlerts.filter((s) =>
-      incomingUrls.has(normalizeAlertUrl(s.url)),
-    );
+    const duplicates =
+      alertTargets.length > 0
+        ? existingAlerts.filter((s) =>
+            incomingUrls.has(normalizeAlertUrl(s.url)),
+          )
+        : [];
 
     if (duplicates.length > 0 && !confirm) {
       return NextResponse.json(
@@ -130,16 +134,18 @@ export async function POST(request: Request) {
       );
     }
 
-    const dropUrls = confirm
-      ? new Set(imported.map((s) => normalizeAlertUrl(s.url)))
-      : null;
+    const dropUrls =
+      confirm && alertTargets.length > 0
+        ? new Set(imported.map((s) => normalizeAlertUrl(s.url)))
+        : null;
     // On confirm replace, drop the old alert row even if source_id differs.
-    const otherAlertSources = confirm
-      ? existingAlerts
-          .filter((s) => dropUrls?.has(normalizeAlertUrl(s.url)))
-          .map((s) => s.source_id)
-          .filter((id) => !targets.includes(id))
-      : [];
+    const otherAlertSources =
+      confirm && dropUrls
+        ? existingAlerts
+            .filter((s) => dropUrls.has(normalizeAlertUrl(s.url)))
+            .map((s) => s.source_id)
+            .filter((id) => !targets.includes(id))
+        : [];
     const mergeTargets = [...new Set([...targets, ...otherAlertSources])];
     const existing = data.stories.filter((s) =>
       mergeTargets.includes(s.source_id),
@@ -155,7 +161,9 @@ export async function POST(request: Request) {
       skipped,
       source_ids: targets,
       replace: false,
-      confirmed: confirm && duplicates.length > 0,
+      ...(alertTargets.length > 0
+        ? { confirmed: confirm && duplicates.length > 0 }
+        : {}),
       message: `Saved ${imported.length} browser-pulled story(ies) to KV.`,
     });
   }
