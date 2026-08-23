@@ -3,6 +3,7 @@ import { getTraverseDataKv, STORE_KEY } from "@/lib/data/kv";
 import { isBannedOriginalSlug, scrubAppData } from "@/lib/data/scrub";
 import { STAFF_PUBLISHED_ORIGINALS, STAFF_UNPUBLISHED_DRAFTS } from "@/lib/data/staff-drafts";
 import { buildEditionSnapshot, upsertEdition } from "@/lib/editions";
+import { sanitizeStoredAthletics } from "@/lib/athletics";
 import { dedupeEvents, sanitizeStoredEvents } from "@/lib/events";
 import {
   DEFAULT_ORIGINAL_BYLINE,
@@ -11,6 +12,7 @@ import {
 } from "@/lib/originals";
 import type {
   AppData,
+  AthleticsGame,
   EditionSnapshot,
   EventItem,
   OriginalDraft,
@@ -40,6 +42,9 @@ function normalizeAppData(data: AppData): { data: AppData; scrubbed: boolean } {
   }
   if (!Array.isArray(data.drafts)) {
     data.drafts = [];
+  }
+  if (!Array.isArray(data.athletics)) {
+    data.athletics = [];
   }
 
   let catalogChanged = false;
@@ -294,6 +299,33 @@ export async function replacePulledEvents(
   data.events = sanitizeStoredEvents(
     dedupeEvents([...kept, ...incoming.values()]),
   ).events;
+  await saveStore(data);
+}
+
+/**
+ * Replace athletics games for the given sources (or all incoming source ids).
+ * Never writes into `events` — HS calendars stay on `athletics` only.
+ */
+export async function replaceAthleticsGames(
+  games: AthleticsGame[],
+  pulledSourceIds?: string[],
+): Promise<void> {
+  const data = await loadStore();
+  if (!Array.isArray(data.athletics)) data.athletics = [];
+  const sourceIds = new Set(
+    pulledSourceIds && pulledSourceIds.length > 0
+      ? pulledSourceIds
+      : games.map((g) => g.source_id),
+  );
+  const kept = data.athletics.filter((g) => !sourceIds.has(g.source_id));
+  const incoming = new Map<string, AthleticsGame>();
+  for (const game of games) {
+    incoming.set(game.id, game);
+  }
+  data.athletics = sanitizeStoredAthletics([
+    ...kept,
+    ...incoming.values(),
+  ]).games;
   await saveStore(data);
 }
 

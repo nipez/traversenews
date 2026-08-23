@@ -366,7 +366,7 @@ const sources: Source[] = [
     beat_id: "beat_hs_sports",
     enabled: true,
     notes:
-      "Big Teams calendar — Sports wire only. Never import game rows into events/KV (floods /whats-on and can 503 the Worker).",
+      "Big Teams calendar — Sports This week only via POST /api/desk/athletics/import. Never import game rows into events/KV.",
   },
   {
     id: "src_tcw_ath",
@@ -377,7 +377,7 @@ const sources: Source[] = [
     beat_id: "beat_hs_sports",
     enabled: true,
     notes:
-      "Big Teams calendar — Sports wire only. Never import game rows into events/KV (floods /whats-on and can 503 the Worker).",
+      "Big Teams calendar — Sports This week only via POST /api/desk/athletics/import. Never import game rows into events/KV.",
   },
   {
     id: "src_tn",
@@ -402,6 +402,7 @@ export function createSeedData(): AppData {
     sources,
     stories,
     events,
+    athletics: [],
     subscribers: [],
     last_pull_at: null,
     editions: [],

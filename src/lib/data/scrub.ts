@@ -1,5 +1,6 @@
 import type { AppData, EditionSnapshot, EditionStoryCard, Story } from "@/lib/types";
-import { dedupeEvents, sanitizeStoredEvents } from "@/lib/events";
+import { sanitizeStoredAthletics } from "@/lib/athletics";
+import { sanitizeStoredEvents } from "@/lib/events";
 
 /** Invented seed copy that must never appear as reporting. See README → Editorial. */
 export const BANNED_ORIGINAL_SLUGS = new Set([
@@ -131,6 +132,19 @@ export function scrubAppData(data: AppData): { data: AppData; changed: boolean }
     data.events = nextEvents;
   } else {
     data.events = nextEvents;
+  }
+
+  if (!Array.isArray(data.athletics)) {
+    data.athletics = [];
+    changed = true;
+  } else {
+    const ath = sanitizeStoredAthletics(data.athletics);
+    if (ath.changed) {
+      changed = true;
+      data.athletics = ath.games;
+    } else {
+      data.athletics = ath.games;
+    }
   }
 
   data.editions = data.editions.map((ed) => {

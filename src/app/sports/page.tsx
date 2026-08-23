@@ -1,10 +1,16 @@
 import Link from "next/link";
 import { DeskRail } from "@/components/DeskRail";
 import { PublicShell } from "@/components/PublicShell";
-import { formatBayDay } from "@/lib/dates";
+import {
+  groupAthleticsByDay,
+  isVarsityGameTitle,
+  selectThisWeekAthletics,
+} from "@/lib/athletics";
+import { formatBayDay, formatEventWhenParts } from "@/lib/dates";
 import { getAppData } from "@/lib/data/store";
 import { isRecordEagleStory } from "@/lib/paywall";
 import { selectSportsStories, type SportsStory } from "@/lib/sports";
+import type { AthleticsGame } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +32,79 @@ const SPORTS_BEAT_LINKS = [
     href: "https://www.record-eagle.com/sports/local_sports/",
   },
 ];
+
+function gameClock(game: AthleticsGame): string {
+  return formatEventWhenParts(game.starts_at, new Date(), {
+    timeUnknown: game.time_unknown,
+  }).time;
+}
+
+function ThisWeekSlate({ games }: { games: AthleticsGame[] }) {
+  const days = groupAthleticsByDay(games);
+
+  return (
+    <section className="sports-week" aria-label="This week">
+      <h2 className="sports-week-hed">This week</h2>
+      <p className="sports-week-dek">
+        Traverse City Central and TC West — from the Big Teams calendars. Links
+        out; we do not invent kickoffs.
+      </p>
+      {days.length === 0 ? (
+        <p className="sports-week-empty">No games on the calendar this week.</p>
+      ) : (
+        <div className="sports-week-days">
+          {days.map((day) => (
+            <div key={day.key} className="sports-week-day">
+              <h3 className="sports-week-day-label">{day.label}</h3>
+              <ul className="sports-week-list">
+                {day.items.map((game) => {
+                  const varsity = isVarsityGameTitle(game.title);
+                  const time = gameClock(game);
+                  const inner = (
+                    <>
+                      <span className="sports-week-time">{time}</span>
+                      <span className="sports-week-school">{game.school}</span>
+                      <span
+                        className={
+                          varsity
+                            ? "sports-week-title sports-week-title-varsity"
+                            : "sports-week-title"
+                        }
+                      >
+                        {game.title}
+                      </span>
+                      {game.place ? (
+                        <span className="sports-week-place">{game.place}</span>
+                      ) : null}
+                    </>
+                  );
+                  return (
+                    <li key={game.id} className="sports-week-item">
+                      {game.url ? (
+                        <a
+                          href={game.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="sports-week-link"
+                        >
+                          {inner}
+                        </a>
+                      ) : (
+                        <div className="sports-week-link sports-week-nolink">
+                          {inner}
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
 
 function SportsList({ items }: { items: SportsStory[] }) {
   if (items.length === 0) {
@@ -63,6 +142,7 @@ function SportsList({ items }: { items: SportsStory[] }) {
 
 export default async function SportsPage() {
   const data = await getAppData();
+  const weekGames = selectThisWeekAthletics(data.athletics ?? []);
   const all = selectSportsStories(data.stories, data.sources, { limit: 40 });
   const seen = new Set<string>();
   const unique: typeof all = [];
@@ -89,6 +169,8 @@ export default async function SportsPage() {
               scores.
             </p>
           </header>
+
+          <ThisWeekSlate games={weekGames} />
 
           {showHsSubhead ? (
             <>

@@ -1872,6 +1872,132 @@ a:hover {
   color: #52493c;
 }
 
+/* This week — Central / West slate (athletics store, not Events) */
+.sports-week {
+  margin: 0 0 2.25rem;
+  padding: 1.1rem 1.15rem 1.2rem;
+  border: 1px solid #1c1712;
+  background: #f4edde;
+}
+
+.sports-week-hed {
+  margin: 0;
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-size: 1.35rem;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  color: #1c1712;
+}
+
+.sports-week-dek {
+  margin: 0.35rem 0 0;
+  font-family: var(--font-source-serif), Georgia, serif;
+  font-size: 0.92rem;
+  line-height: 1.35;
+  color: #52493c;
+}
+
+.sports-week-empty {
+  margin: 1rem 0 0;
+  font-family: var(--font-source-serif), Georgia, serif;
+  font-size: 0.95rem;
+  color: #7a7060;
+}
+
+.sports-week-days {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.sports-week-day-label {
+  margin: 0 0 0.45rem;
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #2a6f6c;
+}
+
+.sports-week-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.sports-week-link {
+  display: grid;
+  grid-template-columns: 4.5rem 4.25rem 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 0.65rem;
+  row-gap: 0.15rem;
+  text-decoration: none;
+  color: inherit;
+}
+
+.sports-week-nolink {
+  cursor: default;
+}
+
+@media (max-width: 560px) {
+  .sports-week-link {
+    grid-template-columns: 3.75rem 3.5rem 1fr;
+  }
+}
+
+.sports-week-time {
+  grid-column: 1;
+  grid-row: 1;
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #1c1712;
+}
+
+.sports-week-school {
+  grid-column: 2;
+  grid-row: 1;
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #2a6f6c;
+}
+
+.sports-week-title {
+  grid-column: 3;
+  grid-row: 1;
+  font-family: var(--font-source-serif), Georgia, serif;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: #1c1712;
+}
+
+.sports-week-title-varsity {
+  font-weight: 800;
+}
+
+.sports-week-place {
+  grid-column: 3;
+  grid-row: 2;
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #7a7060;
+}
+
+.sports-week-link:hover .sports-week-title {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .sports-section + .sports-section {
   margin-top: 2.5rem;
 }

@@ -92,6 +92,22 @@ export type EventItem = {
   time_unknown?: boolean;
 };
 
+/**
+ * HS athletics slate (TC Central / TC West). Stored separately from `events`
+ * so a season calendar cannot balloon /whats-on or 503 the Worker.
+ */
+export type AthleticsGame = {
+  id: string;
+  title: string;
+  starts_at: string;
+  place: string;
+  url: string | null;
+  source_id: string;
+  /** Display label: Central or West. */
+  school: string;
+  time_unknown?: boolean;
+};
+
 export type Subscriber = {
   email: string;
   created_at: string;
@@ -146,6 +162,11 @@ export type AppData = {
   sources: Source[];
   stories: Story[];
   events: EventItem[];
+  /**
+   * HS athletics games (Central / West). Not EventItems — never mix into
+   * Tonight / What's on / civic.
+   */
+  athletics: AthleticsGame[];
   subscribers: Subscriber[];
   last_pull_at: string | null;
   editions: EditionSnapshot[];
