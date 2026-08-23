@@ -708,6 +708,21 @@ a:hover {
   background: #f4edde;
 }
 
+/* Honest meter label — Record-Eagle cards only. */
+.paywall-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  border: 1px solid #1c1712;
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #1c1712;
+  background: #e4d8c4;
+}
+
 /* Tonight peach well */
 .tonight-well {
   background: #f3cfae;

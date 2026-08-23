@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { formatBayDay } from "@/lib/dates";
+import { isRecordEagleCluster } from "@/lib/paywall";
 import type { ClusteredStory } from "@/lib/types";
 
 /** Around the bay — title first, RSS dek when present, source pills. */
@@ -25,6 +26,7 @@ export function AroundTheBay({ items }: { items: ClusteredStory[] }) {
         <ul className="bay-grid">
           {shown.map((item) => {
             const dek = item.dek?.trim() ?? "";
+            const paywalled = isRecordEagleCluster(item);
             return (
               <li key={item.id} className="bay-item">
                 <a
@@ -41,6 +43,9 @@ export function AroundTheBay({ items }: { items: ClusteredStory[] }) {
                         {s.name}
                       </span>
                     ))}
+                    {paywalled ? (
+                      <span className="paywall-pill">Paywall</span>
+                    ) : null}
                     <span className="bay-rel">
                       {formatBayDay(item.published_at)}
                     </span>

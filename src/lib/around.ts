@@ -1,5 +1,6 @@
 import type { ClusteredStory } from "@/lib/types";
 import { isAlertSourceId } from "@/lib/alerts";
+import { isRecordEagleCluster } from "@/lib/paywall";
 
 const JUNK_TITLE_MARKERS = [
   "blood drive",
@@ -114,10 +115,9 @@ const SPORTS_SOURCE_IDS = new Set([
   "src_tcw_ath",
 ]);
 
-/** Prefer these desks in the non-sports bay mix. */
+/** Prefer these free desks for Around the bay (not Record-Eagle). */
 const PREFERRED_NEWS_SOURCE_IDS = new Set([
   "src_ticker",
-  "src_re",
   "src_ipr",
   "src_tcbn",
   "src_northern",
@@ -196,6 +196,9 @@ function clusterScore(cluster: ClusteredStory): number {
   if (looksLikeLocalNews(cluster)) score += 2_000;
   const sid = primarySourceKey(cluster);
   if (PREFERRED_NEWS_SOURCE_IDS.has(sid)) score += 1_500;
+  if (sid === "src_910_sports") score += 1_200;
+  // Paywalled RE is allowed but not preferred for the free-desk majority.
+  if (isRecordEagleCluster(cluster)) score -= 3_000;
   // Recency (ms since epoch, scaled) as tiebreaker within the same tier.
   score += new Date(cluster.published_at).getTime() / 1e12;
   return score;
@@ -207,6 +210,8 @@ export type AroundSelectOptions = {
   maxPerSource?: number;
   /** Cap for sports/HS sports clusters. Default 4 of 18. */
   maxSports?: number;
+  /** Cap for all Record-Eagle sources as one paywall bucket. Default 3. */
+  maxRecordEagle?: number;
 };
 
 function takeFromPool(
@@ -218,7 +223,9 @@ function takeFromPool(
     limit: number;
     maxPerSource: number;
     maxSports: number;
+    maxRecordEagle: number;
     sportsCount: { n: number };
+    reCount: { n: number };
   },
 ) {
   const queues = new Map<string, ClusteredStory[]>();
@@ -230,12 +237,12 @@ function takeFromPool(
     queues.set(key, q);
   }
 
-  // Preferred desks first in round-robin order.
-  const preferredKeys = [...queues.keys()].filter((k) =>
-    PREFERRED_NEWS_SOURCE_IDS.has(k),
+  // Preferred free desks / 9&10 sports first in round-robin order.
+  const preferredKeys = [...queues.keys()].filter(
+    (k) => PREFERRED_NEWS_SOURCE_IDS.has(k) || k === "src_910_sports",
   );
   const otherKeys = [...queues.keys()].filter(
-    (k) => !PREFERRED_NEWS_SOURCE_IDS.has(k),
+    (k) => !PREFERRED_NEWS_SOURCE_IDS.has(k) && k !== "src_910_sports",
   );
   const keyOrder = [...preferredKeys, ...otherKeys];
 
@@ -252,9 +259,12 @@ function takeFromPool(
         if (used.has(next.id)) continue;
         const sports = isSportsCluster(next);
         if (sports && options.sportsCount.n >= options.maxSports) continue;
+        const re = isRecordEagleCluster(next);
+        if (re && options.reCount.n >= options.maxRecordEagle) continue;
         used.add(next.id);
         counts.set(key, (counts.get(key) ?? 0) + 1);
         if (sports) options.sportsCount.n += 1;
+        if (re) options.reCount.n += 1;
         picked.push(next);
         progress = true;
         break;
@@ -276,6 +286,7 @@ export function selectAroundTheBay(
   const limit = options.limit ?? 18;
   const maxPerSource = options.maxPerSource ?? 4;
   const maxSports = options.maxSports ?? 4;
+  const maxRecordEagle = options.maxRecordEagle ?? 3;
 
   const eligible = clusters
     .filter((c) => !c.is_original)
@@ -292,19 +303,28 @@ export function selectAroundTheBay(
     });
 
   const sports = eligible.filter(isSportsCluster);
-  const news = eligible.filter((c) => !isSportsCluster(c));
+  const freeNews = eligible.filter(
+    (c) => !isSportsCluster(c) && !isRecordEagleCluster(c),
+  );
+  const reNews = eligible.filter(
+    (c) => !isSportsCluster(c) && isRecordEagleCluster(c),
+  );
 
   const picked: ClusteredStory[] = [];
   const counts = new Map<string, number>();
   const used = new Set<string>();
   const sportsCount = { n: 0 };
+  const reCount = { n: 0 };
 
-  // Leave room for up to maxSports items; news fills the rest first.
-  const newsTarget = Math.max(0, limit - Math.min(maxSports, sports.length));
+  // Majority free desks: leave room for sports + RE caps (RE is one bucket).
+  const freeTarget = Math.max(
+    0,
+    limit - Math.min(maxSports, sports.length) - maxRecordEagle,
+  );
 
-  // 1) Multi-source news clusters first.
-  for (const c of news) {
-    if (picked.length >= newsTarget) break;
+  // 1) Multi-source free-news clusters first.
+  for (const c of freeNews) {
+    if (picked.length >= freeTarget) break;
     if (c.sources.length < 2) continue;
     const key = primarySourceKey(c);
     if ((counts.get(key) ?? 0) >= maxPerSource) continue;
@@ -313,34 +333,51 @@ export function selectAroundTheBay(
     picked.push(c);
   }
 
-  // 2) Preferred news desks, then other non-sports (up to newsTarget).
-  takeFromPool(news, picked, used, counts, {
-    limit: newsTarget,
+  // 2) Preferred free desks, then other free non-sports.
+  takeFromPool(freeNews, picked, used, counts, {
+    limit: freeTarget,
     maxPerSource,
     maxSports,
+    maxRecordEagle,
     sportsCount,
+    reCount,
   });
 
-  // 3) Up to maxSports sports items.
+  // 3) Up to maxSports sports (RE sports count toward both caps).
   takeFromPool(sports, picked, used, counts, {
     limit,
     maxPerSource,
     maxSports,
+    maxRecordEagle,
     sportsCount,
+    reCount,
   });
 
-  // 4) Soft fill remaining from news, then sports under caps.
+  // 4) Up to maxRecordEagle RE news (if sports did not already fill the bucket).
+  takeFromPool(reNews, picked, used, counts, {
+    limit,
+    maxPerSource,
+    maxSports,
+    maxRecordEagle,
+    sportsCount,
+    reCount,
+  });
+
+  // 5) Soft fill: free first, then sports/RE under caps.
   if (picked.length < limit) {
-    for (const c of [...news, ...sports]) {
+    for (const c of [...freeNews, ...sports, ...reNews]) {
       if (picked.length >= limit) break;
       if (used.has(c.id)) continue;
       const key = primarySourceKey(c);
       if ((counts.get(key) ?? 0) >= maxPerSource + 1) continue;
       const sportsItem = isSportsCluster(c);
       if (sportsItem && sportsCount.n >= maxSports) continue;
+      const reItem = isRecordEagleCluster(c);
+      if (reItem && reCount.n >= maxRecordEagle) continue;
       used.add(c.id);
       counts.set(key, (counts.get(key) ?? 0) + 1);
       if (sportsItem) sportsCount.n += 1;
+      if (reItem) reCount.n += 1;
       picked.push(c);
     }
   }

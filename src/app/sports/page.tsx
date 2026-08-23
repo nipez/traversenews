@@ -3,6 +3,7 @@ import { DeskRail } from "@/components/DeskRail";
 import { PublicShell } from "@/components/PublicShell";
 import { formatBayDay } from "@/lib/dates";
 import { getAppData } from "@/lib/data/store";
+import { isRecordEagleStory } from "@/lib/paywall";
 import { selectSportsStories, type SportsStory } from "@/lib/sports";
 
 export const dynamic = "force-dynamic";
@@ -48,6 +49,9 @@ function SportsList({ items }: { items: SportsStory[] }) {
             <h3 className="sports-title">{item.title}</h3>
             <div className="sports-meta">
               <span className="source-box">{item.source_name}</span>
+              {isRecordEagleStory(item) ? (
+                <span className="paywall-pill">Paywall</span>
+              ) : null}
               <span className="sports-day">{formatBayDay(item.published_at)}</span>
             </div>
           </a>

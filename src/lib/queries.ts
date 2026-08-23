@@ -15,7 +15,7 @@ export async function getHomepageData() {
   const originals = clusters.filter((c) => c.is_original);
   const around = selectAroundTheBay(
     clusters.filter((c) => !c.is_original),
-    { limit: 18, maxPerSource: 4, maxSports: 4 },
+    { limit: 18, maxPerSource: 4, maxSports: 4, maxRecordEagle: 3 },
   );
   // Hero is staff originals only — never promote other-desk crime/wire to the lead.
   const lead = originals[0] ?? null;
