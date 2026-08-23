@@ -9,15 +9,16 @@ const beats: Beat[] = [
   { id: "beat_all", name: "All sources", slug: "all", sort: 0 },
   { id: "beat_general", name: "General news", slug: "general-news", sort: 1 },
   { id: "beat_government", name: "Government", slug: "government", sort: 2 },
-  { id: "beat_schools", name: "Schools", slug: "schools", sort: 3 },
-  { id: "beat_transit", name: "Transit", slug: "transit", sort: 4 },
-  { id: "beat_events", name: "Events", slug: "events", sort: 5 },
-  { id: "beat_arts", name: "Arts", slug: "arts", sort: 6 },
-  { id: "beat_business", name: "Business", slug: "business", sort: 7 },
-  { id: "beat_social", name: "Social", slug: "social", sort: 8 },
-  { id: "beat_sports", name: "Sports", slug: "sports", sort: 9 },
-  { id: "beat_hs_sports", name: "High school sports", slug: "high-school-sports", sort: 10 },
-  { id: "beat_original", name: "Original", slug: "original", sort: 11 },
+  { id: "beat_public_safety", name: "Public safety", slug: "public-safety", sort: 3 },
+  { id: "beat_schools", name: "Schools", slug: "schools", sort: 4 },
+  { id: "beat_transit", name: "Transit", slug: "transit", sort: 5 },
+  { id: "beat_events", name: "Events", slug: "events", sort: 6 },
+  { id: "beat_arts", name: "Arts", slug: "arts", sort: 7 },
+  { id: "beat_business", name: "Business", slug: "business", sort: 8 },
+  { id: "beat_social", name: "Social", slug: "social", sort: 9 },
+  { id: "beat_sports", name: "Sports", slug: "sports", sort: 10 },
+  { id: "beat_hs_sports", name: "High school sports", slug: "high-school-sports", sort: 11 },
+  { id: "beat_original", name: "Original", slug: "original", sort: 12 },
 ];
 
 const sources: Source[] = [
@@ -298,6 +299,17 @@ const sources: Source[] = [
     beat_id: "beat_arts",
     enabled: true,
     notes: "",
+  },
+  {
+    id: "src_gt911",
+    name: "Grand Traverse 911",
+    homepage: "https://www.facebook.com/GrandTraverse911",
+    feed_url: "https://www.facebook.com/GrandTraverse911",
+    pull_method: "facebook",
+    beat_id: "beat_public_safety",
+    enabled: true,
+    notes:
+      "Official alerts only (outages, crashes, closures). Browser-pulled by Traverse News on the live computer. Do not dump the Facebook feed. No memes, hiring fluff, or unverified pile-ons. Empty Worker pull is OK.",
   },
   {
     id: "src_tn",

@@ -44,6 +44,34 @@ function normalizeAppData(data: AppData): { data: AppData; scrubbed: boolean } {
 
   let catalogChanged = false;
   const seed = createSeedData();
+
+  // Merge new beats from seed (e.g. Public safety) without dropping Desk order tweaks.
+  if (!Array.isArray(data.beats)) {
+    data.beats = structuredClone(seed.beats);
+    catalogChanged = true;
+  } else {
+    const beatById = new Map(data.beats.map((b) => [b.id, b]));
+    for (const beat of seed.beats) {
+      const existing = beatById.get(beat.id);
+      if (!existing) {
+        data.beats.push(structuredClone(beat));
+        catalogChanged = true;
+        continue;
+      }
+      if (
+        existing.name !== beat.name ||
+        existing.slug !== beat.slug ||
+        existing.sort !== beat.sort
+      ) {
+        existing.name = beat.name;
+        existing.slug = beat.slug;
+        existing.sort = beat.sort;
+        catalogChanged = true;
+      }
+    }
+    data.beats.sort((a, b) => a.sort - b.sort);
+  }
+
   const byId = new Map(data.sources.map((s) => [s.id, s]));
   for (const source of seed.sources) {
     const existing = byId.get(source.id);
