@@ -8,6 +8,8 @@ import type { SchoolCalendarItem } from "@/lib/types";
 export type SchoolsDistrictBlock = {
   district: string;
   calendarUrl: string | null;
+  /** Optional year PDF (TCAPS) — link out only, never hosted. */
+  calendarPdfUrl: string | null;
   months: Array<{
     key: string;
     name: string;
@@ -102,15 +104,31 @@ export function SchoolsDistrictToggle({
                 ? "No official dates in the pull yet"
                 : `${count} important date${count === 1 ? "" : "s"}`}
             </p>
-            {selected.calendarUrl ? (
+            {selected.calendarUrl || selected.calendarPdfUrl ? (
               <p className="schools-district-cal">
-                <a
-                  href={selected.calendarUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Full calendar →
-                </a>
+                {selected.calendarUrl ? (
+                  <a
+                    href={selected.calendarUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Full calendar →
+                  </a>
+                ) : null}
+                {selected.calendarUrl && selected.calendarPdfUrl ? (
+                  <span className="schools-district-cal-sep" aria-hidden>
+                    {" · "}
+                  </span>
+                ) : null}
+                {selected.calendarPdfUrl ? (
+                  <a
+                    href={selected.calendarPdfUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Year PDF →
+                  </a>
+                ) : null}
               </p>
             ) : null}
           </header>

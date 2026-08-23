@@ -195,6 +195,15 @@ export const SCHOOL_DISTRICT_CALENDAR_URLS: Record<string, string> = {
   "TC Christian": "https://www.tcchristian.org/parents/",
 };
 
+/**
+ * Optional year PDF alongside the board/parents page.
+ * Prefer a 26–27 PDF when posted; until then Nick’s 25–26 Thrillshare file.
+ */
+export const SCHOOL_DISTRICT_CALENDAR_PDF_URLS: Record<string, string> = {
+  TCAPS:
+    "https://files-backend.assets.thrillshare.com/documents/asset/uploaded_file/5656/Tcaps/634b1fa5-4fd0-445c-8504-16ecf5f8a427/25-26-REVISED-Calendars-1.28.26.pdf?disposition=inline",
+};
+
 export function sourceIdForDistrict(district: string): string | null {
   switch (district) {
     case "TCAPS":
