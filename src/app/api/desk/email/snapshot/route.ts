@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { isDeskRequestAuthed } from "@/lib/auth";
 import { snapshotTodaysEmailEdition } from "@/lib/data/store";
+import { buildMorningLetterSubject } from "@/lib/email/letter-format";
 import { emailDetroitDateKey } from "@/lib/email-editions";
 
 /**
@@ -40,12 +41,16 @@ export async function POST(request: Request) {
     ok: true,
     date: snapshot.date,
     captured_at: snapshot.captured_at,
+    subject: buildMorningLetterSubject(snapshot),
     lead: snapshot.lead?.title ?? null,
     around: snapshot.around.length,
     alerts: snapshot.alerts.length,
     tonight: snapshot.tonight.length,
     civic: snapshot.civic.length,
     sports: snapshot.sports.length,
+    schools: snapshot.schools
+      ? `${snapshot.schools.district}: ${snapshot.schools.title}`
+      : null,
     url: `/email/${snapshot.date}`,
     message: `Saved morning letter for ${snapshot.date}. Sending is not wired.`,
   });

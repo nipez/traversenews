@@ -19,8 +19,9 @@ export default async function DeskEmailPage() {
       <div className="mx-auto max-w-3xl px-4 py-10 md:px-6">
         <h1 className="font-serif text-3xl">Email</h1>
         <p className="mt-2 text-[#444]">
-          Send pipeline comes later. Preview the morning scan, archive dated
-          letters, and collect addresses now. Do not invent a letter.
+          Send pipeline comes later. Preview the TLDR-style morning letter,
+          archive dated snapshots, and collect addresses now. Do not invent a
+          letter.
         </p>
 
         <section className="mt-8">
@@ -103,6 +104,16 @@ export default async function DeskEmailPage() {
                   {letter.alerts.length
                     ? ` · ${letter.alerts.length} alerts`
                     : ""}
+                  {letter.tonight.length
+                    ? ` · ${letter.tonight.length} tonight`
+                    : ""}
+                  {letter.civic.length
+                    ? ` · ${letter.civic.length} civic`
+                    : ""}
+                  {letter.sports?.length
+                    ? ` · ${letter.sports.length} sports`
+                    : ""}
+                  {letter.schools ? " · schools" : ""}
                 </p>
               </li>
             ))}

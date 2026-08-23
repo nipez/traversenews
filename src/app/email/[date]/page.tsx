@@ -52,7 +52,7 @@ export default async function EmailEditionPage({ params }: Props) {
       <div className="mx-auto max-w-2xl">
         <div className="flex flex-wrap items-baseline justify-between gap-3">
           <p className="text-sm text-muted">
-            Archive copy. Sending is not wired up yet.
+            Archived letter (same layout as send). Sending is not wired up yet.
           </p>
           <Link
             href="/email/archive"

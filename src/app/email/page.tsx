@@ -18,7 +18,7 @@ export default async function EmailPreviewPage() {
       <div className="mx-auto max-w-2xl">
         <div className="flex flex-wrap items-baseline justify-between gap-3">
           <p className="text-sm text-muted">
-            Preview only. Sending is not wired up yet.
+            Letter preview (same layout as send). Sending is not wired up yet.
           </p>
           <Link
             href="/email/archive"
