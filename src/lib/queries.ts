@@ -1,4 +1,5 @@
 import { selectAroundTheBay } from "@/lib/around";
+import { selectAlerts } from "@/lib/alerts";
 import { dedupeEvents, eventInUpcomingWindow, isCivicEvent, selectTonightEvents } from "@/lib/events";
 import { clusterStories } from "@/lib/pull/cluster";
 import {
@@ -35,6 +36,7 @@ export async function getHomepageData() {
   });
 
   const civic = civicEvents(data.events, data.sources).slice(0, 6);
+  const alerts = selectAlerts(data.stories, data.sources, { limit: 3 });
 
   return {
     data,
@@ -43,6 +45,7 @@ export async function getHomepageData() {
     moreFromUs,
     weekendEvents,
     civic,
+    alerts,
   };
 }
 

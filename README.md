@@ -226,6 +226,33 @@ curl -X POST https://traverse-news.nickperez.workers.dev/api/desk/events/import 
 - First handoff URL: https://www.traversecity.com/events/
 - Do **not** re-import wrong Sunday rows for Saturday markets (Sara Hardy, Bubbly Brunch, etc.).
 
+### Browser story import (Facebook alerts)
+
+Cloud Agents do not scrape Facebook. **Do not invent posts.** Traverse News pulls Grand Traverse 911 (and similar alert pages) on the live computer and POSTs here. The homepage **Alerts** strip shows `src_gt911` stories only; it stays hidden when empty.
+
+```bash
+curl -X POST https://traverse-news.nickperez.workers.dev/api/desk/stories/import \
+  -H "Authorization: Bearer $DESK_IMPORT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "source_id": "src_gt911",
+    "replace": true,
+    "stories": [
+      {
+        "title": "Power outage — west side TC",
+        "dek": "Crews on scene. Avoid downed lines.",
+        "url": "https://www.facebook.com/GrandTraverse911/posts/example",
+        "published_at": "2026-08-23T18:00:00-04:00"
+      }
+    ]
+  }'
+```
+
+- Auth: same as events import (`DESK_IMPORT_TOKEN` or `DEV_DESK_PASSWORD`).
+- Default `source_id`: `src_gt911`.
+- Replaces that source’s story rows when `replace: true` (default). Does not wipe RSS / originals.
+- RSS pulls preserve browser-imported alert stories for other source ids.
+
 ## Product rules (v1)
 
 - Public nav: Today, What's on, Civic, plus morning email CTA
