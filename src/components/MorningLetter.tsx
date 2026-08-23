@@ -59,12 +59,12 @@ export function MorningLetter({
   })();
 
   return (
-    <div className="border border-ink bg-paper p-5 md:p-8">
+    <div className="morning-letter border border-ink bg-paper p-5 md:p-8">
       <div className="flex items-baseline justify-between gap-3 border-b-2 border-ink pb-3">
         <p className="wordmark wordmark-ink text-[1.4rem]">
           traverse<span className="wordmark-dot">.</span>news
         </p>
-        <p className="text-[0.65rem] font-extrabold tracking-[0.08em] text-muted uppercase">
+        <p className="text-[0.65rem] font-extrabold tracking-[0.08em] text-muted uppercase shrink-0">
           {emailDateLabel(dateObj)}
         </p>
       </div>
