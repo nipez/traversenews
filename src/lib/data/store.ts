@@ -26,7 +26,9 @@ import type {
   Source,
   Story,
   Subscriber,
+  Tip,
 } from "@/lib/types";
+import { newId } from "@/lib/ids";
 
 const globalStore = globalThis as typeof globalThis & {
   __traverseStore?: AppData;
@@ -58,6 +60,9 @@ function normalizeAppData(data: AppData): { data: AppData; scrubbed: boolean } {
   }
   if (!Array.isArray(data.email_editions)) {
     data.email_editions = [];
+  }
+  if (!Array.isArray(data.tips)) {
+    data.tips = [];
   }
 
   let catalogChanged = false;
@@ -386,6 +391,37 @@ export async function addSubscriber(email: string): Promise<Subscriber> {
   data.subscribers.push(row);
   await saveStore(data);
   return row;
+}
+
+const TIPS_SOFT_CAP = 200;
+
+export async function addTip(input: {
+  body: string;
+  name?: string | null;
+  email?: string | null;
+  url?: string | null;
+}): Promise<Tip> {
+  const data = await loadStore();
+  const body = input.body.replace(/\s+/g, " ").trim();
+  const row: Tip = {
+    id: newId("tip"),
+    body,
+    name: input.name?.trim() || null,
+    email: input.email?.trim().toLowerCase() || null,
+    url: input.url?.trim() || null,
+    created_at: new Date().toISOString(),
+  };
+  data.tips = [row, ...data.tips].slice(0, TIPS_SOFT_CAP);
+  await saveStore(data);
+  return row;
+}
+
+export async function listTips(): Promise<Tip[]> {
+  const data = await loadStore();
+  return [...data.tips].sort(
+    (a, b) =>
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+  );
 }
 
 export async function getBeats() {

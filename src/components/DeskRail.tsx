@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { MorningScanSignup } from "@/components/MorningScanSignup";
+import { TipsForm } from "@/components/TipsForm";
 
 /**
  * Shared cream/ink rail for About + Sports (morning email, tips, desk links).
@@ -22,16 +23,7 @@ export function DeskRail({
       </div>
 
       <div className="about-rail-card">
-        <p className="about-rail-kicker">Tips</p>
-        <p className="about-rail-copy">Corrections and things we missed.</p>
-        <ul className="about-rail-links">
-          <li>
-            <a href="mailto:tips@traverse.news">tips@traverse.news</a>
-          </li>
-          <li>
-            <a href="mailto:nick@traverse.news">nick@traverse.news</a>
-          </li>
-        </ul>
+        <TipsForm variant="rail" />
       </div>
 
       <div className="about-rail-card">

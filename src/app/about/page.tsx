@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { DeskRail } from "@/components/DeskRail";
 import { PublicShell } from "@/components/PublicShell";
 
@@ -98,7 +99,10 @@ export default function AboutPage() {
             <p>
               This is a Traverse City desk run by Nick Perez. Tips, corrections,
               and things we missed:{" "}
-              <a href="mailto:tips@traverse.news">tips@traverse.news</a> or{" "}
+              <Link href="/tips" className="font-semibold text-teal hover:underline">
+                send a tip
+              </Link>
+              {" · "}
               <a href="mailto:nick@traverse.news">nick@traverse.news</a>.
             </p>
             <p>The newsroom is not public. The paper is.</p>
