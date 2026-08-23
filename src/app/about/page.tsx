@@ -1,5 +1,4 @@
-import Link from "next/link";
-import { MorningScanSignup } from "@/components/MorningScanSignup";
+import { DeskRail } from "@/components/DeskRail";
 import { PublicShell } from "@/components/PublicShell";
 
 export const metadata = {
@@ -106,47 +105,7 @@ export default function AboutPage() {
           </div>
         </article>
 
-        <aside className="about-rail">
-          <div className="about-rail-card about-rail-email">
-            <MorningScanSignup variant="teal" />
-            <p className="about-rail-more">
-              <Link href="/email#signup">Morning email page →</Link>
-            </p>
-          </div>
-
-          <div className="about-rail-card">
-            <p className="about-rail-kicker">Tips</p>
-            <p className="about-rail-copy">
-              Corrections and things we missed.
-            </p>
-            <ul className="about-rail-links">
-              <li>
-                <a href="mailto:tips@traverse.news">tips@traverse.news</a>
-              </li>
-              <li>
-                <a href="mailto:nick@traverse.news">nick@traverse.news</a>
-              </li>
-            </ul>
-          </div>
-
-          <div className="about-rail-card">
-            <p className="about-rail-kicker">On this desk</p>
-            <ul className="about-rail-nav">
-              <li>
-                <Link href="/">Today</Link>
-              </li>
-              <li>
-                <Link href="/whats-on">Events</Link>
-              </li>
-              <li>
-                <Link href="/civic">Civic</Link>
-              </li>
-              <li>
-                <Link href="/#alerts">Alerts</Link>
-              </li>
-            </ul>
-          </div>
-        </aside>
+        <DeskRail active="/about" />
       </div>
     </PublicShell>
   );

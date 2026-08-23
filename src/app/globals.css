@@ -1788,7 +1788,11 @@ a:hover {
   color: #2a6f6c;
 }
 
-/* Widen stage padding on about (desktop) without full-bleed essay */
+.about-rail-nav-active {
+  color: #2a6f6c !important;
+}
+
+/* Widen stage padding on About / Sports (desktop) without full-bleed essay */
 @media (min-width: 960px) {
   .site-shell:has(.about-layout) .stage {
     padding-left: 40px;
@@ -1797,12 +1801,9 @@ a:hover {
   }
 }
 
-/* Sports page */
-.sports-page {
-  max-width: 44rem;
-  padding-bottom: 3rem;
-  background-color: #f4edde;
-  color-scheme: only light;
+/* Sports main column inside about-layout */
+.sports-main {
+  max-width: none;
 }
 
 .sports-hero {
@@ -1837,7 +1838,7 @@ a:hover {
 
 .sports-dek {
   margin: 14px 0 0;
-  max-width: 32rem;
+  max-width: 36rem;
   font-family: var(--font-source-serif), Georgia, serif;
   font-size: 18px;
   line-height: 1.4;
