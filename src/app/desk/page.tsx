@@ -126,6 +126,20 @@ export default async function DeskSourcesPage({ searchParams }: Props) {
                       <span className="source-pill text-teal">
                         {source.pull_method}
                       </span>
+                      <div className="mt-0.5 text-xs text-muted">
+                        {source.last_pulled_at
+                          ? new Date(source.last_pulled_at).toLocaleString(
+                              "en-US",
+                              {
+                                timeZone: "America/Detroit",
+                                month: "short",
+                                day: "numeric",
+                                hour: "numeric",
+                                minute: "2-digit",
+                              },
+                            )
+                          : "No pull yet"}
+                      </div>
                     </td>
                     <td>
                       <span className="inline-flex items-center gap-2">

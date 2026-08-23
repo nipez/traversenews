@@ -40,7 +40,8 @@ const sources: Source[] = [
     pull_method: "html",
     beat_id: "beat_events",
     enabled: true,
-    notes: "HTML calendar scrape deferred to v2.",
+    notes:
+      "No Worker scrape. Traverse News pulls the Ticker calendar on the box → POST /api/desk/events/import (/whats-on).",
   },
   {
     id: "src_re",
@@ -102,7 +103,8 @@ const sources: Source[] = [
     pull_method: "facebook",
     beat_id: "beat_social",
     enabled: true,
-    notes: "Tip wire. No auto-scrape in v1; staff may paste tips later.",
+    notes:
+      "Tip wire. No Worker scrape. Paste tips via Desk Tips — do not invent posts.",
   },
   {
     id: "src_gt_cal",
@@ -220,7 +222,7 @@ const sources: Source[] = [
     enabled: true,
     calendar_url: "https://www.leelanau.gov/calendar.php",
     notes:
-      "News list + calendar. Civic, not Events. Traverse News pulls on the box.",
+      "News list → POST /api/desk/stories/import. Calendar → POST /api/desk/civic/import (/civic, never Events). Traverse News pulls on the box.",
   },
   {
     id: "src_gtb",
@@ -241,7 +243,8 @@ const sources: Source[] = [
     pull_method: "html",
     beat_id: "beat_government",
     enabled: true,
-    notes: "Agenda portal. HTML pull deferred to v2.",
+    notes:
+      "Agenda portal. No Worker scrape. Traverse News pulls on the box → POST /api/desk/civic/import (/civic, never Events).",
   },
   {
     id: "src_connect",
@@ -326,7 +329,8 @@ const sources: Source[] = [
     pull_method: "html",
     beat_id: "beat_events",
     enabled: true,
-    notes: "HTML pull deferred to v2.",
+    notes:
+      "No Worker scrape. Traverse News pulls https://www.downtowntc.com/events/ on the box → POST /api/desk/events/import (/whats-on).",
   },
   {
     id: "src_opera",
@@ -336,7 +340,19 @@ const sources: Source[] = [
     pull_method: "html",
     beat_id: "beat_arts",
     enabled: true,
-    notes: "HTML pull deferred to v2.",
+    notes:
+      "No Worker scrape. Traverse News pulls on the box → POST /api/desk/events/import (/whats-on).",
+  },
+  {
+    id: "src_tcphil",
+    name: "Traverse City Philharmonic",
+    homepage: "https://tcphil.org/concerts/",
+    feed_url: "https://tcphil.org/concerts/",
+    pull_method: "html",
+    beat_id: "beat_arts",
+    enabled: true,
+    notes:
+      "Concerts on /whats-on, never Civic. No Worker scrape. Traverse News pulls https://tcphil.org/concerts/ on the box → POST /api/desk/events/import.",
   },
   {
     id: "src_interlochen",
@@ -347,7 +363,7 @@ const sources: Source[] = [
     beat_id: "beat_arts",
     enabled: true,
     notes:
-      "HTML listing pull for concerts (Tonight / What's on). Prefer all-events listing over the Presenters stub.",
+      "Worker tries HTML listing for concerts (/whats-on). If bot-blocked or empty, Traverse News pulls on the box → POST /api/desk/events/import. Prefer all-events listing over the Presenters stub.",
   },
   {
     id: "src_tadl",
@@ -358,7 +374,7 @@ const sources: Source[] = [
     beat_id: "beat_events",
     enabled: true,
     notes:
-      "HTML upcoming list — no public ICS. Pull parses each event page JSON-LD startDate (Detroit offset). Never invent noon; CLOSED/renovation listings dropped.",
+      "Worker tries HTML upcoming list (JSON-LD times). Never invent noon; CLOSED/renovation listings dropped. If empty, Traverse News pulls on the box → POST /api/desk/events/import.",
   },
   {
     id: "src_dennos",
@@ -368,7 +384,8 @@ const sources: Source[] = [
     pull_method: "html",
     beat_id: "beat_arts",
     enabled: true,
-    notes: "HTML pull deferred to v2.",
+    notes:
+      "No Worker scrape. Traverse News pulls on the box → POST /api/desk/events/import (/whats-on).",
   },
   {
     id: "src_oldtown",
@@ -378,7 +395,8 @@ const sources: Source[] = [
     pull_method: "html",
     beat_id: "beat_arts",
     enabled: true,
-    notes: "HTML pull deferred to v2.",
+    notes:
+      "No Worker scrape. Traverse News pulls on the box → POST /api/desk/events/import (/whats-on).",
   },
   {
     id: "src_pride",
@@ -388,7 +406,8 @@ const sources: Source[] = [
     pull_method: "html",
     beat_id: "beat_events",
     enabled: true,
-    notes: "HTML pull deferred to v2.",
+    notes:
+      "No Worker scrape. Traverse News pulls on the box → POST /api/desk/events/import (/whats-on).",
   },
   {
     id: "src_cherry",
@@ -398,7 +417,8 @@ const sources: Source[] = [
     pull_method: "html",
     beat_id: "beat_events",
     enabled: true,
-    notes: "HTML pull deferred to v2.",
+    notes:
+      "No Worker scrape. Traverse News pulls on the box → POST /api/desk/events/import (/whats-on).",
   },
   {
     id: "src_bata",
@@ -408,7 +428,8 @@ const sources: Source[] = [
     pull_method: "none",
     beat_id: "beat_transit",
     enabled: true,
-    notes: "GTFS-RT alerts. Parser deferred to v2.",
+    notes:
+      "No Worker GTFS-RT parser. Official service alerts via POST /api/desk/stories/import (source_id src_bata) when printed — headline + link only. Do not invent outages.",
   },
   {
     id: "src_nws",
@@ -429,7 +450,7 @@ const sources: Source[] = [
     beat_id: "beat_public_safety",
     enabled: true,
     notes:
-      "Official alerts only (outages, crashes, closures). Browser-pulled by Traverse News on the live computer. Do not dump the Facebook feed. No memes, hiring fluff, or unverified pile-ons. Empty Worker pull is OK.",
+      "Official alerts only (outages, crashes, closures). Browser-pulled by Traverse News on the live computer → POST /api/desk/stories/import. Do not dump the Facebook feed. No memes, hiring fluff, or unverified pile-ons. Empty Worker pull is OK.",
   },
   {
     id: "src_ticker_fb",
@@ -440,7 +461,7 @@ const sources: Source[] = [
     beat_id: "beat_public_safety",
     enabled: true,
     notes:
-      "Browser-pulled. Alerts/breaking only (crashes, outages, closures, developing). Not a dump of every Ticker FB post. Worker does not scrape FB. Separate from The Ticker RSS (src_ticker) — do not duplicate that firehose into Around the bay.",
+      "Browser-pulled → POST /api/desk/stories/import. Alerts/breaking only (crashes, outages, closures, developing). Not a dump of every Ticker FB post. Worker does not scrape FB. Separate from The Ticker RSS (src_ticker) — do not duplicate that firehose into Around the bay.",
   },
   {
     id: "src_910_sports",

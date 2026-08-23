@@ -4,6 +4,7 @@ import type {
   Source,
   Story,
 } from "@/lib/types";
+import { ingestPathForSource } from "@/lib/desk/ingest-path";
 
 export type SourceStoryRow = Story & {
   on_homepage: boolean;
@@ -47,21 +48,14 @@ function eventOnEdition(event: EventItem, ed: EditionSnapshot): boolean {
 
 function emptyHint(source: Source, storyCount: number, eventCount: number): string {
   if (storyCount > 0 || eventCount > 0) return "";
-  if (
-    source.pull_method === "facebook" ||
-    source.pull_method === "html" ||
-    source.pull_method === "none" ||
-    source.pull_method === "original"
-  ) {
-    if (
-      source.id === "src_visit_events" ||
-      (source.last_pull_error && /bot-blocked|403/i.test(source.last_pull_error))
-    ) {
-      return "No items yet. Run pull or this method is not fetched in v1 (html/facebook). Need Traverse News to pull this URL on the live computer if the calendar is bot-blocked.";
-    }
-    return "No items yet. Run pull or this method is not fetched in v1 (html/facebook).";
+  const path = ingestPathForSource(source);
+  if (path.workerPulls) {
+    return "No items yet. Worker RSS/ICS pull has not landed rows — run Pull now or wait for the weekday cron.";
   }
-  return "No items yet. Run pull.";
+  if (path.importPath) {
+    return `No items yet. ${path.summary}`;
+  }
+  return "No items yet.";
 }
 
 /**

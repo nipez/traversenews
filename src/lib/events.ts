@@ -205,6 +205,7 @@ const NIGHT_OUT_SOURCES = new Set([
   "src_downtown",
   "src_tart",
   "src_opera",
+  "src_tcphil",
   "src_dennos",
   "src_oldtown",
   "src_pride",
