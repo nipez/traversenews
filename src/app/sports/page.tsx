@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { DeskRail } from "@/components/DeskRail";
 import { PublicShell } from "@/components/PublicShell";
 import { formatBayDay } from "@/lib/dates";
 import { getAppData } from "@/lib/data/store";
@@ -9,6 +10,21 @@ export const dynamic = "force-dynamic";
 export const metadata = {
   title: "Sports",
 };
+
+const SPORTS_BEAT_LINKS = [
+  {
+    name: "9&10 Sports",
+    href: "https://www.9and10news.com/sports/",
+  },
+  {
+    name: "Record-Eagle Sports",
+    href: "https://www.record-eagle.com/sports/",
+  },
+  {
+    name: "Record-Eagle Local Sports",
+    href: "https://www.record-eagle.com/sports/local_sports/",
+  },
+];
 
 function SportsList({ items }: { items: SportsStory[] }) {
   if (items.length === 0) {
@@ -58,36 +74,40 @@ export default async function SportsPage() {
 
   return (
     <PublicShell active="/sports" header="compact">
-      <div className="sports-page">
-        <header className="sports-hero">
-          <p className="sports-kicker">Scores &amp; prep</p>
-          <h1 className="sports-hed">Sports</h1>
-          <p className="sports-dek">
-            Headlines from 9&amp;10 Sports, Record-Eagle Sports, and local prep.
-            They link out — we do not reprint game stories or invent scores.
+      <div className="about-layout sports-layout">
+        <div className="about-essay sports-main">
+          <header className="sports-hero">
+            <p className="sports-kicker">Scores &amp; prep</p>
+            <h1 className="sports-hed">Sports</h1>
+            <p className="sports-dek">
+              Headlines from 9&amp;10 Sports, Record-Eagle Sports, and local
+              prep. They link out — we do not reprint game stories or invent
+              scores.
+            </p>
+          </header>
+
+          {showHsSubhead ? (
+            <>
+              <section className="sports-section">
+                <h2 className="sports-subhed">Sports</h2>
+                <SportsList items={varsity} />
+              </section>
+              <section className="sports-section">
+                <h2 className="sports-subhed">High school</h2>
+                <SportsList items={prepOnly} />
+              </section>
+            </>
+          ) : (
+            <SportsList items={unique} />
+          )}
+
+          <p className="sports-foot">
+            Also on <Link href="/">Today</Link> in Around the bay when the wire
+            carries them.
           </p>
-        </header>
+        </div>
 
-        {showHsSubhead ? (
-          <>
-            <section className="sports-section">
-              <h2 className="sports-subhed">Sports</h2>
-              <SportsList items={varsity} />
-            </section>
-            <section className="sports-section">
-              <h2 className="sports-subhed">High school</h2>
-              <SportsList items={prepOnly} />
-            </section>
-          </>
-        ) : (
-          <SportsList items={all} />
-        )}
-
-        <p className="sports-foot">
-          Also on{" "}
-          <Link href="/">Today</Link> in Around the bay when the wire carries
-          them.
-        </p>
+        <DeskRail active="/sports" sportsBeats={SPORTS_BEAT_LINKS} />
       </div>
     </PublicShell>
   );
