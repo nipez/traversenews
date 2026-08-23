@@ -3,7 +3,7 @@ import { MorningScanSignup } from "@/components/MorningScanSignup";
 import { TipsForm } from "@/components/TipsForm";
 
 /**
- * Shared cream/ink rail for About + Sports (morning email, tips, desk links).
+ * Shared cream/ink rail for About + Sports (morning email, tips, section links).
  */
 export function DeskRail({
   active = "/",
@@ -27,7 +27,7 @@ export function DeskRail({
       </div>
 
       <div className="about-rail-card">
-        <p className="about-rail-kicker">On this desk</p>
+        <p className="about-rail-kicker">Sections</p>
         <ul className="about-rail-nav">
           <li>
             <Link
@@ -78,6 +78,16 @@ export function DeskRail({
               }
             >
               Sports
+            </Link>
+          </li>
+          <li>
+            <Link
+              href="/local"
+              className={
+                active === "/local" ? "about-rail-nav-active" : undefined
+              }
+            >
+              Local
             </Link>
           </li>
         </ul>
