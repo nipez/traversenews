@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { PublicShell } from "@/components/PublicShell";
 import { TonightBlock } from "@/components/TonightBlock";
 import { formatEventWhenParts } from "@/lib/dates";
@@ -13,7 +14,7 @@ import type { EventItem } from "@/lib/types";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "What's on",
+  title: "Events",
 };
 
 function groupByDay(
@@ -56,18 +57,30 @@ export default async function WhatsOnPage() {
 
   return (
     <PublicShell active="/whats-on" wide>
-      <p className="text-[0.72rem] font-bold tracking-[0.16em] text-teal uppercase">
-        Night out
-      </p>
-      <h1 className="mt-2 font-serif text-[2.75rem] leading-[0.95] tracking-tight text-ink md:text-[3.5rem]">
-        What&apos;s on
-      </h1>
-      <p className="mt-4 max-w-xl text-[1.05rem] text-[#3a3a3a]">
-        Concerts, festivals, markets, library programs. Meetings live on Civic.
-      </p>
+      <div className="flex items-start gap-4">
+        <Image
+          src="/art/stamp-night.png"
+          alt=""
+          width={88}
+          height={88}
+          className="section-stamp hidden shrink-0 sm:block"
+        />
+        <div>
+          <p className="text-[0.72rem] font-bold tracking-[0.16em] text-teal uppercase">
+            Night out
+          </p>
+          <h1 className="mt-2 font-serif text-[2.75rem] leading-[0.95] tracking-tight text-ink md:text-[3.5rem]">
+            Events
+          </h1>
+          <p className="mt-4 max-w-xl text-[1.05rem] text-[#3a3a3a]">
+            Concerts, festivals, markets, library programs. Meetings live on Civic
+            Calendar.
+          </p>
+        </div>
+      </div>
 
       <div className="mt-10 max-w-2xl">
-        <TonightBlock events={featured} limit={6} />
+        <TonightBlock events={featured} limit={6} showStamp={false} />
       </div>
 
       <div className="mt-16 max-w-3xl space-y-12">

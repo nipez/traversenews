@@ -15,12 +15,19 @@ export default async function HomePage() {
 
   return (
     <PublicShell active="/" wide>
-      <div className="grid gap-10 lg:grid-cols-[minmax(0,1.4fr)_minmax(280px,0.8fr)] lg:items-start lg:gap-14">
-        <div className="min-w-0">
+      {/* Lead + first-class Events / Civic Calendar — before the bay feed */}
+      <div className="grid gap-10 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:items-start lg:gap-12">
+        <div className="min-w-0 anim-rise">
           {lead ? <LeadStory lead={lead} /> : <AroundTheBay items={around} />}
         </div>
-        <div className="min-w-0">
+        <div className="grid min-w-0 gap-8 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
           <TonightBlock events={weekendEvents} />
+          <CivicList
+            events={civic}
+            showStamp
+            linkLabel="Full calendar"
+            className="anim-fade anim-delay-1"
+          />
         </div>
       </div>
 
@@ -30,12 +37,9 @@ export default async function HomePage() {
         </div>
       ) : null}
 
-      <div className="mt-14 grid gap-10 border-t border-ink/15 pt-10 md:mt-16 md:grid-cols-[minmax(0,1fr)_300px] md:gap-12">
+      <div className="mt-14 grid gap-10 border-t border-ink/20 pt-10 md:mt-16 md:grid-cols-[minmax(0,1fr)_300px] md:gap-12">
         <MoreFromUs stories={moreFromUs} />
-        <div className="space-y-8">
-          <CivicList events={civic} />
-          <MorningScanSignup />
-        </div>
+        <MorningScanSignup />
       </div>
     </PublicShell>
   );

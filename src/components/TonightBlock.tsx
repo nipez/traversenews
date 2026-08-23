@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { formatEventWhenParts } from "@/lib/dates";
 import type { EventItem } from "@/lib/types";
@@ -6,30 +7,45 @@ export function TonightBlock({
   events,
   limit = 4,
   className = "",
+  showStamp = true,
 }: {
   events: EventItem[];
   compact?: boolean;
   limit?: number;
   className?: string;
+  showStamp?: boolean;
 }) {
   const shown = events.slice(0, limit);
 
   return (
-    <section className={`tonight-poster anim-fade ${className}`.trim()}>
-      <div className="mb-5 flex items-end justify-between gap-3">
-        <div>
-          <p className="text-[0.7rem] font-bold tracking-[0.16em] text-teal uppercase">
-            Night out
-          </p>
-          <h2 className="mt-1 font-serif text-[1.75rem] leading-none tracking-tight text-ink md:text-[2rem]">
-            Tonight & this weekend
-          </h2>
+    <section
+      className={`tonight-poster section-band anim-fade ${className}`.trim()}
+    >
+      <div className="mb-5 flex items-start justify-between gap-3">
+        <div className="flex min-w-0 items-start gap-3">
+          {showStamp ? (
+            <Image
+              src="/art/stamp-night.png"
+              alt=""
+              width={72}
+              height={72}
+              className="section-stamp shrink-0"
+            />
+          ) : null}
+          <div className="min-w-0">
+            <p className="text-[0.7rem] font-bold tracking-[0.16em] text-teal uppercase">
+              Night out
+            </p>
+            <h2 className="mt-1 font-serif text-[1.75rem] leading-none tracking-tight text-ink md:text-[2rem]">
+              Tonight & this weekend
+            </h2>
+          </div>
         </div>
         <Link
           href="/whats-on"
-          className="text-[0.7rem] font-bold tracking-[0.14em] text-teal uppercase"
+          className="shrink-0 pt-1 text-[0.7rem] font-bold tracking-[0.14em] text-teal uppercase"
         >
-          All →
+          Events →
         </Link>
       </div>
 
@@ -39,14 +55,13 @@ export function TonightBlock({
           const timeParts = when.time.replace(/\s+/g, " ").split(" ");
           const clock = timeParts[0] ?? when.time;
           const meridiem = timeParts[1] ?? "";
-
           return (
             <li
               key={event.id}
               className={
                 i === 0
                   ? "border-t border-ink/20 pt-5 pb-5"
-                  : "border-t border-rule py-5"
+                  : "border-t border-ink/15 py-5"
               }
             >
               <div className="flex gap-4">
@@ -82,9 +97,9 @@ export function TonightBlock({
           );
         })}
         {shown.length === 0 ? (
-          <li className="border-t border-rule py-4 text-sm text-muted">
-            No concerts or community listings in the next few days. Civic
-            meetings stay on Civic.
+          <li className="border-t border-ink/15 py-4 text-sm text-muted">
+            No concerts or community listings in the next few days. Meetings stay
+            on Civic Calendar.
           </li>
         ) : null}
       </ul>
