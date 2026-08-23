@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { NavSearch } from "@/components/NavSearch";
 import { formatHeaderDate } from "@/lib/dates";
 
 const NAV = [
@@ -44,9 +45,12 @@ function NavInkBar({ active }: { active: string }) {
             </Link>
           ))}
         </nav>
-        <Link href="/email#signup" className="btn-email">
-          Morning email
-        </Link>
+        <div className="nav-ink-actions">
+          <NavSearch />
+          <Link href="/email#signup" className="btn-email">
+            Morning email
+          </Link>
+        </div>
       </div>
     </div>
   );
