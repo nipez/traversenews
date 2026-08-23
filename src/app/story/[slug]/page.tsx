@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { PublicShell } from "@/components/PublicShell";
 import { CivicList } from "@/components/CivicList";
 import { MorningScanSignup } from "@/components/MorningScanSignup";
+import { TipsForm } from "@/components/TipsForm";
 import { TonightBlock } from "@/components/TonightBlock";
 import { formatStoryDateline } from "@/lib/dates";
 import { selectAroundTheBay } from "@/lib/around";
@@ -143,11 +144,7 @@ export default async function StoryPage({ params }: Props) {
             ) : null}
 
             <div className="story-tips">
-              <p className="story-tips-kicker">Corrections & tips</p>
-              <p className="story-tips-copy">
-                Spot an error?{" "}
-                <a href="mailto:nick@traverse.news">nick@traverse.news</a>
-              </p>
+              <TipsForm variant="rail" />
             </div>
           </article>
 
