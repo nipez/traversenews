@@ -71,7 +71,7 @@ a:hover {
   font-family: var(--font-source-serif), Georgia, serif;
 }
 
-/* Paper + grain tile — solid paper so OS invert cannot blank the page */
+/* Paper + faint alpha grain — never an opaque dark tile */
 .site-shell {
   position: relative;
   min-height: 100vh;
@@ -81,6 +81,7 @@ a:hover {
   background-image: url("/art/grain.png");
   background-size: 200px 200px;
   background-repeat: repeat;
+  background-blend-mode: multiply;
 }
 
 .site-shell > * {
