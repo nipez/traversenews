@@ -76,9 +76,13 @@ export async function runPull(): Promise<PullResult> {
         source.pull_method === "none" ||
         source.pull_method === "original"
       ) {
+        const hint =
+          source.pull_method === "original"
+            ? "Staff originals — Desk publish only."
+            : `Worker does not scrape ${source.pull_method}. Traverse News pulls on the box and POSTs the matching /api/desk/*/import route.`;
         touch.set(source.id, {
           ok: true,
-          error: `Not auto-fetched in v1 (${source.pull_method}).`,
+          error: hint,
           attempted: false,
         });
       }

@@ -196,6 +196,7 @@ export default async function EditSourcePage({ params }: Props) {
             beats={data.beats}
             initial={source}
             recentStories={inventory.stories}
+            eventCount={inventory.event_count}
           />
         </div>
       </div>

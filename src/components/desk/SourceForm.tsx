@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useMemo, useState, type FormEvent } from "react";
+import { SourcePullStatus } from "@/components/desk/SourcePullStatus";
 import type { Beat, PullMethod, Source, Story } from "@/lib/types";
 
 const METHODS: PullMethod[] = ["rss", "ics", "html", "facebook", "original"];
@@ -10,10 +11,12 @@ export function SourceForm({
   beats,
   initial,
   recentStories = [],
+  eventCount = 0,
 }: {
   beats: Beat[];
   initial?: Source;
   recentStories?: Story[];
+  eventCount?: number;
 }) {
   const router = useRouter();
   const editableBeats = useMemo(
@@ -195,58 +198,44 @@ export function SourceForm({
       </div>
 
       <aside className="space-y-4">
-        <div className="border border-rule bg-white p-4">
-          <div className="flex items-center justify-between gap-2">
-            <h2 className="font-semibold">Last pull</h2>
-            <span className="inline-flex items-center gap-2 text-sm">
-              <span className="h-2 w-2 rounded-full bg-teal" />
-              Feed OK · {recentStories.length} items
-            </span>
+        {initial ? (
+          <SourcePullStatus
+            source={{
+              ...initial,
+              name,
+              homepage,
+              feed_url: feedUrl || null,
+              beat_id: beatId,
+              pull_method: pullMethod,
+              enabled,
+              notes,
+            }}
+            storyCount={recentStories.length}
+            eventCount={eventCount}
+          />
+        ) : (
+          <div className="border border-rule bg-white p-4 text-sm text-muted">
+            Save the source first to see pull status.
           </div>
-          <ul className="mt-3 space-y-3">
-            {recentStories.slice(0, 3).map((story) => (
-              <li key={story.id} className="text-sm">
-                <p className="leading-snug">{story.title}</p>
-                <p className="mt-1 text-xs text-muted">
-                  {new Date(story.published_at).toLocaleString()}
-                </p>
-              </li>
-            ))}
-            {recentStories.length === 0 ? (
-              <li className="text-sm text-muted">
-                No items yet. See inventory above, or run <code>/api/pull</code>.
-              </li>
-            ) : null}
-          </ul>
-          <div className="mt-3 flex items-center justify-between text-sm">
-            <span className="text-muted">Checked locally</span>
-            <button
-              type="button"
-              className="text-teal"
-              onClick={() => fetch("/api/pull").then(() => router.refresh())}
-            >
-              Test again
-            </button>
-          </div>
-        </div>
+        )}
 
-        <div className="border border-rule bg-white p-4">
-          <h2 className="font-serif text-xl">Two sources are failing</h2>
-          <ul className="mt-3 space-y-3 text-sm">
-            <li>
-              <p className="font-medium">TC Business News</p>
-              <p className="text-muted">
-                404 on every feed path. Paywalled — left off.
-              </p>
-            </li>
-            <li>
-              <p className="font-medium">Grand Traverse County alerts</p>
-              <p className="text-muted">
-                Feed returned empty Aug 21. Calendar feed still fine.
-              </p>
-            </li>
-          </ul>
-        </div>
+        {recentStories.length > 0 ? (
+          <div className="border border-rule bg-white p-4">
+            <h2 className="font-semibold">Recent stories</h2>
+            <ul className="mt-3 space-y-3">
+              {recentStories.slice(0, 3).map((story) => (
+                <li key={story.id} className="text-sm">
+                  <p className="leading-snug">{story.title}</p>
+                  <p className="mt-1 text-xs text-muted">
+                    {new Date(story.published_at).toLocaleString("en-US", {
+                      timeZone: "America/Detroit",
+                    })}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
       </aside>
     </form>
   );
