@@ -14,6 +14,7 @@ import {
 } from "@/lib/events";
 import type { EventItem } from "@/lib/types";
 import { GOING_OUT } from "@/lib/useful-local";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
@@ -138,6 +139,49 @@ export default async function WhatsOnPage() {
                 Something missing?
               </a>
             </p>
+            <p className="events-dek events-dek-local">
+              For a night out:{" "}
+              <a
+                href={GOING_OUT[0].href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="events-dek-link"
+              >
+                wine country
+              </a>
+              ,{" "}
+              <a
+                href={GOING_OUT[1].href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="events-dek-link"
+              >
+                happy hours
+              </a>
+              ,{" "}
+              <a
+                href={GOING_OUT[2].href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="events-dek-link"
+              >
+                Nauti-Cat
+              </a>
+              ,{" "}
+              <a
+                href={GOING_OUT[3].href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="events-dek-link"
+              >
+                Discovery Cruises
+              </a>
+              . More on{" "}
+              <Link href="/local" className="events-dek-link">
+                Local
+              </Link>
+              .
+            </p>
           </div>
           <Image
             src="/art/stamp-night.png"
@@ -147,21 +191,6 @@ export default async function WhatsOnPage() {
             className="events-stamp"
           />
         </header>
-
-        <p className="events-going-out">
-          <span className="events-going-out-label">Going out</span>
-          {GOING_OUT.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="events-going-out-link"
-            >
-              {link.label}
-            </a>
-          ))}
-        </p>
 
         <section className="events-featured" aria-label="Featured nights out">
           <div className="events-featured-inner">
