@@ -35,15 +35,22 @@ export async function runPull(): Promise<PullResult> {
   const errors: Array<{ source: string; error: string }> = [];
   const pulledStories: Story[] = [];
   const pulledEvents: EventItem[] = [];
+  const pulledAt = new Date().toISOString();
+  const touch = new Map<
+    string,
+    { ok: boolean; error: string | null; attempted: boolean }
+  >();
 
   for (const source of enabled) {
     try {
       if (source.pull_method === "rss") {
         const items = await pullRssSource(source);
         pulledStories.push(...items);
+        touch.set(source.id, { ok: true, error: null, attempted: true });
       } else if (source.pull_method === "ics") {
         const items = await pullIcsSource(source);
         pulledEvents.push(...items);
+        touch.set(source.id, { ok: true, error: null, attempted: true });
       } else if (
         source.pull_method === "html" &&
         HTML_EVENT_SOURCE_IDS.has(source.id)
@@ -51,22 +58,32 @@ export async function runPull(): Promise<PullResult> {
         const htmlResult = await pullHtmlEvents(source);
         pulledEvents.push(...htmlResult.events);
         if (htmlResult.bot_blocked) {
-          errors.push({
-            source: source.name,
-            error:
-              `Bot-blocked or empty JS calendar (${htmlResult.status ?? "n/a"}). ` +
-              "Do not invent events. Need Traverse News to pull this URL on the live computer " +
-              "and POST the list to /api/desk/events/import " +
-              `(first source: https://www.traversecity.com/events/, source_id src_visit_events).`,
-          });
+          const msg =
+            `Bot-blocked or empty JS calendar (${htmlResult.status ?? "n/a"}). ` +
+            "Do not invent events. Need Traverse News to pull this URL on the live computer " +
+            "and POST the list to /api/desk/events/import " +
+            `(first source: https://www.traversecity.com/events/, source_id src_visit_events).`;
+          errors.push({ source: source.name, error: msg });
+          touch.set(source.id, { ok: false, error: msg, attempted: true });
+        } else {
+          touch.set(source.id, { ok: true, error: null, attempted: true });
         }
+      } else if (
+        source.pull_method === "html" ||
+        source.pull_method === "facebook" ||
+        source.pull_method === "none" ||
+        source.pull_method === "original"
+      ) {
+        touch.set(source.id, {
+          ok: true,
+          error: `Not auto-fetched in v1 (${source.pull_method}).`,
+          attempted: false,
+        });
       }
-      // remaining html / facebook / original / none skipped in v1
     } catch (err) {
-      errors.push({
-        source: source.name,
-        error: err instanceof Error ? err.message : "Unknown pull error",
-      });
+      const msg = err instanceof Error ? err.message : "Unknown pull error";
+      errors.push({ source: source.name, error: msg });
+      touch.set(source.id, { ok: false, error: msg, attempted: true });
     }
   }
 
@@ -88,7 +105,15 @@ export async function runPull(): Promise<PullResult> {
   }
 
   const store = await loadStore();
-  store.last_pull_at = new Date().toISOString();
+  store.last_pull_at = pulledAt;
+  for (const source of store.sources) {
+    const t = touch.get(source.id);
+    if (!t) continue;
+    if (t.attempted) {
+      source.last_pulled_at = pulledAt;
+    }
+    source.last_pull_error = t.error;
+  }
   await saveStore(store);
 
   const edition = await snapshotTodaysEdition(new Date());

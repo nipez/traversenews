@@ -22,6 +22,10 @@ export type Source = {
   beat_id: string;
   enabled: boolean;
   notes: string;
+  /** Last successful or attempted pull for this source (ISO). */
+  last_pulled_at?: string | null;
+  /** Last pull error message, if any. Cleared on success. */
+  last_pull_error?: string | null;
 };
 
 export type Story = {

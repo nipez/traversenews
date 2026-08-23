@@ -220,12 +220,13 @@ const sources: Source[] = [
   {
     id: "src_interlochen",
     name: "Interlochen Presenters",
-    homepage: "https://www.interlochen.org/concerts-and-events",
-    feed_url: "https://www.interlochen.org/concerts-and-events",
+    homepage: "https://www.interlochen.org/concerts-and-events/all-events?search=",
+    feed_url: "https://www.interlochen.org/concerts-and-events/all-events?search=",
     pull_method: "html",
     beat_id: "beat_arts",
     enabled: true,
-    notes: "HTML listing pull for concerts (Tonight / What's on).",
+    notes:
+      "HTML listing pull for concerts (Tonight / What's on). Prefer all-events listing over the Presenters stub.",
   },
   {
     id: "src_tadl",

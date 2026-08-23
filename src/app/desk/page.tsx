@@ -100,7 +100,12 @@ export default async function DeskSourcesPage({ searchParams }: Props) {
                 {sources.map((source) => (
                   <tr key={source.id}>
                     <td>
-                      <div className="font-semibold">{source.name}</div>
+                      <Link
+                        href={`/desk/sources/${source.id}`}
+                        className="font-semibold text-teal hover:underline"
+                      >
+                        {source.name}
+                      </Link>
                       <div className="text-xs text-muted">
                         {source.homepage.replace(/^https?:\/\//, "").replace(/\/$/, "")}
                       </div>

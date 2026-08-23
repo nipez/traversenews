@@ -12,7 +12,7 @@ export type SourceResearchResult = {
   /** Human-readable findings for the review card. */
   findings: string[];
   warnings: string[];
-  duplicate_of: { id: string; name: string } | null;
+  duplicate_of: { id: string; name: string; beat_id: string } | null;
   fetch_error: string | null;
   paywall_suspected: boolean;
 };
@@ -283,14 +283,14 @@ function findDuplicate(
   homepage: string,
   feedUrl: string | null,
   existing: Source[],
-): { id: string; name: string } | null {
+): { id: string; name: string; beat_id: string } | null {
   const host = hostKey(homepage);
   for (const source of existing) {
     if (hostKey(source.homepage) === host) {
-      return { id: source.id, name: source.name };
+      return { id: source.id, name: source.name, beat_id: source.beat_id };
     }
     if (feedUrl && sameFeed(source.feed_url, feedUrl)) {
-      return { id: source.id, name: source.name };
+      return { id: source.id, name: source.name, beat_id: source.beat_id };
     }
   }
   return null;

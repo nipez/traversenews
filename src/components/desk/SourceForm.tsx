@@ -214,7 +214,7 @@ export function SourceForm({
             ))}
             {recentStories.length === 0 ? (
               <li className="text-sm text-muted">
-                No pulled items yet. Run <code>/api/pull</code>.
+                No items yet. See inventory above, or run <code>/api/pull</code>.
               </li>
             ) : null}
           </ul>

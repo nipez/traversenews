@@ -41,12 +41,20 @@ export function SmartAddSource({
   const [enabled, setEnabled] = useState(true);
   const [notes, setNotes] = useState("");
 
+  const duplicate = research?.duplicate_of ?? null;
+
   function applyResearch(r: SourceResearchResult) {
     setResearch(r);
-    setName(r.name);
+    // On duplicate, keep existing name/beat; research only proposes wiring.
+    if (r.duplicate_of) {
+      setName(r.duplicate_of.name);
+      setBeatId(r.duplicate_of.beat_id);
+    } else {
+      setName(r.name);
+      setBeatId(r.beat_id);
+    }
     setHomepage(r.homepage);
     setFeedUrl(r.feed_url ?? "");
-    setBeatId(r.beat_id);
     setPullMethod(r.pull_method);
     setEnabled(r.enabled);
     setNotes(r.notes);
@@ -84,6 +92,18 @@ export function SmartAddSource({
     setUrl("");
   }
 
+  function payload() {
+    return {
+      name,
+      homepage,
+      feed_url: feedUrl || null,
+      beat_id: beatId,
+      pull_method: pullMethod,
+      enabled,
+      notes,
+    };
+  }
+
   async function onAdd() {
     setSaving(true);
     setError("");
@@ -91,15 +111,7 @@ export function SmartAddSource({
       const res = await fetch("/api/desk/sources", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name,
-          homepage,
-          feed_url: feedUrl || null,
-          beat_id: beatId,
-          pull_method: pullMethod,
-          enabled,
-          notes,
-        }),
+        body: JSON.stringify(payload()),
       });
       const json = (await res.json()) as { error?: string; source?: Source };
       if (!res.ok) throw new Error(json.error || "Could not add source");
@@ -109,6 +121,38 @@ export function SmartAddSource({
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not add source");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  /** Keep id/name/beat; replace homepage, feed, method, notes (and enabled). */
+  async function onUpdateExisting() {
+    if (!duplicate) return;
+    setSaving(true);
+    setError("");
+    try {
+      const res = await fetch(`/api/desk/sources/${duplicate.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: duplicate.name,
+          beat_id: duplicate.beat_id,
+          homepage,
+          feed_url: feedUrl || null,
+          pull_method: pullMethod,
+          enabled,
+          notes,
+        }),
+      });
+      const json = (await res.json()) as { error?: string; source?: Source };
+      if (!res.ok) throw new Error(json.error || "Could not update source");
+      setResearch(null);
+      setUrl("");
+      router.push(`/desk/sources/${json.source?.id ?? duplicate.id}`);
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not update source");
     } finally {
       setSaving(false);
     }
@@ -160,12 +204,14 @@ export function SmartAddSource({
                 Review before adding
               </p>
               <p className="mt-1 text-sm text-[#444]">
-                Edit anything below, then Add source — or Skip.
+                {duplicate
+                  ? "Possible duplicate — Update existing (keep name/beat), Add a second source, or Skip."
+                  : "Edit anything below, then Add source — or Skip."}
               </p>
             </div>
-            {research.duplicate_of ? (
+            {duplicate ? (
               <span className="source-pill text-red-800">
-                Duplicate? {research.duplicate_of.name}
+                Duplicate? {duplicate.name}
               </span>
             ) : null}
           </div>
@@ -200,6 +246,12 @@ export function SmartAddSource({
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
+                disabled={Boolean(duplicate)}
+                title={
+                  duplicate
+                    ? "Update existing keeps the current name"
+                    : undefined
+                }
               />
             </label>
             <label className="block">
@@ -221,6 +273,12 @@ export function SmartAddSource({
                 className="input mt-1"
                 value={beatId}
                 onChange={(e) => setBeatId(e.target.value)}
+                disabled={Boolean(duplicate)}
+                title={
+                  duplicate
+                    ? "Update existing keeps the current beat"
+                    : undefined
+                }
               >
                 {editableBeats.map((b) => (
                   <option key={b.id} value={b.id}>
@@ -298,13 +356,23 @@ export function SmartAddSource({
           {error ? <p className="mt-3 text-sm text-red-700">{error}</p> : null}
 
           <div className="mt-4 flex flex-wrap gap-2">
+            {duplicate ? (
+              <button
+                type="button"
+                className="btn-teal"
+                disabled={saving || !homepage.trim()}
+                onClick={onUpdateExisting}
+              >
+                {saving ? "Updating…" : "Update existing source"}
+              </button>
+            ) : null}
             <button
               type="button"
-              className="btn-teal"
+              className={duplicate ? "btn-ghost" : "btn-teal"}
               disabled={saving || !name.trim() || !homepage.trim()}
               onClick={onAdd}
             >
-              {saving ? "Adding…" : "Add source"}
+              {saving && !duplicate ? "Adding…" : "Add source"}
             </button>
             <button type="button" className="btn-ghost" disabled={saving} onClick={onSkip}>
               Skip

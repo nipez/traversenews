@@ -193,7 +193,7 @@ Each successful `/api/pull` writes (or refreshes) today's edition snapshot in th
 
 ### Smart add (sources)
 
-On `/desk` and `/desk/sources/new`: paste a URL → **Research** → review card (name, homepage, feed, method, beat, enabled, notes) → **Add source** or **Skip**. Never silent insert. Detects RSS/Atom/ICS when present; otherwise `html`. Facebook → tip wire. Duplicates flagged by host/feed.
+On `/desk` and `/desk/sources/new`: paste a URL → **Research** → review card (name, homepage, feed, method, beat, enabled, notes) → confirm. Never silent insert. Detects RSS/Atom/ICS when present; otherwise `html`. Facebook → tip wire. Duplicates flagged by host/feed — actions are **Update existing source** (keep id/name/beat; replace homepage/feed/method/notes), **Add source**, or **Skip**.
 
 ### Browser event import (Visit TC / bot walls)
 
