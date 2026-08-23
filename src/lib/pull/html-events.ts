@@ -206,9 +206,21 @@ function parseTadl(html: string, source: Source, now: Date): EventItem[] {
 /**
  * Best-effort HTML event pull for desks that do not expose ICS.
  * Visit TC (Simpleview) is often bot-blocked from datacenter IPs — empty is OK.
+ * Do NOT invent events. Ask Traverse News to pull the URL on the live computer
+ * and POST the list to /api/desk/events/import.
  */
-export async function pullHtmlEvents(source: Source): Promise<EventItem[]> {
-  if (!source.feed_url) return [];
+export type HtmlEventsPullResult = {
+  events: EventItem[];
+  bot_blocked: boolean;
+  status: number | null;
+};
+
+export async function pullHtmlEvents(
+  source: Source,
+): Promise<HtmlEventsPullResult> {
+  if (!source.feed_url) {
+    return { events: [], bot_blocked: false, status: null };
+  }
   const res = await fetch(source.feed_url, {
     headers: {
       "User-Agent":
@@ -220,13 +232,13 @@ export async function pullHtmlEvents(source: Source): Promise<EventItem[]> {
   if (!res.ok) {
     // Bot walls (Visit TC / Simpleview) — empty is correct; do not invent events.
     if (res.status === 403 || res.status === 401 || res.status === 429) {
-      return [];
+      return { events: [], bot_blocked: true, status: res.status };
     }
     throw new Error(`HTML event fetch failed ${res.status} for ${source.name}`);
   }
   const html = await res.text();
   if (/access denied|akamai|forbidden/i.test(html.slice(0, 500))) {
-    return [];
+    return { events: [], bot_blocked: true, status: res.status };
   }
   const now = new Date();
   const host = (() => {
@@ -237,11 +249,27 @@ export async function pullHtmlEvents(source: Source): Promise<EventItem[]> {
     }
   })();
 
+  let events: EventItem[] = [];
   if (host.includes("interlochen.org") || source.id === "src_interlochen") {
-    return parseInterlochen(html, source, now);
+    events = parseInterlochen(html, source, now);
+  } else if (host.includes("tadl.org") || source.id === "src_tadl") {
+    events = parseTadl(html, source, now);
+  } else if (
+    host.includes("traversecity.com") ||
+    source.id === "src_visit_events"
+  ) {
+    // JS calendar shell — cloud fetch rarely yields listings.
+    events = [];
+    if (!/<script/i.test(html) && html.length < 2000) {
+      return { events: [], bot_blocked: true, status: res.status };
+    }
+    // Empty parse of a JS-rendered Simpleview page: treat as blocked for handoff.
+    return {
+      events: [],
+      bot_blocked: true,
+      status: res.status,
+    };
   }
-  if (host.includes("tadl.org") || source.id === "src_tadl") {
-    return parseTadl(html, source, now);
-  }
-  return [];
+
+  return { events, bot_blocked: false, status: res.status };
 }

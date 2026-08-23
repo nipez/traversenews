@@ -48,8 +48,18 @@ export async function runPull(): Promise<PullResult> {
         source.pull_method === "html" &&
         HTML_EVENT_SOURCE_IDS.has(source.id)
       ) {
-        const items = await pullHtmlEvents(source);
-        pulledEvents.push(...items);
+        const htmlResult = await pullHtmlEvents(source);
+        pulledEvents.push(...htmlResult.events);
+        if (htmlResult.bot_blocked) {
+          errors.push({
+            source: source.name,
+            error:
+              `Bot-blocked or empty JS calendar (${htmlResult.status ?? "n/a"}). ` +
+              "Do not invent events. Ask Traverse News to pull this URL on the live computer " +
+              "and POST the list to /api/desk/events/import " +
+              `(first source: https://www.traversecity.com/events/, source_id src_visit_events).`,
+          });
+        }
       }
       // remaining html / facebook / original / none skipped in v1
     } catch (err) {

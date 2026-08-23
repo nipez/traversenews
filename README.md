@@ -45,7 +45,7 @@ Public: `/`, `/whats-on`, `/civic`, `/story/[slug]`, `/email`
 
 Desk: `/desk/login`, `/desk`, `/desk/sources/new`, `/desk/sources/[id]`, `/desk/originals`, `/desk/originals/new`, `/desk/originals/[id]`, plus Queue / Email / Editions
 
-API: `POST /api/subscribe`, `GET|POST /api/pull`, Desk CRUD under `/api/desk/*` (including `/api/desk/originals`, `POST /api/desk/sources/research`)
+API: `POST /api/subscribe`, `GET|POST /api/pull`, Desk CRUD under `/api/desk/*` (including `/api/desk/originals`, `POST /api/desk/sources/research`, `POST /api/desk/events/import`)
 
 ## Environment
 
@@ -171,7 +171,7 @@ Each successful `/api/pull` writes (or refreshes) today's edition snapshot in th
 - Homepage originals / “More from us” stay **empty** until a real piece is saved in the Desk. Empty layout is correct; do not invent copy to make the page look full.
 - Around the bay and civic/events listings must come from a real RSS/ICS pull (real title, dek, permalink). If a pull has not run yet, show empty — not fabricated seed stories.
 - Around the bay filters lifestyle columns/briefs/calendars and **mixes desks** (about 3 slots max per outlet) so one feed cannot dominate the homepage.
-- **Tonight & What's on** prefer concerts/community/library listings (Interlochen + TADL HTML pulls, TART ICS). School board stacks stay on **Civic**. Visit TC’s public events calendar is catalogued but often bot-blocked — we never invent fillers.
+- **Tonight & What's on** prefer concerts/community/library listings (Interlochen + TADL HTML pulls, TART ICS). School board stacks stay on **Civic**. Visit TC’s public events calendar ([traversecity.com/events](https://www.traversecity.com/events/)) is often **bot-blocked (403)** or JS-only from datacenters — we **never invent fillers**. When that happens: **Ask Traverse News to pull this URL on the live computer and POST the list** to `POST /api/desk/events/import` (`source_id`: `src_visit_events`).
 - If there is no staff original, the homepage lead may be empty or the first clustered live wire card, labeled **From other desks**, never as traverse.news reporting.
 - `src/lib/data/scrub.ts` strips known invented seed IDs from KV on load. Do not reintroduce those slugs or placeholder journalism.
 - **Desk originals workflow:** Nick drafts from a live pulled story (real title/dek/permalink → `source_urls[]`), edits in Desk, then publishes. Status is `draft | published`. Unpublished drafts never appear on the public site. Publish writes an `is_original` story (byline Nick Perez / Desk) shown as traverse.news reporting. Optional `POST /api/desk/originals/[id]/generate` uses `OPENAI_API_KEY` when set; without it, Nick writes the body himself. Generation must not invent quotes or facts beyond the cited source.
@@ -188,6 +188,34 @@ Each successful `/api/pull` writes (or refreshes) today's edition snapshot in th
 ### Smart add (sources)
 
 On `/desk` and `/desk/sources/new`: paste a URL → **Research** → review card (name, homepage, feed, method, beat, enabled, notes) → **Add source** or **Skip**. Never silent insert. Detects RSS/Atom/ICS when present; otherwise `html`. Facebook → tip wire. Duplicates flagged by host/feed.
+
+### Browser event import (Visit TC / bot walls)
+
+Cloud Agents cannot fetch bot-blocked calendars (e.g. Visit TC Simpleview → 403). **Do not invent events.** **Ask Traverse News to pull this URL on the live computer and POST the list.**
+
+```bash
+# After Desk login cookie, or with Bearer token:
+curl -X POST https://traverse-news.nickperez.workers.dev/api/desk/events/import \
+  -H "Authorization: Bearer $DESK_IMPORT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "source_id": "src_visit_events",
+    "replace": true,
+    "events": [
+      {
+        "title": "Concert example",
+        "starts_at": "2026-08-23T23:00:00.000Z",
+        "place": "Downtown Traverse City",
+        "url": "https://www.traversecity.com/event/example/123/"
+      }
+    ]
+  }'
+```
+
+- Auth: Desk session cookie **or** `Authorization: Bearer` (`DESK_IMPORT_TOKEN` if set, else `DEV_DESK_PASSWORD`).
+- Default `source_id`: `src_visit_events` (Visit TC Events — sports, community, concerts).
+- Replaces that source’s rows in KV when `replace: true` (default). Never invents missing titles/times — invalid rows are skipped.
+- First handoff URL: https://www.traversecity.com/events/
 
 ## Product rules (v1)
 

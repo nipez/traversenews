@@ -162,7 +162,7 @@ const sources: Source[] = [
     beat_id: "beat_events",
     enabled: true,
     notes:
-      "Community/concerts calendar (Simpleview). Often bot-blocked from datacenters; empty pull is OK — do not invent listings.",
+      "Community/concerts calendar (Simpleview). Cloud pulls often 403/empty JS — never invent listings. Ask Traverse News to pull https://www.traversecity.com/events/ on the live computer and POST to /api/desk/events/import.",
   },
   {
     id: "src_tart",
