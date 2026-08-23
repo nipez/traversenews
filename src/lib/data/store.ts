@@ -30,7 +30,7 @@ function cloneSeed(): AppData {
 function siteOrigin(): string {
   return (
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
-    "https://traverse.news"
+    "https://traverse-news.nickperez.workers.dev"
   );
 }
 
@@ -209,6 +209,7 @@ export async function listStories(): Promise<Story[]> {
 
 export async function getOriginalBySlug(slug: string): Promise<Story | undefined> {
   if (isBannedOriginalSlug(slug)) return undefined;
+  await repairPublishedOriginalStories();
   const data = await loadStore();
   return data.stories.find((s) => s.is_original && s.slug === slug);
 }
@@ -292,8 +293,8 @@ export async function snapshotTodaysEdition(at = new Date()): Promise<EditionSna
 }
 
 /**
- * Ensure staff-only unpublished drafts exist in the same store Desk reads.
- * Uses upsertDraft (KV on Workers). Never sets status=published.
+ * Ensure staff-only drafts exist without clobbering a published original.
+ * Uses upsertDraft (KV on Workers). Never downgrades published → draft.
  */
 export async function ensureStaffUnpublishedDrafts(): Promise<void> {
   const data = await loadStore();
@@ -307,10 +308,11 @@ export async function ensureStaffUnpublishedDrafts(): Promise<void> {
       byId.get(staff.id) ||
       (staff.slug ? bySlug.get(staff.slug) : undefined);
 
-    // Already present under the canonical staff id — leave Nick's edits alone.
+    // Already present — leave Nick's Desk edits / publish state alone.
     if (existing?.id === staff.id) continue;
+    // Published under another id for the same slug — do not replace with a draft.
+    if (existing?.status === "published") continue;
 
-    // Drop a prior same-slug stub (wrong id) then write the canonical draft.
     if (existing && existing.id !== staff.id) {
       data.drafts = data.drafts.filter((d) => d.id !== existing.id);
       await saveStore(data);
@@ -323,6 +325,37 @@ export async function ensureStaffUnpublishedDrafts(): Promise<void> {
       published_at: null,
     });
   }
+
+  await repairPublishedOriginalStories();
+}
+
+/** If a draft is published but its is_original Story is missing, recreate it. */
+export async function repairPublishedOriginalStories(): Promise<void> {
+  const data = await loadStore();
+  let changed = false;
+
+  for (let i = 0; i < data.drafts.length; i++) {
+    const draft = data.drafts[i];
+    if (draft.status !== "published") continue;
+    const slug = draft.slug?.trim();
+    if (!slug || isBannedOriginalSlug(slug)) continue;
+
+    const hasStory = data.stories.some(
+      (s) =>
+        s.is_original &&
+        (s.slug === slug ||
+          (draft.published_story_id != null && s.id === draft.published_story_id)),
+    );
+    if (hasStory) continue;
+
+    const story = storyFromPublishedDraft(draft, slug, siteOrigin());
+    draft.published_story_id = story.id;
+    data.drafts[i] = { ...draft };
+    data.stories.push(story);
+    changed = true;
+  }
+
+  if (changed) await saveStore(data);
 }
 
 export async function listDrafts(): Promise<OriginalDraft[]> {

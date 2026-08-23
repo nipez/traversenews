@@ -242,14 +242,18 @@ export function OriginalDraftEditor({ draft }: { draft: OriginalDraft }) {
             Status
           </p>
           <p className="mt-2 font-serif text-xl capitalize">{status}</p>
-          {status === "published" && slug ? (
+          {status === "published" && slug && slug.trim() ? (
             <Link
-              href={`/story/${slug}`}
+              href={`/story/${slug.trim()}`}
               className="mt-2 inline-block text-sm text-teal"
               target="_blank"
             >
               View live ↗
             </Link>
+          ) : status === "published" ? (
+            <p className="mt-2 text-sm text-muted">
+              Published, but slug is missing — save a slug before viewing live.
+            </p>
           ) : (
             <p className="mt-2 text-sm text-muted">
               Drafts never appear on the public site.

@@ -1,10 +1,14 @@
 import { selectAroundTheBay } from "@/lib/around";
 import { dedupeEvents, isCivicEvent, selectTonightEvents } from "@/lib/events";
 import { clusterStories } from "@/lib/pull/cluster";
-import { getAppData } from "@/lib/data/store";
+import {
+  getAppData,
+  repairPublishedOriginalStories,
+} from "@/lib/data/store";
 import type { ClusteredStory, EventItem, Story } from "@/lib/types";
 
 export async function getHomepageData() {
+  await repairPublishedOriginalStories();
   const data = await getAppData();
   const clusters = clusterStories(data.stories, data.sources);
   const originals = clusters.filter((c) => c.is_original);
