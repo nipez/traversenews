@@ -105,6 +105,25 @@ const OUTLET_HOMEPAGES = new Set(
   ].flatMap((u) => [u, `${u}/`]),
 );
 
+/** Sports / HS sports source ids — have their own /sports page. */
+const SPORTS_SOURCE_IDS = new Set([
+  "src_910_sports",
+  "src_re_sports",
+  "src_re_prep",
+  "src_tcc_ath",
+  "src_tcw_ath",
+]);
+
+/** Prefer these desks in the non-sports bay mix. */
+const PREFERRED_NEWS_SOURCE_IDS = new Set([
+  "src_ticker",
+  "src_re",
+  "src_ipr",
+  "src_tcbn",
+  "src_northern",
+  "src_910",
+]);
+
 /** Columns, briefs, calendars, books, wire fillers — not homepage news. */
 export function isLifestyleJunk(input: {
   title: string;
@@ -159,10 +178,24 @@ function primarySourceKey(cluster: ClusteredStory): string {
   return cluster.sources[0]?.id || cluster.sources[0]?.name || "unknown";
 }
 
+export function isSportsCluster(cluster: ClusteredStory): boolean {
+  return cluster.sources.some((s) => {
+    if (SPORTS_SOURCE_IDS.has(s.id)) return true;
+    const name = s.name.toLowerCase();
+    return (
+      name.includes("sports") ||
+      name.includes("athletics") ||
+      name.includes("local sports")
+    );
+  });
+}
+
 function clusterScore(cluster: ClusteredStory): number {
   let score = 0;
   if (cluster.sources.length > 1) score += 10_000;
   if (looksLikeLocalNews(cluster)) score += 2_000;
+  const sid = primarySourceKey(cluster);
+  if (PREFERRED_NEWS_SOURCE_IDS.has(sid)) score += 1_500;
   // Recency (ms since epoch, scaled) as tiebreaker within the same tier.
   score += new Date(cluster.published_at).getTime() / 1e12;
   return score;
@@ -170,21 +203,79 @@ function clusterScore(cluster: ClusteredStory): number {
 
 export type AroundSelectOptions = {
   limit?: number;
-  /** Soft cap per primary desk. Default 3 of 12. */
+  /** Soft cap per primary desk. Default 4 of 18. */
   maxPerSource?: number;
+  /** Cap for sports/HS sports clusters. Default 4 of 18. */
+  maxSports?: number;
 };
+
+function takeFromPool(
+  pool: ClusteredStory[],
+  picked: ClusteredStory[],
+  used: Set<string>,
+  counts: Map<string, number>,
+  options: {
+    limit: number;
+    maxPerSource: number;
+    maxSports: number;
+    sportsCount: { n: number };
+  },
+) {
+  const queues = new Map<string, ClusteredStory[]>();
+  for (const c of pool) {
+    if (used.has(c.id)) continue;
+    const key = primarySourceKey(c);
+    const q = queues.get(key) ?? [];
+    q.push(c);
+    queues.set(key, q);
+  }
+
+  // Preferred desks first in round-robin order.
+  const preferredKeys = [...queues.keys()].filter((k) =>
+    PREFERRED_NEWS_SOURCE_IDS.has(k),
+  );
+  const otherKeys = [...queues.keys()].filter(
+    (k) => !PREFERRED_NEWS_SOURCE_IDS.has(k),
+  );
+  const keyOrder = [...preferredKeys, ...otherKeys];
+
+  let progress = true;
+  while (picked.length < options.limit && progress) {
+    progress = false;
+    for (const key of keyOrder) {
+      if (picked.length >= options.limit) break;
+      if ((counts.get(key) ?? 0) >= options.maxPerSource) continue;
+      const queue = queues.get(key);
+      if (!queue || queue.length === 0) continue;
+      while (queue.length > 0) {
+        const next = queue.shift()!;
+        if (used.has(next.id)) continue;
+        const sports = isSportsCluster(next);
+        if (sports && options.sportsCount.n >= options.maxSports) continue;
+        used.add(next.id);
+        counts.set(key, (counts.get(key) ?? 0) + 1);
+        if (sports) options.sportsCount.n += 1;
+        picked.push(next);
+        progress = true;
+        break;
+      }
+    }
+  }
+}
 
 /**
  * Homepage / edition Around the bay mix:
  * drop lifestyle junk, require real permalinks, prefer multi-source local,
  * interleave desks so one outlet cannot fill the rail.
+ * Sports/HS is capped — full sports list lives on /sports.
  */
 export function selectAroundTheBay(
   clusters: ClusteredStory[],
   options: AroundSelectOptions = {},
 ): ClusteredStory[] {
-  const limit = options.limit ?? 12;
-  const maxPerSource = options.maxPerSource ?? 3;
+  const limit = options.limit ?? 18;
+  const maxPerSource = options.maxPerSource ?? 4;
+  const maxSports = options.maxSports ?? 4;
 
   const eligible = clusters
     .filter((c) => !c.is_original)
@@ -200,63 +291,53 @@ export function selectAroundTheBay(
       );
     });
 
+  const sports = eligible.filter(isSportsCluster);
+  const news = eligible.filter((c) => !isSportsCluster(c));
+
   const picked: ClusteredStory[] = [];
   const counts = new Map<string, number>();
   const used = new Set<string>();
+  const sportsCount = { n: 0 };
 
-  function tryTake(cluster: ClusteredStory, enforceCap: boolean): boolean {
-    if (used.has(cluster.id)) return false;
-    const key = primarySourceKey(cluster);
-    const n = counts.get(key) ?? 0;
-    if (enforceCap && n >= maxPerSource) return false;
-    used.add(cluster.id);
-    counts.set(key, n + 1);
-    picked.push(cluster);
-    return true;
-  }
-
-  // 1) Multi-source clusters first (still under the per-desk cap).
-  for (const c of eligible) {
+  // 1) Multi-source news clusters first.
+  for (const c of news) {
     if (picked.length >= limit) break;
     if (c.sources.length < 2) continue;
-    tryTake(c, true);
-  }
-
-  // 2) Round-robin remaining singles by desk for a mixed rail.
-  const queues = new Map<string, ClusteredStory[]>();
-  for (const c of eligible) {
-    if (used.has(c.id)) continue;
     const key = primarySourceKey(c);
-    const q = queues.get(key) ?? [];
-    q.push(c);
-    queues.set(key, q);
+    if ((counts.get(key) ?? 0) >= maxPerSource) continue;
+    used.add(c.id);
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+    picked.push(c);
   }
 
-  let progress = true;
-  while (picked.length < limit && progress) {
-    progress = false;
-    for (const [key, queue] of queues) {
-      if (picked.length >= limit) break;
-      if ((counts.get(key) ?? 0) >= maxPerSource) continue;
-      while (queue.length > 0) {
-        const next = queue.shift()!;
-        if (tryTake(next, true)) {
-          progress = true;
-          break;
-        }
-      }
-    }
-  }
+  // 2) Fill with preferred news desks, then other non-sports.
+  takeFromPool(news, picked, used, counts, {
+    limit,
+    maxPerSource,
+    maxSports,
+    sportsCount,
+  });
 
-  // 3) Soft fill: allow one extra slot per desk only if the rail is still short.
+  // 3) Up to maxSports sports items (after news has a foothold).
+  takeFromPool(sports, picked, used, counts, {
+    limit,
+    maxPerSource,
+    maxSports,
+    sportsCount,
+  });
+
+  // 4) Soft fill remaining from news, then sports under caps.
   if (picked.length < limit) {
-    for (const c of eligible) {
+    for (const c of [...news, ...sports]) {
       if (picked.length >= limit) break;
       if (used.has(c.id)) continue;
       const key = primarySourceKey(c);
       if ((counts.get(key) ?? 0) >= maxPerSource + 1) continue;
+      const sportsItem = isSportsCluster(c);
+      if (sportsItem && sportsCount.n >= maxSports) continue;
       used.add(c.id);
       counts.set(key, (counts.get(key) ?? 0) + 1);
+      if (sportsItem) sportsCount.n += 1;
       picked.push(c);
     }
   }

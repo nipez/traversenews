@@ -2,9 +2,9 @@ import Link from "next/link";
 import { formatBayDay } from "@/lib/dates";
 import type { ClusteredStory } from "@/lib/types";
 
-/** Around the bay — title first, then source pills. Real pulled stories only. */
+/** Around the bay — title first, RSS dek when present, source pills. */
 export function AroundTheBay({ items }: { items: ClusteredStory[] }) {
-  const shown = items.slice(0, 8);
+  const shown = items.slice(0, 18);
 
   return (
     <section className="bay-section">
@@ -23,26 +23,32 @@ export function AroundTheBay({ items }: { items: ClusteredStory[] }) {
         </p>
       ) : (
         <ul className="bay-grid">
-          {shown.map((item) => (
-            <li key={item.id} className="bay-item">
-              <a
-                href={item.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bay-item-link"
-              >
-                <h3 className="bay-title">{item.title}</h3>
-                <div className="bay-meta">
-                  {item.sources.slice(0, 2).map((s) => (
-                    <span key={s.id} className="source-box">
-                      {s.name}
+          {shown.map((item) => {
+            const dek = item.dek?.trim() ?? "";
+            return (
+              <li key={item.id} className="bay-item">
+                <a
+                  href={item.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bay-item-link"
+                >
+                  <h3 className="bay-title">{item.title}</h3>
+                  {dek ? <p className="bay-dek">{dek}</p> : null}
+                  <div className="bay-meta">
+                    {item.sources.slice(0, 2).map((s) => (
+                      <span key={s.id} className="source-box">
+                        {s.name}
+                      </span>
+                    ))}
+                    <span className="bay-rel">
+                      {formatBayDay(item.published_at)}
                     </span>
-                  ))}
-                  <span className="bay-rel">{formatBayDay(item.published_at)}</span>
-                </div>
-              </a>
-            </li>
-          ))}
+                  </div>
+                </a>
+              </li>
+            );
+          })}
         </ul>
       )}
     </section>
