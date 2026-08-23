@@ -1,3 +1,4 @@
+import { letterWeekSectionLabel } from "@/lib/email-editions";
 import {
   buildMorningLetterSubject,
   civicLabel,
@@ -239,7 +240,11 @@ export function renderMorningLetterHtml(
   }
 
   if (letter.civic.length > 0) {
-    rows.push(sectionHeading("🏛️", "Civic this week", civicHref));
+    const civicHead = letterWeekSectionLabel(
+      "civic",
+      letter.civic.map((e) => e.starts_at),
+    );
+    rows.push(sectionHeading("🏛️", civicHead, civicHref));
     for (const e of letter.civic) {
       rows.push(
         lineItem(
@@ -250,7 +255,11 @@ export function renderMorningLetterHtml(
   }
 
   if (letter.sports.length > 0) {
-    rows.push(sectionHeading("🏈", "Sports this week", sportsHref));
+    const sportsHead = letterWeekSectionLabel(
+      "sports",
+      letter.sports.map((g) => g.starts_at),
+    );
+    rows.push(sectionHeading("🏈", sportsHead, sportsHref));
     for (const g of letter.sports) {
       const when = esc(sportsWhenLabel(g.starts_at, g.time_unknown));
       rows.push(
@@ -409,7 +418,12 @@ function buildPlainText(
   }
 
   if (letter.civic.length > 0) {
-    lines.push("🏛️ Civic this week");
+    lines.push(
+      `🏛️ ${letterWeekSectionLabel(
+        "civic",
+        letter.civic.map((e) => e.starts_at),
+      )}`,
+    );
     for (const e of letter.civic) {
       lines.push(`• ${civicLabel(e.starts_at)} · ${e.title} · ${e.place}`);
     }
@@ -417,7 +431,12 @@ function buildPlainText(
   }
 
   if (letter.sports.length > 0) {
-    lines.push("🏈 Sports this week");
+    lines.push(
+      `🏈 ${letterWeekSectionLabel(
+        "sports",
+        letter.sports.map((g) => g.starts_at),
+      )}`,
+    );
     for (const g of letter.sports) {
       lines.push(
         `• ${sportsWhenLabel(g.starts_at, g.time_unknown)} · ${g.school} · ${g.title}`,

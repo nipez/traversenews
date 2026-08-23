@@ -1,9 +1,11 @@
 import { selectAlerts } from "@/lib/alerts";
 import { selectAroundTheBay } from "@/lib/around";
 import {
+  ATHLETICS_WEEK_DAYS,
   isVarsityGameTitle,
   selectThisWeekAthletics,
 } from "@/lib/athletics";
+import { detroitDayKey } from "@/lib/dates";
 import {
   dedupeEvents,
   eventInUpcomingWindow,
@@ -15,6 +17,7 @@ import { clusterStories } from "@/lib/pull/cluster";
 import { selectUpcomingSchoolDays } from "@/lib/schools";
 import type {
   AppData,
+  AthleticsGame,
   EmailAlertCard,
   EmailEditionSnapshot,
   EmailEventCard,
@@ -23,12 +26,16 @@ import type {
   EmailStoryCard,
   EventItem,
   SchoolCalendarItem,
+  Source,
 } from "@/lib/types";
 
 const DETROIT = "America/Detroit";
 
 /** Soft ceiling so the letter archive cannot balloon KV. */
 export const MAX_EMAIL_EDITIONS = 90;
+
+/** Letter “this week” = today through +7 America/Detroit calendar days. */
+export const LETTER_WEEK_DAYS = ATHLETICS_WEEK_DAYS;
 
 /** Calendar date YYYY-MM-DD in America/Detroit. */
 export function emailDetroitDateKey(at = new Date()): string {
@@ -134,6 +141,18 @@ function toEventCard(e: EventItem): EmailEventCard {
   return card;
 }
 
+function toSportsCard(g: AthleticsGame): EmailSportsCard {
+  const card: EmailSportsCard = {
+    title: g.title,
+    starts_at: g.starts_at,
+    place: g.place,
+    url: g.url,
+    school: g.school,
+  };
+  if (g.time_unknown) card.time_unknown = true;
+  return card;
+}
+
 /**
  * Next upcoming official Important date across districts already in schools data.
  * One beat only — never the full calendar.
@@ -152,6 +171,196 @@ export function pickNextSchoolBeat(
   };
   if (next.time_unknown) card.time_unknown = true;
   return card;
+}
+
+/** True when starts_at falls in today … today+7 Detroit calendar days. */
+export function inLetterWeek(startsAt: string, now = new Date()): boolean {
+  const todayKey = detroitDayKey(now);
+  const end = new Date(
+    now.getTime() + LETTER_WEEK_DAYS * 24 * 60 * 60 * 1000,
+  );
+  const endKey = detroitDayKey(end);
+  const key = detroitDayKey(startsAt);
+  return key >= todayKey && key <= endKey;
+}
+
+/**
+ * Pick up to `limit` items spread across different Detroit calendar days.
+ * Pass 1: best item per day (chronological days). Pass 2: fill leftovers
+ * round-robin. Display order is chronological. Never invents rows.
+ */
+export function pickAcrossDays<T>(opts: {
+  items: T[];
+  dayKey: (item: T) => string;
+  rank: (item: T) => number;
+  startsAt: (item: T) => string;
+  limit: number;
+}): T[] {
+  const { items, dayKey, rank, startsAt, limit } = opts;
+  if (items.length === 0 || limit <= 0) return [];
+
+  const byDay = new Map<string, T[]>();
+  for (const item of items) {
+    const key = dayKey(item);
+    const list = byDay.get(key) ?? [];
+    list.push(item);
+    byDay.set(key, list);
+  }
+  for (const list of byDay.values()) {
+    list.sort((a, b) => {
+      const rd = rank(b) - rank(a);
+      if (rd !== 0) return rd;
+      return (
+        new Date(startsAt(a)).getTime() - new Date(startsAt(b)).getTime()
+      );
+    });
+  }
+
+  const days = [...byDay.keys()].sort((a, b) => a.localeCompare(b));
+  const queues = new Map(days.map((d) => [d, [...(byDay.get(d) ?? [])]]));
+  const picked: T[] = [];
+
+  for (const day of days) {
+    if (picked.length >= limit) break;
+    const next = queues.get(day)?.shift();
+    if (next) picked.push(next);
+  }
+
+  let guard = 0;
+  while (picked.length < limit && guard < limit * days.length + 2) {
+    guard += 1;
+    let added = false;
+    for (const day of days) {
+      if (picked.length >= limit) break;
+      const next = queues.get(day)?.shift();
+      if (next) {
+        picked.push(next);
+        added = true;
+      }
+    }
+    if (!added) break;
+  }
+
+  return picked.sort(
+    (a, b) =>
+      new Date(startsAt(a)).getTime() - new Date(startsAt(b)).getTime(),
+  );
+}
+
+/** Prefer cancellations and board/commission over stacked Tuesday committees. */
+export function civicLetterRank(title: string): number {
+  const t = title.toLowerCase();
+  let s = 0;
+  if (/\bcancell/.test(t)) s += 1200;
+  const isCommittee =
+    /\b(committee|ad hoc|subcommittee|working group)\b/.test(t);
+  if (
+    !isCommittee &&
+    /\b(city commission|county commission|school board|township board|village council|planning commission|zoning board)\b/.test(
+      t,
+    )
+  ) {
+    s += 600;
+  }
+  if (!isCommittee && /\b(board|commission|council|authority)\b/.test(t)) {
+    s += 250;
+  }
+  if (/\b(study session|work session)\b/.test(t)) s += 120;
+  if (isCommittee) s -= 40;
+  if (/\b(retiree|act\s*345)\b/.test(t)) s -= 60;
+  return s;
+}
+
+/** Prefer varsity over JV/freshman; soft nudge football/soccer over tennis stacks. */
+export function sportsLetterRank(title: string): number {
+  const t = title.toLowerCase();
+  let s = 0;
+  if (isVarsityGameTitle(title)) s += 500;
+  if (/\b(jv|j\.v\.|junior varsity|frosh|freshman|freshmen)\b/.test(t)) {
+    s -= 300;
+  }
+  if (/\bfootball\b/.test(t)) s += 90;
+  if (/\b(soccer|volleyball|basketball|baseball|softball)\b/.test(t)) s += 40;
+  if (/\btennis\b/.test(t)) s += 10;
+  return s;
+}
+
+/**
+ * Civic this week for the letter: up to 4 meetings across different days
+ * in the next 7 Detroit days. Prefer cancelled + board/commission.
+ */
+export function pickCivicForLetter(
+  events: EventItem[],
+  sources: Source[],
+  at = new Date(),
+  limit = 4,
+): EmailEventCard[] {
+  const week = dedupeEvents(events)
+    .filter((e) => isCivicEvent(e, sources))
+    .filter((e) =>
+      eventInUpcomingWindow(e, at, {
+        horizonMs: LETTER_WEEK_DAYS * 24 * 60 * 60 * 1000,
+      }),
+    )
+    .filter((e) => inLetterWeek(e.starts_at, at));
+
+  return pickAcrossDays({
+    items: week,
+    dayKey: (e) => detroitDayKey(e.starts_at),
+    rank: (e) => civicLetterRank(e.title),
+    startsAt: (e) => e.starts_at,
+    limit,
+  }).map(toEventCard);
+}
+
+/**
+ * Sports this week for the letter: up to 4 games across different days.
+ * Prefer varsity; do not fill with three Monday tennis lines when later
+ * days have games.
+ */
+export function pickSportsForLetter(
+  games: AthleticsGame[],
+  at = new Date(),
+  limit = 4,
+): EmailSportsCard[] {
+  const week = selectThisWeekAthletics(games, at);
+  const varsity = week.filter((g) => isVarsityGameTitle(g.title));
+  // Prefer the varsity pool when it has enough games; else all games with
+  // varsity ranked above JV so day picks still favor V.
+  const pool = varsity.length >= 2 ? varsity : week;
+
+  return pickAcrossDays({
+    items: pool,
+    dayKey: (g) => detroitDayKey(g.starts_at),
+    rank: (g) => sportsLetterRank(g.title),
+    startsAt: (g) => g.starts_at,
+    limit,
+  }).map(toSportsCard);
+}
+
+/**
+ * Section head: "Civic this week" / "Sports this week", or the single
+ * Detroit weekday name when every row falls on one calendar day.
+ */
+export function letterWeekSectionLabel(
+  kind: "civic" | "sports",
+  startsAts: string[],
+): string {
+  const base = kind === "civic" ? "Civic" : "Sports";
+  const keys = [
+    ...new Set(
+      startsAts
+        .map((s) => detroitDayKey(s))
+        .filter((k) => /^\d{4}-\d{2}-\d{2}$/.test(k)),
+    ),
+  ];
+  if (keys.length === 1 && startsAts[0]) {
+    return new Intl.DateTimeFormat("en-US", {
+      timeZone: DETROIT,
+      weekday: "long",
+    }).format(new Date(startsAts[0]));
+  }
+  return `${base} this week`;
 }
 
 /**
@@ -205,31 +414,12 @@ export function buildEmailEditionSnapshot(
     timedOnly: true,
   }).map(toEventCard);
 
-  // Civic this week: next 2–4 meetings. Date + title + place; no invented times.
-  const civic = dedupeEvents(data.events)
-    .filter((e) => isCivicEvent(e, data.sources))
-    .filter((e) => eventInUpcomingWindow(e, at))
-    .slice(0, 4)
-    .map(toEventCard);
+  const civic = pickCivicForLetter(data.events, data.sources, at, 4);
 
-  // Sports this week: next 3–4 real games (omit on Sunday lighter mix).
-  let sports: EmailSportsCard[] = [];
-  if (!isSunday) {
-    const weekGames = selectThisWeekAthletics(data.athletics ?? [], at);
-    const varsity = weekGames.filter((g) => isVarsityGameTitle(g.title));
-    const sportsPool = (varsity.length > 0 ? varsity : weekGames).slice(0, 4);
-    sports = sportsPool.map((g) => {
-      const card: EmailSportsCard = {
-        title: g.title,
-        starts_at: g.starts_at,
-        place: g.place,
-        url: g.url,
-        school: g.school,
-      };
-      if (g.time_unknown) card.time_unknown = true;
-      return card;
-    });
-  }
+  // Sports this week: spread across days (omit on Sunday lighter mix).
+  const sports = isSunday
+    ? []
+    : pickSportsForLetter(data.athletics ?? [], at, 4);
 
   const schools = pickNextSchoolBeat(data.schools ?? [], at);
 
