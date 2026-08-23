@@ -475,8 +475,9 @@ const sources: Source[] = [
     pull_method: "ics",
     beat_id: "beat_schools",
     enabled: true,
+    calendar_url: "https://www.tcaps.net/page/district-board-calendar",
     notes:
-      "District academic calendar (no-school, half days, conferences). /schools via POST /api/desk/schools/import. Never Events.",
+      "District academic calendar (no-school, half days, conferences). /schools via POST /api/desk/schools/import. Never Events. Full calendar: board page (prefer current year PDF when posted).",
   },
   {
     id: "src_gtacs_cal",
@@ -486,6 +487,8 @@ const sources: Source[] = [
     pull_method: "ics",
     beat_id: "beat_schools",
     enabled: true,
+    calendar_url:
+      "https://gtacs.org/wp-content/uploads/2026/07/Academic-Calendar-2026-27.pdf",
     notes:
       "Grand Traverse Area Catholic Schools district calendar. /schools import only. Do not invent half days.",
   },
@@ -497,6 +500,8 @@ const sources: Source[] = [
     pull_method: "ics",
     beat_id: "beat_schools",
     enabled: true,
+    calendar_url:
+      "https://elkrapids-cdn.fxbrt.com/downloads/district_files/final_year_at_a_glance_26-27_with_dates.pdf",
     notes: "District academic calendar. /schools via POST /api/desk/schools/import.",
   },
   {
@@ -507,6 +512,8 @@ const sources: Source[] = [
     pull_method: "ics",
     beat_id: "beat_schools",
     enabled: true,
+    calendar_url:
+      "https://suttonsbayschools.com/en-US/school-academic-calendar-1da89303",
     notes: "District academic calendar. /schools via POST /api/desk/schools/import.",
   },
   {
@@ -517,6 +524,8 @@ const sources: Source[] = [
     pull_method: "ics",
     beat_id: "beat_schools",
     enabled: true,
+    calendar_url:
+      "https://files.smartsites.parentsquare.com/11216/lps_academic_calendar_2026-2027.pdf",
     notes: "District academic calendar. /schools via POST /api/desk/schools/import.",
   },
   {
@@ -527,6 +536,8 @@ const sources: Source[] = [
     pull_method: "ics",
     beat_id: "beat_schools",
     enabled: true,
+    calendar_url:
+      "https://www.glenlakeschools.org/documents/school/district-calendar/269495",
     notes: "District academic calendar. /schools via POST /api/desk/schools/import.",
   },
   {
@@ -537,6 +548,8 @@ const sources: Source[] = [
     pull_method: "ics",
     beat_id: "beat_schools",
     enabled: true,
+    calendar_url:
+      "https://www.kingsleyschools.org/_files/ugd/0f375c_05a1e9ae39684525acde9690e13c96e9.pdf",
     notes: "District academic calendar. /schools via POST /api/desk/schools/import.",
   },
   {
@@ -547,6 +560,7 @@ const sources: Source[] = [
     pull_method: "html",
     beat_id: "beat_schools",
     enabled: true,
+    calendar_url: "https://www.tcchristian.org/parents/",
     notes:
       "Academic calendar (not athletics). /schools via POST /api/desk/schools/import.",
   },

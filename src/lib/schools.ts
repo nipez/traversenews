@@ -171,6 +171,53 @@ export const SCHOOL_DISTRICT_ORDER = [
   "TC Christian",
 ] as const;
 
+/** Always-on toggle tabs (even when empty). Neighbors appear when they have rows. */
+export const SCHOOL_TOGGLE_ALWAYS = ["TCAPS", "GTACS"] as const;
+
+/**
+ * Official full calendars (link out only — do not host/reprint PDFs).
+ * From Traverse News district map; do not invent URLs.
+ */
+export const SCHOOL_DISTRICT_CALENDAR_URLS: Record<string, string> = {
+  TCAPS: "https://www.tcaps.net/page/district-board-calendar",
+  GTACS:
+    "https://gtacs.org/wp-content/uploads/2026/07/Academic-Calendar-2026-27.pdf",
+  "Elk Rapids":
+    "https://elkrapids-cdn.fxbrt.com/downloads/district_files/final_year_at_a_glance_26-27_with_dates.pdf",
+  "Suttons Bay":
+    "https://suttonsbayschools.com/en-US/school-academic-calendar-1da89303",
+  Leland:
+    "https://files.smartsites.parentsquare.com/11216/lps_academic_calendar_2026-2027.pdf",
+  "Glen Lake":
+    "https://www.glenlakeschools.org/documents/school/district-calendar/269495",
+  Kingsley:
+    "https://www.kingsleyschools.org/_files/ugd/0f375c_05a1e9ae39684525acde9690e13c96e9.pdf",
+  "TC Christian": "https://www.tcchristian.org/parents/",
+};
+
+export function sourceIdForDistrict(district: string): string | null {
+  switch (district) {
+    case "TCAPS":
+      return "src_tcaps_cal";
+    case "GTACS":
+      return "src_gtacs_cal";
+    case "Elk Rapids":
+      return "src_elk_cal";
+    case "Suttons Bay":
+      return "src_suttons_cal";
+    case "Leland":
+      return "src_leland_cal";
+    case "Glen Lake":
+      return "src_glenlake_cal";
+    case "Kingsley":
+      return "src_kingsley_cal";
+    case "TC Christian":
+      return "src_tcch_cal";
+    default:
+      return null;
+  }
+}
+
 export function stableSchoolId(sourceId: string, uid: string): string {
   return `sch_${shortHash(`${sourceId}:${uid}`)}`;
 }

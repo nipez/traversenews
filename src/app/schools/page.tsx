@@ -1,12 +1,13 @@
 import { DeskRail } from "@/components/DeskRail";
 import { PublicShell } from "@/components/PublicShell";
-import { formatCivicDate, formatEventWhenParts } from "@/lib/dates";
+import { SchoolsDistrictToggle } from "@/components/SchoolsDistrictToggle";
 import { getAppData } from "@/lib/data/store";
 import {
   groupSchoolDaysByDistrict,
+  SCHOOL_DISTRICT_CALENDAR_URLS,
   selectUpcomingSchoolDays,
+  sourceIdForDistrict,
 } from "@/lib/schools";
-import type { SchoolCalendarItem } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -14,18 +15,26 @@ export const metadata = {
   title: "Schools",
 };
 
-function schoolClock(item: SchoolCalendarItem): string {
-  return formatEventWhenParts(item.starts_at, new Date(), {
-    timeUnknown: item.time_unknown,
-  }).time;
-}
-
 export default async function SchoolsPage() {
   const data = await getAppData();
   const upcoming = selectUpcomingSchoolDays(data.schools ?? []);
-  // Always emit TCAPS → GTACS → neighbors with heds, even when a district is empty.
-  const districts = groupSchoolDaysByDistrict(upcoming, { includeEmpty: true });
-  const anyDates = districts.some((d) => d.months.length > 0);
+  const grouped = groupSchoolDaysByDistrict(upcoming, { includeEmpty: true });
+
+  const districts = grouped.map((block) => {
+    const sourceId = sourceIdForDistrict(block.district);
+    const source = sourceId
+      ? data.sources.find((s) => s.id === sourceId)
+      : undefined;
+    const calendarUrl =
+      source?.calendar_url ||
+      SCHOOL_DISTRICT_CALENDAR_URLS[block.district] ||
+      null;
+    return {
+      district: block.district,
+      calendarUrl,
+      months: block.months,
+    };
+  });
 
   return (
     <PublicShell active="/schools" header="compact">
@@ -42,101 +51,7 @@ export default async function SchoolsPage() {
             </p>
           </header>
 
-          {!anyDates ? (
-            <p className="schools-empty">
-              No Important dates in the pull yet — we do not invent half days
-              or first days of school. Districts below stay labeled so TCAPS
-              and GTACS never read as one calendar.
-            </p>
-          ) : null}
-
-          <div className="schools-districts">
-            {districts.map((block) => {
-              const count = block.months.reduce(
-                (n, m) => n + m.items.length,
-                0,
-              );
-              return (
-                <section
-                  key={block.district}
-                  className="schools-district"
-                  aria-labelledby={`schools-${block.district.replace(/\s+/g, "-").toLowerCase()}`}
-                >
-                  <header className="schools-district-head">
-                    <p className="schools-district-kicker">District</p>
-                    <h2
-                      id={`schools-${block.district.replace(/\s+/g, "-").toLowerCase()}`}
-                      className="schools-district-hed"
-                    >
-                      {block.district}
-                    </h2>
-                    <p className="schools-district-meta">
-                      {count === 0
-                        ? "No official dates in the pull yet"
-                        : `${count} important date${count === 1 ? "" : "s"}`}
-                    </p>
-                  </header>
-
-                  {block.months.length === 0 ? (
-                    <p className="schools-district-empty">
-                      Empty for now — we do not invent half days for{" "}
-                      {block.district}.
-                    </p>
-                  ) : (
-                    block.months.map((month) => (
-                      <div key={month.key} className="schools-month">
-                        <h3 className="schools-month-hed">{month.name}</h3>
-                        <ul className="schools-list">
-                          {month.items.map((item) => {
-                            const d = formatCivicDate(item.starts_at);
-                            const clock = schoolClock(item);
-                            return (
-                              <li key={item.id} className="schools-row">
-                                <div className="schools-datebox">
-                                  <div className="schools-datebox-dow">
-                                    {d.day}
-                                  </div>
-                                  <div className="schools-datebox-day">
-                                    {d.label}
-                                  </div>
-                                  <div className="schools-datebox-month">
-                                    {d.monthAbbr}
-                                  </div>
-                                </div>
-                                <div className="schools-copy">
-                                  {item.url ? (
-                                    <p className="schools-title">
-                                      <a
-                                        href={item.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                      >
-                                        {item.title}
-                                      </a>
-                                    </p>
-                                  ) : (
-                                    <p className="schools-title">
-                                      {item.title}
-                                    </p>
-                                  )}
-                                  {item.place && item.place !== "District" ? (
-                                    <p className="schools-place">
-                                      {item.place}
-                                    </p>
-                                  ) : null}
-                                </div>
-                                <p className="schools-time">{clock}</p>
-                              </li>
-                            );
-                          })}
-                        </ul>
-                      </div>
-                    ))
-                  )}
-                </section>
-              );
-            })}
-          </div>
+          <SchoolsDistrictToggle districts={districts} />
         </div>
 
         <DeskRail active="/schools" />
