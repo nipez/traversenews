@@ -10,11 +10,11 @@ export const metadata = {
 };
 
 /**
- * Important dates by district. Payload is KV-cached (~15m) so cold
- * custom-domain hits do not re-parse the full app_data blob (CF 1102).
+ * Important dates by district from in-worker static JSON.
+ * No KV on this path (free-plan list/get caps).
  */
 export default async function SchoolsPage() {
-  const { districts } = await getSchoolsPagePayload();
+  const { districts } = getSchoolsPagePayload();
 
   return (
     <PublicShell active="/schools" header="compact">

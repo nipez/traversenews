@@ -8,7 +8,6 @@ import {
   upsertEmailEdition,
 } from "@/lib/email-editions";
 import { sanitizeStoredAthletics } from "@/lib/athletics";
-import { refreshSchoolsPageCaches } from "@/lib/schools-page-cache";
 import { sanitizeStoredSchools } from "@/lib/schools";
 import { dedupeEvents, sanitizeStoredEvents } from "@/lib/events";
 import {
@@ -393,14 +392,7 @@ export async function replaceSchoolCalendarItems(
     ...incoming.values(),
   ]).items;
   await saveStore(data);
-  await refreshSchoolsPageCaches({
-    schools: data.schools,
-    sources: data.sources.map((s) => ({
-      id: s.id,
-      calendar_url: s.calendar_url ?? null,
-      calendar_pdf_url: s.calendar_pdf_url ?? null,
-    })),
-  });
+  // Public /schools reads in-worker static JSON — do not write KV caches here.
 }
 
 export async function listEvents(): Promise<EventItem[]> {

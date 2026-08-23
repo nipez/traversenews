@@ -6,8 +6,8 @@ import {
 import { SCHOOL_CALENDAR_SOURCE_IDS, shortHash } from "@/lib/events";
 import type { SchoolCalendarItem, Source } from "@/lib/types";
 
-/** Soft ceiling for bay-ring Important dates (not a full season dump). */
-export const MAX_STORED_SCHOOLS = 500;
+/** Soft ceiling for bay-ring Important dates (static bundle + Desk import). */
+export const MAX_STORED_SCHOOLS = 800;
 
 export const SCHOOL_SOURCE_IDS = SCHOOL_CALENDAR_SOURCE_IDS;
 
