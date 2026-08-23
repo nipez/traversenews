@@ -108,7 +108,7 @@ export function buildEmailEditionSnapshot(
     clusters.filter((c) => !c.is_original),
     { limit: 18, maxPerSource: 4, maxSports: 4, maxRecordEagle: 3 },
   );
-  // 5–6 wire items; free desks already preferred by selectAroundTheBay.
+  // 4–6 wire items; free desks already preferred by selectAroundTheBay.
   const around = aroundClusters.slice(0, 6).map(toAroundCard);
 
   const alerts: EmailAlertCard[] = selectAlerts(data.stories, data.sources, {

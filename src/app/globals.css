@@ -3193,21 +3193,14 @@ a:hover {
     min-height: 44px;
   }
 
-  /* Morning letter: a bit less side padding on narrow phones */
-  .morning-letter {
-    padding: 1rem !important;
+  /* Morning letter: white TLDR frame on cream site */
+  .morning-letter-frame {
+    padding: 0 !important;
   }
 
-  .morning-letter-head {
-    flex-wrap: wrap;
-    align-items: flex-start;
-  }
-
-  .morning-letter-date {
-    max-width: 100%;
-    text-align: right;
-    line-height: 1.35;
-    letter-spacing: 0.06em;
+  .morning-letter-subject {
+    font-size: 0.8rem !important;
+    line-height: 1.4;
   }
 
   .prose-article img,
@@ -3223,6 +3216,53 @@ a:hover {
   .about-hed {
     font-size: clamp(2.1rem, 11vw, 42px);
   }
+}
+
+
+/* Morning letter — white TLDR layout (not cream site chrome) */
+.morning-letter-frame {
+  background: #ffffff;
+  border: 1px solid #e5e5e5;
+  padding: 1.25rem 1.25rem 1rem;
+  max-width: 40rem;
+}
+
+.morning-letter-subject {
+  margin: 0 0 1rem;
+  padding: 0.65rem 0.75rem;
+  background: #f7f7f7;
+  border: 1px solid #e8e8e8;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: #111;
+  word-break: break-word;
+}
+
+.morning-letter-subject-label {
+  display: inline-block;
+  margin-right: 0.5rem;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #777;
+}
+
+.morning-letter-body {
+  background: #ffffff;
+  color: #111;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.morning-letter-body a {
+  color: #0563c1;
+}
+
+.morning-letter-meta {
+  margin: 1rem 0 0;
+  font-size: 0.75rem;
+  color: #7a7060;
 }
 
 /* 404 uses the same public chrome */

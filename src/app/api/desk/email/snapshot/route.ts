@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { isDeskRequestAuthed } from "@/lib/auth";
 import { snapshotTodaysEmailEdition } from "@/lib/data/store";
+import { buildMorningLetterSubject } from "@/lib/email/letter-format";
 import { emailDetroitDateKey } from "@/lib/email-editions";
 
 /**
@@ -40,6 +41,7 @@ export async function POST(request: Request) {
     ok: true,
     date: snapshot.date,
     captured_at: snapshot.captured_at,
+    subject: buildMorningLetterSubject(snapshot),
     lead: snapshot.lead?.title ?? null,
     around: snapshot.around.length,
     alerts: snapshot.alerts.length,
