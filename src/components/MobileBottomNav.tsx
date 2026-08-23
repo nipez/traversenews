@@ -6,6 +6,7 @@ const ITEMS = [
   { href: "/civic", label: "Civic" },
   { href: "/schools", label: "Schools" },
   { href: "/sports", label: "Sports" },
+  { href: "/local", label: "Local" },
 ] as const;
 
 export function MobileBottomNav({ active = "/" }: { active?: string }) {

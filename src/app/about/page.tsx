@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { DeskRail } from "@/components/DeskRail";
 import { PublicShell } from "@/components/PublicShell";
-import { USEFUL_LOCAL } from "@/lib/useful-local";
 
 export const metadata = {
   title: "About traverse.news",
@@ -110,23 +109,11 @@ export default function AboutPage() {
 
             <h2>Useful local</h2>
             <p>
-              Outbound links for the bay — Nick’s directories plus a few standing
-              local stops. We do not paste their catalogs here.
+              Standing outbound directories and places live on{" "}
+              <Link href="/local">Useful local</Link>
+              {" — "}
+              not Events, and not news.
             </p>
-            <ul className="about-useful-list">
-              {USEFUL_LOCAL.map((link) => (
-                <li key={link.href}>
-                  <a
-                    href={link.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {link.label}
-                  </a>
-                  <span className="about-useful-dek"> — {link.dek}</span>
-                </li>
-              ))}
-            </ul>
           </div>
         </article>
 
