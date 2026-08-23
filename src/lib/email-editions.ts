@@ -1,11 +1,10 @@
 import { selectAlerts } from "@/lib/alerts";
 import { selectAroundTheBay } from "@/lib/around";
 import {
-  ATHLETICS_WEEK_DAYS,
   isVarsityGameTitle,
   selectThisWeekAthletics,
 } from "@/lib/athletics";
-import { detroitDayKey } from "@/lib/dates";
+import { detroitDayKey, detroitWallToUtc } from "@/lib/dates";
 import {
   dedupeEvents,
   eventInUpcomingWindow,
@@ -34,8 +33,23 @@ const DETROIT = "America/Detroit";
 /** Soft ceiling so the letter archive cannot balloon KV. */
 export const MAX_EMAIL_EDITIONS = 90;
 
-/** Letter “this week” = today through +7 America/Detroit calendar days. */
-export const LETTER_WEEK_DAYS = ATHLETICS_WEEK_DAYS;
+/**
+ * Inclusive Detroit calendar days in the Civic/Sports letter window
+ * (edition morning + 6 more = 7 days).
+ */
+export const LETTER_WEEK_DAYS = 7;
+
+/**
+ * PRODUCT RULE (Nick, locked): Civic and Sports in the morning letter are
+ * UNIQUE EACH MORNING — not a frozen weekly highlight reel.
+ *
+ * Window = the next {@link LETTER_WEEK_DAYS} America/Detroit calendar days
+ * starting on the edition date (the morning it sends / is snapshotted).
+ * Tuesday’s letter must not keep Monday-only items once Monday has passed.
+ * Still spread across remaining days; still prefer boards/cancellations and
+ * varsity. If only one remaining day, rename the section head to that day.
+ * What’s on stays tonight/upcoming the same way. Never invent times.
+ */
 
 /** Calendar date YYYY-MM-DD in America/Detroit. */
 export function emailDetroitDateKey(at = new Date()): string {
@@ -173,15 +187,41 @@ export function pickNextSchoolBeat(
   return card;
 }
 
-/** True when starts_at falls in today … today+7 Detroit calendar days. */
-export function inLetterWeek(startsAt: string, now = new Date()): boolean {
-  const todayKey = detroitDayKey(now);
-  const end = new Date(
-    now.getTime() + LETTER_WEEK_DAYS * 24 * 60 * 60 * 1000,
+/**
+ * Add Detroit calendar days to a YYYY-MM-DD key (noon Detroit anchor — not noon
+ * as a showtime; only a DST-safe day step).
+ */
+export function addDetroitCalendarDays(
+  dayKey: string,
+  daysToAdd: number,
+): string {
+  const [y, m, d] = dayKey.split("-").map(Number);
+  if (!y || !m || !d) return dayKey;
+  const noon = detroitWallToUtc(y, m, d, 12, 0, 0);
+  return detroitDayKey(
+    new Date(noon.getTime() + daysToAdd * 24 * 60 * 60 * 1000),
   );
-  const endKey = detroitDayKey(end);
+}
+
+/**
+ * Edition-morning window for Civic/Sports: start = edition Detroit date,
+ * end = start + (LETTER_WEEK_DAYS - 1). Recomputed every morning — past days
+ * drop out. Not a frozen weekly reel.
+ */
+export function letterWeekRange(editionAt = new Date()): {
+  startKey: string;
+  endKey: string;
+} {
+  const startKey = emailDetroitDateKey(editionAt);
+  const endKey = addDetroitCalendarDays(startKey, LETTER_WEEK_DAYS - 1);
+  return { startKey, endKey };
+}
+
+/** True when starts_at’s Detroit day is in this edition morning’s week window. */
+export function inLetterWeek(startsAt: string, editionAt = new Date()): boolean {
+  const { startKey, endKey } = letterWeekRange(editionAt);
   const key = detroitDayKey(startsAt);
-  return key >= todayKey && key <= endKey;
+  return key >= startKey && key <= endKey;
 }
 
 /**
@@ -286,23 +326,22 @@ export function sportsLetterRank(title: string): number {
 }
 
 /**
- * Civic this week for the letter: up to 4 meetings across different days
- * in the next 7 Detroit days. Prefer cancelled + board/commission.
+ * Civic for this edition morning: up to 4 meetings across remaining days in
+ * the edition’s 7-day Detroit window. Past calendar days are excluded.
+ * Prefer cancelled + board/commission. Never invents times.
  */
 export function pickCivicForLetter(
   events: EventItem[],
   sources: Source[],
-  at = new Date(),
+  editionAt = new Date(),
   limit = 4,
 ): EmailEventCard[] {
   const week = dedupeEvents(events)
     .filter((e) => isCivicEvent(e, sources))
-    .filter((e) =>
-      eventInUpcomingWindow(e, at, {
-        horizonMs: LETTER_WEEK_DAYS * 24 * 60 * 60 * 1000,
-      }),
-    )
-    .filter((e) => inLetterWeek(e.starts_at, at));
+    // Hard floor/ceiling on edition Detroit date — not a frozen Mon–Sun reel.
+    .filter((e) => inLetterWeek(e.starts_at, editionAt))
+    // Drop meetings already past on the edition morning (same-day clock).
+    .filter((e) => eventInUpcomingWindow(e, editionAt));
 
   return pickAcrossDays({
     items: week,
@@ -314,19 +353,21 @@ export function pickCivicForLetter(
 }
 
 /**
- * Sports this week for the letter: up to 4 games across different days.
- * Prefer varsity; do not fill with three Monday tennis lines when later
- * days have games.
+ * Sports for this edition morning: up to 4 games across remaining days in
+ * the edition’s 7-day Detroit window. Prefer varsity. Past days drop out.
+ * Never invents kickoffs.
  */
 export function pickSportsForLetter(
   games: AthleticsGame[],
-  at = new Date(),
+  editionAt = new Date(),
   limit = 4,
 ): EmailSportsCard[] {
-  const week = selectThisWeekAthletics(games, at);
+  // Start from the public This-week slate, then clamp to this edition’s window
+  // so Tuesday cannot keep Monday games.
+  const week = selectThisWeekAthletics(games, editionAt).filter((g) =>
+    inLetterWeek(g.starts_at, editionAt),
+  );
   const varsity = week.filter((g) => isVarsityGameTitle(g.title));
-  // Prefer the varsity pool when it has enough games; else all games with
-  // varsity ranked above JV so day picks still favor V.
   const pool = varsity.length >= 2 ? varsity : week;
 
   return pickAcrossDays({
@@ -340,7 +381,7 @@ export function pickSportsForLetter(
 
 /**
  * Section head: "Civic this week" / "Sports this week", or the single
- * Detroit weekday name when every row falls on one calendar day.
+ * Detroit weekday name when every remaining row falls on one calendar day.
  */
 export function letterWeekSectionLabel(
   kind: "civic" | "sports",
@@ -366,6 +407,8 @@ export function letterWeekSectionLabel(
 /**
  * Assemble the morning letter from the same live mix rules as /email preview.
  * Never invents stories, kickoffs, meetings, or school dates.
+ *
+ * Civic/Sports are recomputed for `at`’s Detroit morning (unique each day).
  *
  * Weekend (America/Detroit):
  * - Saturday leans What’s on (more nights out).
@@ -404,7 +447,7 @@ export function buildEmailEditionSnapshot(
     source_name: a.source_name,
   }));
 
-  // Saturday leans What’s on; other days keep a short slate.
+  // What’s on: tonight/upcoming from `at` — same rolling idea, not a weekly reel.
   const tonightLimit = isSaturday ? 5 : 3;
   const tonight = selectTonightEvents(data.events, data.sources, {
     now: at,
@@ -414,9 +457,8 @@ export function buildEmailEditionSnapshot(
     timedOnly: true,
   }).map(toEventCard);
 
+  // Civic/Sports: unique for this edition morning’s 7-day Detroit window.
   const civic = pickCivicForLetter(data.events, data.sources, at, 4);
-
-  // Sports this week: spread across days (omit on Sunday lighter mix).
   const sports = isSunday
     ? []
     : pickSportsForLetter(data.athletics ?? [], at, 4);
