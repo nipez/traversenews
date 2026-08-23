@@ -35,15 +35,16 @@ export const BANNED_EVENT_IDS = new Set([
   "evt_tcaps_board",
 ]);
 
-/** Known invented titles (seed + archive cards) — match case-insensitive substring. */
+/** Known invented titles (seed + archive cards) — match case-insensitive substring.
+ * Keep these specific to fake seed copy — do not ban real Center Road / Peninsula reporting. */
 const BANNED_TITLE_MARKERS = [
-  "center road",
+  "center road still on the fix list",
+  "six years on the fix list",
   "boardman overnight",
   "food & wine",
   "food and wine",
   "bata alert cutover",
   "tcaps hub",
-  "peninsula crash",
   "organizers say saturday night tastings",
 ];
 
