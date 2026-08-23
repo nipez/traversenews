@@ -1335,46 +1335,62 @@ a:hover {
 
 /* About */
 .about-page {
-  max-width: 36rem;
-  padding-bottom: 3rem;
-}
-
-.about-kicker {
-  margin: 0;
-  font-family: var(--font-archivo), system-ui, sans-serif;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: #1c1712;
+  max-width: 40rem;
+  padding-bottom: 3.5rem;
 }
 
 .about-hed {
-  margin: 8px 0 0;
+  margin: 0;
   font-family: var(--font-archivo), system-ui, sans-serif;
   font-weight: 900;
-  font-size: 48px;
-  line-height: 0.92;
+  font-size: 42px;
+  line-height: 0.95;
   letter-spacing: -0.04em;
   color: #1c1712;
 }
 
 @media (min-width: 768px) {
   .about-hed {
-    font-size: 66px;
+    font-size: 64px;
   }
 }
 
+.about-dek {
+  margin: 14px 0 0;
+  font-family: var(--font-source-serif), Georgia, serif;
+  font-size: 1.2rem;
+  line-height: 1.4;
+  color: #52493c;
+}
+
 .about-body {
-  margin-top: 1.5rem;
+  margin-top: 2rem;
   font-family: var(--font-source-serif), Georgia, serif;
   font-size: 1.1rem;
   line-height: 1.55;
   color: #1c1712;
 }
 
+.about-body h2 {
+  margin: 2.25rem 0 0.85rem;
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-weight: 800;
+  font-size: 1.15rem;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  color: #1c1712;
+}
+
+.about-body h2:first-child {
+  margin-top: 0;
+}
+
 .about-body p {
   margin: 0 0 1.1rem;
+}
+
+.about-body strong {
+  font-weight: 700;
 }
 
 .about-body a {
@@ -1386,9 +1402,14 @@ a:hover {
   text-decoration: underline;
 }
 
-.about-email-link {
+.about-email-cta {
+  margin-top: 2rem !important;
   font-family: var(--font-archivo), system-ui, sans-serif;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   font-weight: 800;
   letter-spacing: 0.04em;
+}
+
+.about-email-cta a {
+  font-weight: 800;
 }
