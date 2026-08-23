@@ -2,6 +2,12 @@
 
 Traverse City local news: original reporting in full, aggregated headlines from other desks (headline + dek + source pills + link out), events, and civic listings. Staff Desk manages sources by beat.
 
+## Talk to Traverse News
+
+Cloud coding agents on this repo are **not** Traverse News. Traverse News is Nick’s user-facing Grok Bot in the traverse.news Cursor chat: real browser, signed-in Facebook / Overheard tip wire, pages that **403 from datacenters** (e.g. Visit TC Simpleview).
+
+**When a fetch is blocked:** do not invent events or quotes. Say in the PR and in user-visible status: **Need Traverse News to pull \<URL\> on the live computer.** There is no cloud→bot API yet — Nick + that chat is the bridge. Full handshake: [`AGENTS.md`](./AGENTS.md). Event lists land via `POST /api/desk/events/import`.
+
 ## Stack
 
 - Next.js App Router + TypeScript
@@ -191,7 +197,7 @@ On `/desk` and `/desk/sources/new`: paste a URL → **Research** → review card
 
 ### Browser event import (Visit TC / bot walls)
 
-Cloud Agents cannot fetch bot-blocked calendars (e.g. Visit TC Simpleview → 403). **Do not invent events.** **Ask Traverse News to pull this URL on the live computer and POST the list.**
+Cloud Agents cannot fetch bot-blocked calendars (e.g. Visit TC Simpleview → 403). **Do not invent events.** **Need Traverse News to pull this URL on the live computer** (see [`AGENTS.md`](./AGENTS.md) — Talk to Traverse News). Nick relays; there is no cloud→bot API yet.
 
 ```bash
 # After Desk login cookie, or with Bearer token:

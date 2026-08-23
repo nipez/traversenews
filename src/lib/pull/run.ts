@@ -55,7 +55,7 @@ export async function runPull(): Promise<PullResult> {
             source: source.name,
             error:
               `Bot-blocked or empty JS calendar (${htmlResult.status ?? "n/a"}). ` +
-              "Do not invent events. Ask Traverse News to pull this URL on the live computer " +
+              "Do not invent events. Need Traverse News to pull this URL on the live computer " +
               "and POST the list to /api/desk/events/import " +
               `(first source: https://www.traversecity.com/events/, source_id src_visit_events).`,
           });
