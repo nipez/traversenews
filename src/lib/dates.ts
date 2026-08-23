@@ -1,0 +1,358 @@
+const MONTHS = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+] as const;
+
+const WEEKDAYS = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+] as const;
+
+const DETROIT = "America/Detroit";
+
+function detroitParts(at: Date): {
+  weekday: string;
+  month: string;
+  day: number;
+  year: number;
+  hour: number;
+  minute: number;
+  second: number;
+} {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: DETROIT,
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(at);
+  const get = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((p) => p.type === type)?.value ?? "";
+  return {
+    weekday: get("weekday"),
+    month: get("month"),
+    day: Number(get("day")),
+    year: Number(get("year")),
+    hour: Number(get("hour")),
+    minute: Number(get("minute")),
+    second: Number(get("second")),
+  };
+}
+
+function monthNumber(name: string): number {
+  const idx = MONTHS.indexOf(name as (typeof MONTHS)[number]);
+  return idx >= 0 ? idx + 1 : 1;
+}
+
+/** Convert a Detroit wall-clock to a UTC Date. */
+export function detroitWallToUtc(
+  year: number,
+  month: number,
+  day: number,
+  hour = 12,
+  minute = 0,
+  second = 0,
+): Date {
+  let utcMs = Date.UTC(year, month - 1, day, hour, minute, second);
+  for (let i = 0; i < 4; i++) {
+    const shown = detroitParts(new Date(utcMs));
+    const shownAsUtc = Date.UTC(
+      shown.year,
+      monthNumber(shown.month) - 1,
+      shown.day,
+      shown.hour,
+      shown.minute,
+      shown.second,
+    );
+    const want = Date.UTC(year, month - 1, day, hour, minute, second);
+    utcMs += want - shownAsUtc;
+  }
+  return new Date(utcMs);
+}
+
+/**
+ * Parse an ISO / datetime for event import.
+ * - With Z or ±offset: absolute instant.
+ * - Naive `YYYY-MM-DDTHH:mm[:ss]`: America/Detroit wall time (not Worker UTC).
+ * Never invents "tomorrow" from relative words.
+ */
+export function parseEventStartsAt(raw: string): Date | null {
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  if (/^(today|tomorrow|tonight|next\b)/i.test(trimmed)) return null;
+
+  if (/[zZ]|[+-]\d{2}:?\d{2}$/.test(trimmed)) {
+    const d = new Date(trimmed);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+
+  const m = trimmed.match(
+    /^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2})(?::(\d{2}))?)?$/,
+  );
+  if (m) {
+    return detroitWallToUtc(
+      Number(m[1]),
+      Number(m[2]),
+      Number(m[3]),
+      m[4] != null ? Number(m[4]) : 12,
+      m[5] != null ? Number(m[5]) : 0,
+      m[6] != null ? Number(m[6]) : 0,
+    );
+  }
+
+  const d = new Date(trimmed);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+const WEEKDAY_INDEX: Record<string, number> = {
+  sun: 0,
+  sunday: 0,
+  mon: 1,
+  monday: 1,
+  tue: 2,
+  tues: 2,
+  tuesday: 2,
+  wed: 3,
+  wednesday: 3,
+  thu: 4,
+  thur: 4,
+  thurs: 4,
+  thursday: 4,
+  fri: 5,
+  friday: 5,
+  sat: 6,
+  saturday: 6,
+};
+
+/**
+ * Next occurrences for listed weekdays at a Detroit wall time.
+ * Recurring Visit TC rows expand from weekdays — never "tomorrow" or noon guesses.
+ */
+export function expandDetroitWeekdayOccurrences(
+  weekdays: string[],
+  timeHHmm: string,
+  options: { now?: Date; count?: number } = {},
+): Date[] {
+  const now = options.now ?? new Date();
+  const count = Math.min(Math.max(options.count ?? 2, 1), 8);
+  const timeM = timeHHmm.trim().match(/^(\d{1,2}):(\d{2})$/);
+  if (!timeM) return [];
+  const hour = Number(timeM[1]);
+  const minute = Number(timeM[2]);
+  if (hour > 23 || minute > 59) return [];
+
+  const wanted = new Set(
+    weekdays
+      .map((w) => WEEKDAY_INDEX[w.trim().toLowerCase()])
+      .filter((n): n is number => n !== undefined),
+  );
+  if (wanted.size === 0) return [];
+
+  const out: Date[] = [];
+  // Walk Detroit calendar days one at a time (never invent "tomorrow" as a shortcut).
+  let cursor = detroitParts(now);
+  for (let step = 0; step < 70 && out.length < count; step++) {
+    const occurrence = detroitWallToUtc(
+      cursor.year,
+      monthNumber(cursor.month),
+      cursor.day,
+      hour,
+      minute,
+      0,
+    );
+    const weekdayIdx = WEEKDAYS.indexOf(
+      cursor.weekday as (typeof WEEKDAYS)[number],
+    );
+    if (
+      wanted.has(weekdayIdx) &&
+      occurrence.getTime() >= now.getTime() - 60 * 60 * 1000
+    ) {
+      out.push(occurrence);
+    }
+    // Advance exactly one Detroit calendar day via local midnight+30h → next local morning.
+    const localMidnight = detroitWallToUtc(
+      cursor.year,
+      monthNumber(cursor.month),
+      cursor.day,
+      0,
+      0,
+      0,
+    );
+    cursor = detroitParts(new Date(localMidnight.getTime() + 30 * 60 * 60 * 1000));
+  }
+  return out;
+}
+
+export function formatHeaderDate(date = new Date()): string {
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: DETROIT,
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  }).format(date);
+}
+
+export function formatShortDate(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: DETROIT,
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(d);
+}
+
+/** Dateline for originals: date + local time in America/Detroit. */
+export function formatStoryDateline(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return formatShortDate(iso);
+  const date = new Intl.DateTimeFormat("en-US", {
+    timeZone: DETROIT,
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(d);
+  const time = new Intl.DateTimeFormat("en-US", {
+    timeZone: DETROIT,
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).format(d);
+  return `${date}, ${time}`;
+}
+
+export function formatCivicDate(iso: string): { day: string; label: string } {
+  const d = new Date(iso);
+  const day = new Intl.DateTimeFormat("en-US", {
+    timeZone: DETROIT,
+    weekday: "short",
+  })
+    .format(d)
+    .toUpperCase();
+  const label = new Intl.DateTimeFormat("en-US", {
+    timeZone: DETROIT,
+    day: "numeric",
+  }).format(d);
+  return { day, label };
+}
+
+export function formatRelative(iso: string, now = new Date()): string {
+  const d = new Date(iso);
+  const diffMs = now.getTime() - d.getTime();
+  const hours = Math.floor(diffMs / (1000 * 60 * 60));
+  if (hours < 1) return "just now";
+  if (hours < 24) return `${hours}h ago`;
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: DETROIT,
+    weekday: "short",
+  }).format(d);
+}
+
+/** Around the bay day label — always weekday short (Fri), never “15h ago”. */
+export function formatBayDay(iso: string): string {
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: DETROIT,
+    weekday: "short",
+  }).format(new Date(iso));
+}
+
+export function formatEventWhen(iso: string, now = new Date()): string {
+  const parts = formatEventWhenParts(iso, now);
+  return `${parts.dayLabel}, ${parts.time}`;
+}
+
+/** Time-first parts for Tonight / What's on night-out UI. */
+export function formatEventWhenParts(
+  iso: string,
+  now = new Date(),
+): { dayLabel: string; time: string; dayKey: string } {
+  const d = new Date(iso);
+  const detroitNow = new Intl.DateTimeFormat("en-CA", {
+    timeZone: DETROIT,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(now);
+  const detroitEvent = new Intl.DateTimeFormat("en-CA", {
+    timeZone: DETROIT,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(d);
+
+  const time = new Intl.DateTimeFormat("en-US", {
+    timeZone: DETROIT,
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  })
+    .format(d)
+    .toUpperCase();
+
+  const [ny, nm, nd] = detroitNow.split("-").map(Number);
+  const [ey, em, ed] = detroitEvent.split("-").map(Number);
+  const startOfToday = Date.UTC(ny, nm - 1, nd);
+  const startOfEvent = Date.UTC(ey, em - 1, ed);
+  const dayDiff = Math.round((startOfEvent - startOfToday) / 86_400_000);
+
+  const weekday = new Intl.DateTimeFormat("en-US", {
+    timeZone: DETROIT,
+    weekday: "short",
+  })
+    .format(d)
+    .toUpperCase();
+
+  let dayLabel = `${weekday} ${em}/${ed}`;
+  if (dayDiff === 0) dayLabel = "TONIGHT";
+  else if (dayDiff === 1) dayLabel = "TOMORROW";
+
+  return { dayLabel, time, dayKey: detroitEvent };
+}
+
+/** Homepage bay dateline, e.g. "Saturday, August 22 · Traverse City". */
+export function formatBayDateline(at = new Date()): string {
+  const day = new Intl.DateTimeFormat("en-US", {
+    timeZone: DETROIT,
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  }).format(at);
+  return `${day} · Traverse City`;
+}
+
+export function isWeekendWindow(iso: string, now = new Date()): boolean {
+  const d = new Date(iso);
+  const end = new Date(now.getTime() + 3 * 86_400_000);
+  return d >= now && d <= end;
+}
+
+export function emailDateLabel(date = new Date()): string {
+  const label = new Intl.DateTimeFormat("en-US", {
+    timeZone: DETROIT,
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  }).format(date);
+  return `${label.toUpperCase()} · TRAVERSE CITY`;
+}
