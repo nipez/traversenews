@@ -48,6 +48,8 @@ export function clusterStories(
     byline: s.byline,
     slug: s.slug,
     image_url: s.image_url,
+    image_credit: s.image_credit ?? null,
+    image_caption: s.image_caption ?? null,
     body: s.body,
   }));
 

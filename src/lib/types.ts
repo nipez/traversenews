@@ -38,10 +38,16 @@ export type Story = {
   is_original: boolean;
   body: string | null;
   image_url: string | null;
+  /** Optional credit line under the photo (originals only). */
+  image_credit?: string | null;
+  /** Optional caption under the photo (originals only). */
+  image_caption?: string | null;
   byline: string | null;
   slug: string | null;
   /** Public kicker label (e.g. "Events"). Prefer over beat name when set. */
   section?: string | null;
+  /** Permalinks shown on the public story as “From the local record”. */
+  source_urls?: string[];
 };
 
 export type DraftStatus = "draft" | "published";
@@ -56,6 +62,10 @@ export type OriginalDraft = {
   section: string | null;
   byline: string;
   slug: string | null;
+  /** Optional staff photo URL. Empty = no image on public story/lead. */
+  image_url: string | null;
+  image_credit: string | null;
+  image_caption: string | null;
   /** Permalinks the draft may draw facts from. Required. */
   source_urls: string[];
   based_on_story_ids: string[];
@@ -92,6 +102,8 @@ export type ClusteredStory = {
   byline: string | null;
   slug: string | null;
   image_url: string | null;
+  image_credit?: string | null;
+  image_caption?: string | null;
   body: string | null;
 };
 

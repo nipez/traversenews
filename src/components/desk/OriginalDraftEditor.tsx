@@ -13,6 +13,9 @@ export function OriginalDraftEditor({ draft }: { draft: OriginalDraft }) {
   const [body, setBody] = useState(draft.body);
   const [section, setSection] = useState(draft.section ?? "");
   const [byline, setByline] = useState(draft.byline);
+  const [imageUrl, setImageUrl] = useState(draft.image_url ?? "");
+  const [imageCaption, setImageCaption] = useState(draft.image_caption ?? "");
+  const [imageCredit, setImageCredit] = useState(draft.image_credit ?? "");
   const [sourceUrls, setSourceUrls] = useState(draft.source_urls.join("\n"));
   const [status, setStatus] = useState(draft.status);
   const [slug, setSlug] = useState(draft.slug);
@@ -22,12 +25,16 @@ export function OriginalDraftEditor({ draft }: { draft: OriginalDraft }) {
   const [generating, setGenerating] = useState(false);
 
   function payload() {
+    const photo = imageUrl.trim() || null;
     return {
       title,
       dek,
       body,
       section: section.trim() || null,
       byline,
+      image_url: photo,
+      image_caption: photo ? imageCaption.trim() || null : null,
+      image_credit: photo ? imageCredit.trim() || null : null,
       source_urls: sourceUrls
         .split(/\n+/)
         .map((u) => u.trim())
@@ -55,6 +62,9 @@ export function OriginalDraftEditor({ draft }: { draft: OriginalDraft }) {
         setStatus(json.draft.status);
         setSlug(json.draft.slug);
         setBody(json.draft.body);
+        setImageUrl(json.draft.image_url ?? "");
+        setImageCaption(json.draft.image_caption ?? "");
+        setImageCredit(json.draft.image_credit ?? "");
       }
       setNotice("Saved.");
       router.refresh();
@@ -140,7 +150,9 @@ export function OriginalDraftEditor({ draft }: { draft: OriginalDraft }) {
       if (!res.ok) throw new Error(json.error || "Generate failed");
       if (json.generated && json.draft) {
         setBody(json.draft.body);
-        setNotice("Draft body filled from the linked source (model assist). Review hard before publish.");
+        setNotice(
+          "Draft body filled from the linked source (model assist). Review hard before publish.",
+        );
       } else {
         setNotice(
           json.reason ||
@@ -282,6 +294,52 @@ export function OriginalDraftEditor({ draft }: { draft: OriginalDraft }) {
             onChange={(e) => setByline(e.target.value)}
           />
         </label>
+
+        <div className="space-y-3 border border-rule bg-white/70 p-4">
+          <p className="text-[0.68rem] font-bold tracking-[0.08em] text-muted-2 uppercase">
+            Photo (optional)
+          </p>
+          <p className="text-sm text-muted">
+            Paste a real photo URL before publish. Leave blank for no image —
+            publish still works. Do not invent or generate a photo.
+          </p>
+          <label className="block">
+            <span className="text-[0.68rem] font-bold tracking-[0.08em] text-muted-2 uppercase">
+              Photo URL
+            </span>
+            <input
+              className="input mt-1"
+              type="url"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              placeholder="https://…"
+            />
+          </label>
+          <label className="block">
+            <span className="text-[0.68rem] font-bold tracking-[0.08em] text-muted-2 uppercase">
+              Caption
+            </span>
+            <input
+              className="input mt-1"
+              value={imageCaption}
+              onChange={(e) => setImageCaption(e.target.value)}
+              placeholder="Optional"
+              disabled={!imageUrl.trim()}
+            />
+          </label>
+          <label className="block">
+            <span className="text-[0.68rem] font-bold tracking-[0.08em] text-muted-2 uppercase">
+              Credit
+            </span>
+            <input
+              className="input mt-1"
+              value={imageCredit}
+              onChange={(e) => setImageCredit(e.target.value)}
+              placeholder="Optional"
+              disabled={!imageUrl.trim()}
+            />
+          </label>
+        </div>
 
         <div className="border border-rule bg-paper-2 p-4">
           <p className="text-[0.68rem] font-bold tracking-[0.08em] text-muted-2 uppercase">

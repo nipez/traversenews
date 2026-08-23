@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PublicShell } from "@/components/PublicShell";
 import { CivicList } from "@/components/CivicList";
@@ -8,6 +7,7 @@ import { selectAroundTheBay } from "@/lib/around";
 import { getAppData, getOriginalBySlug } from "@/lib/data/store";
 import { civicEvents } from "@/lib/queries";
 import { clusterStories } from "@/lib/pull/cluster";
+import { sourceLinksFromUrls } from "@/lib/source-links";
 import {
   isQuotedParagraph,
   readTimeMinutes,
@@ -43,6 +43,20 @@ export default async function StoryPage({ params }: Props) {
   const readMins = readTimeMinutes(story.body);
   const dateline = formatStoryDateline(story.published_at);
 
+  const draft = data.drafts.find(
+    (d) =>
+      d.published_story_id === story.id ||
+      (d.slug != null && d.slug === story.slug),
+  );
+  const sourceLinks = sourceLinksFromUrls(
+    story.source_urls?.length ? story.source_urls : draft?.source_urls,
+  );
+
+  const captionParts = [story.image_caption, story.image_credit]
+    .map((p) => p?.trim())
+    .filter(Boolean);
+  const captionLine = captionParts.join(" · ");
+
   return (
     <PublicShell active="/" header="compact">
       <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_280px]">
@@ -70,9 +84,18 @@ export default async function StoryPage({ params }: Props) {
           </p>
 
           {story.image_url ? (
-            <figure className="mt-6 border border-ink">
+            <figure className="mt-6 max-w-2xl">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={story.image_url} alt="" className="w-full" />
+              <img
+                src={story.image_url}
+                alt=""
+                className="w-full border border-ink"
+              />
+              {captionLine ? (
+                <figcaption className="mt-2 text-sm text-muted">
+                  {captionLine}
+                </figcaption>
+              ) : null}
             </figure>
           ) : null}
 
@@ -87,6 +110,28 @@ export default async function StoryPage({ params }: Props) {
               ),
             )}
           </div>
+
+          {sourceLinks.length > 0 ? (
+            <section className="mt-10 max-w-2xl border-t border-rule pt-6">
+              <h2 className="font-serif text-xl text-ink">From the local record</h2>
+              <ul className="mt-3 space-y-2">
+                {sourceLinks.map((link) => (
+                  <li key={link.url} className="text-sm">
+                    <span className="font-semibold text-ink">{link.name}</span>
+                    {" · "}
+                    <a
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-teal break-all hover:underline"
+                    >
+                      {link.url.replace(/^https?:\/\//, "").replace(/\/$/, "")}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
 
           <div className="mt-10 max-w-2xl border border-ink p-4">
             <p className="text-[0.65rem] font-extrabold tracking-[0.1em] text-muted uppercase">

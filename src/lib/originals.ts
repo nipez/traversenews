@@ -45,6 +45,9 @@ export function draftFromPulledCluster(input: {
     section: null,
     byline: input.byline?.trim() || DEFAULT_ORIGINAL_BYLINE,
     slug: null,
+    image_url: null,
+    image_credit: null,
+    image_caption: null,
     source_urls: url ? [url] : [],
     based_on_story_ids: [input.cluster.id],
     source_title: input.cluster.title.trim(),
@@ -62,6 +65,7 @@ export function storyFromPublishedDraft(
   siteOrigin: string,
 ): Story {
   const publishedAt = draft.published_at ?? new Date().toISOString();
+  const imageUrl = draft.image_url?.trim() || null;
   return {
     id: draft.published_story_id ?? newId("story"),
     source_id: "src_tn",
@@ -71,10 +75,13 @@ export function storyFromPublishedDraft(
     published_at: publishedAt,
     is_original: true,
     body: draft.body.trim() || null,
-    image_url: null,
+    image_url: imageUrl,
+    image_credit: imageUrl ? draft.image_credit?.trim() || null : null,
+    image_caption: imageUrl ? draft.image_caption?.trim() || null : null,
     byline: draft.byline.trim() || DEFAULT_ORIGINAL_BYLINE,
     slug,
     section: draft.section?.trim() || null,
+    source_urls: draft.source_urls.map((u) => u.trim()).filter(Boolean),
   };
 }
 

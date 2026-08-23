@@ -358,6 +358,9 @@ export async function ensurePublishedStaffOriginals(): Promise<void> {
       section: existing?.section?.trim() || staff.section,
       byline: existing?.byline?.trim() || staff.byline,
       slug,
+      image_url: existing?.image_url ?? staff.image_url ?? null,
+      image_credit: existing?.image_credit ?? staff.image_credit ?? null,
+      image_caption: existing?.image_caption ?? staff.image_caption ?? null,
       source_urls:
         existing?.source_urls?.length ? existing.source_urls : staff.source_urls,
       status: existing?.status === "published" ? "published" : "draft",
@@ -415,6 +418,7 @@ export async function getDraft(id: string): Promise<OriginalDraft | undefined> {
 
 export async function upsertDraft(draft: OriginalDraft): Promise<OriginalDraft> {
   const data = await loadStore();
+  const imageUrl = draft.image_url?.trim() || null;
   const next: OriginalDraft = {
     ...draft,
     title: draft.title.trim(),
@@ -422,6 +426,9 @@ export async function upsertDraft(draft: OriginalDraft): Promise<OriginalDraft> 
     body: draft.body,
     byline: draft.byline.trim() || DEFAULT_ORIGINAL_BYLINE,
     section: draft.section?.trim() || null,
+    image_url: imageUrl,
+    image_credit: imageUrl ? draft.image_credit?.trim() || null : null,
+    image_caption: imageUrl ? draft.image_caption?.trim() || null : null,
     source_urls: draft.source_urls.map((u) => u.trim()).filter(Boolean),
     updated_at: new Date().toISOString(),
   };

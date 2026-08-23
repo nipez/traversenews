@@ -42,6 +42,16 @@ export async function PUT(request: Request, ctx: Ctx) {
     section: body.section !== undefined ? body.section : existing.section,
     byline: body.byline ?? existing.byline,
     slug: body.slug !== undefined ? body.slug : existing.slug,
+    image_url:
+      body.image_url !== undefined ? body.image_url : existing.image_url ?? null,
+    image_credit:
+      body.image_credit !== undefined
+        ? body.image_credit
+        : existing.image_credit ?? null,
+    image_caption:
+      body.image_caption !== undefined
+        ? body.image_caption
+        : existing.image_caption ?? null,
     source_urls: urls,
     // status changes only via publish/unpublish
     status: existing.status,
