@@ -23,7 +23,9 @@ function schoolClock(item: SchoolCalendarItem): string {
 export default async function SchoolsPage() {
   const data = await getAppData();
   const upcoming = selectUpcomingSchoolDays(data.schools ?? []);
-  const districts = groupSchoolDaysByDistrict(upcoming);
+  // Always emit TCAPS → GTACS → neighbors with heds, even when a district is empty.
+  const districts = groupSchoolDaysByDistrict(upcoming, { includeEmpty: true });
+  const anyDates = districts.some((d) => d.months.length > 0);
 
   return (
     <PublicShell active="/schools" header="compact">
@@ -40,65 +42,101 @@ export default async function SchoolsPage() {
             </p>
           </header>
 
-          {districts.length === 0 ? (
+          {!anyDates ? (
             <p className="schools-empty">
               No Important dates in the pull yet — we do not invent half days
-              or first days of school.
+              or first days of school. Districts below stay labeled so TCAPS
+              and GTACS never read as one calendar.
             </p>
-          ) : (
-            <div className="schools-districts">
-              {districts.map((block) => (
-                <section key={block.district} className="schools-district">
-                  <h2 className="schools-district-hed">{block.district}</h2>
-                  {block.months.map((month) => (
-                    <div key={month.key} className="schools-month">
-                      <h3 className="schools-month-hed">{month.name}</h3>
-                      <ul className="schools-list">
-                        {month.items.map((item) => {
-                          const d = formatCivicDate(item.starts_at);
-                          const clock = schoolClock(item);
-                          return (
-                            <li key={item.id} className="schools-row">
-                              <div className="schools-datebox">
-                                <div className="schools-datebox-dow">
-                                  {d.day}
+          ) : null}
+
+          <div className="schools-districts">
+            {districts.map((block) => {
+              const count = block.months.reduce(
+                (n, m) => n + m.items.length,
+                0,
+              );
+              return (
+                <section
+                  key={block.district}
+                  className="schools-district"
+                  aria-labelledby={`schools-${block.district.replace(/\s+/g, "-").toLowerCase()}`}
+                >
+                  <header className="schools-district-head">
+                    <p className="schools-district-kicker">District</p>
+                    <h2
+                      id={`schools-${block.district.replace(/\s+/g, "-").toLowerCase()}`}
+                      className="schools-district-hed"
+                    >
+                      {block.district}
+                    </h2>
+                    <p className="schools-district-meta">
+                      {count === 0
+                        ? "No official dates in the pull yet"
+                        : `${count} important date${count === 1 ? "" : "s"}`}
+                    </p>
+                  </header>
+
+                  {block.months.length === 0 ? (
+                    <p className="schools-district-empty">
+                      Empty for now — we do not invent half days for{" "}
+                      {block.district}.
+                    </p>
+                  ) : (
+                    block.months.map((month) => (
+                      <div key={month.key} className="schools-month">
+                        <h3 className="schools-month-hed">{month.name}</h3>
+                        <ul className="schools-list">
+                          {month.items.map((item) => {
+                            const d = formatCivicDate(item.starts_at);
+                            const clock = schoolClock(item);
+                            return (
+                              <li key={item.id} className="schools-row">
+                                <div className="schools-datebox">
+                                  <div className="schools-datebox-dow">
+                                    {d.day}
+                                  </div>
+                                  <div className="schools-datebox-day">
+                                    {d.label}
+                                  </div>
+                                  <div className="schools-datebox-month">
+                                    {d.monthAbbr}
+                                  </div>
                                 </div>
-                                <div className="schools-datebox-day">
-                                  {d.label}
-                                </div>
-                                <div className="schools-datebox-month">
-                                  {d.monthAbbr}
-                                </div>
-                              </div>
-                              <div className="schools-copy">
-                                {item.url ? (
-                                  <p className="schools-title">
-                                    <a
-                                      href={item.url}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                    >
+                                <div className="schools-copy">
+                                  {item.url ? (
+                                    <p className="schools-title">
+                                      <a
+                                        href={item.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                      >
+                                        {item.title}
+                                      </a>
+                                    </p>
+                                  ) : (
+                                    <p className="schools-title">
                                       {item.title}
-                                    </a>
-                                  </p>
-                                ) : (
-                                  <p className="schools-title">{item.title}</p>
-                                )}
-                                {item.place && item.place !== "District" ? (
-                                  <p className="schools-place">{item.place}</p>
-                                ) : null}
-                              </div>
-                              <p className="schools-time">{clock}</p>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    </div>
-                  ))}
+                                    </p>
+                                  )}
+                                  {item.place && item.place !== "District" ? (
+                                    <p className="schools-place">
+                                      {item.place}
+                                    </p>
+                                  ) : null}
+                                </div>
+                                <p className="schools-time">{clock}</p>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </div>
+                    ))
+                  )}
                 </section>
-              ))}
-            </div>
-          )}
+              );
+            })}
+          </div>
         </div>
 
         <DeskRail active="/schools" />

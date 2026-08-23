@@ -2397,16 +2397,51 @@ a:hover {
 .schools-districts {
   display: flex;
   flex-direction: column;
-  gap: 2.5rem;
+  gap: 2.75rem;
+}
+
+.schools-district {
+  padding-top: 0.25rem;
+  border-top: 2px solid #1c1712;
+}
+
+.schools-district-head {
+  margin: 0 0 1rem;
+  padding-top: 1rem;
+}
+
+.schools-district-kicker {
+  margin: 0;
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #7a7060;
 }
 
 .schools-district-hed {
-  margin: 0 0 1rem;
+  margin: 0.2rem 0 0;
   font-family: var(--font-archivo), system-ui, sans-serif;
-  font-size: 1.5rem;
+  font-size: 1.75rem;
   font-weight: 900;
   letter-spacing: -0.03em;
   color: #1c1712;
+}
+
+.schools-district-meta {
+  margin: 0.35rem 0 0;
+  font-family: var(--font-source-serif), Georgia, serif;
+  font-size: 0.92rem;
+  color: #52493c;
+}
+
+.schools-district-empty {
+  margin: 0;
+  padding: 0.35rem 0 0.5rem;
+  font-family: var(--font-source-serif), Georgia, serif;
+  font-size: 0.95rem;
+  color: #7a7060;
 }
 
 .schools-month + .schools-month {
