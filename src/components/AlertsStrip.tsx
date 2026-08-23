@@ -8,7 +8,7 @@ export function AlertsStrip({ items }: { items: AlertItem[] }) {
   if (items.length === 0) return null;
 
   return (
-    <section className="alerts-strip" aria-label="Alerts">
+    <section id="alerts" className="alerts-strip" aria-label="Alerts">
       <div className="alerts-head">
         <p className="alerts-kicker">Alerts</p>
       </div>
