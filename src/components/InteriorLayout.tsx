@@ -4,7 +4,7 @@ import { InteriorRail } from "@/components/InteriorRail";
  * Shared public interior chrome: main column + the same right rail.
  * Homepage hero stays its own grid; Desk stays desktop-admin.
  */
-export function InteriorLayout({
+export async function InteriorLayout({
   children,
   mainClassName = "",
   layoutClassName = "",

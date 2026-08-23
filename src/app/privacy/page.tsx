@@ -2,6 +2,8 @@ import Link from "next/link";
 import { InteriorLayout } from "@/components/InteriorLayout";
 import { PublicShell } from "@/components/PublicShell";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Privacy",
 };

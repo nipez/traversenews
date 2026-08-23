@@ -2,6 +2,8 @@ import { InteriorLayout } from "@/components/InteriorLayout";
 import { PublicShell } from "@/components/PublicShell";
 import { LOCAL_GROUPS } from "@/lib/useful-local";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Useful local",
 };
