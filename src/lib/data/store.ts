@@ -1,6 +1,7 @@
 import { createSeedData } from "@/lib/data/seed";
 import { getTraverseDataKv, STORE_KEY } from "@/lib/data/kv";
 import { isBannedOriginalSlug, scrubAppData } from "@/lib/data/scrub";
+import { STAFF_UNPUBLISHED_DRAFTS } from "@/lib/data/staff-drafts";
 import { buildEditionSnapshot, upsertEdition } from "@/lib/editions";
 import { dedupeEvents } from "@/lib/events";
 import {
@@ -290,12 +291,48 @@ export async function snapshotTodaysEdition(at = new Date()): Promise<EditionSna
   return snapshot;
 }
 
+/**
+ * Ensure staff-only unpublished drafts exist in the same store Desk reads.
+ * Uses upsertDraft (KV on Workers). Never sets status=published.
+ */
+export async function ensureStaffUnpublishedDrafts(): Promise<void> {
+  const data = await loadStore();
+  const byId = new Map(data.drafts.map((d) => [d.id, d]));
+  const bySlug = new Map(
+    data.drafts.filter((d) => d.slug).map((d) => [d.slug as string, d]),
+  );
+
+  for (const staff of STAFF_UNPUBLISHED_DRAFTS) {
+    const existing =
+      byId.get(staff.id) ||
+      (staff.slug ? bySlug.get(staff.slug) : undefined);
+
+    // Already present under the canonical staff id — leave Nick's edits alone.
+    if (existing?.id === staff.id) continue;
+
+    // Drop a prior same-slug stub (wrong id) then write the canonical draft.
+    if (existing && existing.id !== staff.id) {
+      data.drafts = data.drafts.filter((d) => d.id !== existing.id);
+      await saveStore(data);
+    }
+
+    await upsertDraft({
+      ...staff,
+      status: "draft",
+      published_story_id: null,
+      published_at: null,
+    });
+  }
+}
+
 export async function listDrafts(): Promise<OriginalDraft[]> {
+  await ensureStaffUnpublishedDrafts();
   const data = await loadStore();
   return [...data.drafts].sort((a, b) => b.updated_at.localeCompare(a.updated_at));
 }
 
 export async function getDraft(id: string): Promise<OriginalDraft | undefined> {
+  await ensureStaffUnpublishedDrafts();
   const data = await loadStore();
   return data.drafts.find((d) => d.id === id);
 }
