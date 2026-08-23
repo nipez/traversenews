@@ -1,5 +1,5 @@
 import { selectAroundTheBay } from "@/lib/around";
-import { dedupeEvents, selectTonightEvents } from "@/lib/events";
+import { dedupeEvents, isCivicEvent, selectTonightEvents } from "@/lib/events";
 import { clusterStories } from "@/lib/pull/cluster";
 import type {
   AppData,
@@ -41,12 +41,8 @@ function civicForEdition(
   sources: { id: string; beat_id: string }[],
   nowMs: number,
 ): EventItem[] {
-  const civicBeats = new Set(["beat_government", "beat_schools"]);
-  const civicSourceIds = new Set(
-    sources.filter((s) => civicBeats.has(s.beat_id)).map((s) => s.id),
-  );
   return dedupeEvents(events)
-    .filter((e) => civicSourceIds.has(e.source_id))
+    .filter((e) => isCivicEvent(e, sources))
     .filter((e) => new Date(e.starts_at).getTime() >= nowMs - 60 * 60 * 1000);
 }
 
@@ -94,22 +90,18 @@ export function buildEditionSnapshot(
 ): EditionSnapshot {
   const clusters = clusterStories(data.stories, data.sources);
   const originals = clusters.filter((c) => c.is_original);
-  const aroundRail = selectAroundTheBay(
+  const around = selectAroundTheBay(
     clusters.filter((c) => !c.is_original),
-    { limit: 13, maxPerSource: 3 },
+    { limit: 12, maxPerSource: 3 },
   );
-  const leadOriginal = originals[0] ?? null;
-  // No staff original → lead with first mixed wire card (other-desk), never fake reporting.
-  const wireLead = !leadOriginal && aroundRail[0] ? aroundRail[0] : null;
-  const leadCluster = leadOriginal ?? wireLead;
-  const around = wireLead ? aroundRail.slice(1, 13) : aroundRail.slice(0, 12);
+  // Staff originals only — never promote other-desk wire into the edition lead.
+  const leadCluster = originals[0] ?? null;
 
   const weekendEvents = selectTonightEvents(data.events, data.sources, {
     now: at,
     limit: 6,
     horizonDays: 5,
-    maxMeetings: 1,
-    maxPerSource: 2,
+    maxPerSource: 3,
   });
 
   const civic = civicForEdition(data.events, data.sources, at.getTime()).slice(
@@ -121,10 +113,7 @@ export function buildEditionSnapshot(
     date: detroitDateKey(at),
     captured_at: at.toISOString(),
     lead: leadCluster
-      ? toStoryCard(
-          leadCluster,
-          leadCluster.is_original ? ["traverse.news"] : undefined,
-        )
+      ? toStoryCard(leadCluster, ["traverse.news"])
       : null,
     around: around.map((c) => toStoryCard(c)),
     events: weekendEvents.map(toEventCard),

@@ -1,5 +1,5 @@
 import { selectAroundTheBay } from "@/lib/around";
-import { dedupeEvents, selectTonightEvents } from "@/lib/events";
+import { dedupeEvents, isCivicEvent, selectTonightEvents } from "@/lib/events";
 import { clusterStories } from "@/lib/pull/cluster";
 import { getAppData } from "@/lib/data/store";
 import type { ClusteredStory, EventItem, Story } from "@/lib/types";
@@ -8,21 +8,16 @@ export async function getHomepageData() {
   const data = await getAppData();
   const clusters = clusterStories(data.stories, data.sources);
   const originals = clusters.filter((c) => c.is_original);
-  const aroundRail = selectAroundTheBay(
+  const around = selectAroundTheBay(
     clusters.filter((c) => !c.is_original),
-    { limit: 13, maxPerSource: 3 },
+    { limit: 12, maxPerSource: 3 },
   );
-  const leadOriginal = originals[0] ?? null;
-
-  // No invented originals: if we have no staff piece, lead with a mixed wire card
-  // clearly labeled as other-desk (never as traverse.news reporting).
-  const wireLead = !leadOriginal && aroundRail[0] ? aroundRail[0] : null;
-  const lead = leadOriginal ?? wireLead;
-  const around = wireLead ? aroundRail.slice(1, 13) : aroundRail.slice(0, 12);
+  // Hero is staff originals only — never promote other-desk crime/wire to the lead.
+  const lead = originals[0] ?? null;
 
   const moreFromUs = data.stories
     .filter((s) => s.is_original)
-    .filter((s) => !leadOriginal || s.slug !== leadOriginal.slug)
+    .filter((s) => !lead || s.slug !== lead.slug)
     .sort(
       (a, b) =>
         new Date(b.published_at).getTime() - new Date(a.published_at).getTime(),
@@ -32,8 +27,7 @@ export async function getHomepageData() {
   const weekendEvents = selectTonightEvents(data.events, data.sources, {
     limit: 6,
     horizonDays: 5,
-    maxMeetings: 1,
-    maxPerSource: 2,
+    maxPerSource: 3,
   });
 
   const civic = civicEvents(data.events, data.sources).slice(0, 6);
@@ -53,12 +47,8 @@ export function civicEvents(
   sources: { id: string; beat_id: string }[],
   nowMs = Date.now(),
 ): EventItem[] {
-  const civicBeats = new Set(["beat_government", "beat_schools"]);
-  const civicSourceIds = new Set(
-    sources.filter((s) => civicBeats.has(s.beat_id)).map((s) => s.id),
-  );
   return dedupeEvents(events)
-    .filter((e) => civicSourceIds.has(e.source_id))
+    .filter((e) => isCivicEvent(e, sources))
     .filter((e) => new Date(e.starts_at).getTime() >= nowMs - 60 * 60 * 1000);
 }
 

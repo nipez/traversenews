@@ -1,20 +1,29 @@
-import Link from "next/link";
-import { formatRelative } from "@/lib/dates";
+import { formatBayDateline, formatRelative } from "@/lib/dates";
 import type { ClusteredStory } from "@/lib/types";
 
-export function AroundTheBay({ items }: { items: ClusteredStory[] }) {
+export function AroundTheBay({
+  items,
+  showDateline = true,
+}: {
+  items: ClusteredStory[];
+  showDateline?: boolean;
+}) {
   return (
     <section className="anim-rise anim-delay-1">
-      <div className="mb-4 flex items-end justify-between gap-3">
-        <div className="flex flex-wrap items-baseline gap-3">
-          <h2 className="font-serif text-2xl text-ink">Around the bay</h2>
-          <span className="text-[0.68rem] font-semibold tracking-[0.08em] text-muted-2 uppercase">
+      {showDateline ? (
+        <p className="mb-3 text-[0.72rem] font-semibold tracking-[0.14em] text-muted-2 uppercase">
+          {formatBayDateline()}
+        </p>
+      ) : null}
+      <div className="mb-5 flex flex-wrap items-end justify-between gap-3 border-b-2 border-ink pb-3">
+        <div>
+          <h2 className="font-serif text-[1.85rem] leading-none tracking-tight text-ink md:text-[2.15rem]">
+            Around the bay
+          </h2>
+          <p className="mt-2 text-[0.72rem] font-bold tracking-[0.12em] text-teal uppercase">
             Headlines from other desks
-          </span>
+          </p>
         </div>
-        <span className="hidden text-[0.68rem] font-semibold tracking-[0.08em] text-muted-2 uppercase md:inline">
-          Other desks
-        </span>
       </div>
 
       <ul>
@@ -24,32 +33,37 @@ export function AroundTheBay({ items }: { items: ClusteredStory[] }) {
               href={item.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="group block py-4"
+              className="group block py-5"
             >
-              <h3 className="font-serif text-[1.2rem] leading-snug text-ink group-hover:text-teal md:text-[1.28rem]">
+              <div className="mb-2 flex flex-wrap items-center gap-2">
+                {item.sources.map((s) => (
+                  <span key={s.id} className="source-pill">
+                    {s.name}
+                  </span>
+                ))}
+                <span className="text-xs font-medium text-muted">
+                  {formatRelative(item.published_at)}
+                </span>
+              </div>
+              <h3 className="font-serif text-[1.35rem] leading-[1.2] tracking-tight text-ink group-hover:text-teal md:text-[1.45rem]">
                 {item.title}
                 <span className="ml-1 inline-block text-base text-muted" aria-hidden>
                   ↗
                 </span>
               </h3>
               {item.dek ? (
-                <p className="mt-1.5 max-w-3xl text-[0.95rem] leading-relaxed text-[#444]">
+                <p className="mt-2 max-w-3xl text-[0.98rem] leading-relaxed text-[#3a3a3a]">
                   {item.dek}
                 </p>
               ) : null}
-              <div className="mt-2.5 flex flex-wrap items-center gap-2">
-                {item.sources.map((s) => (
-                  <span key={s.id} className="source-pill">
-                    {s.name}
-                  </span>
-                ))}
-                <span className="text-xs text-muted">
-                  {formatRelative(item.published_at)}
-                </span>
-              </div>
             </a>
           </li>
         ))}
+        {items.length === 0 ? (
+          <li className="py-6 text-sm text-muted">
+            No live wire yet. Run a pull — we do not invent headlines.
+          </li>
+        ) : null}
       </ul>
     </section>
   );

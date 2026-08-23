@@ -11,7 +11,7 @@ export function SiteHeader({ active = "/" }: { active?: string }) {
   return (
     <header className="border-b border-rule">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 md:px-6">
-        <Link href="/" className="font-serif text-2xl tracking-tight text-ink md:text-[1.7rem]">
+        <Link href="/" className="font-serif text-[1.65rem] leading-none tracking-tight text-ink md:text-[1.85rem]">
           traverse.news
         </Link>
 

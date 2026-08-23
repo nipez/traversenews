@@ -79,6 +79,18 @@ export function formatRelative(iso: string, now = new Date()): string {
 }
 
 export function formatEventWhen(iso: string, now = new Date()): string {
+  const parts = formatEventWhenParts(iso, now);
+  if (parts.dayLabel === "TONIGHT" || parts.dayLabel === "TOMORROW") {
+    return `${parts.dayLabel}, ${parts.time}`;
+  }
+  return `${parts.dayLabel}, ${parts.time}`;
+}
+
+/** Time-first parts for Tonight / What's on night-out UI. */
+export function formatEventWhenParts(
+  iso: string,
+  now = new Date(),
+): { dayLabel: string; time: string; dayKey: string } {
   const d = new Date(iso);
   const detroitNow = new Intl.DateTimeFormat("en-CA", {
     timeZone: "America/Detroit",
@@ -115,9 +127,22 @@ export function formatEventWhen(iso: string, now = new Date()): string {
     .format(d)
     .toUpperCase();
 
-  if (dayDiff === 0) return `TONIGHT, ${time}`;
-  if (dayDiff === 1) return `TOMORROW, ${time}`;
-  return `${weekday} ${em}/${ed}, ${time}`;
+  let dayLabel = `${weekday} ${em}/${ed}`;
+  if (dayDiff === 0) dayLabel = "TONIGHT";
+  else if (dayDiff === 1) dayLabel = "TOMORROW";
+
+  return { dayLabel, time, dayKey: detroitEvent };
+}
+
+/** Homepage bay dateline, e.g. "Sunday, August 23 · Traverse City". */
+export function formatBayDateline(at = new Date()): string {
+  const day = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Detroit",
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  }).format(at);
+  return `${day} · Traverse City`;
 }
 
 export function isWeekendWindow(iso: string, now = new Date()): boolean {

@@ -16,11 +16,17 @@ export default async function CivicPage() {
   return (
     <PublicShell active="/civic">
       <div className="mx-auto max-w-3xl">
-        <h1 className="font-serif text-3xl text-ink md:text-4xl">Civic</h1>
-        <p className="mt-2 text-[#444]">
-          City, county, and school meetings in the next stretch of the calendar.
+        <p className="text-[0.72rem] font-bold tracking-[0.14em] text-muted-2 uppercase">
+          Agenda
         </p>
-        <div className="mt-8 border border-rule bg-white/50 p-5">
+        <h1 className="mt-2 font-serif text-[2.1rem] leading-none tracking-tight text-ink md:text-[2.4rem]">
+          Civic
+        </h1>
+        <p className="mt-3 max-w-xl text-sm leading-relaxed text-[#555]">
+          City, county, and school board meetings. Concerts and markets are on
+          What&apos;s on.
+        </p>
+        <div className="mt-8 border border-rule bg-paper-2/60 px-4 py-2">
           <CivicList events={events} linkLabel="Calendar" />
         </div>
       </div>

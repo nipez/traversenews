@@ -164,7 +164,7 @@ Each successful `/api/pull` writes (or refreshes) today's edition snapshot in th
 
 - Date key: `YYYY-MM-DD` in **America/Detroit**
 - One edition per day; later pulls the same day overwrite that day's snapshot so the archive matches the last homepage readers saw
-- Payload: lead (staff original if any, else other-desk wire), around-the-bay cards, tonight/events from ICS, civic (no third-party full bodies)
+- Payload: lead (staff original only — empty if none), around-the-bay cards, tonight/community events, civic meetings (no third-party full bodies)
 - Public: `/editions`, `/editions/[date]` (linked from the footer)
 - Desk: `/desk/editions`
 
