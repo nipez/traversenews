@@ -109,7 +109,9 @@ const OUTLET_HOMEPAGES = new Set(
     "https://glenarborsun.com",
     "https://www.elkrapidsnews.com",
     "https://www.recordpatriot.com",
+    "https://betsiecurrent.com",
     "https://www.antrimreview.net",
+    "https://antrimreview.net",
     "https://www.leelanau.gov",
     "https://www.gtbindians.org",
     "https://www.traversecitymi.gov",
@@ -145,6 +147,7 @@ const PREFERRED_NEWS_SOURCE_IDS = new Set([
   "src_leelanau_ent",
   "src_elk_news",
   "src_benzie_rp",
+  "src_betsie",
   "src_antrim_review",
 ]);
 
