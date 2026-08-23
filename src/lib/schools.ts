@@ -156,6 +156,21 @@ export function districtFromSourceId(sourceId: string): string {
   }
 }
 
+/**
+ * Display order on /schools. TCAPS first even when short; GTACS next;
+ * then bay neighbors. Never hide an empty district — show the hed + empty line.
+ */
+export const SCHOOL_DISTRICT_ORDER = [
+  "TCAPS",
+  "GTACS",
+  "Elk Rapids",
+  "Suttons Bay",
+  "Leland",
+  "Glen Lake",
+  "Kingsley",
+  "TC Christian",
+] as const;
+
 export function stableSchoolId(sourceId: string, uid: string): string {
   return `sch_${shortHash(`${sourceId}:${uid}`)}`;
 }
@@ -222,10 +237,12 @@ export function selectUpcomingSchoolDays(
 /** Important dates grouped by district, then month. */
 export function groupSchoolDaysByDistrict(
   items: SchoolCalendarItem[],
+  options: { includeEmpty?: boolean } = {},
 ): Array<{
   district: string;
   months: Array<{ key: string; name: string; items: SchoolCalendarItem[] }>;
 }> {
+  const includeEmpty = options.includeEmpty !== false;
   const byDistrict = new Map<string, SchoolCalendarItem[]>();
   for (const item of items) {
     const list = byDistrict.get(item.district) ?? [];
@@ -233,12 +250,33 @@ export function groupSchoolDaysByDistrict(
     byDistrict.set(item.district, list);
   }
 
-  return [...byDistrict.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([district, districtItems]) => ({
+  const ordered: Array<{
+    district: string;
+    months: Array<{ key: string; name: string; items: SchoolCalendarItem[] }>;
+  }> = [];
+
+  for (const district of SCHOOL_DISTRICT_ORDER) {
+    const districtItems = byDistrict.get(district) ?? [];
+    byDistrict.delete(district);
+    if (!includeEmpty && districtItems.length === 0) continue;
+    ordered.push({
       district,
       months: groupSchoolDaysByMonth(districtItems),
-    }));
+    });
+  }
+
+  // Any unexpected district labels (should be rare) — after the bay list.
+  const leftovers = [...byDistrict.entries()].sort(([a], [b]) =>
+    a.localeCompare(b),
+  );
+  for (const [district, districtItems] of leftovers) {
+    ordered.push({
+      district,
+      months: groupSchoolDaysByMonth(districtItems),
+    });
+  }
+
+  return ordered;
 }
 
 export function groupSchoolDaysByMonth(
