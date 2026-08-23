@@ -3,7 +3,7 @@ import { getTraverseDataKv, STORE_KEY } from "@/lib/data/kv";
 import { isBannedOriginalSlug, scrubAppData } from "@/lib/data/scrub";
 import { STAFF_PUBLISHED_ORIGINALS, STAFF_UNPUBLISHED_DRAFTS } from "@/lib/data/staff-drafts";
 import { buildEditionSnapshot, upsertEdition } from "@/lib/editions";
-import { dedupeEvents } from "@/lib/events";
+import { dedupeEvents, sanitizeStoredEvents } from "@/lib/events";
 import {
   DEFAULT_ORIGINAL_BYLINE,
   storyFromPublishedDraft,
@@ -291,7 +291,9 @@ export async function replacePulledEvents(
   for (const event of events) {
     incoming.set(event.id, event);
   }
-  data.events = dedupeEvents([...kept, ...incoming.values()]);
+  data.events = sanitizeStoredEvents(
+    dedupeEvents([...kept, ...incoming.values()]),
+  ).events;
   await saveStore(data);
 }
 

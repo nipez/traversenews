@@ -1,5 +1,5 @@
 import type { AppData, EditionSnapshot, EditionStoryCard, Story } from "@/lib/types";
-import { dedupeEvents } from "@/lib/events";
+import { dedupeEvents, sanitizeStoredEvents } from "@/lib/events";
 
 /** Invented seed copy that must never appear as reporting. See README → Editorial. */
 export const BANNED_ORIGINAL_SLUGS = new Set([
@@ -122,10 +122,11 @@ export function scrubAppData(data: AppData): { data: AppData; changed: boolean }
   }
 
   const filtered = data.events.filter((e) => !BANNED_EVENT_IDS.has(e.id));
-  const nextEvents = dedupeEvents(filtered);
+  const sanitized = sanitizeStoredEvents(filtered);
+  const nextEvents = sanitized.events;
   const beforeIds = data.events.map((e) => e.id).sort().join(",");
   const afterIds = nextEvents.map((e) => e.id).sort().join(",");
-  if (beforeIds !== afterIds) {
+  if (beforeIds !== afterIds || sanitized.changed) {
     changed = true;
     data.events = nextEvents;
   } else {

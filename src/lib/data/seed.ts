@@ -366,7 +366,7 @@ const sources: Source[] = [
     beat_id: "beat_hs_sports",
     enabled: true,
     notes:
-      "Big Teams calendar. No public RSS. Browser-pull later; empty Worker pull is OK.",
+      "Big Teams calendar — Sports wire only. Never import game rows into events/KV (floods /whats-on and can 503 the Worker).",
   },
   {
     id: "src_tcw_ath",
@@ -377,7 +377,7 @@ const sources: Source[] = [
     beat_id: "beat_hs_sports",
     enabled: true,
     notes:
-      "Big Teams calendar. No public RSS. Browser-pull later; empty Worker pull is OK.",
+      "Big Teams calendar — Sports wire only. Never import game rows into events/KV (floods /whats-on and can 503 the Worker).",
   },
   {
     id: "src_tn",
