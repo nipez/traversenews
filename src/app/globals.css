@@ -36,14 +36,19 @@
   box-sizing: border-box;
 }
 
+/* Force cream paper even when Chrome/OS is in dark mode — never invert */
 html {
+  color-scheme: only light;
+  background-color: #f4edde !important;
+  color: #1c1712 !important;
   scroll-behavior: smooth;
 }
 
 body {
   margin: 0;
-  background: var(--paper);
-  color: var(--ink);
+  color-scheme: only light;
+  background-color: #f4edde !important;
+  color: #1c1712 !important;
   font-family: var(--font-archivo), system-ui, sans-serif;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -66,11 +71,13 @@ a:hover {
   font-family: var(--font-source-serif), Georgia, serif;
 }
 
-/* Paper + grain tile */
+/* Paper + grain tile — solid paper so OS invert cannot blank the page */
 .site-shell {
   position: relative;
   min-height: 100vh;
-  background-color: var(--paper);
+  color-scheme: only light;
+  background-color: #f4edde !important;
+  color: #1c1712 !important;
   background-image: url("/art/grain.png");
   background-size: 200px 200px;
   background-repeat: repeat;
@@ -362,6 +369,8 @@ a:hover {
   max-width: 1120px;
   margin: 0 auto;
   padding: 1.25rem 1rem 2.5rem;
+  background-color: #f4edde;
+  color: #1c1712;
 }
 
 @media (min-width: 768px) {
@@ -404,7 +413,7 @@ a:hover {
   font-size: clamp(2rem, 5vw, 3.625rem); /* ~58px desktop */
   line-height: 0.95;
   letter-spacing: -0.035em;
-  color: var(--ink);
+  color: #1c1712;
 }
 
 .lead-dek {
@@ -431,7 +440,7 @@ a:hover {
   font-size: 1.6875rem; /* 27px */
   letter-spacing: -0.03em;
   line-height: 1;
-  color: var(--ink);
+  color: #1c1712;
 }
 
 .bay-grid {
@@ -450,6 +459,7 @@ a:hover {
 .bay-item {
   border-bottom: 1px solid var(--ink);
   padding: 0.95rem 0 1.05rem;
+  background-color: #f4edde;
 }
 
 @media (min-width: 640px) {
@@ -472,8 +482,8 @@ a:hover {
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--ink);
-  background: transparent;
+  color: #1c1712;
+  background: #f4edde;
 }
 
 .bay-title {
@@ -482,7 +492,7 @@ a:hover {
   font-size: 1.15625rem; /* ~18.5px */
   font-weight: 600;
   line-height: 1.3;
-  color: var(--ink);
+  color: #1c1712;
 }
 
 /* Tonight peach well */
@@ -515,11 +525,11 @@ a:hover {
   mix-blend-mode: multiply;
 }
 
-/* Civic card */
+/* Civic card — solid paper so dark-mode invert cannot blank it */
 .civic-card {
   border: 1px solid var(--ink);
   padding: 1rem 1rem 1.1rem;
-  background: transparent;
+  background-color: #f4edde;
 }
 
 .civic-datebox {

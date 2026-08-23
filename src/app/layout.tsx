@@ -23,6 +23,9 @@ export const metadata: Metadata = {
   },
   description:
     "Traverse City local news: original reporting plus headlines from other desks, events, and civic listings.",
+  other: {
+    "color-scheme": "light only",
+  },
 };
 
 export default function RootLayout({
@@ -31,7 +34,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" style={{ colorScheme: "only light" }}>
+      <head>
+        <meta name="color-scheme" content="light only" />
+      </head>
       <body className={`${archivo.variable} ${sourceSerif.variable} antialiased`}>
         {children}
       </body>
