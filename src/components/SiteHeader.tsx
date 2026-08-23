@@ -86,7 +86,7 @@ export function SiteHeader({
                 <Wordmark tone="cream" />
               </Link>
               <p className="hero-dek">
-                Local news from Traverse City and the surrounding area.
+                One tab for the bay: news, nights out, civic, and schools.
               </p>
             </div>
           </div>
