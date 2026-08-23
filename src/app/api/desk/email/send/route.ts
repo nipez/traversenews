@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { isDeskRequestAuthed } from "@/lib/auth";
 import { getAppData } from "@/lib/data/store";
-import { buildEmailEditionSnapshot } from "@/lib/email-editions";
+import {
+  buildEmailEditionSnapshot,
+  emailDetroitDateKey,
+} from "@/lib/email-editions";
 import { renderMorningLetterHtml } from "@/lib/email/render-letter-html";
 import {
   DEFAULT_TEST_RECIPIENT,
@@ -20,7 +23,10 @@ import {
  *   omitted / {}                    — ONLY nickperez@gmail.com (test default)
  *
  * Never blasts subscribers unless audience is explicitly "subscribers".
- * Builds letter HTML once and reuses it for every recipient (cheap CPU).
+ *
+ * KV: one `getAppData()` read of `app_data` only — subscribers live in that
+ * document. Prefer today's archived email edition; build once from live mix
+ * only if missing. HTML is rendered once and reused for every recipient.
  */
 export async function POST(request: Request) {
   if (!(await isDeskRequestAuthed(request))) {
@@ -48,9 +54,12 @@ export async function POST(request: Request) {
     "https://traverse.news";
   const unsubscribeUrl = `${siteUrl}/email#signup`;
 
-  // One store load for letter + optional subscriber list (cheap CPU).
+  // Single KV read (`app_data`). No list(), no per-subscriber keys.
   const data = await getAppData();
-  const letter = buildEmailEditionSnapshot(data);
+  const today = emailDetroitDateKey();
+  const archived = data.email_editions?.find((e) => e.date === today);
+  const letter = archived ?? buildEmailEditionSnapshot(data);
+  const letterSource = archived ? "email_edition" : "live_mix";
 
   let recipients: string[] = [];
   let audience: "test" | "explicit" | "subscribers" = "test";
@@ -105,6 +114,7 @@ export async function POST(request: Request) {
   return NextResponse.json({
     ok: failed.length === 0,
     audience,
+    letter_source: letterSource,
     from: "Traverse News <letter@traverse.news>",
     date: letter.date,
     subject: rendered.subject,
