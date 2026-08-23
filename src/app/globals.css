@@ -1273,6 +1273,14 @@ a:hover {
   color: #52493c;
 }
 
+.event-tip-box {
+  margin: 2.5rem 0 0;
+  padding: 1.5rem 0 0;
+  border-top: 2px solid #1c1712;
+  color-scheme: only light;
+  background: #f4edde;
+}
+
 .day-num {
   font-family: var(--font-archivo), system-ui, sans-serif;
   font-weight: 900;

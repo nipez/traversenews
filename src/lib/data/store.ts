@@ -21,6 +21,7 @@ import type {
   EditionSnapshot,
   EmailEditionSnapshot,
   EventItem,
+  EventTip,
   OriginalDraft,
   SchoolCalendarItem,
   Source,
@@ -29,6 +30,8 @@ import type {
   Tip,
 } from "@/lib/types";
 import { newId } from "@/lib/ids";
+import { parseEventStartsAt } from "@/lib/dates";
+import { stableEventId } from "@/lib/events";
 
 const globalStore = globalThis as typeof globalThis & {
   __traverseStore?: AppData;
@@ -63,6 +66,9 @@ function normalizeAppData(data: AppData): { data: AppData; scrubbed: boolean } {
   }
   if (!Array.isArray(data.tips)) {
     data.tips = [];
+  }
+  if (!Array.isArray(data.event_tips)) {
+    data.event_tips = [];
   }
 
   let catalogChanged = false;
@@ -422,6 +428,116 @@ export async function listTips(): Promise<Tip[]> {
     (a, b) =>
       new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
   );
+}
+
+const EVENT_TIPS_SOFT_CAP = 200;
+export const READER_EVENTS_SOURCE_ID = "src_reader_events";
+
+export async function addEventTip(input: {
+  title: string;
+  date: string;
+  time?: string | null;
+  place?: string | null;
+  url?: string | null;
+  note?: string | null;
+  name?: string | null;
+  email?: string | null;
+}): Promise<EventTip> {
+  const data = await loadStore();
+  const row: EventTip = {
+    id: newId("etip"),
+    title: input.title.trim(),
+    date: input.date.trim(),
+    time: input.time?.trim() || null,
+    place: input.place?.trim() || null,
+    url: input.url?.trim() || null,
+    note: input.note?.trim() || null,
+    name: input.name?.trim() || null,
+    email: input.email?.trim().toLowerCase() || null,
+    created_at: new Date().toISOString(),
+    status: "pending",
+    event_id: null,
+  };
+  data.event_tips = [row, ...(data.event_tips ?? [])].slice(
+    0,
+    EVENT_TIPS_SOFT_CAP,
+  );
+  await saveStore(data);
+  return row;
+}
+
+export async function listEventTips(): Promise<EventTip[]> {
+  const data = await loadStore();
+  return [...(data.event_tips ?? [])].sort(
+    (a, b) =>
+      new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+  );
+}
+
+/** Merge one EventItem without wiping other rows for that source. */
+export async function upsertEvent(event: EventItem): Promise<void> {
+  const data = await loadStore();
+  const next = data.events.filter((e) => e.id !== event.id);
+  next.push(event);
+  data.events = sanitizeStoredEvents(dedupeEvents(next)).events;
+  await saveStore(data);
+}
+
+/**
+ * Confirm a pending reader event tip into public `events` (src_reader_events).
+ * Does not invent a clock — date-only → time_unknown.
+ */
+export async function confirmEventTip(
+  id: string,
+): Promise<{ tip: EventTip; event: EventItem }> {
+  const data = await loadStore();
+  const tip = (data.event_tips ?? []).find((t) => t.id === id);
+  if (!tip) throw new Error("Tip not found");
+  if (tip.status === "dismissed") throw new Error("Tip was dismissed");
+  if (tip.status === "confirmed" && tip.event_id) {
+    const existing = data.events.find((e) => e.id === tip.event_id);
+    if (existing) return { tip, event: existing };
+  }
+
+  const timeUnknown = !tip.time;
+  const startsRaw = tip.time
+    ? `${tip.date}T${tip.time}`
+    : tip.date;
+  const starts = parseEventStartsAt(startsRaw);
+  if (!starts) throw new Error("Invalid date/time on tip");
+
+  const uid = tip.url
+    ? `${tip.url}|${starts.toISOString()}`
+    : `${tip.title}|${starts.toISOString()}|${tip.id}`;
+  const event: EventItem = {
+    id: stableEventId(READER_EVENTS_SOURCE_ID, uid),
+    title: tip.title,
+    starts_at: starts.toISOString(),
+    place: tip.place?.trim() || "",
+    url: tip.url,
+    source_id: READER_EVENTS_SOURCE_ID,
+  };
+  if (timeUnknown) event.time_unknown = true;
+
+  tip.status = "confirmed";
+  tip.event_id = event.id;
+  data.event_tips = data.event_tips.map((t) => (t.id === id ? tip : t));
+
+  const next = data.events.filter((e) => e.id !== event.id);
+  next.push(event);
+  data.events = sanitizeStoredEvents(dedupeEvents(next)).events;
+  await saveStore(data);
+  return { tip, event };
+}
+
+export async function dismissEventTip(id: string): Promise<EventTip> {
+  const data = await loadStore();
+  const tip = (data.event_tips ?? []).find((t) => t.id === id);
+  if (!tip) throw new Error("Tip not found");
+  tip.status = "dismissed";
+  data.event_tips = data.event_tips.map((t) => (t.id === id ? tip : t));
+  await saveStore(data);
+  return tip;
 }
 
 export async function getBeats() {

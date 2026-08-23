@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { EventTipsForm } from "@/components/EventTipsForm";
 import { PublicShell } from "@/components/PublicShell";
 import { detroitDayKey, formatEventWhenParts } from "@/lib/dates";
 import { getAppData, listEvents } from "@/lib/data/store";
@@ -131,7 +132,10 @@ export default async function WhatsOnPage() {
             <h1 className="events-hed">Events</h1>
             <p className="events-dek">
               Concerts, festivals, markets, library programs. Meetings live on
-              Civic Calendar.
+              Civic Calendar.{" "}
+              <a href="#event-tip" className="font-semibold text-teal hover:underline">
+                Something missing?
+              </a>
             </p>
           </div>
           <Image
@@ -243,6 +247,8 @@ export default async function WhatsOnPage() {
             </p>
           ) : null}
         </div>
+
+        <EventTipsForm />
       </div>
     </PublicShell>
   );

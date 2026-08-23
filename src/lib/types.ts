@@ -139,6 +139,28 @@ export type Tip = {
   created_at: string;
 };
 
+/**
+ * Reader-submitted night-out listing. Desk-only until confirmed.
+ * Never auto-imported to public Events.
+ */
+export type EventTip = {
+  id: string;
+  title: string;
+  /** Calendar date YYYY-MM-DD (America/Detroit). */
+  date: string;
+  /** Optional clock HH:mm. Null/empty → time_unknown on confirm (never invent noon). */
+  time: string | null;
+  place: string | null;
+  url: string | null;
+  note: string | null;
+  name: string | null;
+  email: string | null;
+  created_at: string;
+  status: "pending" | "confirmed" | "dismissed";
+  /** EventItem id after confirm. */
+  event_id: string | null;
+};
+
 export type ClusteredStory = {
   id: string;
   title: string;
@@ -251,6 +273,8 @@ export type AppData = {
   subscribers: Subscriber[];
   /** Public tip form submissions. Newest first in Desk. */
   tips: Tip[];
+  /** Reader event suggestions. Pending until Desk confirms into `events`. */
+  event_tips: EventTip[];
   last_pull_at: string | null;
   editions: EditionSnapshot[];
   /** Morning-email letter archive (Detroit date keys). Not sent mail. */

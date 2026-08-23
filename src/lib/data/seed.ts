@@ -166,6 +166,17 @@ const sources: Source[] = [
       "Community/concerts calendar (Simpleview). Cloud pulls often 403/empty JS — never invent listings. Need Traverse News to pull https://www.traversecity.com/events/ on the live computer and POST to /api/desk/events/import. Recurring rows: send recurrence_weekdays + recurrence_time (Detroit) or explicit occurrence ISO — never invent Sunday from a Saturday market.",
   },
   {
+    id: "src_reader_events",
+    name: "Reader nights out",
+    homepage: "https://traverse.news/whats-on",
+    feed_url: null,
+    pull_method: "none",
+    beat_id: "beat_events",
+    enabled: true,
+    notes:
+      "Hand-confirmed reader submissions from /whats-on (Something missing?). Desk confirms one row at a time into events. Never auto-import. Concerts, markets, nights out — not civic meetings.",
+  },
+  {
     id: "src_tart",
     name: "TART Trails",
     homepage: "https://traversetrails.org",
@@ -566,6 +577,7 @@ export function createSeedData(): AppData {
     schools: [],
     subscribers: [],
     tips: [],
+    event_tips: [],
     last_pull_at: null,
     editions: [],
     email_editions: [],
