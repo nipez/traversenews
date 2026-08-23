@@ -28,12 +28,11 @@ export function SiteHeader({
   variant = "compact",
 }: {
   active?: string;
-  /** hero = photo masthead (Today); compact = inner pages */
   variant?: "hero" | "compact";
 }) {
   if (variant === "hero") {
     return (
-      <header>
+      <header className="site-header-hero">
         <div className="hero-photo">
           <Image
             src="/art/bay-hero.jpg"
@@ -44,20 +43,25 @@ export function SiteHeader({
             sizes="100vw"
           />
           <div className="hero-photo-scrim" aria-hidden />
-          <div className="hero-photo-inner">
-            <p className="hero-date">{formatHeaderDate()}</p>
-            <Link href="/" className="hero-wordmark block">
-              <Wordmark tone="cream" />
-            </Link>
-            <p className="hero-dek">
-              Local news from Traverse City and the surrounding area.
-            </p>
+          <div className="hero-photo-frame">
+            <div className="hero-top">
+              <p className="hero-meta">Traverse City, Michigan</p>
+              <p className="hero-meta">{formatHeaderDate()}</p>
+            </div>
+            <div className="hero-bottom">
+              <Link href="/" className="hero-wordmark">
+                <Wordmark tone="cream" />
+              </Link>
+              <p className="hero-dek">
+                Local news from Traverse City and the surrounding area.
+              </p>
+            </div>
           </div>
         </div>
 
         <div className="nav-ink-bar">
           <div className="nav-ink-bar-inner">
-            <nav className="nav-links hidden md:flex" aria-label="Primary">
+            <nav className="nav-links" aria-label="Primary">
               {NAV.map((item) => (
                 <Link
                   key={item.href}
@@ -72,7 +76,7 @@ export function SiteHeader({
                 </Link>
               ))}
             </nav>
-            <Link href="/email#signup" className="btn-email ml-auto">
+            <Link href="/email#signup" className="btn-email">
               Morning email
             </Link>
           </div>
@@ -87,8 +91,8 @@ export function SiteHeader({
         <Link href="/">
           <Wordmark />
         </Link>
-        <div className="flex flex-wrap items-center gap-3">
-          <nav className="nav-boxed hidden md:inline-flex" aria-label="Primary">
+        <div className="header-compact-actions">
+          <nav className="nav-boxed" aria-label="Primary">
             {NAV.map((item) => (
               <Link
                 key={item.href}

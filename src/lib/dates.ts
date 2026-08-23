@@ -208,6 +208,7 @@ export function formatHeaderDate(date = new Date()): string {
     weekday: "long",
     month: "long",
     day: "numeric",
+    year: "numeric",
   }).format(date);
 }
 

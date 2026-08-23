@@ -12,13 +12,12 @@ export default async function HomePage() {
 
   return (
     <PublicShell active="/" header="hero">
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.85fr)] lg:items-start lg:gap-10">
-        <div className="min-w-0">
+      <div className="home-grid">
+        <div className="home-main">
           {lead ? <LeadStory lead={lead} /> : null}
           <AroundTheBay items={around} />
         </div>
-
-        <aside className="flex min-w-0 flex-col gap-5">
+        <aside className="home-rail">
           <TonightBlock events={weekendEvents} limit={4} />
           <CivicList
             events={civic}
