@@ -7,6 +7,7 @@
  * rebuild all snapshots, return (no N+1).
  */
 
+import { cache } from "react";
 import { selectAlerts } from "@/lib/alerts";
 import { selectAroundTheBay } from "@/lib/around";
 import {
@@ -621,9 +622,10 @@ export async function readPublicSnapshot<T>(
   return pick(all);
 }
 
-export async function getHomeSnapshot(): Promise<PublicHomeSnapshot> {
+/** Request-deduped: interior rail + homepage + story “also” share one get. */
+export const getHomeSnapshot = cache(async (): Promise<PublicHomeSnapshot> => {
   return readPublicSnapshot(PUBLIC_KEYS.home, (a) => a.home);
-}
+});
 
 export async function getSchoolsSnapshot(): Promise<PublicSchoolsSnapshot> {
   return readPublicSnapshot(PUBLIC_KEYS.schools, (a) => a.schools);
@@ -661,10 +663,14 @@ export async function getOriginalsSnapshot(): Promise<PublicOriginalsSnapshot> {
   return readPublicSnapshot(PUBLIC_KEYS.originals, (a) => a.originals);
 }
 
-/** Story page rail + “also covered” from the home snapshot (1 extra get). */
+/**
+ * Shared interior rail + story “also covered” from the home snapshot.
+ * One well-known key — never list() or per-item gets on GET.
+ */
 export function homeRailFromSnapshot(home: PublicHomeSnapshot) {
   return {
-    civic: home.civic.slice(0, 4),
+    alerts: home.alerts,
+    civic: home.civic.slice(0, 5),
     tonight: home.weekendEvents.slice(0, 4),
     also: home.around.slice(0, 5) as ClusteredStory[],
   };

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { DeskRail } from "@/components/DeskRail";
+import { InteriorLayout } from "@/components/InteriorLayout";
 import { PublicShell } from "@/components/PublicShell";
 
 export const metadata = {
@@ -9,8 +9,8 @@ export const metadata = {
 export default function AboutPage() {
   return (
     <PublicShell active="/" header="compact">
-      <div className="about-layout">
-        <article className="about-essay">
+      <InteriorLayout>
+        <article>
           <h1 className="about-hed">About traverse.news</h1>
           <p className="about-dek">
             A Traverse City desk. One place to read the bay.
@@ -119,8 +119,7 @@ export default function AboutPage() {
               <Link href="/tips" className="font-semibold text-teal hover:underline">
                 tip form
               </Link>
-              {" "}
-              on this site — or the one in the rail.
+              .
             </p>
 
             <h2>Useful local</h2>
@@ -132,9 +131,7 @@ export default function AboutPage() {
             </p>
           </div>
         </article>
-
-        <DeskRail active="/about" />
-      </div>
+      </InteriorLayout>
     </PublicShell>
   );
 }

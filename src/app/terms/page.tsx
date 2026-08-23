@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { InteriorLayout } from "@/components/InteriorLayout";
 import { PublicShell } from "@/components/PublicShell";
 
 export const metadata = {
@@ -8,8 +9,8 @@ export const metadata = {
 export default function TermsPage() {
   return (
     <PublicShell active="/" header="compact">
-      <div className="about-layout">
-        <article className="about-essay">
+      <InteriorLayout>
+        <article>
           <h1 className="about-hed">Terms of use</h1>
           <p className="about-dek">
             Ground rules for reading and using traverse.news.
@@ -75,7 +76,7 @@ export default function TermsPage() {
             </p>
           </div>
         </article>
-      </div>
+      </InteriorLayout>
     </PublicShell>
   );
 }

@@ -1,9 +1,7 @@
 import { notFound } from "next/navigation";
+import { InteriorLayout } from "@/components/InteriorLayout";
 import { PublicShell } from "@/components/PublicShell";
-import { CivicList } from "@/components/CivicList";
-import { MorningScanSignup } from "@/components/MorningScanSignup";
 import { TipsForm } from "@/components/TipsForm";
-import { TonightBlock } from "@/components/TonightBlock";
 import { formatStoryDateline } from "@/lib/dates";
 import {
   getHomeSnapshot,
@@ -44,9 +42,9 @@ export default async function StoryPage({ params }: Props) {
   const story = await loadOriginal(slug);
   if (!story) notFound();
 
-  // Rail + also-covered from home snapshot (second thin get — no full store).
+  // “Also covered” from home snapshot (deduped with InteriorRail’s get).
   const home = await getHomeSnapshot();
-  const { civic, tonight, also } = homeRailFromSnapshot(home);
+  const { also } = homeRailFromSnapshot(home);
 
   const paragraphs = (story.body ?? "").split(/\n\n+/).filter(Boolean);
   const section = story.section;
@@ -80,8 +78,8 @@ export default async function StoryPage({ params }: Props) {
           </p>
         </header>
 
-        <div className="story-layout">
-          <article className="story-main">
+        <InteriorLayout mainClassName="story-main" layoutClassName="story-interior">
+          <article>
             {story.image_url ? (
               <figure className="story-figure">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -138,24 +136,7 @@ export default async function StoryPage({ params }: Props) {
               <TipsForm variant="rail" />
             </div>
           </article>
-
-          <aside className="story-rail" aria-label="Alongside this story">
-            <CivicList
-              events={civic}
-              showStamp
-              linkLabel="Calendar"
-              limit={4}
-            />
-            <TonightBlock events={tonight} limit={4} showStamp />
-            <div className="story-rail-card story-rail-email">
-              <MorningScanSignup variant="teal" />
-            </div>
-            <div className="story-ad-well" aria-hidden="true">
-              <p className="story-ad-label">Advertising</p>
-              <p className="story-ad-hint">Reserved</p>
-            </div>
-          </aside>
-        </div>
+        </InteriorLayout>
 
         <section className="story-also">
           <h2 className="bay-hed">Also being covered</h2>
