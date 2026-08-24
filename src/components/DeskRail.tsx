@@ -95,7 +95,7 @@ export function DeskRail({
 
       {sportsBeats && sportsBeats.length > 0 ? (
         <div className="about-rail-card">
-          <p className="about-rail-kicker">Sports desks</p>
+          <p className="about-rail-kicker">Sports</p>
           <ul className="about-rail-links">
             {sportsBeats.map((b) => (
               <li key={b.href}>
