@@ -273,8 +273,9 @@ a:hover {
 .nav-ink-actions {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 1.15rem;
   margin-left: auto;
+  flex-shrink: 0;
 }
 
 /* ——— Nav search ——— */
@@ -390,6 +391,94 @@ a:hover {
 .nav-search-go:hover {
   background: var(--teal-ink);
   color: #f4edde;
+}
+
+/* Ghost / text link — not the same filled teal as Search Go */
+.nav-email-link {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 0.35rem 0;
+  border: 0;
+  background: transparent;
+  color: #f4edde;
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.nav-email-link:hover {
+  color: var(--mint);
+  background: transparent;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+/* Mobile: keep search compact (icon + dropdown). Do not stretch the field
+   across leftover bar width — that recreates the empty gap and glues Go to
+   Morning email as one subscribe form. */
+@media (max-width: 767px) {
+  .nav-ink-bar-inner {
+    flex-wrap: nowrap;
+    gap: 0.65rem;
+  }
+
+  .nav-ink-actions {
+    width: auto;
+    margin-left: auto;
+    justify-content: flex-end;
+    gap: 1rem;
+    flex-shrink: 0;
+  }
+
+  .nav-search {
+    flex: 0 0 auto;
+    min-width: 0;
+  }
+
+  .nav-search-toggle {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    min-height: 44px;
+  }
+
+  .nav-search-open .nav-search-form {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 0.35rem);
+    z-index: 40;
+    width: min(18rem, calc(100vw - 2rem));
+    padding: 0.45rem;
+    background: #1c1712;
+    border: 1px solid color-mix(in srgb, #f4edde 28%, transparent);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    display: flex;
+  }
+
+  .nav-search-open .nav-search-input {
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 0;
+    font-size: 16px;
+    padding: 0.55rem 0.65rem;
+  }
+
+  .nav-search-go {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0.55rem 0.7rem;
+  }
+
+  .nav-email-link {
+    min-height: 44px;
+    padding: 0.55rem 0;
+  }
 }
 
 .nav-links {
