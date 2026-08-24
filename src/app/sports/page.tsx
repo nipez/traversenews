@@ -163,9 +163,9 @@ export default async function SportsPage() {
             header={headers.headers.sports}
             dek={
               <>
-                Headlines from 9&amp;10 Sports, Record-Eagle Sports, and local
-                prep across the greater bay. They link out — we do not reprint
-                game stories or invent scores.
+                Headlines from 9&10 Sports, Record-Eagle Sports, and local prep
+                across the greater bay. They link out — we do not reprint game
+                stories or invent scores.
               </>
             }
           />
