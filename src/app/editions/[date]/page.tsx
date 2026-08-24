@@ -91,9 +91,7 @@ export default async function EditionPage({ params }: Props) {
           {label}
         </h1>
         <p className="mt-2 max-w-2xl text-[#444]">
-          Snapshot of the homepage after the last successful pull that day
-          (America/Detroit). Headlines from other desks link out; we do not
-          reprint their full stories.
+          Homepage snapshot for that day (America/Detroit).
         </p>
         <p className="mt-2 text-sm text-muted">
           Captured{" "}

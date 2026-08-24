@@ -24,16 +24,11 @@ export default async function EmailArchivePage() {
           Past mornings
         </h1>
         <p className="mt-2 text-[#444]">
-          Dated letter snapshots. Sending is not wired — these are for reading
-          the mix before mail goes out. Times are America/Detroit.
+          Past morning letters. Times are America/Detroit.
         </p>
 
         {editions.length === 0 ? (
-          <p className="mt-10 text-sm text-muted">
-            No letters archived yet. Desk can capture today with{" "}
-            <code className="bg-paper-2 px-1">POST /api/desk/email/snapshot</code>
-            .
-          </p>
+          <p className="mt-10 text-sm text-muted">No letters archived yet.</p>
         ) : (
           <ul className="mt-8">
             {editions.map((edition) => (

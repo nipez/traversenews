@@ -32,9 +32,7 @@ const SPORTS_BEAT_LINKS = [
 function SportsList({ items }: { items: SportsStory[] }) {
   if (items.length === 0) {
     return (
-      <p className="sports-empty">
-        No sports headlines in the pull yet — we do not invent games or scores.
-      </p>
+      <p className="sports-empty">No sports headlines yet.</p>
     );
   }
 
@@ -88,8 +86,7 @@ export default async function SportsPage() {
             <h1 className="sports-hed">Sports</h1>
             <p className="sports-dek">
               Headlines from 9&amp;10 Sports, Record-Eagle Sports, and local
-              prep across the greater bay. They link out — we do not reprint
-              game stories or invent scores.
+              prep across the greater bay.
             </p>
           </header>
 
@@ -111,8 +108,7 @@ export default async function SportsPage() {
           )}
 
           <p className="sports-foot">
-            Also on <Link href="/">Today</Link> in Around the bay when the wire
-            carries them.
+            Also on <Link href="/">Today</Link> in Around the bay.
           </p>
         </div>
 

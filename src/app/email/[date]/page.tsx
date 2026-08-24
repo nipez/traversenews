@@ -38,8 +38,7 @@ export default async function EmailEditionPage({ params }: Props) {
             No letter that morning
           </h1>
           <p className="mt-2 text-[#444]">
-            Nothing was captured for {formatEmailEditionLabel(date)}. We do not
-            invent a letter after the fact.
+            Nothing was captured for {formatEmailEditionLabel(date)}.
           </p>
         </div>
       </PublicShell>

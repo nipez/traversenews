@@ -119,7 +119,7 @@ export function MorningLetter({
         ))}
         {letter.around.length === 0 ? (
           <li className="border-t border-rule py-4 text-sm text-muted">
-            No wire yet — we do not invent stories.
+            No headlines yet.
           </li>
         ) : null}
       </ul>
@@ -187,7 +187,7 @@ export function MorningLetter({
             </li>
           ))}
           {letter.civic.length === 0 ? (
-            <li className="text-muted">No meetings in the pull yet.</li>
+            <li className="text-muted">No meetings yet.</li>
           ) : null}
         </ul>
       </div>

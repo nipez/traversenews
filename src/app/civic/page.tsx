@@ -99,7 +99,7 @@ export default async function CivicPage() {
             );
           })}
           {events.length === 0 ? (
-            <li className="civic-empty">No upcoming meetings in the pull yet.</li>
+            <li className="civic-empty">No upcoming meetings yet.</li>
           ) : null}
         </ul>
 
@@ -107,8 +107,7 @@ export default async function CivicPage() {
           <div className="civic-rail-card">
             <h2 className="civic-rail-hed">Where this comes from</h2>
             <p className="civic-rail-copy">
-              Meeting listings are pulled from city, county, and school board
-              calendars. We do not invent agendas or invent times.
+              Meeting listings from city, county, and school board calendars.
             </p>
           </div>
           <MorningScanSignup variant="teal" />

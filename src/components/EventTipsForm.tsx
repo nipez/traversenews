@@ -63,8 +63,7 @@ export function EventTipsForm() {
       <h2 className="font-serif text-2xl text-ink">Something missing?</h2>
       <p className="mt-1 max-w-xl text-sm text-muted">
         Concerts, markets, nights out that are not listed. Civic and government
-        meetings belong on Civic — not here. Submissions stay with the desk
-        until confirmed; we do not invent a time if you leave it blank.
+        meetings belong on Civic — not here.
       </p>
 
       {status === "ok" ? (
@@ -90,7 +89,7 @@ export function EventTipsForm() {
             required
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="As listed — do not invent"
+            placeholder="As listed"
             disabled={saving}
           />
         </label>

@@ -57,8 +57,7 @@ export function SportsThisWeek({ games }: { games: AthleticsGame[] }) {
     <section className="sports-week" aria-label="This week">
       <h2 className="sports-week-hed">This week</h2>
       <p className="sports-week-dek">
-        Traverse City prep — Central, West, St. Francis, TC Christian. Links
-        out; we do not invent kickoffs.
+        Traverse City prep — Central, West, St. Francis, TC Christian.
       </p>
 
       <div

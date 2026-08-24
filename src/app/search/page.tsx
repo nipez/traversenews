@@ -67,11 +67,11 @@ export default async function SearchPage({ searchParams }: Props) {
                 Results for <span className="search-q">“{q}”</span>
               </>
             ) : (
-              "Search the desk"
+              "Search"
             )}
           </h1>
           <p className="search-lead">
-            Titles, deks, and places from the live desk pull.
+            Titles, deks, and places across the site.
           </p>
           <form className="search-page-form" action="/search" method="get">
             <label className="sr-only" htmlFor="search-page-q">
@@ -95,7 +95,7 @@ export default async function SearchPage({ searchParams }: Props) {
         {!q ? (
           <p className="search-empty">Type a query in the bar above.</p>
         ) : !hasAny ? (
-          <p className="search-empty">Nothing in the pull for that.</p>
+          <p className="search-empty">Nothing matched.</p>
         ) : (
           <div className="search-groups">
             <ResultGroup title="Stories" hits={results.stories} />
