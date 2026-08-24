@@ -137,14 +137,18 @@ curl https://traverse-news.nickperez.workers.dev/
 # Around the bay should be live RSS (Ticker / IPR / 9&10), not seed placeholders
 ```
 
-### Morning cron
+### Scheduled crons
 
-Weekdays at **11:30 UTC** (7:30am EDT): `30 11 * * 1-5` in `wrangler.jsonc` → `cloudflare-worker.ts` `scheduled` handler POSTs `/api/pull` via the self service binding.
+In `wrangler.jsonc` → `cloudflare-worker.ts` `scheduled` (self service binding):
+
+- **Every 5 minutes** (`*/5 * * * *`): POST `/api/go-live` — publishes Desk originals whose `go_live_at` has passed (same path as Publish now).
+- **Weekdays 11:30 UTC** (`30 11 * * 1-5`, 7:30am EDT): POST `/api/go-live` then `/api/pull` for RSS/ICS.
 
 Test locally:
 
 ```bash
 npx wrangler dev --test-scheduled
+curl "http://localhost:8787/__scheduled?cron=*/5+*+*+*+*"
 curl "http://localhost:8787/__scheduled?cron=30+11+*+*+1-5"
 ```
 

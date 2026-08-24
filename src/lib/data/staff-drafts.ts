@@ -47,5 +47,6 @@ export const STAFF_PUBLISHED_ORIGINALS: OriginalDraft[] = [
     created_at: "2026-08-22T14:00:00.000Z",
     updated_at: "2026-08-22T14:00:00.000Z",
     published_at: "2026-08-22T14:00:00.000Z",
+    go_live_at: null,
   },
 ];

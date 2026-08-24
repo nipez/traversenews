@@ -3,11 +3,31 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
+import {
+  formatDetroitDateInput,
+  formatDetroitTimeInput,
+  nextDetroitMorning8am,
+  parseDetroitDateTimeInputs,
+} from "@/lib/dates";
 import { EDITORIAL_CHECKLIST } from "@/lib/originals";
 import type { OriginalDraft } from "@/lib/types";
 
+function goLiveParts(iso: string | null | undefined): {
+  date: string;
+  time: string;
+} {
+  if (!iso?.trim()) return { date: "", time: "" };
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return { date: "", time: "" };
+  return {
+    date: formatDetroitDateInput(d),
+    time: formatDetroitTimeInput(d),
+  };
+}
+
 export function OriginalDraftEditor({ draft }: { draft: OriginalDraft }) {
   const router = useRouter();
+  const initialGoLive = goLiveParts(draft.go_live_at);
   const [title, setTitle] = useState(draft.title);
   const [dek, setDek] = useState(draft.dek);
   const [body, setBody] = useState(draft.body);
@@ -17,12 +37,26 @@ export function OriginalDraftEditor({ draft }: { draft: OriginalDraft }) {
   const [imageCaption, setImageCaption] = useState(draft.image_caption ?? "");
   const [imageCredit, setImageCredit] = useState(draft.image_credit ?? "");
   const [sourceUrls, setSourceUrls] = useState(draft.source_urls.join("\n"));
+  const [goLiveDate, setGoLiveDate] = useState(initialGoLive.date);
+  const [goLiveTime, setGoLiveTime] = useState(initialGoLive.time);
   const [status, setStatus] = useState(draft.status);
   const [slug, setSlug] = useState(draft.slug);
+  const [savedGoLiveAt, setSavedGoLiveAt] = useState(draft.go_live_at ?? null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
+
+  function resolveGoLiveAt(): string | null {
+    const date = goLiveDate.trim();
+    const time = goLiveTime.trim();
+    if (!date && !time) return null;
+    const parsed = parseDetroitDateTimeInputs(date, time);
+    if (!parsed) {
+      throw new Error("Go-live needs both a date and time (America/Detroit).");
+    }
+    return parsed.toISOString();
+  }
 
   function payload() {
     const photo = imageUrl.trim() || null;
@@ -39,7 +73,23 @@ export function OriginalDraftEditor({ draft }: { draft: OriginalDraft }) {
         .split(/\n+/)
         .map((u) => u.trim())
         .filter(Boolean),
+      go_live_at: resolveGoLiveAt(),
     };
+  }
+
+  function applyTomorrow8am() {
+    const at = nextDetroitMorning8am();
+    setGoLiveDate(formatDetroitDateInput(at));
+    setGoLiveTime(formatDetroitTimeInput(at));
+    setNotice("");
+    setError("");
+  }
+
+  function clearGoLive() {
+    setGoLiveDate("");
+    setGoLiveTime("");
+    setNotice("");
+    setError("");
   }
 
   async function save(e?: FormEvent): Promise<boolean> {
@@ -65,8 +115,16 @@ export function OriginalDraftEditor({ draft }: { draft: OriginalDraft }) {
         setImageUrl(json.draft.image_url ?? "");
         setImageCaption(json.draft.image_caption ?? "");
         setImageCredit(json.draft.image_credit ?? "");
+        setSavedGoLiveAt(json.draft.go_live_at ?? null);
+        const parts = goLiveParts(json.draft.go_live_at);
+        setGoLiveDate(parts.date);
+        setGoLiveTime(parts.time);
       }
-      setNotice("Saved.");
+      setNotice(
+        json.draft?.go_live_at
+          ? "Saved. Go-live is scheduled — this did not publish."
+          : "Saved.",
+      );
       router.refresh();
       return true;
     } catch (err) {
@@ -95,6 +153,9 @@ export function OriginalDraftEditor({ draft }: { draft: OriginalDraft }) {
       if (json.draft) {
         setStatus(json.draft.status);
         setSlug(json.draft.slug);
+        setSavedGoLiveAt(null);
+        setGoLiveDate("");
+        setGoLiveTime("");
       }
       setNotice("Published on the public site as traverse.news reporting.");
       router.refresh();
@@ -187,6 +248,15 @@ export function OriginalDraftEditor({ draft }: { draft: OriginalDraft }) {
     }
   }
 
+  const scheduledLabel =
+    status === "draft" && savedGoLiveAt
+      ? new Date(savedGoLiveAt).toLocaleString("en-US", {
+          timeZone: "America/Detroit",
+          dateStyle: "medium",
+          timeStyle: "short",
+        })
+      : null;
+
   return (
     <form onSubmit={save} className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_300px]">
       <div className="space-y-4">
@@ -266,12 +336,71 @@ export function OriginalDraftEditor({ draft }: { draft: OriginalDraft }) {
             <p className="mt-2 text-sm text-muted">
               Published, but slug is missing — save a slug before viewing live.
             </p>
+          ) : scheduledLabel ? (
+            <p className="mt-2 text-sm text-muted">
+              Goes live {scheduledLabel} America/Detroit. Still Desk-only until
+              then (or Publish now).
+            </p>
           ) : (
             <p className="mt-2 text-sm text-muted">
               Drafts never appear on the public site.
             </p>
           )}
         </div>
+
+        {status === "draft" ? (
+          <div className="space-y-3 border border-rule bg-white/70 p-4">
+            <p className="text-[0.68rem] font-bold tracking-[0.08em] text-muted-2 uppercase">
+              Go live
+            </p>
+            <p className="text-sm text-muted">
+              America/Detroit. Empty = stay draft until Publish now. Saving a
+              date does not publish.
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              <label className="block">
+                <span className="text-[0.68rem] font-bold tracking-[0.08em] text-muted-2 uppercase">
+                  Date
+                </span>
+                <input
+                  className="input mt-1"
+                  type="date"
+                  value={goLiveDate}
+                  onChange={(e) => setGoLiveDate(e.target.value)}
+                />
+              </label>
+              <label className="block">
+                <span className="text-[0.68rem] font-bold tracking-[0.08em] text-muted-2 uppercase">
+                  Time
+                </span>
+                <input
+                  className="input mt-1"
+                  type="time"
+                  value={goLiveTime}
+                  onChange={(e) => setGoLiveTime(e.target.value)}
+                />
+              </label>
+            </div>
+            <div className="flex flex-wrap gap-2 text-sm">
+              <button
+                type="button"
+                className="text-teal hover:underline"
+                onClick={applyTomorrow8am}
+              >
+                Next morning 8:00am
+              </button>
+              {goLiveDate || goLiveTime ? (
+                <button
+                  type="button"
+                  className="text-muted hover:underline"
+                  onClick={clearGoLive}
+                >
+                  Clear
+                </button>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
 
         <label className="block">
           <span className="text-[0.68rem] font-bold tracking-[0.08em] text-muted-2 uppercase">
@@ -386,7 +515,7 @@ export function OriginalDraftEditor({ draft }: { draft: OriginalDraft }) {
               disabled={saving}
               onClick={publish}
             >
-              Publish
+              Publish now
             </button>
           )}
           <button

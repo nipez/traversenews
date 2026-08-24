@@ -79,6 +79,12 @@ function normalizeAppData(data: AppData): { data: AppData; scrubbed: boolean } {
   }
   if (!Array.isArray(data.drafts)) {
     data.drafts = [];
+  } else {
+    for (const draft of data.drafts) {
+      if (draft.go_live_at === undefined) {
+        draft.go_live_at = null;
+      }
+    }
   }
   if (!Array.isArray(data.athletics)) {
     data.athletics = [];
@@ -777,6 +783,7 @@ export async function upsertDraft(draft: OriginalDraft): Promise<OriginalDraft> 
     image_credit: imageUrl ? draft.image_credit?.trim() || null : null,
     image_caption: imageUrl ? draft.image_caption?.trim() || null : null,
     source_urls: draft.source_urls.map((u) => u.trim()).filter(Boolean),
+    go_live_at: draft.go_live_at?.trim() || null,
     updated_at: new Date().toISOString(),
   };
 
@@ -843,6 +850,8 @@ export async function publishDraft(id: string): Promise<OriginalDraft> {
     slug,
     byline: draft.byline.trim() || DEFAULT_ORIGINAL_BYLINE,
     published_at: draft.published_at ?? now,
+    // Publish now and scheduled go-live both clear the schedule.
+    go_live_at: null,
     updated_at: now,
   };
   const story = storyFromPublishedDraft(next, slug, siteOrigin());
@@ -855,6 +864,46 @@ export async function publishDraft(id: string): Promise<OriginalDraft> {
 
   await saveStore(data);
   return next;
+}
+
+/**
+ * Publish drafts whose go_live_at has been reached.
+ * Same path as Publish now (publishDraft → saveStore → public snapshots).
+ * Cheap no-op when nothing is due.
+ */
+export async function publishDueDrafts(
+  now = new Date(),
+): Promise<{ published: string[]; errors: { id: string; error: string }[] }> {
+  const data = await loadStore();
+  const nowMs = now.getTime();
+  const due = data.drafts.filter(
+    (d) =>
+      d.status === "draft" &&
+      d.go_live_at != null &&
+      d.go_live_at.trim() !== "" &&
+      !Number.isNaN(new Date(d.go_live_at).getTime()) &&
+      new Date(d.go_live_at).getTime() <= nowMs,
+  );
+
+  const published: string[] = [];
+  const errors: { id: string; error: string }[] = [];
+
+  // One at a time so each publishDraft rebuilds snapshots once (lead updates).
+  for (const draft of due.sort((a, b) =>
+    (a.go_live_at ?? "").localeCompare(b.go_live_at ?? ""),
+  )) {
+    try {
+      await publishDraft(draft.id);
+      published.push(draft.id);
+    } catch (err) {
+      errors.push({
+        id: draft.id,
+        error: err instanceof Error ? err.message : "Publish failed",
+      });
+    }
+  }
+
+  return { published, errors };
 }
 
 export async function unpublishDraft(id: string): Promise<OriginalDraft> {
