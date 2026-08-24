@@ -18,7 +18,8 @@ export async function DeskChrome({
     | "queue"
     | "originals"
     | "email"
-    | "editions";
+    | "editions"
+    | "headers";
   backHref?: string;
 }) {
   const authed = await isDeskAuthed();
@@ -39,6 +40,7 @@ export async function DeskChrome({
     { id: "events", href: "/desk/events", label: "Events" },
     { id: "queue", href: "/desk/queue", label: "Queue" },
     { id: "originals", href: "/desk/originals", label: "Originals" },
+    { id: "headers", href: "/desk/headers", label: "Headers" },
     { id: "editions", href: "/desk/editions", label: "Editions" },
     { id: "email", href: "/desk/email", label: "Email" },
   ] as const;

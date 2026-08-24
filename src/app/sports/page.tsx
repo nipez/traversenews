@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { DeskRail } from "@/components/DeskRail";
 import { PublicShell } from "@/components/PublicShell";
+import { SectionHero } from "@/components/SectionHero";
 import {
   groupAthleticsByDay,
   isVarsityGameTitle,
@@ -8,6 +9,7 @@ import {
 import { formatBayDay, formatEventWhenParts } from "@/lib/dates";
 import { isRecordEagleStory } from "@/lib/paywall";
 import {
+  getSectionHeadersSnapshot,
   getSportsSnapshot,
   type PublicSportsStoryCard,
 } from "@/lib/public-snapshots";
@@ -144,6 +146,7 @@ function SportsList({ items }: { items: PublicSportsStoryCard[] }) {
 
 export default async function SportsPage() {
   const snap = await getSportsSnapshot();
+  const headers = await getSectionHeadersSnapshot();
   const weekGames = snap.weekGames;
   const unique = snap.stories;
   const varsity = unique.filter((s) => s.beat_id === "beat_sports");
@@ -154,15 +157,18 @@ export default async function SportsPage() {
     <PublicShell active="/sports" header="compact">
       <div className="about-layout sports-layout">
         <div className="about-essay sports-main">
-          <header className="sports-hero">
-            <p className="sports-kicker">Scores &amp; prep</p>
-            <h1 className="sports-hed">Sports</h1>
-            <p className="sports-dek">
-              Headlines from 9&amp;10 Sports, Record-Eagle Sports, and local
-              prep across the greater bay. They link out — we do not reprint
-              game stories or invent scores.
-            </p>
-          </header>
+          <SectionHero
+            kicker="Scores & prep"
+            title="Sports"
+            header={headers.headers.sports}
+            dek={
+              <>
+                Headlines from 9&amp;10 Sports, Record-Eagle Sports, and local
+                prep across the greater bay. They link out — we do not reprint
+                game stories or invent scores.
+              </>
+            }
+          />
 
           <ThisWeekSlate games={weekGames} />
 
