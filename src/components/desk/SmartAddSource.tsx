@@ -204,17 +204,32 @@ export function SmartAddSource({
                 Review before adding
               </p>
               <p className="mt-1 text-sm text-[#444]">
-                {duplicate
-                  ? "Possible duplicate — Update existing (keep name/beat), Add a second source, or Skip."
-                  : "Edit anything below, then Add source — or Skip."}
+                {research.facebook_post
+                  ? "This is a Facebook post, not a source page. Prefer Desk Links (/desk/queue) or Events — Skip unless you really mean to add the page."
+                  : duplicate
+                    ? "Possible duplicate — Update existing (keep name/beat), Add a second source, or Skip."
+                    : "Edit anything below, then Add source — or Skip."}
               </p>
             </div>
-            {duplicate ? (
+            {research.facebook_post ? (
+              <span className="source-pill text-red-800">Post, not a source</span>
+            ) : duplicate ? (
               <span className="source-pill text-red-800">
                 Duplicate? {duplicate.name}
               </span>
             ) : null}
           </div>
+
+          {research.facebook_post ? (
+            <p className="mt-3 text-sm text-red-800">
+              Facebook post/permalink URLs are not standing sources. Use{" "}
+              <a href="/desk/queue" className="underline">
+                Desk Links
+              </a>{" "}
+              or Events. If you need a source, paste the page or group URL
+              instead.
+            </p>
+          ) : null}
 
           {research.fetch_error ? (
             <p className="mt-3 text-sm text-red-700">

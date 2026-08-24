@@ -15,6 +15,11 @@ export type SourceResearchResult = {
   duplicate_of: { id: string; name: string; beat_id: string } | null;
   fetch_error: string | null;
   paywall_suspected: boolean;
+  /**
+   * True when the pasted URL is a Facebook post/permalink/reel/etc.
+   * Not a standing page or group — desk should use Links or Events, not Sources.
+   */
+  facebook_post?: boolean;
 };
 
 function normalizeUrl(raw: string): URL {
@@ -31,6 +36,142 @@ function hostKey(url: string): string {
   } catch {
     return url.toLowerCase();
   }
+}
+
+function isFacebookHost(hostnameOrUrl: string): boolean {
+  const host = hostnameOrUrl.includes("://")
+    ? hostKey(hostnameOrUrl)
+    : hostnameOrUrl.replace(/^www\./i, "").toLowerCase();
+  return host === "facebook.com" || host.endsWith(".facebook.com");
+}
+
+/** Path segments that are content types / app routes, not page vanities. */
+const FACEBOOK_RESERVED_SEGMENTS = new Set([
+  "posts",
+  "permalink.php",
+  "story.php",
+  "stories",
+  "reel",
+  "reels",
+  "videos",
+  "watch",
+  "photo.php",
+  "photo",
+  "photos",
+  "share",
+  "share.php",
+  "sharer",
+  "sharer.php",
+  "events",
+  "marketplace",
+  "gaming",
+  "login",
+  "dialog",
+  "pages",
+  "people",
+  "pg",
+  "hashtag",
+  "search",
+  "help",
+  "settings",
+  "messages",
+  "notifications",
+  "profile.php",
+]);
+
+/**
+ * Stable page/group identity for Facebook duplicate checks.
+ * Host alone is never enough — BARCinTC ≠ Overheard ≠ TraverseCityTicker.
+ * Returns null when the URL has no usable page/group identity.
+ * Identities are lowercased for comparison.
+ */
+export function facebookPageIdentity(raw: string): string | null {
+  try {
+    const u = new URL(raw.includes("://") ? raw : `https://${raw}`);
+    if (!isFacebookHost(u.hostname)) return null;
+
+    const profileId = u.searchParams.get("id");
+    if (/\/profile\.php$/i.test(u.pathname.replace(/\/$/, "")) && profileId) {
+      return `id:${profileId}`;
+    }
+
+    const parts = u.pathname.split("/").filter(Boolean);
+    if (parts.length === 0) return null;
+
+    if (parts[0].toLowerCase() === "groups" && parts[1]) {
+      return `groups/${parts[1].toLowerCase()}`;
+    }
+
+    const first = parts[0].toLowerCase();
+    if (FACEBOOK_RESERVED_SEGMENTS.has(first)) return null;
+    return first;
+  } catch {
+    return null;
+  }
+}
+
+/** Original path vanity casing for display names (identity stays lowercased). */
+function facebookVanityLabel(raw: string): string | null {
+  try {
+    const u = new URL(raw.includes("://") ? raw : `https://${raw}`);
+    if (!isFacebookHost(u.hostname)) return null;
+    const parts = u.pathname.split("/").filter(Boolean);
+    if (parts.length === 0) return null;
+    if (parts[0].toLowerCase() === "groups" && parts[1]) return parts[1];
+    if (FACEBOOK_RESERVED_SEGMENTS.has(parts[0].toLowerCase())) return null;
+    return parts[0];
+  } catch {
+    return null;
+  }
+}
+
+/** Post / permalink / media URL — not a standing page or group source. */
+export function isFacebookPostUrl(raw: string | URL): boolean {
+  try {
+    const u = typeof raw === "string" ? new URL(
+      raw.includes("://") ? raw : `https://${raw}`,
+    ) : raw;
+    if (!isFacebookHost(u.hostname)) return false;
+    const path = u.pathname.toLowerCase();
+    const search = u.search.toLowerCase();
+    if (path.includes("/posts/")) return true;
+    if (path.includes("/permalink.php")) return true;
+    if (path.includes("/story.php")) return true;
+    if (path.includes("/reel/") || path.includes("/reels/")) return true;
+    if (path.includes("/videos/")) return true;
+    if (path.includes("/photo.php") || /\/photos?\//.test(path)) return true;
+    if (path.includes("/share/") || path.includes("/share.php")) return true;
+    if (search.includes("story_fbid")) return true;
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+function facebookStandingHomepage(u: URL): string {
+  const identity = facebookPageIdentity(u.toString());
+  if (!identity) return u.toString().replace(/\/$/, "");
+  if (identity.startsWith("id:")) {
+    return `https://www.facebook.com/profile.php?id=${identity.slice(3)}`;
+  }
+  if (identity.startsWith("groups/")) {
+    return `https://www.facebook.com/${identity}`;
+  }
+  return `https://www.facebook.com/${identity}`;
+}
+
+function displayNameFromFacebookUrl(raw: string): string {
+  const label = facebookVanityLabel(raw);
+  if (label) {
+    // Keep camel/Pascal vanity as-is (BARCinTC).
+    if (/[a-z]/.test(label) && /[A-Z]/.test(label) && !/[\s_-]/.test(label)) {
+      return label;
+    }
+    return label.replace(/[-_]+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  }
+  const identity = facebookPageIdentity(raw);
+  if (identity?.startsWith("id:")) return `Facebook ${identity.slice(3)}`;
+  return "Facebook source";
 }
 
 function sameFeed(a: string | null, b: string | null): boolean {
@@ -285,7 +426,32 @@ function findDuplicate(
   existing: Source[],
 ): { id: string; name: string; beat_id: string } | null {
   const host = hostKey(homepage);
+  const homepageIsFacebook = isFacebookHost(homepage);
+  const draftFbIdentity =
+    facebookPageIdentity(homepage) ||
+    (feedUrl ? facebookPageIdentity(feedUrl) : null);
+
   for (const source of existing) {
+    const sourceIsFacebook =
+      isFacebookHost(source.homepage) ||
+      (source.feed_url ? isFacebookHost(source.feed_url) : false);
+
+    // Facebook: compare page/group identity only — never hostname alone.
+    if (homepageIsFacebook || sourceIsFacebook) {
+      if (!homepageIsFacebook || !sourceIsFacebook) continue;
+      const existingIdentity =
+        facebookPageIdentity(source.homepage) ||
+        (source.feed_url ? facebookPageIdentity(source.feed_url) : null);
+      if (
+        draftFbIdentity &&
+        existingIdentity &&
+        draftFbIdentity === existingIdentity
+      ) {
+        return { id: source.id, name: source.name, beat_id: source.beat_id };
+      }
+      continue;
+    }
+
     if (hostKey(source.homepage) === host) {
       return { id: source.id, name: source.name, beat_id: source.beat_id };
     }
@@ -335,34 +501,73 @@ export async function researchSourceUrl(input: {
   const homepage = `${parsed.protocol}//${parsed.host}/`;
   const host = parsed.hostname.replace(/^www\./i, "").toLowerCase();
 
-  // Facebook tip wire — no auto-scrape.
-  if (host === "facebook.com" || host.endsWith(".facebook.com")) {
-    const name =
-      parsed.pathname
-        .split("/")
-        .filter(Boolean)
-        .slice(-1)[0]
-        ?.replace(/[-_]/g, " ") || "Facebook source";
+  // Facebook — no auto-scrape. Match duplicates by page/group identity, not host.
+  if (isFacebookHost(host)) {
     const beatId =
       input.beats.find((b) => b.slug === "social")?.id ?? "beat_social";
-    const draftHomepage = parsed.toString().replace(/\/$/, "");
-    const duplicate = findDuplicate(draftHomepage, draftHomepage, input.existing);
+    const identity = facebookPageIdentity(parsed.toString());
+    const isPost = isFacebookPostUrl(parsed);
+
+    // A post/permalink is not a standing source. Do not treat it as Overheard
+    // (or any other facebook.com page) just because the host matches.
+    if (isPost) {
+      const standing = facebookStandingHomepage(parsed);
+      const name = displayNameFromFacebookUrl(parsed.toString());
+      return {
+        input_url: input.url,
+        name,
+        homepage: standing,
+        feed_url: standing,
+        pull_method: "facebook",
+        beat_id: beatId,
+        enabled: false,
+        notes:
+          "Facebook post URL — not a standing source. Use Desk Links (/desk/queue) or Events, not Sources.",
+        findings: [
+          "This is a Facebook post/permalink (or reel/video/photo/share), not a page or group.",
+          "Staff should use Desk Links (/desk/queue) or Events — not Sources.",
+          identity
+            ? `Page vanity from URL: ${identity}.`
+            : "Could not resolve a page/group vanity from this post URL.",
+        ],
+        warnings: [
+          "Adding a post URL as a source is the wrong door. If this should be a standing source, paste the page or group URL instead (e.g. facebook.com/BARCinTC).",
+        ],
+        // Prefer not treating a post as an update to an existing page source.
+        duplicate_of: null,
+        fetch_error: null,
+        paywall_suspected: false,
+        facebook_post: true,
+      };
+    }
+
+    const draftHomepage = facebookStandingHomepage(parsed);
+    const name = displayNameFromFacebookUrl(parsed.toString());
+    const duplicate = findDuplicate(
+      draftHomepage,
+      draftHomepage,
+      input.existing,
+    );
     return {
       input_url: input.url,
-      name: name.replace(/\b\w/g, (c) => c.toUpperCase()),
+      name,
       homepage: draftHomepage,
       feed_url: draftHomepage,
       pull_method: "facebook",
       beat_id: beatId,
       enabled: true,
       notes: "Tip wire. No auto-scrape in v1; staff may paste tips later.",
-      findings: ["Detected Facebook URL → pull_method facebook, beat Social."],
+      findings: [
+        "Detected Facebook page/group URL → pull_method facebook, beat Social.",
+        identity ? `Page identity: ${identity}.` : "No page identity parsed.",
+      ],
       warnings: duplicate
         ? [`Possible duplicate of “${duplicate.name}”.`]
         : [],
       duplicate_of: duplicate,
       fetch_error: null,
       paywall_suspected: false,
+      facebook_post: false,
     };
   }
 
