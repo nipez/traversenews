@@ -1,8 +1,11 @@
-import Image from "next/image";
 import { MorningScanSignup } from "@/components/MorningScanSignup";
 import { PublicShell } from "@/components/PublicShell";
+import { SectionHero } from "@/components/SectionHero";
 import { formatCivicDate, formatEventWhenParts } from "@/lib/dates";
-import { getCivicSnapshot } from "@/lib/public-snapshots";
+import {
+  getCivicSnapshot,
+  getSectionHeadersSnapshot,
+} from "@/lib/public-snapshots";
 import type { EventItem } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -43,28 +46,18 @@ function withMonthHeadings(events: EventItem[]): CivicRow[] {
 
 export default async function CivicPage() {
   const snap = await getCivicSnapshot();
+  const headers = await getSectionHeadersSnapshot();
   const events = snap.events;
   const rows = withMonthHeadings(events);
 
   return (
     <PublicShell active="/civic" header="compact">
-      <div className="civic-page-head">
-        <div>
-          <p className="civic-kicker">Agenda</p>
-          <h1 className="page-hed-civic">Civic Calendar</h1>
-          <p className="civic-page-dek">
-            City, county, and school board meetings. Concerts and markets are on
-            Events.
-          </p>
-        </div>
-        <Image
-          src="/art/stamp-civic.png"
-          alt=""
-          width={130}
-          height={130}
-          className="section-stamp-lg shrink-0"
-        />
-      </div>
+      <SectionHero
+        kicker="Agenda"
+        title="Civic Calendar"
+        header={headers.headers.civic}
+        dek="City, county, and school board meetings. Concerts and markets are on Events."
+      />
 
       <div className="civic-page-grid">
         <ul className="civic-agenda">

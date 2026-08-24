@@ -1,9 +1,12 @@
-import Image from "next/image";
 import { EventTipsForm } from "@/components/EventTipsForm";
 import { PublicShell } from "@/components/PublicShell";
+import { SectionHero } from "@/components/SectionHero";
 import { detroitDayKey, formatEventWhenParts } from "@/lib/dates";
 import { venueKicker } from "@/lib/events";
-import { getEventsSnapshot } from "@/lib/public-snapshots";
+import {
+  getEventsSnapshot,
+  getSectionHeadersSnapshot,
+} from "@/lib/public-snapshots";
 import type { EventItem } from "@/lib/types";
 import { GOING_OUT } from "@/lib/useful-local";
 import Link from "next/link";
@@ -90,6 +93,7 @@ function featuredMeta(event: EventItem): string {
 
 export default async function WhatsOnPage() {
   const snap = await getEventsSnapshot();
+  const headers = await getSectionHeadersSnapshot();
   const featured = snap.featured;
   const byDay = groupByDay(snap.upcoming);
   const todayKey = detroitDayKey(new Date());
@@ -97,69 +101,67 @@ export default async function WhatsOnPage() {
   return (
     <PublicShell active="/whats-on" header="compact">
       <div className="events-page">
-        <header className="events-hero">
-          <div className="events-hero-copy">
-            <p className="events-kicker">Night out</p>
-            <h1 className="events-hed">Events</h1>
-            <p className="events-dek">
+        <SectionHero
+          kicker="Night out"
+          title="Events"
+          header={headers.headers["whats-on"]}
+          dek={
+            <>
               Concerts, festivals, markets, library programs. Meetings live on
               Civic Calendar.{" "}
-              <a href="#event-tip" className="font-semibold text-teal hover:underline">
+              <a
+                href="#event-tip"
+                className="font-semibold text-teal hover:underline"
+              >
                 Something missing?
               </a>
-            </p>
-            <p className="events-dek events-dek-local">
-              For a night out:{" "}
-              <a
-                href={GOING_OUT[0].href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="events-dek-link"
-              >
-                wine country
-              </a>
-              ,{" "}
-              <a
-                href={GOING_OUT[1].href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="events-dek-link"
-              >
-                happy hours
-              </a>
-              ,{" "}
-              <a
-                href={GOING_OUT[2].href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="events-dek-link"
-              >
-                Nauti-Cat
-              </a>
-              ,{" "}
-              <a
-                href={GOING_OUT[3].href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="events-dek-link"
-              >
-                Discovery Cruises
-              </a>
-              . More on{" "}
-              <Link href="/local" className="events-dek-link">
-                Local
-              </Link>
-              .
-            </p>
-          </div>
-          <Image
-            src="/art/stamp-night.png"
-            alt=""
-            width={150}
-            height={150}
-            className="events-stamp"
-          />
-        </header>
+            </>
+          }
+        >
+          <p className="events-dek events-dek-local section-photo-extra">
+            For a night out:{" "}
+            <a
+              href={GOING_OUT[0].href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="events-dek-link"
+            >
+              wine country
+            </a>
+            ,{" "}
+            <a
+              href={GOING_OUT[1].href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="events-dek-link"
+            >
+              happy hours
+            </a>
+            ,{" "}
+            <a
+              href={GOING_OUT[2].href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="events-dek-link"
+            >
+              Nauti-Cat
+            </a>
+            ,{" "}
+            <a
+              href={GOING_OUT[3].href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="events-dek-link"
+            >
+              Discovery Cruises
+            </a>
+            . More on{" "}
+            <Link href="/local" className="events-dek-link">
+              Local
+            </Link>
+            .
+          </p>
+        </SectionHero>
 
         <section className="events-featured" aria-label="Featured nights out">
           <div className="events-featured-inner">

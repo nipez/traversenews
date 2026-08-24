@@ -3,6 +3,7 @@
 // Runtime types generated with workerd@1.20260820.1 2026-08-04 global_fetch_strictly_public,nodejs_compat
 interface __BaseEnv_CloudflareEnv {
 	TRAVERSE_DATA: KVNamespace;
+	TRAVERSE_MEDIA: R2Bucket;
 	ASSETS: Fetcher;
 	NEXT_PUBLIC_SUPABASE_URL: string;
 	NEXT_PUBLIC_SUPABASE_ANON_KEY: string;

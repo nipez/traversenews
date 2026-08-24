@@ -21,6 +21,12 @@
       "preview_id": "1c73f5b6de2d420db8dd940d4e81484f"
     }
   ],
+  "r2_buckets": [
+    {
+      "binding": "TRAVERSE_MEDIA",
+      "bucket_name": "traverse-news-media"
+    }
+  ],
   "vars": {
     "NEXT_PUBLIC_SITE_URL": "https://traverse-news.nickperez.workers.dev"
   },

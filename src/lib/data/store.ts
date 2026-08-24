@@ -15,6 +15,10 @@ import {
   storyFromPublishedDraft,
   uniqueOriginalSlug,
 } from "@/lib/originals";
+import {
+  emptySectionHeaders,
+  withSectionHeaderSeeds,
+} from "@/lib/section-headers";
 import type {
   AppData,
   AthleticsGame,
@@ -24,6 +28,8 @@ import type {
   EventTip,
   OriginalDraft,
   SchoolCalendarItem,
+  SectionHeaderId,
+  SectionHeaderMeta,
   Source,
   Story,
   Subscriber,
@@ -94,6 +100,15 @@ function normalizeAppData(data: AppData): { data: AppData; scrubbed: boolean } {
   }
   if (!Array.isArray(data.event_tips)) {
     data.event_tips = [];
+  }
+  if (!data.section_headers || typeof data.section_headers !== "object") {
+    data.section_headers = withSectionHeaderSeeds(null);
+  } else {
+    // Preserve Desk clears (null). Only fill missing keys with empty slots.
+    data.section_headers = {
+      ...emptySectionHeaders(),
+      ...data.section_headers,
+    };
   }
 
   let catalogChanged = false;
@@ -589,6 +604,21 @@ export async function getBeats() {
 
 export async function getAppData(): Promise<AppData> {
   return loadStore();
+}
+
+/** Update one section photo header pointer and rebuild public snapshots. */
+export async function setSectionHeader(
+  id: SectionHeaderId,
+  meta: SectionHeaderMeta | null,
+): Promise<AppData> {
+  const data = await loadStore();
+  data.section_headers = {
+    ...emptySectionHeaders(),
+    ...(data.section_headers ?? {}),
+  };
+  data.section_headers[id] = meta;
+  await saveStore(data);
+  return data;
 }
 
 export async function listEditions(): Promise<EditionSnapshot[]> {

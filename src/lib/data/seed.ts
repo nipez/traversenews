@@ -3,6 +3,7 @@
  * NEVER invent Story bodies, bylines, quotes, crashes, or events here.
  * See README → Editorial.
  */
+import { withSectionHeaderSeeds } from "@/lib/section-headers";
 import type { AppData, Beat, EventItem, Source, Story } from "@/lib/types";
 
 const beats: Beat[] = [
@@ -740,6 +741,7 @@ export function createSeedData(): AppData {
     editions: [],
     email_editions: [],
     drafts: [],
+    section_headers: withSectionHeaderSeeds(null),
   };
 }
 

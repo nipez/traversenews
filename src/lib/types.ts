@@ -259,6 +259,25 @@ export type EmailEditionSnapshot = {
   sports: EmailSportsCard[];
 };
 
+/** Thin pointer for a section page photo header (bytes live in R2 or /art). */
+export type SectionHeaderMeta = {
+  src: string;
+  alt: string;
+  updated_at: string;
+};
+
+export type SectionHeaderId =
+  | "whats-on"
+  | "sports"
+  | "civic"
+  | "schools"
+  | "local";
+
+export type SectionHeadersMap = Record<
+  SectionHeaderId,
+  SectionHeaderMeta | null
+>;
+
 export type AppData = {
   beats: Beat[];
   sources: Source[];
@@ -285,4 +304,9 @@ export type AppData = {
   email_editions: EmailEditionSnapshot[];
   /** Desk originals workflow. Drafts are never public. */
   drafts: OriginalDraft[];
+  /**
+   * Photo headers for public section pages. Pointers only — never store
+   * image bytes here (R2 / static /art). Homepage bay masthead is separate.
+   */
+  section_headers: SectionHeadersMap;
 };
