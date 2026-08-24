@@ -99,7 +99,7 @@ export function buildEditionSnapshot(
   const originals = clusters.filter((c) => c.is_original);
   const around = selectAroundTheBay(
     clusters.filter((c) => !c.is_original),
-    { limit: 18, maxPerSource: 4, maxSports: 4, maxRecordEagle: 3 },
+    { limit: 18, maxPerSource: 4, maxSports: 4, maxRecordEagle: 2 },
   );
   // Staff originals only — never promote other-desk wire into the edition lead.
   const leadCluster = originals[0] ?? null;

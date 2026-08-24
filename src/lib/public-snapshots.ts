@@ -298,7 +298,7 @@ export function buildHomeSnapshot(data: AppData, at = new Date()): PublicHomeSna
       limit: 18,
       maxPerSource: 4,
       maxSports: 4,
-      maxRecordEagle: 3,
+      maxRecordEagle: 2,
       maxUpNorth: 3,
     },
   );

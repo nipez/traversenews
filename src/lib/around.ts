@@ -274,7 +274,7 @@ export type AroundSelectOptions = {
   maxPerSource?: number;
   /** Cap for sports/HS sports clusters. Default 4 of 18. */
   maxSports?: number;
-  /** Cap for all Record-Eagle sources as one paywall bucket. Default 3. */
+  /** Cap for all Record-Eagle sources as one paywall bucket. Default 2. */
   maxRecordEagle?: number;
   /** Cap for UpNorthLive so the TV wire does not eat the bay. Default 3. */
   maxUpNorth?: number;
@@ -361,7 +361,7 @@ export function selectAroundTheBay(
   const limit = options.limit ?? 18;
   const maxPerSource = options.maxPerSource ?? 4;
   const maxSports = options.maxSports ?? 4;
-  const maxRecordEagle = options.maxRecordEagle ?? 3;
+  const maxRecordEagle = options.maxRecordEagle ?? 2;
   const maxUpNorth = options.maxUpNorth ?? 3;
   const maxOfficial = options.maxOfficial ?? 2;
 

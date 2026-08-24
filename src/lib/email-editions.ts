@@ -130,7 +130,7 @@ export function buildEmailEditionSnapshot(
 
   const aroundClusters = selectAroundTheBay(
     clusters.filter((c) => !c.is_original),
-    { limit: 18, maxPerSource: 4, maxSports: 4, maxRecordEagle: 3 },
+    { limit: 18, maxPerSource: 4, maxSports: 4, maxRecordEagle: 2 },
   );
   // Prefer items with real dek text; aim for 5–6 when the pull has them.
   const around = pickAroundForLetter(aroundClusters).map(toAroundCard);
