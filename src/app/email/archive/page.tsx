@@ -44,7 +44,7 @@ export default async function EmailArchivePage() {
                   {edition.lead ? " · lead original" : ""}
                   {edition.alerts.length ? ` · ${edition.alerts.length} alert${edition.alerts.length === 1 ? "" : "s"}` : ""}
                   {edition.tonight.length ? ` · ${edition.tonight.length} tonight` : ""}
-                  {" · captured "}
+                  {" · "}
                   {new Date(edition.captured_at).toLocaleString("en-US", {
                     timeZone: "America/Detroit",
                     hour: "numeric",

@@ -17,9 +17,7 @@ export default async function EmailPreviewPage() {
     <PublicShell active="/" header="compact">
       <div className="mx-auto max-w-2xl">
         <div className="flex flex-wrap items-baseline justify-between gap-3">
-          <p className="text-sm text-muted">
-            Preview only. Sending is not wired up yet.
-          </p>
+          <p className="text-sm text-muted">Morning email</p>
           <Link
             href="/email/archive"
             className="text-sm font-bold text-teal underline-offset-2 hover:underline"

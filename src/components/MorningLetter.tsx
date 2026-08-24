@@ -229,7 +229,6 @@ export function MorningLetter({
         </p>
         <p className="mt-2 text-xs">
           Traverse City, Michigan · Unsubscribe · Weekdays and Saturdays
-          {mode === "archive" ? " · Archive copy (not sent)" : null}
         </p>
         {mode === "preview" ? (
           <p className="mt-3 text-xs">
@@ -240,7 +239,7 @@ export function MorningLetter({
         ) : (
           <p className="mt-3 text-xs">
             <Link href="/email" className="font-bold text-teal">
-              Live preview →
+              Morning email →
             </Link>
           </p>
         )}
