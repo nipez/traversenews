@@ -86,6 +86,7 @@ export function draftFromPulledCluster(input: {
     created_at: now,
     updated_at: now,
     published_at: null,
+    go_live_at: null,
   };
 }
 

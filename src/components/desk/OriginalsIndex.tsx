@@ -133,6 +133,11 @@ export function OriginalsIndex({ drafts }: { drafts: OriginalDraft[] }) {
                 <time dateTime={sortKey(d)}>
                   {formatDetroitDate(sortKey(d))}
                 </time>
+                {d.status === "draft" && d.go_live_at ? (
+                  <div className="text-[0.8rem]">
+                    Goes live {formatDetroitDate(d.go_live_at)}
+                  </div>
+                ) : null}
                 {d.status === "published" && d.slug ? (
                   <div>
                     <Link

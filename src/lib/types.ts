@@ -79,6 +79,12 @@ export type OriginalDraft = {
   created_at: string;
   updated_at: string;
   published_at: string | null;
+  /**
+   * When set on a draft, Worker cron publishes at this instant (ISO UTC).
+   * Wall clock is always America/Detroit in Desk — no timezone picker.
+   * Empty/null = stay draft until Publish now. Saving this does not publish.
+   */
+  go_live_at: string | null;
 };
 
 export type EventItem = {

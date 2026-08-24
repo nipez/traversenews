@@ -25,7 +25,7 @@ const WEEKDAYS = [
 
 const DETROIT = "America/Detroit";
 
-function detroitParts(at: Date): {
+export function detroitParts(at: Date): {
   weekday: string;
   month: string;
   day: number;
@@ -58,9 +58,82 @@ function detroitParts(at: Date): {
   };
 }
 
-function monthNumber(name: string): number {
+export function monthNumber(name: string): number {
   const idx = MONTHS.indexOf(name as (typeof MONTHS)[number]);
   return idx >= 0 ? idx + 1 : 1;
+}
+
+/** YYYY-MM-DD for a Detroit wall date (date inputs). */
+export function formatDetroitDateInput(at: Date | string): string {
+  return detroitDayKey(at);
+}
+
+/** HH:mm for a Detroit wall clock (time inputs). */
+export function formatDetroitTimeInput(at: Date | string): string {
+  const d = typeof at === "string" ? new Date(at) : at;
+  const p = detroitParts(d);
+  return `${String(p.hour).padStart(2, "0")}:${String(p.minute).padStart(2, "0")}`;
+}
+
+/**
+ * Next 8:00am America/Detroit morning.
+ * Before 8am today → today 8:00; at/after 8am → tomorrow 8:00.
+ */
+export function nextDetroitMorning8am(now = new Date()): Date {
+  const p = detroitParts(now);
+  const today8 = detroitWallToUtc(
+    p.year,
+    monthNumber(p.month),
+    p.day,
+    8,
+    0,
+    0,
+  );
+  if (now.getTime() < today8.getTime()) return today8;
+  const localMidnight = detroitWallToUtc(
+    p.year,
+    monthNumber(p.month),
+    p.day,
+    0,
+    0,
+    0,
+  );
+  const tomorrow = detroitParts(
+    new Date(localMidnight.getTime() + 30 * 60 * 60 * 1000),
+  );
+  return detroitWallToUtc(
+    tomorrow.year,
+    monthNumber(tomorrow.month),
+    tomorrow.day,
+    8,
+    0,
+    0,
+  );
+}
+
+/** Parse Detroit date + time form values into a UTC Date (or null if empty/invalid). */
+export function parseDetroitDateTimeInputs(
+  dateYmd: string,
+  timeHm: string,
+): Date | null {
+  const date = dateYmd.trim();
+  const time = timeHm.trim();
+  if (!date && !time) return null;
+  if (!date || !time) return null;
+  const m = date.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  const t = time.match(/^(\d{1,2}):(\d{2})$/);
+  if (!m || !t) return null;
+  const hour = Number(t[1]);
+  const minute = Number(t[2]);
+  if (hour > 23 || minute > 59) return null;
+  return detroitWallToUtc(
+    Number(m[1]),
+    Number(m[2]),
+    Number(m[3]),
+    hour,
+    minute,
+    0,
+  );
 }
 
 /** Convert a Detroit wall-clock to a UTC Date. */

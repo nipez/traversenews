@@ -9,6 +9,16 @@ import type { OriginalDraft } from "@/lib/types";
 
 type Ctx = { params: Promise<{ id: string }> };
 
+function normalizeGoLiveAt(raw: unknown): string | null {
+  if (raw == null || raw === "") return null;
+  if (typeof raw !== "string") return null;
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  const d = new Date(trimmed);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toISOString();
+}
+
 export async function GET(_request: Request, ctx: Ctx) {
   if (!(await isDeskAuthed())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -55,6 +65,11 @@ export async function PUT(request: Request, ctx: Ctx) {
     source_urls: urls,
     // status changes only via publish/unpublish
     status: existing.status,
+    // Schedule only — saving go_live_at never publishes.
+    go_live_at:
+      body.go_live_at !== undefined
+        ? normalizeGoLiveAt(body.go_live_at)
+        : (existing.go_live_at ?? null),
   };
 
   const saved = await upsertDraft(next);

@@ -5,30 +5,51 @@ type PullEnv = {
   WORKER_SELF_REFERENCE: { fetch: typeof fetch };
 };
 
+const PULL_CRON = "30 11 * * 1-5";
+
+async function hitInternal(
+  self: PullEnv["WORKER_SELF_REFERENCE"],
+  path: string,
+  label: string,
+) {
+  const res = await self.fetch(
+    new Request(`https://traverse-news.internal${path}`, {
+      method: "POST",
+    }),
+  );
+  const body = await res.text();
+  console.log(
+    `scheduled ${label} status=${res.status} body=${body.slice(0, 500)}`,
+  );
+}
+
 export default {
   fetch: handler.fetch,
 
   /**
-   * Weekday morning pull (see wrangler.jsonc triggers.crons).
-   * Hits our own /api/pull so Next route handlers + KV bindings run as usual.
+   * Crons (see wrangler.jsonc triggers.crons):
+   * - every 5 minutes → publish due Desk originals (go_live_at)
+   * - "30 11 * * 1-5" → weekday morning RSS/ICS pull (+ go-live check)
+   *
    * Test locally: wrangler dev --test-scheduled
-   *   curl "http://localhost:8787/__scheduled?cron=30+11+*+*+1-5"
+   *   curl with ?cron= URL-encoded every-5-min expression, or the weekday pull cron
    */
   async scheduled(
-    _controller: ScheduledController,
+    controller: ScheduledController,
     env: PullEnv,
     ctx: ExecutionContext,
   ) {
     const self = env.WORKER_SELF_REFERENCE;
+    const cron = controller.cron;
+
     ctx.waitUntil(
       (async () => {
-        const res = await self.fetch(
-          new Request("https://traverse-news.internal/api/pull", {
-            method: "POST",
-          }),
-        );
-        const body = await res.text();
-        console.log(`scheduled pull status=${res.status} body=${body.slice(0, 500)}`);
+        // Every cron tick checks go-live so an 8:00am Detroit schedule is not
+        // stranded on the weekday-only pull cron.
+        await hitInternal(self, "/api/go-live", "go-live");
+        if (cron === PULL_CRON) {
+          await hitInternal(self, "/api/pull", "pull");
+        }
       })(),
     );
   },
