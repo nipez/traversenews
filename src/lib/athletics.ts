@@ -14,6 +14,70 @@ export const ATHLETICS_WEEK_DAYS = 7;
 
 export const ATHLETICS_SOURCE_IDS = HS_ATHLETICS_EVENT_SOURCE_IDS;
 
+/**
+ * Traverse City core slate for Sports This week (default).
+ * Surrounding map-ring schools stay behind the Surrounding control.
+ * Central calendars: tcctrojans.net → src_tcc_ath.
+ */
+export const ATHLETICS_CORE_SOURCE_IDS = new Set([
+  "src_tcc_ath",
+  "src_tcw_ath",
+  "src_tcsf_ath",
+  "src_tcch_ath",
+]);
+
+export const ATHLETICS_SURROUNDING_SOURCE_IDS = new Set([
+  "src_elk_ath",
+  "src_suttons_ath",
+  "src_leland_ath",
+  "src_glenlake_ath",
+  "src_kingsley_ath",
+]);
+
+export const ATHLETICS_CORE_SCHOOLS = [
+  "Central",
+  "West",
+  "St. Francis",
+  "TC Christian",
+] as const;
+
+export const ATHLETICS_SURROUNDING_SCHOOLS = [
+  "Elk Rapids",
+  "Suttons Bay",
+  "Leland",
+  "Glen Lake",
+  "Kingsley",
+] as const;
+
+export function isCoreAthleticsGame(game: AthleticsGame): boolean {
+  if (ATHLETICS_CORE_SOURCE_IDS.has(game.source_id)) return true;
+  return (ATHLETICS_CORE_SCHOOLS as readonly string[]).includes(game.school);
+}
+
+export function isSurroundingAthleticsGame(game: AthleticsGame): boolean {
+  if (ATHLETICS_SURROUNDING_SOURCE_IDS.has(game.source_id)) return true;
+  return (ATHLETICS_SURROUNDING_SCHOOLS as readonly string[]).includes(
+    game.school,
+  );
+}
+
+/** Default Sports This week: TC only. Pass includeSurrounding for map-ring. */
+export function filterAthleticsSlate(
+  games: AthleticsGame[],
+  options: { includeSurrounding?: boolean; school?: string | null } = {},
+): AthleticsGame[] {
+  const includeSurrounding = options.includeSurrounding === true;
+  const school = options.school?.trim() || null;
+  return games.filter((g) => {
+    const inCore = isCoreAthleticsGame(g);
+    const inSurrounding = isSurroundingAthleticsGame(g);
+    if (!inCore && !inSurrounding) return false;
+    if (!includeSurrounding && !inCore) return false;
+    if (school && g.school !== school) return false;
+    return true;
+  });
+}
+
 export type AthleticsImportRow = {
   title: string;
   starts_at?: string;

@@ -25,9 +25,10 @@ export default async function SchoolsPage() {
             <h1 className="schools-hed">Schools</h1>
             <p className="schools-dek">
               Important dates by district — half days, no-school, orientation,
-              conferences, spring break, first and last day. Not PTA nights,
-              not sports, not every elementary listing. We do not invent half
-              days.
+              conferences, spring break, first and last day. Traverse City
+              districts first; surrounding map-ring calendars under Surrounding.
+              Not PTA nights, not sports, not every elementary listing. We do
+              not invent half days.
             </p>
           </header>
 
