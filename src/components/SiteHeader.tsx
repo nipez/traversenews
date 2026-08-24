@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { MobileBottomNav } from "@/components/MobileBottomNav";
 import { NavSearch } from "@/components/NavSearch";
 import { formatHeaderDate } from "@/lib/dates";
 
@@ -109,7 +110,10 @@ export function SiteHeader({
           </div>
         </div>
 
-        <NavInkBar active={active} />
+        <div className="nav-sticky-stack">
+          <NavInkBar active={active} />
+          <MobileBottomNav active={active} />
+        </div>
       </header>
     );
   }
@@ -121,7 +125,10 @@ export function SiteHeader({
           <Wordmark />
         </Link>
       </div>
-      <NavInkBar active={active} />
+      <div className="nav-sticky-stack">
+        <NavInkBar active={active} />
+        <MobileBottomNav active={active} />
+      </div>
     </header>
   );
 }

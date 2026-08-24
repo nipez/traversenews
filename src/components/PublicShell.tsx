@@ -1,6 +1,5 @@
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
-import { MobileBottomNav } from "@/components/MobileBottomNav";
 
 export function PublicShell({
   children,
@@ -18,7 +17,7 @@ export function PublicShell({
   wide?: boolean;
 }) {
   return (
-    <div className="site-shell pb-mobile-nav">
+    <div className="site-shell">
       <SiteHeader
         active={active}
         variant={header}
@@ -26,7 +25,6 @@ export function PublicShell({
       />
       <main className="stage">{children}</main>
       <SiteFooter />
-      <MobileBottomNav active={active} />
     </div>
   );
 }
