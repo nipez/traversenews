@@ -83,7 +83,7 @@ export function SchoolsDistrictToggle({
   if (tabs.length === 0) {
     return (
       <p className="schools-district-empty">
-        No official district dates in the pull yet — we do not invent half days.
+        No official district dates in the pull yet.
       </p>
     );
   }
