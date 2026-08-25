@@ -1,5 +1,6 @@
 import { DeskChrome } from "@/components/desk/DeskChrome";
 import { AddAlertForm } from "@/components/desk/AddAlertForm";
+import { DeskAlertsList } from "@/components/desk/DeskAlertsList";
 import { isAlertSourceId, selectAlerts } from "@/lib/alerts";
 import { getAppData } from "@/lib/data/store";
 
@@ -17,6 +18,18 @@ export default async function DeskAlertsPage() {
 
   const sourceName = (id: string) =>
     data.sources.find((s) => s.id === id)?.name ?? id;
+
+  const stripIds = new Set(strip.map((a) => a.id));
+  const storedOnly = allAlertStories
+    .filter((s) => !stripIds.has(s.id))
+    .slice(0, 12)
+    .map((s) => ({
+      id: s.id,
+      title: s.title,
+      dek: s.dek ?? "",
+      url: s.url,
+      source_name: sourceName(s.source_id),
+    }));
 
   return (
     <DeskChrome active="alerts">
@@ -39,54 +52,24 @@ export default async function DeskAlertsPage() {
           />
         </div>
 
-        <section className="mt-10">
-          <h2 className="text-[0.68rem] font-bold tracking-[0.1em] text-ink uppercase">
-            On the strip now
-          </h2>
-          {strip.length === 0 ? (
-            <p className="mt-2 text-sm text-muted">
-              Empty — homepage Alerts strip stays hidden until something is
-              saved.
-            </p>
-          ) : (
-            <ul className="mt-3 space-y-3">
-              {strip.map((a) => (
-                <li key={a.id} className="border-b border-[#e6ddd0] pb-3">
-                  <p className="text-xs font-semibold tracking-wide text-muted-2 uppercase">
-                    {a.source_name}
-                  </p>
-                  <a
-                    href={a.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-0.5 block font-serif text-lg text-teal hover:underline"
-                  >
-                    {a.title}
-                  </a>
-                  {a.dek ? (
-                    <p className="mt-0.5 text-sm text-muted">{a.dek}</p>
-                  ) : null}
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
+        <DeskAlertsList
+          heading="On the strip now"
+          empty="Empty — homepage Alerts strip stays hidden until something is saved."
+          items={strip.map((a) => ({
+            id: a.id,
+            title: a.title,
+            dek: a.dek ?? "",
+            url: a.url,
+            source_name: a.source_name,
+          }))}
+        />
 
-        {allAlertStories.length > strip.length ? (
-          <section className="mt-8">
-            <h2 className="text-[0.68rem] font-bold tracking-[0.1em] text-ink uppercase">
-              Stored alerts ({allAlertStories.length})
-            </h2>
-            <ul className="mt-2 space-y-1 text-sm text-muted">
-              {allAlertStories.slice(0, 12).map((s) => (
-                <li key={s.id}>
-                  <span className="text-muted-2">{sourceName(s.source_id)}</span>
-                  {" · "}
-                  {s.title}
-                </li>
-              ))}
-            </ul>
-          </section>
+        {storedOnly.length > 0 ? (
+          <DeskAlertsList
+            heading={`Stored alerts (${allAlertStories.length})`}
+            empty=""
+            items={storedOnly}
+          />
         ) : null}
       </div>
     </DeskChrome>
