@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { MorningScanSignup } from "@/components/MorningScanSignup";
+import { InteriorLayout } from "@/components/InteriorLayout";
 import { PublicShell } from "@/components/PublicShell";
 import { formatCivicDate, formatEventWhenParts } from "@/lib/dates";
 import { getCivicSnapshot } from "@/lib/public-snapshots";
@@ -48,25 +48,25 @@ export default async function CivicPage() {
 
   return (
     <PublicShell active="/civic" header="compact">
-      <div className="civic-page-head">
-        <div>
-          <p className="civic-kicker">Agenda</p>
-          <h1 className="page-hed-civic">Civic Calendar</h1>
-          <p className="civic-page-dek">
-            City, county, and school board meetings. Concerts and markets are on
-            Events.
-          </p>
+      <InteriorLayout mainClassName="civic-main" layoutClassName="civic-layout">
+        <div className="civic-page-head">
+          <div>
+            <p className="civic-kicker">Agenda</p>
+            <h1 className="page-hed-civic">Civic Calendar</h1>
+            <p className="civic-page-dek">
+              City, county, and school board meetings. Concerts and markets are
+              on Events.
+            </p>
+          </div>
+          <Image
+            src="/art/stamp-civic.png"
+            alt=""
+            width={130}
+            height={130}
+            className="section-stamp-lg shrink-0"
+          />
         </div>
-        <Image
-          src="/art/stamp-civic.png"
-          alt=""
-          width={130}
-          height={130}
-          className="section-stamp-lg shrink-0"
-        />
-      </div>
 
-      <div className="civic-page-grid">
         <ul className="civic-agenda">
           {rows.map((row) => {
             if (row.kind === "month") {
@@ -101,18 +101,7 @@ export default async function CivicPage() {
             <li className="civic-empty">No upcoming meetings in the pull yet.</li>
           ) : null}
         </ul>
-
-        <aside className="civic-page-rail">
-          <div className="civic-rail-card">
-            <h2 className="civic-rail-hed">Where this comes from</h2>
-            <p className="civic-rail-copy">
-              Meeting listings are pulled from city, county, and school board
-              calendars. We do not invent agendas or invent times.
-            </p>
-          </div>
-          <MorningScanSignup variant="teal" />
-        </aside>
-      </div>
+      </InteriorLayout>
     </PublicShell>
   );
 }

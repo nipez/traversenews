@@ -1,16 +1,15 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AroundTheBay } from "@/components/AroundTheBay";
-import { CivicList } from "@/components/CivicList";
+import { InteriorLayout } from "@/components/InteriorLayout";
 import { LeadStory } from "@/components/LeadStory";
 import { PublicShell } from "@/components/PublicShell";
-import { TonightBlock } from "@/components/TonightBlock";
 import {
   formatEditionLabel,
   isValidEditionDate,
 } from "@/lib/editions";
 import { getEditionsSnapshot } from "@/lib/public-snapshots";
-import type { ClusteredStory, EventItem } from "@/lib/types";
+import type { ClusteredStory } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -62,66 +61,43 @@ export default async function EditionPage({ params }: Props) {
     body: null,
   }));
 
-  const events: EventItem[] = edition.events.map((e, i) => ({
-    id: `edition-evt-${date}-${i}`,
-    title: e.title,
-    starts_at: e.starts_at,
-    place: e.place,
-    url: e.url,
-    source_id: "edition",
-  }));
-
-  const civic: EventItem[] = edition.civic.map((e, i) => ({
-    id: `edition-civic-${date}-${i}`,
-    title: e.title,
-    starts_at: e.starts_at,
-    place: e.place,
-    url: e.url,
-    source_id: "edition",
-  }));
-
   const label = formatEditionLabel(date);
 
   return (
     <PublicShell active="/">
-      <div className="mb-8 border-b border-rule pb-6">
-        <p className="text-[0.7rem] font-semibold tracking-[0.08em] text-teal uppercase">
-          Edition archive
-        </p>
-        <h1 className="mt-2 font-serif text-3xl text-ink md:text-4xl">
-          {label}
-        </h1>
-        <p className="mt-2 max-w-2xl text-[#444]">
-          Snapshot of the homepage after the last successful pull that day
-          (America/Detroit). Headlines from other desks link out; we do not
-          reprint their full stories.
-        </p>
-        <p className="mt-2 text-sm text-muted">
-          Captured{" "}
-          {new Date(edition.captured_at).toLocaleString("en-US", {
-            timeZone: "America/Detroit",
-            dateStyle: "medium",
-            timeStyle: "short",
-          })}
-          {" · "}
-          <Link href="/editions" className="text-teal">
-            All editions
-          </Link>
-        </p>
-      </div>
+      <InteriorLayout mainClassName="editions-main">
+        <div className="mb-8 border-b border-rule pb-6">
+          <p className="text-[0.7rem] font-semibold tracking-[0.08em] text-teal uppercase">
+            Edition archive
+          </p>
+          <h1 className="mt-2 font-serif text-3xl text-ink md:text-4xl">
+            {label}
+          </h1>
+          <p className="mt-2 max-w-2xl text-[#444]">
+            Snapshot of the homepage after the last successful pull that day
+            (America/Detroit). Headlines from other desks link out; we do not
+            reprint their full stories.
+          </p>
+          <p className="mt-2 text-sm text-muted">
+            Captured{" "}
+            {new Date(edition.captured_at).toLocaleString("en-US", {
+              timeZone: "America/Detroit",
+              dateStyle: "medium",
+              timeStyle: "short",
+            })}
+            {" · "}
+            <Link href="/editions" className="text-teal">
+              All editions
+            </Link>
+          </p>
+        </div>
 
-      <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="min-w-0 space-y-10">
           {lead ? <LeadStory lead={lead} /> : null}
           <hr className="rule" />
           <AroundTheBay items={around} />
         </div>
-
-        <aside className="space-y-8">
-          <TonightBlock events={events} />
-          <CivicList events={civic} linkLabel="Archive" />
-        </aside>
-      </div>
+      </InteriorLayout>
     </PublicShell>
   );
 }

@@ -1,12 +1,13 @@
 import Image from "next/image";
+import Link from "next/link";
 import { EventTipsForm } from "@/components/EventTipsForm";
+import { InteriorLayout } from "@/components/InteriorLayout";
 import { PublicShell } from "@/components/PublicShell";
 import { detroitDayKey, formatEventWhenParts } from "@/lib/dates";
 import { venueKicker } from "@/lib/events";
 import { getEventsSnapshot } from "@/lib/public-snapshots";
 import type { EventItem } from "@/lib/types";
 import { GOING_OUT } from "@/lib/useful-local";
-import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
@@ -96,174 +97,179 @@ export default async function WhatsOnPage() {
 
   return (
     <PublicShell active="/whats-on" header="compact">
-      <div className="events-page">
-        <header className="events-hero">
-          <div className="events-hero-copy">
-            <p className="events-kicker">Night out</p>
-            <h1 className="events-hed">Events</h1>
-            <p className="events-dek">
-              Concerts, festivals, markets, library programs. Meetings live on
-              Civic Calendar.{" "}
-              <a href="#event-tip" className="font-semibold text-teal hover:underline">
-                Something missing?
-              </a>
-            </p>
-            <p className="events-dek events-dek-local">
-              For a night out:{" "}
-              <a
-                href={GOING_OUT[0].href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="events-dek-link"
-              >
-                wine country
-              </a>
-              ,{" "}
-              <a
-                href={GOING_OUT[1].href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="events-dek-link"
-              >
-                happy hours
-              </a>
-              ,{" "}
-              <a
-                href={GOING_OUT[2].href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="events-dek-link"
-              >
-                Nauti-Cat
-              </a>
-              ,{" "}
-              <a
-                href={GOING_OUT[3].href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="events-dek-link"
-              >
-                Discovery Cruises
-              </a>
-              . More on{" "}
-              <Link href="/local" className="events-dek-link">
-                Local
-              </Link>
-              .
-            </p>
-          </div>
-          <Image
-            src="/art/stamp-night.png"
-            alt=""
-            width={150}
-            height={150}
-            className="events-stamp"
-          />
-        </header>
+      <InteriorLayout mainClassName="events-main" layoutClassName="events-layout">
+        <div className="events-page">
+          <header className="events-hero">
+            <div className="events-hero-copy">
+              <p className="events-kicker">Night out</p>
+              <h1 className="events-hed">Events</h1>
+              <p className="events-dek">
+                Concerts, festivals, markets, library programs. Meetings live on
+                Civic Calendar.{" "}
+                <a
+                  href="#event-tip"
+                  className="font-semibold text-teal hover:underline"
+                >
+                  Something missing?
+                </a>
+              </p>
+              <p className="events-dek events-dek-local">
+                For a night out:{" "}
+                <a
+                  href={GOING_OUT[0].href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="events-dek-link"
+                >
+                  wine country
+                </a>
+                ,{" "}
+                <a
+                  href={GOING_OUT[1].href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="events-dek-link"
+                >
+                  happy hours
+                </a>
+                ,{" "}
+                <a
+                  href={GOING_OUT[2].href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="events-dek-link"
+                >
+                  Nauti-Cat
+                </a>
+                ,{" "}
+                <a
+                  href={GOING_OUT[3].href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="events-dek-link"
+                >
+                  Discovery Cruises
+                </a>
+                . More on{" "}
+                <Link href="/local" className="events-dek-link">
+                  Local
+                </Link>
+                .
+              </p>
+            </div>
+            <Image
+              src="/art/stamp-night.png"
+              alt=""
+              width={150}
+              height={150}
+              className="events-stamp"
+            />
+          </header>
 
-        <section className="events-featured" aria-label="Featured nights out">
-          <div className="events-featured-inner">
-            {featured.map((event) => {
-              const { clock, meridiem } = eventClock(event);
-              return (
-                <article key={event.id} className="events-featured-card">
-                  <p className="events-featured-time">
-                    {clock}
-                    {meridiem ? (
-                      <span className="events-featured-meridiem">
-                        {" "}
-                        {meridiem}
-                      </span>
-                    ) : null}
-                  </p>
-                  <p className="events-featured-meta">{featuredMeta(event)}</p>
-                  <h2 className="events-featured-title">
-                    {event.url ? (
-                      <a
-                        href={event.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        {event.title} ↗
-                      </a>
-                    ) : (
-                      event.title
-                    )}
-                  </h2>
-                </article>
-              );
-            })}
-            {featured.length === 0 ? (
-              <p className="events-featured-empty">
-                No timed nights-out in the next couple of weeks — we do not
-                invent showtimes.
+          <section className="events-featured" aria-label="Featured nights out">
+            <div className="events-featured-inner">
+              {featured.map((event) => {
+                const { clock, meridiem } = eventClock(event);
+                return (
+                  <article key={event.id} className="events-featured-card">
+                    <p className="events-featured-time">
+                      {clock}
+                      {meridiem ? (
+                        <span className="events-featured-meridiem">
+                          {" "}
+                          {meridiem}
+                        </span>
+                      ) : null}
+                    </p>
+                    <p className="events-featured-meta">{featuredMeta(event)}</p>
+                    <h2 className="events-featured-title">
+                      {event.url ? (
+                        <a
+                          href={event.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {event.title} ↗
+                        </a>
+                      ) : (
+                        event.title
+                      )}
+                    </h2>
+                  </article>
+                );
+              })}
+              {featured.length === 0 ? (
+                <p className="events-featured-empty">
+                  No timed nights-out in the next couple of weeks — we do not
+                  invent showtimes.
+                </p>
+              ) : null}
+            </div>
+          </section>
+
+          <div className="events-days">
+            {byDay.map((group) => (
+              <section
+                key={group.key}
+                className="events-day"
+                data-today={group.key === todayKey ? "true" : undefined}
+              >
+                <header className="events-day-head">
+                  <p className="events-day-num">{group.dayNum}</p>
+                  <p className="events-day-label">{group.dayLabel}</p>
+                </header>
+                <ul className="events-day-grid">
+                  {group.items.map((event) => {
+                    const { clock, meridiem } = eventClock(event);
+                    return (
+                      <li key={event.id} className="events-row">
+                        <div className="events-row-when">
+                          <p className="events-row-time">
+                            {clock}
+                            {meridiem ? (
+                              <span className="events-row-meridiem">
+                                {" "}
+                                {meridiem}
+                              </span>
+                            ) : null}
+                          </p>
+                        </div>
+                        <div className="events-row-copy">
+                          <p className="events-row-venue">
+                            {venueKicker(event.place)}
+                          </p>
+                          <h3 className="events-row-title">
+                            {event.url ? (
+                              <a
+                                href={event.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                {event.title} ↗
+                              </a>
+                            ) : (
+                              event.title
+                            )}
+                          </h3>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
+            ))}
+            {byDay.length === 0 ? (
+              <p className="events-empty">
+                No community listings yet. Need Traverse News to pull Visit TC on
+                the live computer if the calendar is empty — we do not invent
+                events.
               </p>
             ) : null}
           </div>
-        </section>
 
-        <div className="events-days">
-          {byDay.map((group) => (
-            <section
-              key={group.key}
-              className="events-day"
-              data-today={group.key === todayKey ? "true" : undefined}
-            >
-              <header className="events-day-head">
-                <p className="events-day-num">{group.dayNum}</p>
-                <p className="events-day-label">{group.dayLabel}</p>
-              </header>
-              <ul className="events-day-grid">
-                {group.items.map((event) => {
-                  const { clock, meridiem } = eventClock(event);
-                  return (
-                    <li key={event.id} className="events-row">
-                      <div className="events-row-when">
-                        <p className="events-row-time">
-                          {clock}
-                          {meridiem ? (
-                            <span className="events-row-meridiem">
-                              {" "}
-                              {meridiem}
-                            </span>
-                          ) : null}
-                        </p>
-                      </div>
-                      <div className="events-row-copy">
-                        <p className="events-row-venue">
-                          {venueKicker(event.place)}
-                        </p>
-                        <h3 className="events-row-title">
-                          {event.url ? (
-                            <a
-                              href={event.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              {event.title} ↗
-                            </a>
-                          ) : (
-                            event.title
-                          )}
-                        </h3>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            </section>
-          ))}
-          {byDay.length === 0 ? (
-            <p className="events-empty">
-              No community listings yet. Need Traverse News to pull Visit TC on
-              the live computer if the calendar is empty — we do not invent
-              events.
-            </p>
-          ) : null}
+          <EventTipsForm />
         </div>
-
-        <EventTipsForm />
-      </div>
+      </InteriorLayout>
     </PublicShell>
   );
 }

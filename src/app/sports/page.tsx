@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { DeskRail } from "@/components/DeskRail";
+import { InteriorLayout } from "@/components/InteriorLayout";
 import { PublicShell } from "@/components/PublicShell";
 import {
   groupAthleticsByDay,
@@ -152,43 +152,51 @@ export default async function SportsPage() {
 
   return (
     <PublicShell active="/sports" header="compact">
-      <div className="about-layout sports-layout">
-        <div className="about-essay sports-main">
-          <header className="sports-hero">
-            <p className="sports-kicker">Scores &amp; prep</p>
-            <h1 className="sports-hed">Sports</h1>
-            <p className="sports-dek">
-              Headlines from 9&amp;10 Sports, Record-Eagle Sports, and local
-              prep across the greater bay. They link out — we do not reprint
-              game stories or invent scores.
-            </p>
-          </header>
-
-          <ThisWeekSlate games={weekGames} />
-
-          {showHsSubhead ? (
-            <>
-              <section className="sports-section">
-                <h2 className="sports-subhed">Sports</h2>
-                <SportsList items={varsity} />
-              </section>
-              <section className="sports-section">
-                <h2 className="sports-subhed">High school</h2>
-                <SportsList items={prepOnly} />
-              </section>
-            </>
-          ) : (
-            <SportsList items={unique} />
-          )}
-
-          <p className="sports-foot">
-            Also on <Link href="/">Today</Link> in Around the bay when the wire
-            carries them.
+      <InteriorLayout
+        mainClassName="sports-main"
+        layoutClassName="sports-layout"
+      >
+        <header className="sports-hero">
+          <p className="sports-kicker">Scores &amp; prep</p>
+          <h1 className="sports-hed">Sports</h1>
+          <p className="sports-dek">
+            Headlines from 9&amp;10 Sports, Record-Eagle Sports, and local prep
+            across the greater bay. They link out — we do not reprint game
+            stories or invent scores.
           </p>
-        </div>
+        </header>
 
-        <DeskRail active="/sports" sportsBeats={SPORTS_BEAT_LINKS} />
-      </div>
+        <ThisWeekSlate games={weekGames} />
+
+        {showHsSubhead ? (
+          <>
+            <section className="sports-section">
+              <h2 className="sports-subhed">Sports</h2>
+              <SportsList items={varsity} />
+            </section>
+            <section className="sports-section">
+              <h2 className="sports-subhed">High school</h2>
+              <SportsList items={prepOnly} />
+            </section>
+          </>
+        ) : (
+          <SportsList items={unique} />
+        )}
+
+        <p className="sports-foot">
+          Desks:{" "}
+          {SPORTS_BEAT_LINKS.map((b, i) => (
+            <span key={b.href}>
+              {i > 0 ? " · " : null}
+              <a href={b.href} target="_blank" rel="noopener noreferrer">
+                {b.name} ↗
+              </a>
+            </span>
+          ))}
+          . Also on <Link href="/">Today</Link> in Around the bay when the wire
+          carries them.
+        </p>
+      </InteriorLayout>
     </PublicShell>
   );
 }

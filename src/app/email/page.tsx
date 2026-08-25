@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { InteriorLayout } from "@/components/InteriorLayout";
 import { MorningLetter } from "@/components/MorningLetter";
 import { MorningScanSignup } from "@/components/MorningScanSignup";
 import { PublicShell } from "@/components/PublicShell";
@@ -15,7 +16,7 @@ export default async function EmailPreviewPage() {
 
   return (
     <PublicShell active="/" header="compact">
-      <div className="mx-auto max-w-2xl">
+      <InteriorLayout mainClassName="email-main">
         <div className="flex flex-wrap items-baseline justify-between gap-3">
           <p className="text-sm text-muted">
             Letter preview (same layout as send). Sending is not wired up yet.
@@ -35,7 +36,7 @@ export default async function EmailPreviewPage() {
         <div className="mt-10">
           <MorningScanSignup variant="box" />
         </div>
-      </div>
+      </InteriorLayout>
     </PublicShell>
   );
 }

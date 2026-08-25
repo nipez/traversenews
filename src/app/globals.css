@@ -1237,9 +1237,13 @@ a:hover {
   opacity: 0.55;
 }
 
-/* Events page — v4 night-out layout */
+/* Events page — main-column layout (shared interior rail on the right) */
 .events-page {
   padding-bottom: 3rem;
+}
+
+.events-main {
+  max-width: none;
 }
 
 .events-hero {
@@ -1276,7 +1280,7 @@ a:hover {
 
 @media (min-width: 768px) {
   .events-hed {
-    font-size: 88px;
+    font-size: 72px;
   }
 }
 
@@ -1291,8 +1295,8 @@ a:hover {
 
 .events-stamp {
   display: none;
-  width: 150px;
-  height: 150px;
+  width: 120px;
+  height: 120px;
   flex-shrink: 0;
   object-fit: contain;
 }
@@ -1320,31 +1324,27 @@ a:hover {
 }
 
 .events-featured {
-  /* Full-bleed peach band without 100vw scrollbar overflow */
+  /* Peach band stays inside the main column — no full-bleed wall */
   margin: 32px 0 0;
-  margin-inline: calc(50% - 50vw);
-  width: 100vw;
-  max-width: 100vw;
+  width: auto;
+  max-width: none;
   background: #f3cfae;
-  border-top: 1px solid #1c1712;
-  border-bottom: 1px solid #1c1712;
-  padding: 28px 0 32px;
+  border: 1px solid #1c1712;
+  padding: 24px 20px 28px;
   box-sizing: border-box;
 }
 
 .events-featured-inner {
-  max-width: 1120px;
-  margin: 0 auto;
-  padding: 0 16px;
+  margin: 0;
+  padding: 0;
   display: grid;
-  gap: 28px;
+  gap: 24px;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 640px) {
   .events-featured-inner {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 40px;
-    padding: 0 40px;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 28px;
   }
 }
 
@@ -1356,7 +1356,7 @@ a:hover {
   margin: 0;
   font-family: var(--font-archivo), system-ui, sans-serif;
   font-weight: 800;
-  font-size: 46px;
+  font-size: 40px;
   line-height: 0.95;
   letter-spacing: -0.04em;
   color: #1c1712;
@@ -1383,7 +1383,7 @@ a:hover {
 .events-featured-title {
   margin: 10px 0 0;
   font-family: var(--font-source-serif), Georgia, serif;
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 600;
   line-height: 1.25;
   color: #1c1712;
@@ -1401,11 +1401,11 @@ a:hover {
 }
 
 .events-days {
-  margin-top: 48px;
-  max-width: 960px;
+  margin-top: 40px;
+  max-width: none;
   display: flex;
   flex-direction: column;
-  gap: 48px;
+  gap: 40px;
 }
 
 .events-day-head {
@@ -1445,7 +1445,7 @@ a:hover {
   gap: 0 56px;
 }
 
-@media (min-width: 720px) {
+@media (min-width: 1100px) {
   .events-day-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1465,7 +1465,7 @@ a:hover {
   padding-top: 12px;
 }
 
-@media (max-width: 719px) {
+@media (max-width: 1099px) {
   .events-day-grid > .events-row:nth-child(2) {
     border-top: 1px solid #d9d0bf;
     padding-top: 16px;
@@ -1578,6 +1578,14 @@ a:hover {
   gap: 16px;
 }
 
+.civic-main {
+  max-width: none;
+}
+
+.civic-main .civic-agenda {
+  margin-top: 40px;
+}
+
 .civic-page-dek {
   margin: 14px 0 0;
   max-width: 32rem;
@@ -1585,20 +1593,6 @@ a:hover {
   font-size: 17px;
   line-height: 1.4;
   color: #52493c;
-}
-
-.civic-page-grid {
-  display: grid;
-  gap: 32px;
-  margin-top: 40px;
-  align-items: start;
-}
-
-@media (min-width: 960px) {
-  .civic-page-grid {
-    grid-template-columns: minmax(0, 1fr) 280px;
-    gap: 48px;
-  }
 }
 
 .civic-agenda {
@@ -1682,36 +1676,6 @@ a:hover {
   .civic-datebox-day {
     font-size: 20px;
   }
-}
-
-.civic-page-rail {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.civic-rail-card {
-  border: 1px solid #1c1712;
-  padding: 16px;
-  background: #f4edde;
-}
-
-.civic-rail-hed {
-  margin: 0;
-  font-family: var(--font-archivo), system-ui, sans-serif;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: #1c1712;
-}
-
-.civic-rail-copy {
-  margin: 10px 0 0;
-  font-family: var(--font-source-serif), Georgia, serif;
-  font-size: 14px;
-  line-height: 1.45;
-  color: #52493c;
 }
 
 .signup-teal {
@@ -2127,13 +2091,26 @@ a:hover {
   color: #2a6f6c !important;
 }
 
-/* Widen stage padding on About / Sports (desktop) without full-bleed essay */
+/* Widen stage padding on shared interior layouts (desktop) */
 @media (min-width: 960px) {
   .site-shell:has(.about-layout) .stage {
     padding-left: 40px;
     padding-right: 40px;
     padding-top: 44px;
   }
+}
+
+/* Interior main columns that need full width of the left grid track */
+.sports-main,
+.schools-main,
+.events-main,
+.civic-main,
+.local-main,
+.search-main,
+.email-main,
+.editions-main,
+.tips-main {
+  max-width: none;
 }
 
 /* Sports main column inside about-layout */
@@ -3095,8 +3072,12 @@ a:hover {
 
 /* Useful local */
 .local-page {
-  padding-bottom: 3rem;
-  max-width: 40rem;
+  padding-bottom: 0;
+  max-width: none;
+}
+
+.local-main {
+  max-width: none;
 }
 
 .local-hero {

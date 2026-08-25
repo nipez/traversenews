@@ -1,3 +1,4 @@
+import { isAlertSourceId } from "@/lib/alerts";
 import { createSeedData } from "@/lib/data/seed";
 import { getTraverseDataKv, STORE_KEY } from "@/lib/data/kv";
 import { isBannedOriginalSlug, scrubAppData } from "@/lib/data/scrub";
@@ -344,6 +345,23 @@ export async function replaceStoriesForSources(
   data.stories = [...kept, ...incoming.values()];
   data.last_pull_at = new Date().toISOString();
   await saveStore(data);
+}
+
+/**
+ * Remove one hand-added / browser-pulled alert story (src_gt911 / src_ticker_fb).
+ * Refuses originals and non-alert wire. Returns the removed row, or null if missing.
+ */
+export async function deleteAlertStory(id: string): Promise<Story | null> {
+  const data = await loadStore();
+  const story = data.stories.find((s) => s.id === id);
+  if (!story) return null;
+  if (story.is_original || !isAlertSourceId(story.source_id)) {
+    throw new Error("Only Grand Traverse 911 / Ticker Facebook alerts can be deleted here.");
+  }
+  data.stories = data.stories.filter((s) => s.id !== id);
+  data.last_pull_at = new Date().toISOString();
+  await saveStore(data);
+  return story;
 }
 
 export async function replacePulledEvents(

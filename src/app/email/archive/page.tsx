@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { InteriorLayout } from "@/components/InteriorLayout";
 import { PublicShell } from "@/components/PublicShell";
 import { formatEmailEditionLabel } from "@/lib/email-editions";
 import { getEmailArchiveSnapshot } from "@/lib/public-snapshots";
@@ -15,7 +16,7 @@ export default async function EmailArchivePage() {
 
   return (
     <PublicShell active="/" header="compact">
-      <div className="mx-auto max-w-2xl">
+      <InteriorLayout mainClassName="email-main">
         <p className="text-sm text-muted">
           <Link href="/email" className="font-bold text-teal">
             ← Morning email
@@ -32,7 +33,9 @@ export default async function EmailArchivePage() {
         {editions.length === 0 ? (
           <p className="mt-10 text-sm text-muted">
             No letters archived yet. Desk can capture today with{" "}
-            <code className="bg-paper-2 px-1">POST /api/desk/email/snapshot</code>
+            <code className="bg-paper-2 px-1">
+              POST /api/desk/email/snapshot
+            </code>
             .
           </p>
         ) : (
@@ -48,8 +51,12 @@ export default async function EmailArchivePage() {
                 <p className="mt-1 text-sm text-muted">
                   {edition.around.length} headlines
                   {edition.lead ? " · lead original" : ""}
-                  {edition.alerts.length ? ` · ${edition.alerts.length} alert${edition.alerts.length === 1 ? "" : "s"}` : ""}
-                  {edition.tonight.length ? ` · ${edition.tonight.length} tonight` : ""}
+                  {edition.alerts.length
+                    ? ` · ${edition.alerts.length} alert${edition.alerts.length === 1 ? "" : "s"}`
+                    : ""}
+                  {edition.tonight.length
+                    ? ` · ${edition.tonight.length} tonight`
+                    : ""}
                   {" · captured "}
                   {new Date(edition.captured_at).toLocaleString("en-US", {
                     timeZone: "America/Detroit",
@@ -61,7 +68,7 @@ export default async function EmailArchivePage() {
             ))}
           </ul>
         )}
-      </div>
+      </InteriorLayout>
     </PublicShell>
   );
 }

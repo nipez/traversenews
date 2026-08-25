@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { InteriorLayout } from "@/components/InteriorLayout";
 import { PublicShell } from "@/components/PublicShell";
 import { formatEditionLabel } from "@/lib/editions";
 import { getEditionsSnapshot } from "@/lib/public-snapshots";
@@ -15,7 +16,7 @@ export default async function EditionsIndexPage() {
 
   return (
     <PublicShell active="/">
-      <div className="mx-auto max-w-2xl">
+      <InteriorLayout mainClassName="editions-main">
         <h1 className="font-serif text-3xl text-ink md:text-4xl">Editions</h1>
         <p className="mt-2 text-[#444]">
           A dated log of what ran on the homepage after each day&apos;s last
@@ -51,7 +52,7 @@ export default async function EditionsIndexPage() {
             ))}
           </ul>
         )}
-      </div>
+      </InteriorLayout>
     </PublicShell>
   );
 }
