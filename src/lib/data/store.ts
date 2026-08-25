@@ -24,6 +24,7 @@ import type {
   AthleticsGame,
   EditionSnapshot,
   EmailEditionSnapshot,
+  EmailLetterSendRecord,
   EventItem,
   EventTip,
   OriginalDraft,
@@ -94,6 +95,13 @@ function normalizeAppData(data: AppData): { data: AppData; scrubbed: boolean } {
   }
   if (!Array.isArray(data.email_editions)) {
     data.email_editions = [];
+  }
+  if (
+    !data.email_letter_sends ||
+    typeof data.email_letter_sends !== "object" ||
+    Array.isArray(data.email_letter_sends)
+  ) {
+    data.email_letter_sends = {};
   }
   if (!Array.isArray(data.tips)) {
     data.tips = [];
@@ -667,6 +675,51 @@ export async function snapshotTodaysEmailEdition(
   data.email_editions = upsertEmailEdition(data.email_editions, snapshot);
   await saveStore(data);
   return snapshot;
+}
+
+/** Cheap read: dedicated KV key first, then app_data.email_letter_sends. */
+export async function getEmailLetterSend(
+  date: string,
+): Promise<EmailLetterSendRecord | null> {
+  const kv = await getTraverseDataKv();
+  if (kv) {
+    const { morningLetterSentKvKey } = await import("@/lib/email-letter");
+    const raw = await kv.get(morningLetterSentKvKey(date));
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw) as EmailLetterSendRecord;
+        if (parsed && typeof parsed.sent_at === "string") return parsed;
+      } catch {
+        return { sent_at: raw };
+      }
+    }
+  }
+
+  const data = await loadStore();
+  const record = data.email_letter_sends?.[date];
+  return record && typeof record.sent_at === "string" ? record : null;
+}
+
+/** Mark a Detroit date as sent (KV mirror + app_data). */
+export async function markEmailLetterSent(
+  date: string,
+  record: EmailLetterSendRecord,
+): Promise<void> {
+  const kv = await getTraverseDataKv();
+  if (kv) {
+    const { morningLetterSentKvKey } = await import("@/lib/email-letter");
+    await kv.put(
+      morningLetterSentKvKey(date),
+      JSON.stringify({ date, ...record }),
+    );
+  }
+
+  const data = await loadStore();
+  data.email_letter_sends = {
+    ...(data.email_letter_sends ?? {}),
+    [date]: record,
+  };
+  await saveStore(data);
 }
 
 /**
