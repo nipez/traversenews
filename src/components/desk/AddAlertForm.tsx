@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
+import { alertsSameIncident } from "@/lib/alert-incidents";
 import type { Story } from "@/lib/types";
 
 const ALERT_SOURCES = [
@@ -15,10 +16,14 @@ function normalizeUrl(url: string): string {
   return url.trim().replace(/\/+$/, "").toLowerCase();
 }
 
+type ExistingAlert = Pick<Story, "id" | "title" | "url" | "source_id"> & {
+  dek?: string | null;
+};
+
 export function AddAlertForm({
   existingAlerts,
 }: {
-  existingAlerts: Pick<Story, "id" | "title" | "url" | "source_id">[];
+  existingAlerts: ExistingAlert[];
 }) {
   const router = useRouter();
   const [url, setUrl] = useState("");
@@ -32,14 +37,27 @@ export function AddAlertForm({
     title: string;
     url: string;
     source_id: string;
+    reason: "url" | "incident";
   } | null>(null);
 
-  function findLocalDuplicate(rawUrl: string) {
+  function findLocalDuplicate(rawUrl: string, rawTitle: string, rawDek: string) {
     const key = normalizeUrl(rawUrl);
-    if (!key) return null;
-    return (
-      existingAlerts.find((a) => normalizeUrl(a.url) === key) ?? null
+    if (key) {
+      const byUrl = existingAlerts.find((a) => normalizeUrl(a.url) === key);
+      if (byUrl) {
+        return { ...byUrl, reason: "url" as const };
+      }
+    }
+    const byIncident = existingAlerts.find((a) =>
+      alertsSameIncident(
+        { title: rawTitle, dek: rawDek, url: rawUrl },
+        { title: a.title, dek: a.dek, url: a.url },
+      ),
     );
+    if (byIncident) {
+      return { ...byIncident, reason: "incident" as const };
+    }
+    return null;
   }
 
   async function save(confirm: boolean) {
@@ -68,11 +86,15 @@ export function AddAlertForm({
         error?: string;
         message?: string;
         needsConfirm?: boolean;
+        reason?: "url" | "incident";
         duplicates?: Array<{ title: string; url: string; source_id: string }>;
       };
 
       if (res.status === 409 && json.needsConfirm && json.duplicates?.[0]) {
-        setPendingDuplicate(json.duplicates[0]);
+        setPendingDuplicate({
+          ...json.duplicates[0],
+          reason: json.reason === "incident" ? "incident" : "url",
+        });
         return;
       }
 
@@ -105,12 +127,13 @@ export function AddAlertForm({
       return;
     }
 
-    const local = findLocalDuplicate(trimmedUrl);
+    const local = findLocalDuplicate(trimmedUrl, trimmedTitle, dek.trim());
     if (local && !pendingDuplicate) {
       setPendingDuplicate({
         title: local.title,
         url: local.url,
         source_id: local.source_id,
+        reason: local.reason,
       });
       return;
     }
@@ -159,7 +182,10 @@ export function AddAlertForm({
             type="text"
             required
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            onChange={(e) => {
+              setTitle(e.target.value);
+              setPendingDuplicate(null);
+            }}
             placeholder="As posted — do not invent"
             disabled={saving}
           />
@@ -173,7 +199,10 @@ export function AddAlertForm({
             className="input mt-1 w-full"
             type="text"
             value={dek}
-            onChange={(e) => setDek(e.target.value)}
+            onChange={(e) => {
+              setDek(e.target.value);
+              setPendingDuplicate(null);
+            }}
             placeholder="Short line from the post"
             disabled={saving}
           />
@@ -199,7 +228,11 @@ export function AddAlertForm({
 
         {pendingDuplicate ? (
           <div className="border border-[#c9a227]/20 bg-[#fff8e6] px-3 py-2 text-sm text-ink">
-            <p className="font-medium">URL already in the Alerts strip</p>
+            <p className="font-medium">
+              {pendingDuplicate.reason === "incident"
+                ? "Similar alert already in the Alerts strip"
+                : "URL already in the Alerts strip"}
+            </p>
             <p className="mt-1 text-muted">
               “{pendingDuplicate.title}”
               {pendingDuplicate.source_id === "src_ticker_fb"
