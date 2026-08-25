@@ -90,7 +90,7 @@ export function SiteHeader({
                 <Wordmark tone="cream" />
               </Link>
               <p className="hero-dek">
-                One tab for the bay: news, nights out, civic, and schools.
+                Curated source for all things northern Michigan: news, events, civic, prep sports, schools and more.
               </p>
               <p className="hero-editions">
                 <Link href="/editions">Earlier editions</Link>

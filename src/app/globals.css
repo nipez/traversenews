@@ -259,23 +259,33 @@ a:hover {
   margin: 10px 0 0;
   max-width: none;
   font-family: var(--font-source-serif), Georgia, serif;
-  font-size: 15px;
+  font-size: 14px;
+  letter-spacing: -0.01em;
   line-height: 1.35;
   color: #f4edde;
-  /* Even line lengths on phones — avoids a stub last line */
+  /* Even line lengths on phones — avoids orphaning “more.” alone */
   text-wrap: balance;
 }
 
 @media (max-width: 389px) {
   .hero-dek {
-    font-size: 14px;
+    font-size: 13px;
+    letter-spacing: -0.015em;
   }
 }
 
 @media (min-width: 768px) {
   .hero-dek {
+    font-size: 16px;
+    letter-spacing: -0.005em;
+  }
+}
+
+/* Wide desktop only — string is long enough that nowrap overflows tablets */
+@media (min-width: 1100px) {
+  .hero-dek {
     font-size: 17px;
-    /* one line at desktop — no wrap / no orphan */
+    letter-spacing: 0;
     white-space: nowrap;
     text-wrap: nowrap;
   }
