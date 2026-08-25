@@ -1,5 +1,14 @@
 import { shortHash } from "@/lib/events";
+import { dedupeAlertIncidents } from "@/lib/alert-incidents";
 import type { Source, Story } from "@/lib/types";
+
+export {
+  alertsSameIncident,
+  dedupeAlertIncidents,
+  normalizeAlertTitle,
+  preferAlertCard,
+  type AlertIncidentFields,
+} from "@/lib/alert-incidents";
 
 /**
  * Homepage Alerts strip sources (Facebook tip wires).
@@ -14,7 +23,7 @@ export function isAlertSourceId(sourceId: string): boolean {
 export type AlertItem = Story & { source_name: string };
 
 /**
- * Real pulled alert stories only. Newest first, max 3.
+ * Real pulled alert stories only. Newest first, max 3 distinct incidents.
  * Empty → caller must hide the strip (no dummy copy).
  */
 export function selectAlerts(
@@ -25,13 +34,11 @@ export function selectAlerts(
   const limit = options.limit ?? 3;
   const nameById = new Map(sources.map((s) => [s.id, s.name]));
 
-  return stories
+  const candidates = stories
     .filter((s) => !s.is_original && isAlertSourceId(s.source_id))
-    .filter((s) => s.title.trim().length > 0 && s.url.trim().length > 0)
-    .sort(
-      (a, b) =>
-        new Date(b.published_at).getTime() - new Date(a.published_at).getTime(),
-    )
+    .filter((s) => s.title.trim().length > 0 && s.url.trim().length > 0);
+
+  return dedupeAlertIncidents(candidates)
     .slice(0, limit)
     .map((s) => ({
       ...s,

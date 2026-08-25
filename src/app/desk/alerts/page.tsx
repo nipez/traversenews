@@ -46,6 +46,7 @@ export default async function DeskAlertsPage() {
             existingAlerts={allAlertStories.map((s) => ({
               id: s.id,
               title: s.title,
+              dek: s.dek,
               url: s.url,
               source_id: s.source_id,
             }))}

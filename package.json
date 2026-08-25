@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "test:research-source": "tsx --test src/lib/desk/research-source.test.ts",
+    "test:alerts": "tsx --test src/lib/alerts.test.ts",
     "pull": "tsx scripts/pull.ts",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
