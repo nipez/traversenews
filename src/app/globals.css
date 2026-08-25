@@ -141,14 +141,9 @@ a:hover {
   z-index: 1;
 }
 
-/* Sticky ink + mobile tabs must paint above .stage while stuck */
-.site-shell > .site-header-hero,
-.site-shell > .site-header-interior {
-  z-index: 40;
-}
-
-/* Search/email + mobile section chips stick; hero/mast scroll away */
-.nav-sticky-stack {
+/* Sticky stack is a site-shell sibling of main (not inside a short header)
+   so it can stick while page content scrolls. */
+.site-shell > .nav-sticky-stack {
   position: sticky;
   top: 0;
   z-index: 40;

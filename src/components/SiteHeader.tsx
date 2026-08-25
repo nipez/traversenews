@@ -58,6 +58,16 @@ function NavInkBar({ active }: { active: string }) {
   );
 }
 
+/** Ink search/email + mobile chips. Sibling of mast/hero so sticky can span main. */
+function StickyNavStack({ active }: { active: string }) {
+  return (
+    <div className="nav-sticky-stack">
+      <NavInkBar active={active} />
+      <MobileBottomNav active={active} />
+    </div>
+  );
+}
+
 export function SiteHeader({
   active = "/",
   variant = "compact",
@@ -70,65 +80,62 @@ export function SiteHeader({
 }) {
   if (variant === "hero") {
     return (
-      <header className="site-header-hero">
-        <div className="hero-photo">
-          <Image
-            src="/art/bay-hero.jpg"
-            alt="Grand Traverse Bay at sunset"
-            fill
-            priority
-            className="hero-photo-img"
-            sizes="100vw"
-          />
-          <div className="hero-photo-scrim" aria-hidden />
-          <div className="hero-photo-frame">
-            <div className="hero-top">
-              <p className="hero-meta">Traverse City, Michigan</p>
-              <p className="hero-meta">{formatHeaderDate()}</p>
-            </div>
-            <div className="hero-bottom">
-              <Link href="/" className="hero-wordmark">
-                <Wordmark tone="cream" />
-              </Link>
-              <p className="hero-dek">
-                One tab for the bay: news, nights out, civic, and schools.
-              </p>
-              <p className="hero-editions">
-                <Link href="/editions">Earlier editions</Link>
-                {yesterdayEditionDate ? (
-                  <>
-                    <span className="hero-editions-sep" aria-hidden>
-                      ·
-                    </span>
-                    <Link href={`/editions/${yesterdayEditionDate}`}>
-                      Yesterday
-                    </Link>
-                  </>
-                ) : null}
-              </p>
+      <>
+        <header className="site-header-hero">
+          <div className="hero-photo">
+            <Image
+              src="/art/bay-hero.jpg"
+              alt="Grand Traverse Bay at sunset"
+              fill
+              priority
+              className="hero-photo-img"
+              sizes="100vw"
+            />
+            <div className="hero-photo-scrim" aria-hidden />
+            <div className="hero-photo-frame">
+              <div className="hero-top">
+                <p className="hero-meta">Traverse City, Michigan</p>
+                <p className="hero-meta">{formatHeaderDate()}</p>
+              </div>
+              <div className="hero-bottom">
+                <Link href="/" className="hero-wordmark">
+                  <Wordmark tone="cream" />
+                </Link>
+                <p className="hero-dek">
+                  One tab for the bay: news, nights out, civic, and schools.
+                </p>
+                <p className="hero-editions">
+                  <Link href="/editions">Earlier editions</Link>
+                  {yesterdayEditionDate ? (
+                    <>
+                      <span className="hero-editions-sep" aria-hidden>
+                        ·
+                      </span>
+                      <Link href={`/editions/${yesterdayEditionDate}`}>
+                        Yesterday
+                      </Link>
+                    </>
+                  ) : null}
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-
-        <div className="nav-sticky-stack">
-          <NavInkBar active={active} />
-          <MobileBottomNav active={active} />
-        </div>
-      </header>
+        </header>
+        <StickyNavStack active={active} />
+      </>
     );
   }
 
   return (
-    <header className="site-header-interior">
-      <div className="interior-mast">
-        <Link href="/" className="interior-wordmark">
-          <Wordmark />
-        </Link>
-      </div>
-      <div className="nav-sticky-stack">
-        <NavInkBar active={active} />
-        <MobileBottomNav active={active} />
-      </div>
-    </header>
+    <>
+      <header className="site-header-interior">
+        <div className="interior-mast">
+          <Link href="/" className="interior-wordmark">
+            <Wordmark />
+          </Link>
+        </div>
+      </header>
+      <StickyNavStack active={active} />
+    </>
   );
 }
