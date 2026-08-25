@@ -141,6 +141,15 @@ a:hover {
   z-index: 1;
 }
 
+/* Sticky stack is a site-shell sibling of main (not inside a short header)
+   so it can stick while page content scrolls. */
+.site-shell > .nav-sticky-stack {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: var(--ink);
+}
+
 /* ——— Wordmark ——— */
 .wordmark {
   font-family: var(--font-archivo), system-ui, sans-serif;
@@ -1725,16 +1734,12 @@ a:hover {
   font-weight: 700;
 }
 
-/* Mobile bottom ink tabs */
+/* Mobile section chips under Search / Morning email (sticky stack) */
 .mobile-tabs {
-  position: fixed;
-  inset-inline: 0;
-  bottom: 0;
-  z-index: 40;
   display: grid;
   grid-template-columns: repeat(6, 1fr);
   background: var(--ink);
-  border-top: 1px solid var(--ink);
+  border-top: 1px solid color-mix(in srgb, var(--paper) 25%, transparent);
 }
 
 @media (min-width: 768px) {
@@ -1781,14 +1786,9 @@ a:hover {
   color: var(--ink);
 }
 
+/* Bottom spacer retired — mobile tabs live in the sticky top stack */
 .pb-mobile-nav {
-  padding-bottom: 4.25rem;
-}
-
-@media (min-width: 768px) {
-  .pb-mobile-nav {
-    padding-bottom: 0;
-  }
+  padding-bottom: 0;
 }
 
 .prose-article p {
