@@ -31,8 +31,9 @@
     "NEXT_PUBLIC_SITE_URL": "https://traverse-news.nickperez.workers.dev"
   },
   "triggers": {
-    // Weekday 7:30am America/Detroit (EDT = UTC-4 → 11:30 UTC; EST = UTC-5 → 12:30 UTC).
-    // Fixed at 11:30 UTC for EDT mornings; adjust seasonally if needed.
-    "crons": ["30 11 * * 1-5"]
+    // Weekday pull 7:30am America/Detroit (EDT = UTC-4 → 11:30 UTC).
+    // Morning letter Mon-Sat 8:00am America/Detroit (EDT → 12:00 UTC).
+    // Do not change these schedules without Nick's say-so.
+    "crons": ["30 11 * * 1-5", "0 12 * * 1-6"]
   }
 }

@@ -243,6 +243,13 @@ export type EmailSportsCard = {
   time_unknown?: boolean;
 };
 
+/** Record that today's morning letter already went out (America/Detroit date). */
+export type EmailLetterSendRecord = {
+  sent_at: string;
+  resend_id?: string;
+  subject?: string;
+};
+
 /**
  * Frozen morning-email letter for one America/Detroit date.
  * Separate from homepage `editions` — this is the letter, not the Today rail.
@@ -302,6 +309,11 @@ export type AppData = {
   editions: EditionSnapshot[];
   /** Morning-email letter archive (Detroit date keys). Not sent mail. */
   email_editions: EmailEditionSnapshot[];
+  /**
+   * Per-Detroit-date record that the Worker already sent the morning letter.
+   * Also mirrored to a dedicated KV key for cheap cron reads.
+   */
+  email_letter_sends?: Record<string, EmailLetterSendRecord>;
   /** Desk originals workflow. Drafts are never public. */
   drafts: OriginalDraft[];
   /**

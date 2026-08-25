@@ -11,6 +11,10 @@ interface __BaseEnv_CloudflareEnv {
 	DEV_DESK_PASSWORD: string;
 	DEV_DESK_EMAIL: string;
 	NEXT_PUBLIC_SITE_URL: string;
+	/** Resend sending-only API key (wrangler secret). From: info@traverse.news */
+	RESEND_API_KEY: string;
+	/** Optional Desk bearer for cron → /api/desk/email/send */
+	DESK_IMPORT_TOKEN: string;
 	WORKER_SELF_REFERENCE: Service<typeof import("./cloudflare-worker").default>;
 }
 declare namespace Cloudflare {
@@ -24,7 +28,7 @@ type StringifyValues<EnvType extends Record<string, unknown>> = {
 	[Binding in keyof EnvType]: EnvType[Binding] extends string ? EnvType[Binding] : string;
 };
 declare namespace NodeJS {
-	interface ProcessEnv extends StringifyValues<Pick<Cloudflare.Env, "NEXT_PUBLIC_SUPABASE_URL" | "NEXT_PUBLIC_SUPABASE_ANON_KEY" | "SUPABASE_SERVICE_ROLE_KEY" | "DEV_DESK_PASSWORD" | "DEV_DESK_EMAIL" | "NEXT_PUBLIC_SITE_URL">> {}
+	interface ProcessEnv extends StringifyValues<Pick<Cloudflare.Env, "NEXT_PUBLIC_SUPABASE_URL" | "NEXT_PUBLIC_SUPABASE_ANON_KEY" | "SUPABASE_SERVICE_ROLE_KEY" | "DEV_DESK_PASSWORD" | "DEV_DESK_EMAIL" | "NEXT_PUBLIC_SITE_URL" | "RESEND_API_KEY" | "DESK_IMPORT_TOKEN">> {}
 }
 
 // Begin runtime types
