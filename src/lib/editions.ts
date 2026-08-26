@@ -1,7 +1,5 @@
-import { selectAroundTheBay } from "@/lib/around";
 import {
-  collectStaleEditionBayIdentities,
-  wasInPriorLetter,
+  selectFreshAroundTheBay,
 } from "@/lib/email-editions";
 import {
   dedupeEvents,
@@ -101,14 +99,10 @@ export function buildEditionSnapshot(
 ): EditionSnapshot {
   const clusters = clusterStories(data.stories, data.sources);
   const originals = clusters.filter((c) => c.is_original);
-  const staleBay = collectStaleEditionBayIdentities(data.editions, at);
-  const around = selectAroundTheBay(
-    clusters.filter((c) => !c.is_original),
-    { limit: 24, maxPerSource: 4, maxSports: 4, maxRecordEagle: 2 },
-  )
-    .filter((c) => !wasInPriorLetter(c, staleBay))
-    .slice(0, 18);
-  // Staff originals only — never promote other-desk wire into the edition lead.
+  // Drop yesterday’s edition bay heads (+ stale multi-day leftovers). Staff
+  // originals only for the lead — never invent a lead or promote wire into it.
+  // Keep today’s original even if the same piece also ran yesterday.
+  const around = selectFreshAroundTheBay(clusters, data.editions, at);
   const leadCluster = originals[0] ?? null;
 
   const weekendEvents = selectTonightEvents(data.events, data.sources, {

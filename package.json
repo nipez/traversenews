@@ -9,6 +9,7 @@
     "lint": "eslint",
     "dry-run:morning-letter": "tsx scripts/dry-run-morning-letter.ts",
     "dry-run:letter-fresh": "tsx scripts/dry-run-letter-fresh.ts",
+    "dry-run:bay-fresh": "tsx scripts/dry-run-bay-fresh.ts",
     "pull": "tsx scripts/pull.ts",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
