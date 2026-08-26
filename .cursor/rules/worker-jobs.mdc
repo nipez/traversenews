@@ -1,0 +1,16 @@
+---
+description: Worker owns the 7:30 pull and Mon–Sat morning letter. Do not reimplement those jobs in Grok Bot or a second cron.
+alwaysApply: true
+---
+
+The weekday 7:30am America/Detroit source pull is the Worker cron `30 11 * * 1-5` (EDT) → POST `/api/pull`. Do not add a Cursor/Grok Bot pull that replaces it.
+
+The morning letter is the Worker cron `0 12 * * 1-6` (EDT = Mon–Sat 8am Detroit) → POST `/api/desk/email/send`. Sunday stays off. Idempotent per Detroit date. From Traverse News `<info@traverse.news>` via Resend. Do not add a second send from Cursor or Grok Bot.
+
+EST needs a seasonal cron shift (pull 12:30 UTC, letter 13:00 UTC) — see `wrangler.jsonc` comments.
+
+Grok Bot / Cursor chat still owns Facebook alerts (signed-in browser), bot-blocked pages (Visit TC Simpleview), and Desk originals Nick writes or approves. Never invent reporting.
+
+Letter mix: unique vs yesterday’s letter (shorter is better than repeating heads). Homepage bay should also drop yesterday’s heads.
+
+Recipients stay `nickperez@gmail.com` while the stored list has example/verify addresses. No attachments. No Google Drive/Docs/Sheets/Forms hrefs.

@@ -139,6 +139,8 @@ curl https://traverse-news.nickperez.workers.dev/
 
 ### Morning cron
 
+**These two jobs are live on the Worker. Do not re-add them in Grok Bot or Cursor.**
+
 Weekdays at **11:30 UTC** (7:30am EDT): `30 11 * * 1-5` in `wrangler.jsonc` → `cloudflare-worker.ts` `scheduled` handler POSTs `/api/pull` via the self service binding.
 
 Test locally:
