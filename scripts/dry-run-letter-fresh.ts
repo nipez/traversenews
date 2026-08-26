@@ -1,6 +1,6 @@
 /**
- * Dry-run: morning letter must drop yesterday’s bay/lead/alert cards by URL
- * or headline, and must not pad with stale heads when the fresh pool is thin.
+ * Dry-run: morning letter must drop yesterday’s letter cards, multi-day
+ * homepage leftovers, and second-desk rewrites — without padding stale heads.
  *
  *   npx tsx scripts/dry-run-letter-fresh.ts
  */
@@ -10,10 +10,12 @@ import {
   collectPriorLetterIdentities,
   LETTER_AROUND_MIN_FRESH,
   pickFreshAroundForLetter,
+  titlesLikelySameStory,
   wasInPriorLetter,
 } from "../src/lib/email-editions";
 import type {
   AppData,
+  EditionSnapshot,
   EmailEditionSnapshot,
   Source,
   Story,
@@ -24,6 +26,21 @@ const STALE_URL =
 const STALE_TITLE = "Deputy City Manager search advances";
 const FRESH_URL = "https://www.9and10news.com/2026/08/26/new-bay-story/";
 const FRESH_TITLE = "Harbor Commission sets fall dock fees";
+const JULY_URL = "https://www.northernexpress.com/july-up-north-recap/";
+const JULY_TITLE = "July Up North: A Recap";
+const TICKER_MORATORIUM_URL =
+  "https://www.traverseticker.com/news/issues-moratorium-on-data-centers/";
+const TICKER_MORATORIUM_TITLE = "Issues Moratorium on Data Centers";
+const NINE_MORATORIUM_URL =
+  "https://www.9and10news.com/2026/08/26/enacts-data-center-moratorium/";
+const NINE_MORATORIUM_TITLE =
+  "Grand Traverse County enacts data center moratorium";
+
+assert.equal(
+  titlesLikelySameStory(TICKER_MORATORIUM_TITLE, NINE_MORATORIUM_TITLE),
+  true,
+  "second-desk rewrite should match prior letter title",
+);
 
 const yesterdayLetter: EmailEditionSnapshot = {
   date: "2026-08-25",
@@ -42,6 +59,12 @@ const yesterdayLetter: EmailEditionSnapshot = {
       url: "https://www.record-eagle.com/brown-bridge",
       sources: ["Record-Eagle"],
       paywalled: true,
+    },
+    {
+      title: TICKER_MORATORIUM_TITLE,
+      dek: "County pause.",
+      url: TICKER_MORATORIUM_URL,
+      sources: ["The Ticker"],
     },
   ],
   alerts: [
@@ -124,6 +147,16 @@ const source910: Source = {
   enabled: true,
   notes: "",
 };
+const sourceNx: Source = {
+  id: "src_northern",
+  name: "Northern Express",
+  beat_id: "beat_news",
+  homepage: "https://www.northernexpress.com",
+  feed_url: null,
+  pull_method: "rss",
+  enabled: true,
+  notes: "",
+};
 
 function story(partial: Partial<Story> & Pick<Story, "id" | "title" | "url" | "source_id">): Story {
   return {
@@ -138,9 +171,29 @@ function story(partial: Partial<Story> & Pick<Story, "id" | "title" | "url" | "s
   };
 }
 
+const oldEdition = (date: string, title: string, url: string): EditionSnapshot => ({
+  date,
+  captured_at: `${date}T12:00:00.000Z`,
+  lead: null,
+  around: [
+    {
+      title,
+      dek: "Leftover bay head.",
+      url,
+      published_at: `${date}T12:00:00.000Z`,
+      sources: ["Northern Express"],
+      byline: null,
+      slug: null,
+      is_original: false,
+    },
+  ],
+  events: [],
+  civic: [],
+});
+
 const data = {
   beats: [],
-  sources: [sourceTicker, source910],
+  sources: [sourceTicker, source910, sourceNx],
   stories: [
     story({
       id: "s1",
@@ -166,6 +219,30 @@ const data = {
       dek: "Second fresh wire item for the morning letter.",
       published_at: "2026-08-26T08:00:00.000Z",
     }),
+    story({
+      id: "s4",
+      title: JULY_TITLE,
+      url: JULY_URL,
+      source_id: "src_northern",
+      dek: "Week-old recap still sitting on the homepage pile.",
+      published_at: "2026-08-22T12:00:00.000Z",
+    }),
+    story({
+      id: "s5",
+      title: TICKER_MORATORIUM_TITLE,
+      url: TICKER_MORATORIUM_URL,
+      source_id: "src_ticker",
+      dek: "Already mailed Wednesday.",
+      published_at: "2026-08-25T14:00:00.000Z",
+    }),
+    story({
+      id: "s6",
+      title: NINE_MORATORIUM_TITLE,
+      url: NINE_MORATORIUM_URL,
+      source_id: "src_910",
+      dek: "Second-desk rewrite of Wednesday’s Ticker card.",
+      published_at: "2026-08-26T11:00:00.000Z",
+    }),
   ],
   events: [],
   athletics: [],
@@ -174,13 +251,17 @@ const data = {
   tips: [],
   event_tips: [],
   last_pull_at: null,
-  editions: [],
+  editions: [
+    oldEdition("2026-08-22", JULY_TITLE, JULY_URL),
+    oldEdition("2026-08-23", JULY_TITLE, JULY_URL),
+    oldEdition("2026-08-24", JULY_TITLE, JULY_URL),
+  ],
   email_editions: [yesterdayLetter],
   drafts: [],
 } as unknown as AppData;
 
-const monday = new Date("2026-08-26T12:00:00.000Z");
-const letter = buildEmailEditionSnapshot(data, monday);
+const thursday = new Date("2026-08-26T12:00:00.000Z");
+const letter = buildEmailEditionSnapshot(data, thursday);
 
 assert.equal(letter.date, "2026-08-26");
 assert.ok(
@@ -190,6 +271,19 @@ assert.ok(
 assert.ok(
   letter.around.every((c) => c.title !== STALE_TITLE),
   "yesterday headline must not reappear",
+);
+assert.ok(
+  letter.around.every((c) => c.url !== JULY_URL && c.title !== JULY_TITLE),
+  "multi-day homepage leftover must not get its first email slot",
+);
+assert.ok(
+  letter.around.every(
+    (c) =>
+      c.url !== NINE_MORATORIUM_URL &&
+      c.url !== TICKER_MORATORIUM_URL &&
+      !/moratorium/i.test(c.title),
+  ),
+  "second-desk rewrite of yesterday’s letter card must be excluded",
 );
 assert.ok(
   letter.around.some((c) => c.url === FRESH_URL),
@@ -205,5 +299,5 @@ assert.ok(
 );
 
 console.log(
-  `dry-run-letter-fresh: ok (around=${letter.around.length}, skipped stale bay heads)`,
+  `dry-run-letter-fresh: ok (around=${letter.around.length}, skipped stale + rewrite bay heads)`,
 );

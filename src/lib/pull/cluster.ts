@@ -51,6 +51,7 @@ export function clusterStories(
     image_credit: s.image_credit ?? null,
     image_caption: s.image_caption ?? null,
     body: s.body,
+    members: [{ title: s.title, url: s.url }],
   }));
 
   const used = new Set<string>();
@@ -98,6 +99,7 @@ export function clusterStories(
       slug: null,
       image_url: null,
       body: null,
+      members: members.map((m) => ({ title: m.title, url: m.url })),
     });
   }
 

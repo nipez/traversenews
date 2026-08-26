@@ -17,6 +17,7 @@ import { isRecordEagleCluster } from "@/lib/paywall";
 import { clusterStories } from "@/lib/pull/cluster";
 import type {
   AppData,
+  ClusteredStory,
   EditionSnapshot,
   EmailAlertCard,
   EmailEditionSnapshot,
@@ -135,7 +136,8 @@ function addIdentity(set: Set<string>, item: { title: string; url?: string | nul
 /**
  * Collect URL + headline identities from yesterday’s published letter only
  * so today’s letter can drop anything already emailed. Homepage edition bay
- * cards that never made the letter are not excluded here.
+ * cards that never made the letter are not excluded here (stale multi-day
+ * aging is separate via collectStaleEditionBayIdentities).
  */
 export function collectPriorLetterIdentities(
   priorLetter: EmailEditionSnapshot | null | undefined,
@@ -163,6 +165,120 @@ export function wasInPriorLetter(
   if (url && prior.has(`url:${url}`)) return true;
   const titleKey = `title:${normalizeLetterHeadline(item.title)}`;
   return titleKey !== "title:" && prior.has(titleKey);
+}
+
+function titleTokens(title: string): Set<string> {
+  return new Set(
+    normalizeLetterHeadline(title)
+      .replace(/(ies)\b/g, "y")
+      .replace(/(ses|xes|zes|ches|shes)\b/g, "")
+      .replace(/s\b/g, "")
+      .split(/\s+/)
+      .filter((t) => t.length > 2),
+  );
+}
+
+function tokenJaccard(a: Set<string>, b: Set<string>): number {
+  if (a.size === 0 || b.size === 0) return 0;
+  let inter = 0;
+  for (const t of a) if (b.has(t)) inter += 1;
+  const union = a.size + b.size - inter;
+  return union === 0 ? 0 : inter / union;
+}
+
+/**
+ * True when two headlines are likely the same story (exact, cluster-strength
+ * overlap, or a second-desk rewrite with the same key nouns).
+ */
+export function titlesLikelySameStory(a: string, b: string): boolean {
+  const na = normalizeLetterHeadline(a);
+  const nb = normalizeLetterHeadline(b);
+  if (!na || !nb) return false;
+  if (na === nb) return true;
+
+  const ta = titleTokens(a);
+  const tb = titleTokens(b);
+  const overlap = tokenJaccard(ta, tb);
+  if (overlap >= 0.62) return true;
+
+  let shared = 0;
+  let distinctiveShared = false;
+  for (const t of ta) {
+    if (!tb.has(t)) continue;
+    shared += 1;
+    if (t.length >= 8) distinctiveShared = true;
+  }
+  // "moratorium" + "data" + "center" style rewrites across desks.
+  if (shared >= 3 && overlap >= 0.35) return true;
+  return shared >= 2 && distinctiveShared && overlap >= 0.4;
+}
+
+function clusterMembers(
+  cluster: ClusteredStory,
+): Array<{ title: string; url: string }> {
+  if (cluster.members?.length) return cluster.members;
+  return [{ title: cluster.title, url: cluster.url }];
+}
+
+function clusterHitsExcluded(
+  cluster: ClusteredStory,
+  excluded: Set<string>,
+  priorTitles: string[],
+): boolean {
+  const members = clusterMembers(cluster);
+  for (const member of members) {
+    if (wasInPriorLetter(member, excluded)) return true;
+    for (const priorTitle of priorTitles) {
+      if (titlesLikelySameStory(priorTitle, member.title)) return true;
+    }
+  }
+  if (wasInPriorLetter(cluster, excluded)) return true;
+  for (const priorTitle of priorTitles) {
+    if (titlesLikelySameStory(priorTitle, cluster.title)) return true;
+  }
+  return false;
+}
+
+/**
+ * When a prior-letter (or stale) identity hits a cluster by URL / title /
+ * rewrite-similarity, exclude every member URL + title so a second desk
+ * cannot follow the next morning.
+ */
+export function expandExcludedWithClusterMembers(
+  excluded: Set<string>,
+  clusters: ClusteredStory[],
+  priorLetter?: EmailEditionSnapshot | null,
+): Set<string> {
+  const next = new Set(excluded);
+  const priorTitles: string[] = [];
+  if (priorLetter?.lead?.title) priorTitles.push(priorLetter.lead.title);
+  for (const card of priorLetter?.around ?? []) {
+    if (card.title) priorTitles.push(card.title);
+  }
+
+  let grew = true;
+  while (grew) {
+    grew = false;
+    for (const cluster of clusters) {
+      if (!clusterHitsExcluded(cluster, next, priorTitles)) continue;
+      for (const member of clusterMembers(cluster)) {
+        const before = next.size;
+        addIdentity(next, member);
+        if (next.size > before) grew = true;
+      }
+      addIdentity(next, cluster);
+    }
+  }
+
+  return next;
+}
+
+export function mergeIdentitySets(...sets: Set<string>[]): Set<string> {
+  const next = new Set<string>();
+  for (const set of sets) {
+    for (const value of set) next.add(value);
+  }
+  return next;
 }
 
 export function findPriorDetroitDaySnapshot<T extends { date: string }>(
@@ -234,8 +350,17 @@ export function pickFreshAroundForLetter<
 
 /**
  * Assemble the morning letter from the same live mix rules as /email preview.
- * Drops URL/headline matches from yesterday’s published letter only. Never
- * invents stories, kickoffs, or meetings.
+ *
+ * Uniqueness:
+ * - Yesterday’s published letter only (not the full yesterday edition) for
+ *   all sections.
+ * - Around + lead also drop collectStaleEditionBayIdentities (editions older
+ *   than yesterday) so a weekly recap cannot get its first email slot after
+ *   days on the homepage.
+ * - When a prior/stale identity hits a cluster, every member URL/title is
+ *   excluded so a second-desk rewrite cannot follow.
+ *
+ * Never invents stories, kickoffs, or meetings.
  */
 export function buildEmailEditionSnapshot(
   data: AppData,
@@ -243,20 +368,32 @@ export function buildEmailEditionSnapshot(
 ): EmailEditionSnapshot {
   const priorLetter = findPriorDetroitDaySnapshot(data.email_editions, at);
   const prior = collectPriorLetterIdentities(priorLetter);
+  const staleBay = collectStaleEditionBayIdentities(data.editions, at);
 
   const clusters = clusterStories(data.stories, data.sources);
+  const bayExclude = expandExcludedWithClusterMembers(
+    mergeIdentitySets(prior, staleBay),
+    clusters,
+    priorLetter,
+  );
+  const priorExpanded = expandExcludedWithClusterMembers(
+    prior,
+    clusters,
+    priorLetter,
+  );
+
   const originals = clusters.filter((c) => c.is_original);
   const leadCluster = originals[0] ?? null;
 
-  // Pull a wide pool, then keep only cards that did not run yesterday.
-  // Record-Eagle hard-paywall cap stays at 2.
+  // Pull a wide pool, then keep only cards that did not run yesterday /
+  // sit as multi-day leftovers. Record-Eagle hard-paywall cap stays at 2.
   const aroundClusters = selectAroundTheBay(
     clusters.filter((c) => !c.is_original),
     { limit: 24, maxPerSource: 4, maxSports: 4, maxRecordEagle: 2 },
   );
   const around = pickFreshAroundForLetter(
     aroundClusters.map(toAroundCard),
-    prior,
+    bayExclude,
     LETTER_AROUND_MAX,
   );
 
@@ -269,7 +406,7 @@ export function buildEmailEditionSnapshot(
       url: a.url,
       source_name: a.source_name,
     }))
-    .filter((a) => !wasInPriorLetter(a, prior))
+    .filter((a) => !wasInPriorLetter(a, priorExpanded))
     .slice(0, 2);
 
   // Same featured pool as /whats-on (timed nights out — not library-first noon).
@@ -281,14 +418,14 @@ export function buildEmailEditionSnapshot(
     timedOnly: true,
   })
     .map(toEventCard)
-    .filter((e) => !wasInPriorLetter(e, prior))
+    .filter((e) => !wasInPriorLetter(e, priorExpanded))
     .slice(0, 3);
 
   const civic = dedupeEvents(data.events)
     .filter((e) => isCivicEvent(e, data.sources))
     .filter((e) => eventInUpcomingWindow(e, at))
     .map(toEventCard)
-    .filter((e) => !wasInPriorLetter(e, prior))
+    .filter((e) => !wasInPriorLetter(e, priorExpanded))
     .slice(0, 2);
 
   const weekGames = filterAthleticsSlate(
@@ -309,11 +446,11 @@ export function buildEmailEditionSnapshot(
       if (g.time_unknown) card.time_unknown = true;
       return card;
     })
-    .filter((g) => !wasInPriorLetter(g, prior))
+    .filter((g) => !wasInPriorLetter(g, priorExpanded))
     .slice(0, 4);
 
   const lead: EmailStoryCard | null =
-    leadCluster && !wasInPriorLetter(leadCluster, prior)
+    leadCluster && !wasInPriorLetter(leadCluster, bayExclude)
       ? {
           title: leadCluster.title,
           dek: leadCluster.dek,

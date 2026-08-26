@@ -179,6 +179,12 @@ export type ClusteredStory = {
   image_credit?: string | null;
   image_caption?: string | null;
   body: string | null;
+  /**
+   * Every desk row in this cluster (lead first). Used so a morning letter
+   * that already mailed one desk can exclude the whole cluster, including
+   * second-desk rewrites.
+   */
+  members?: Array<{ title: string; url: string }>;
 };
 
 /** Compact card stored in a day's edition (no third-party bodies). */
