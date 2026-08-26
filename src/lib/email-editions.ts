@@ -1,6 +1,8 @@
 import { selectAlerts } from "@/lib/alerts";
 import { selectAroundTheBay } from "@/lib/around";
 import {
+  athleticsSchoolLabel,
+  filterAthleticsSlate,
   isVarsityGameTitle,
   selectThisWeekAthletics,
 } from "@/lib/athletics";
@@ -131,13 +133,12 @@ function addIdentity(set: Set<string>, item: { title: string; url?: string | nul
 }
 
 /**
- * Collect URL + headline identities from yesterday’s published letter
- * (and optionally yesterday’s homepage edition) so today’s letter can drop
- * anything already sent.
+ * Collect URL + headline identities from yesterday’s published letter only
+ * so today’s letter can drop anything already emailed. Homepage edition bay
+ * cards that never made the letter are not excluded here.
  */
 export function collectPriorLetterIdentities(
   priorLetter: EmailEditionSnapshot | null | undefined,
-  priorEdition?: EditionSnapshot | null,
 ): Set<string> {
   const set = new Set<string>();
 
@@ -148,11 +149,6 @@ export function collectPriorLetterIdentities(
     for (const card of priorLetter.tonight) addIdentity(set, card);
     for (const card of priorLetter.civic) addIdentity(set, card);
     for (const card of priorLetter.sports) addIdentity(set, card);
-  }
-
-  if (priorEdition) {
-    if (priorEdition.lead) addIdentity(set, priorEdition.lead);
-    for (const card of priorEdition.around) addIdentity(set, card);
   }
 
   return set;
@@ -238,16 +234,15 @@ export function pickFreshAroundForLetter<
 
 /**
  * Assemble the morning letter from the same live mix rules as /email preview.
- * Drops URL/headline matches from yesterday’s letter (and yesterday’s edition
- * bay/lead when present). Never invents stories, kickoffs, or meetings.
+ * Drops URL/headline matches from yesterday’s published letter only. Never
+ * invents stories, kickoffs, or meetings.
  */
 export function buildEmailEditionSnapshot(
   data: AppData,
   at = new Date(),
 ): EmailEditionSnapshot {
   const priorLetter = findPriorDetroitDaySnapshot(data.email_editions, at);
-  const priorEdition = findPriorDetroitDaySnapshot(data.editions, at);
-  const prior = collectPriorLetterIdentities(priorLetter, priorEdition);
+  const prior = collectPriorLetterIdentities(priorLetter);
 
   const clusters = clusterStories(data.stories, data.sources);
   const originals = clusters.filter((c) => c.is_original);
@@ -296,7 +291,10 @@ export function buildEmailEditionSnapshot(
     .filter((e) => !wasInPriorLetter(e, prior))
     .slice(0, 2);
 
-  const weekGames = selectThisWeekAthletics(data.athletics ?? [], at);
+  const weekGames = filterAthleticsSlate(
+    selectThisWeekAthletics(data.athletics ?? [], at),
+    { includeSurrounding: false },
+  );
   const varsity = weekGames.filter((g) => isVarsityGameTitle(g.title));
   const sportsPool = (varsity.length > 0 ? varsity : weekGames).slice(0, 8);
   const sports: EmailSportsCard[] = sportsPool
@@ -306,7 +304,7 @@ export function buildEmailEditionSnapshot(
         starts_at: g.starts_at,
         place: g.place,
         url: g.url,
-        school: g.school,
+        school: athleticsSchoolLabel(g),
       };
       if (g.time_unknown) card.time_unknown = true;
       return card;
