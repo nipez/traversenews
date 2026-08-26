@@ -14,7 +14,7 @@ import {
 } from "@/lib/athletics";
 import { getTraverseDataKv } from "@/lib/data/kv";
 import { isBannedOriginalSlug } from "@/lib/data/scrub";
-import { buildEmailEditionSnapshot } from "@/lib/email-editions";
+import { buildEmailEditionSnapshot, collectStaleEditionBayIdentities, wasInPriorLetter } from "@/lib/email-editions";
 import {
   dedupeEvents,
   eventInUpcomingWindow,
@@ -304,16 +304,19 @@ function toAlert(a: {
 export function buildHomeSnapshot(data: AppData, at = new Date()): PublicHomeSnapshot {
   const clusters = clusterStories(data.stories, data.sources);
   const originals = clusters.filter((c) => c.is_original);
+  const staleBay = collectStaleEditionBayIdentities(data.editions, at);
   const around = selectAroundTheBay(
     clusters.filter((c) => !c.is_original),
     {
-      limit: 18,
+      limit: 24,
       maxPerSource: 4,
       maxSports: 4,
-      maxRecordEagle: 3,
+      maxRecordEagle: 2,
       maxUpNorth: 3,
     },
-  );
+  )
+    .filter((c) => !wasInPriorLetter(c, staleBay))
+    .slice(0, 18);
   const lead = originals[0] ?? null;
   const weekendEvents = selectTonightEvents(data.events, data.sources, {
     now: at,

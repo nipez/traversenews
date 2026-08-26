@@ -1,5 +1,9 @@
 import { selectAroundTheBay } from "@/lib/around";
 import {
+  collectStaleEditionBayIdentities,
+  wasInPriorLetter,
+} from "@/lib/email-editions";
+import {
   dedupeEvents,
   eventInUpcomingWindow,
   isCivicEvent,
@@ -97,10 +101,13 @@ export function buildEditionSnapshot(
 ): EditionSnapshot {
   const clusters = clusterStories(data.stories, data.sources);
   const originals = clusters.filter((c) => c.is_original);
+  const staleBay = collectStaleEditionBayIdentities(data.editions, at);
   const around = selectAroundTheBay(
     clusters.filter((c) => !c.is_original),
-    { limit: 18, maxPerSource: 4, maxSports: 4, maxRecordEagle: 3 },
-  );
+    { limit: 24, maxPerSource: 4, maxSports: 4, maxRecordEagle: 2 },
+  )
+    .filter((c) => !wasInPriorLetter(c, staleBay))
+    .slice(0, 18);
   // Staff originals only — never promote other-desk wire into the edition lead.
   const leadCluster = originals[0] ?? null;
 
