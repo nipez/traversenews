@@ -80,16 +80,6 @@ export function DeskRail({
               Sports
             </Link>
           </li>
-          <li>
-            <Link
-              href="/local"
-              className={
-                active === "/local" ? "about-rail-nav-active" : undefined
-              }
-            >
-              Local
-            </Link>
-          </li>
         </ul>
       </div>
 
