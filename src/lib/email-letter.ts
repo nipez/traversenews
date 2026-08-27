@@ -369,12 +369,12 @@ function renderStory(
     sourceOverride || (story.sources?.length ? story.sources.join(" · ") : "");
 
   return {
-    html: `<p style="margin:0 0 10px;font-family:${LETTER_FONT};font-size:16px;line-height:1.35;">${
+    html: `<p style="margin:0;font-family:${LETTER_FONT};font-size:16px;line-height:1.35;">${
       url
         ? `<a href="${escapeHtml(url)}" style="color:#111111;font-weight:700;text-decoration:underline;">${title}</a>`
         : `<strong>${title}</strong>`
     }</p>
-${dek ? `<p style="margin:0 0 6px;font-family:${LETTER_FONT};font-size:14px;line-height:1.5;color:#333333;">${dek}</p>` : ""}
+${dek ? `<p style="margin:12px 0 6px;font-family:${LETTER_FONT};font-size:14px;line-height:1.5;color:#333333;">${dek}</p>` : ""}
 ${source ? `<p style="margin:0 0 18px;font-family:${LETTER_FONT};font-size:12px;color:#666666;">${escapeHtml(source)}${story.paywalled ? " · Paywall" : ""}</p>` : '<p style="margin:0 0 18px;"></p>'}`,
     text: [
       url ? `${story.title} ${url}` : story.title,
@@ -392,12 +392,12 @@ function renderAlert(alert: EmailAlertCard): RenderedItem {
   const dek = alert.dek?.trim() ? escapeHtml(alert.dek.trim()) : "";
 
   return {
-    html: `<p style="margin:0 0 10px;font-family:${LETTER_FONT};font-size:16px;line-height:1.35;">${
+    html: `<p style="margin:0;font-family:${LETTER_FONT};font-size:16px;line-height:1.35;">${
       url
         ? `<a href="${escapeHtml(url)}" style="color:#111111;font-weight:700;text-decoration:underline;">${title}</a>`
         : `<strong>${title}</strong>`
     }</p>
-${dek ? `<p style="margin:0 0 6px;font-family:${LETTER_FONT};font-size:14px;line-height:1.5;color:#333333;">${dek}</p>` : ""}
+${dek ? `<p style="margin:12px 0 6px;font-family:${LETTER_FONT};font-size:14px;line-height:1.5;color:#333333;">${dek}</p>` : ""}
 <p style="margin:0 0 18px;font-family:${LETTER_FONT};font-size:12px;color:#666666;">${escapeHtml(alert.source_name)}</p>`,
     text: [
       url ? `${alert.title} ${url}` : alert.title,
