@@ -19,7 +19,12 @@ import type {
 
 const SITE_ORIGIN = "https://traverse.news";
 const DETROIT_TIME_ZONE = "America/Detroit";
-const DEFAULT_TEST_RECIPIENT = "nickperez@gmail.com";
+
+/** Fallback when the signup list is empty or still has fake/example/verify addresses. */
+export const DESK_LETTER_FALLBACK = "nickperez@gmail.com";
+
+/** Subject prefix for Nick-only 8am previews (live send keeps the bare subject). */
+export const PREVIEW_SUBJECT_PREFIX = "Preview · ";
 
 const LETTER_SCHOOL_TITLE_MARKERS = [
   "orientation",
@@ -585,6 +590,15 @@ export function morningLetterSentKvKey(date: string): string {
   return `morning_letter_sent:${date}`;
 }
 
+/** Nick-only preview idempotency (separate from public `morning_letter_sent`). */
+export function morningLetterPreviewKvKey(date: string): string {
+  return `morning_letter_preview:${date}`;
+}
+
+export function previewLetterSubject(subject: string): string {
+  return `${PREVIEW_SUBJECT_PREFIX}${subject}`;
+}
+
 export function pickLetterSchoolDate(
   schools: SchoolCalendarItem[] | null | undefined,
   at = new Date(),
@@ -621,9 +635,14 @@ export function resolveLetterRecipients(subscribers: Subscriber[]): string[] {
   ];
 
   if (emails.some(isFakeSubscriberEmail)) {
-    return [DEFAULT_TEST_RECIPIENT];
+    return [DESK_LETTER_FALLBACK];
   }
 
   const realEmails = emails.filter((email) => !isFakeSubscriberEmail(email));
-  return realEmails.length > 0 ? realEmails : [DEFAULT_TEST_RECIPIENT];
+  return realEmails.length > 0 ? realEmails : [DESK_LETTER_FALLBACK];
+}
+
+/** 8am preview always goes only to Nick — never the public list. */
+export function resolvePreviewLetterRecipients(): string[] {
+  return [DESK_LETTER_FALLBACK];
 }

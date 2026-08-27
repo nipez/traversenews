@@ -316,10 +316,15 @@ export type AppData = {
   /** Morning-email letter archive (Detroit date keys). Not sent mail. */
   email_editions: EmailEditionSnapshot[];
   /**
-   * Per-Detroit-date record that the Worker already sent the morning letter.
+   * Per-Detroit-date record that the public (live) morning letter already went out.
    * Also mirrored to a dedicated KV key for cheap cron reads.
    */
   email_letter_sends?: Record<string, EmailLetterSendRecord>;
+  /**
+   * Per-Detroit-date Nick-only 8am preview. Separate from live send —
+   * preview must not block Desk from sending live later.
+   */
+  email_letter_previews?: Record<string, EmailLetterSendRecord>;
   /** Desk originals workflow. Drafts are never public. */
   drafts: OriginalDraft[];
   /**

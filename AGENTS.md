@@ -9,6 +9,16 @@
 
 There is **no API from cloud agent → Traverse News** yet. The bridge is **Nick + that chat**: write the ask in the PR and in user-visible status; Nick (and Traverse News watching the repo work) will see it.
 
+## Jobs that already run on the Worker
+
+These are live on the Cloudflare Worker (`wrangler.jsonc` crons → `cloudflare-worker.ts` `scheduled`).
+
+- **Weekday 7:30am America/Detroit pull:** cron `30 11 * * 1-5` (EDT) → POST `/api/pull`.
+- **Morning letter preview Mon–Sat 8am Detroit:** cron `0 12 * * 1-6` (EDT) → POST `/api/desk/email/send` with `{"preview":true}`. Goes **only** to nickperez@gmail.com (`DESK_LETTER_FALLBACK`), subject prefixed `Preview · `. Idempotent via `morning_letter_preview:YYYY-MM-DD`. Does **not** mark the day as publicly sent. **Live/public send is from Desk** (`/desk/email` → same route without `preview`). Sunday stays off.
+- **EST:** shift seasonally (pull 12:30 UTC, letter 13:00 UTC) — see `wrangler.jsonc` comments.
+- **Recipients:** fake/example/verify addresses are never mailed; fallback is nickperez@gmail.com. No attachments. No Google Drive/Docs/Sheets/Forms hrefs.
+- **Never invent reporting.**
+
 ## What Traverse News can do that you cannot
 
 - Drive a **real browser** on a persistent computer (Facebook already signed in; Overheard in TC readable).
