@@ -12,6 +12,7 @@ import {
   previewLetterSubject,
   resolveLetterRecipients,
   resolvePreviewLetterRecipients,
+  unsubscribeUrl,
 } from "../src/lib/email-letter";
 import type { Subscriber } from "../src/lib/types";
 
@@ -47,5 +48,11 @@ const fakeList: Subscriber[] = [
 assert.deepEqual(resolveLetterRecipients(fakeList), [
   "nickperez@gmail.com",
 ]);
+
+assert.equal(unsubscribeUrl(), "https://traverse.news/email/unsubscribe");
+assert.equal(
+  unsubscribeUrl("NickPerez@gmail.com"),
+  "https://traverse.news/email/unsubscribe?email=nickperez%40gmail.com",
+);
 
 console.log("dry-run-letter-preview: ok");

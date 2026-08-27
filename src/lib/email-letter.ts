@@ -447,9 +447,21 @@ function textSectionHeading(emoji: string, label: string): string {
   return `${emoji} ${label.toUpperCase()}`;
 }
 
+/** Absolute unsubscribe URL for the morning letter footer. */
+export function unsubscribeUrl(email?: string | null): string {
+  const base = `${SITE_ORIGIN}/email/unsubscribe`;
+  const normalized = email?.trim().toLowerCase() ?? "";
+  if (!normalized || !normalized.includes("@")) return base;
+  return `${base}?email=${encodeURIComponent(normalized)}`;
+}
+
 export function buildMorningLetter(
   letter: EmailEditionSnapshot,
-  options: { school?: LetterSchoolDate | null } = {},
+  options: {
+    school?: LetterSchoolDate | null;
+    /** Personalized one-click opt-out when sending to a single address. */
+    unsubscribeEmail?: string | null;
+  } = {},
 ): { subject: string; html: string; text: string } {
   const subject = buildMorningLetterSubject(letter);
   const editionLabel = formatEmailEditionLabel(letter.date);
@@ -465,6 +477,7 @@ export function buildMorningLetter(
   );
   const html: string[] = [];
   const text: string[] = [];
+  const unsubscribeHref = unsubscribeUrl(options.unsubscribeEmail);
 
   html.push(`<!DOCTYPE html>
 <html lang="en">
@@ -561,7 +574,7 @@ export function buildMorningLetter(
 
   html.push(`<p style="margin:32px 0 0;padding-top:16px;border-top:1px solid #eeeeee;font-size:12px;line-height:1.5;color:#888888;">
 traverse.news · Traverse City, Michigan<br>
-<a href="${SITE_ORIGIN}/tips" style="color:#555555;">Send a tip</a> · <a href="${SITE_ORIGIN}/email/${escapeHtml(letter.date)}" style="color:#555555;">Archive</a>
+<a href="${SITE_ORIGIN}/tips" style="color:#555555;">Send a tip</a> · <a href="${SITE_ORIGIN}/email/${escapeHtml(letter.date)}" style="color:#555555;">Archive</a> · <a href="${escapeHtml(unsubscribeHref)}" style="color:#555555;">Unsubscribe</a>
 </p>
 </div>
 </body>
@@ -569,6 +582,7 @@ traverse.news · Traverse City, Michigan<br>
   text.push("traverse.news · Traverse City, Michigan");
   text.push(`Send a tip: ${SITE_ORIGIN}/tips`);
   text.push(`Archive: ${SITE_ORIGIN}/email/${letter.date}`);
+  text.push(`Unsubscribe: ${unsubscribeHref}`);
 
   return {
     subject,

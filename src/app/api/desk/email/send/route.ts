@@ -91,10 +91,14 @@ export async function POST(request: Request) {
   const edition = await snapshotTodaysEmailEdition();
   const data = await getAppData();
   const school = pickLetterSchoolDate(data.schools ?? []);
-  const letter = buildMorningLetter(edition, { school });
   const recipients = preview
     ? resolvePreviewLetterRecipients()
     : resolveLetterRecipients(data.subscribers ?? []);
+  const letter = buildMorningLetter(edition, {
+    school,
+    unsubscribeEmail:
+      recipients.length === 1 ? recipients[0] : undefined,
+  });
   const subject = preview
     ? previewLetterSubject(letter.subject)
     : letter.subject;
