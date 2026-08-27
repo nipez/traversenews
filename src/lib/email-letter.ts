@@ -26,6 +26,10 @@ export const DESK_LETTER_FALLBACK = "nickperez@gmail.com";
 /** Subject prefix for Nick-only 8am previews (live send keeps the bare subject). */
 export const PREVIEW_SUBJECT_PREFIX = "Preview · ";
 
+/** Email-safe stack closer to TLDR’s system sans (Roboto on Android). */
+const LETTER_FONT =
+  "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
+
 const LETTER_SCHOOL_TITLE_MARKERS = [
   "orientation",
   "first day",
@@ -66,6 +70,14 @@ type RenderedItem = {
 type SubjectItem = {
   text: string;
   kind: "lead" | "tonight" | "around" | "alert";
+};
+
+/** TLDR-style: emoji follows each phrase (Brothers Osborne 🌙, … 🌊). */
+const SUBJECT_EMOJI: Record<SubjectItem["kind"], string> = {
+  lead: "⚡️",
+  tonight: "🌙",
+  around: "🌊",
+  alert: "🚨",
 };
 
 function isFakeSubscriberEmail(value: string): boolean {
@@ -288,11 +300,9 @@ function buildMorningLetterSubject(letter: EmailEditionSnapshot): string {
   }
 
   const format = (items: SubjectItem[]): string =>
-    `🗞️ ${items
-      .map((item) =>
-        item.kind === "tonight" ? `🌙 ${item.text}` : item.text,
-      )
-      .join(" · ")}`;
+    items
+      .map((item) => `${item.text} ${SUBJECT_EMOJI[item.kind]}`)
+      .join(", ");
 
   const keepUsable = (items: SubjectItem[]): SubjectItem[] =>
     items.filter(
@@ -328,14 +338,19 @@ function buildMorningLetterSubject(letter: EmailEditionSnapshot): string {
     subject = `${subject
       .slice(0, 81)
       .replace(/\s+\S*$/, "")
-      .replace(/[·,\s]+$/, "")}…`;
+      .replace(/[,·\s]+$/, "")}…`;
 
     const leftover = subject
-      .replace(/^🗞️\s*/, "")
-      .replace(/^🌙\s*/, "")
       .replace(/…$/u, "")
-      .trim();
-    if (!leftover || isUnusableSubjectPhrase(leftover)) {
+      .split(/,\s*/)
+      .map((part) =>
+        part.replace(/\s*(?:⚡️|🌙|🌊|🚨|🗞️)\s*$/u, "").trim(),
+      )
+      .filter(Boolean);
+    if (
+      leftover.length === 0 ||
+      leftover.some((phrase) => isUnusableSubjectPhrase(phrase))
+    ) {
       return subjectFallbackDate();
     }
   }
@@ -354,13 +369,13 @@ function renderStory(
     sourceOverride || (story.sources?.length ? story.sources.join(" · ") : "");
 
   return {
-    html: `<p style="margin:0 0 4px;font-size:16px;line-height:1.35;">${
+    html: `<p style="margin:0 0 10px;font-family:${LETTER_FONT};font-size:16px;line-height:1.35;">${
       url
         ? `<a href="${escapeHtml(url)}" style="color:#111111;font-weight:700;text-decoration:underline;">${title}</a>`
         : `<strong>${title}</strong>`
     }</p>
-${dek ? `<p style="margin:0 0 4px;font-size:14px;line-height:1.45;color:#333333;">${dek}</p>` : ""}
-${source ? `<p style="margin:0 0 16px;font-size:12px;color:#666666;">${escapeHtml(source)}${story.paywalled ? " · Paywall" : ""}</p>` : '<p style="margin:0 0 16px;"></p>'}`,
+${dek ? `<p style="margin:0 0 6px;font-family:${LETTER_FONT};font-size:14px;line-height:1.5;color:#333333;">${dek}</p>` : ""}
+${source ? `<p style="margin:0 0 18px;font-family:${LETTER_FONT};font-size:12px;color:#666666;">${escapeHtml(source)}${story.paywalled ? " · Paywall" : ""}</p>` : '<p style="margin:0 0 18px;"></p>'}`,
     text: [
       url ? `${story.title} ${url}` : story.title,
       story.dek?.trim() || "",
@@ -377,13 +392,13 @@ function renderAlert(alert: EmailAlertCard): RenderedItem {
   const dek = alert.dek?.trim() ? escapeHtml(alert.dek.trim()) : "";
 
   return {
-    html: `<p style="margin:0 0 4px;font-size:16px;line-height:1.35;">${
+    html: `<p style="margin:0 0 10px;font-family:${LETTER_FONT};font-size:16px;line-height:1.35;">${
       url
         ? `<a href="${escapeHtml(url)}" style="color:#111111;font-weight:700;text-decoration:underline;">${title}</a>`
         : `<strong>${title}</strong>`
     }</p>
-${dek ? `<p style="margin:0 0 4px;font-size:14px;line-height:1.45;color:#333333;">${dek}</p>` : ""}
-<p style="margin:0 0 16px;font-size:12px;color:#666666;">${escapeHtml(alert.source_name)}</p>`,
+${dek ? `<p style="margin:0 0 6px;font-family:${LETTER_FONT};font-size:14px;line-height:1.5;color:#333333;">${dek}</p>` : ""}
+<p style="margin:0 0 18px;font-family:${LETTER_FONT};font-size:12px;color:#666666;">${escapeHtml(alert.source_name)}</p>`,
     text: [
       url ? `${alert.title} ${url}` : alert.title,
       alert.dek?.trim() || "",
@@ -421,9 +436,9 @@ function renderEvent(
     .join(" · ");
 
   return {
-    html: `<p style="margin:0 0 2px;font-size:13px;color:#555555;">${escapeHtml(when)}</p>
-<p style="margin:0 0 2px;font-size:16px;line-height:1.35;">${titleHtml}</p>
-${details ? `<p style="margin:0 0 16px;font-size:13px;color:#555555;">${details}</p>` : '<p style="margin:0 0 16px;"></p>'}`,
+    html: `<p style="margin:0 0 4px;font-family:${LETTER_FONT};font-size:13px;color:#555555;">${escapeHtml(when)}</p>
+<p style="margin:0 0 6px;font-family:${LETTER_FONT};font-size:16px;line-height:1.35;">${titleHtml}</p>
+${details ? `<p style="margin:0 0 18px;font-family:${LETTER_FONT};font-size:13px;color:#555555;">${details}</p>` : '<p style="margin:0 0 18px;"></p>'}`,
     text: [
       when,
       url ? `${event.title} ${url}` : event.title,
@@ -436,7 +451,7 @@ ${details ? `<p style="margin:0 0 16px;font-size:13px;color:#555555;">${details}
 
 function sectionHeading(emoji: string, label: string, url?: string): string {
   const content = `${emoji} ${escapeHtml(label)}`;
-  return `<h2 style="margin:28px 0 12px;font-size:15px;letter-spacing:0.04em;text-transform:uppercase;font-weight:800;">${
+  return `<h2 style="margin:28px 0 12px;font-family:${LETTER_FONT};font-size:15px;letter-spacing:0.04em;text-transform:uppercase;font-weight:800;">${
     url
       ? `<a href="${escapeHtml(url)}" style="color:#111111;text-decoration:none;">${content}</a>`
       : content
@@ -486,11 +501,11 @@ export function buildMorningLetter(
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${escapeHtml(subject)}</title>
 </head>
-<body style="margin:0;padding:0;background:#ffffff;color:#111111;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
-<div style="max-width:560px;margin:0 auto;padding:24px 16px 40px;">
-<p style="margin:0;font-size:22px;font-weight:800;letter-spacing:-0.02em;"><a href="${SITE_ORIGIN}" style="color:#111111;text-decoration:none;">traverse.news</a></p>
-<p style="margin:6px 0 0;font-size:13px;color:#555555;">${escapeHtml(editionLabel)}</p>
-<p style="margin:2px 0 8px;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#888888;">${escapeHtml(dateLabel)}</p>`);
+<body style="margin:0;padding:0;background:#ffffff;color:#111111;font-family:${LETTER_FONT};">
+<div style="max-width:560px;margin:0 auto;padding:28px 20px 40px;">
+<p style="margin:0;text-align:center;font-family:${LETTER_FONT};font-size:24px;font-weight:800;letter-spacing:-0.02em;"><a href="${SITE_ORIGIN}" style="color:#111111;text-decoration:none;">traverse.news</a></p>
+<p style="margin:10px 0 0;text-align:center;font-family:${LETTER_FONT};font-size:15px;font-weight:600;color:#111111;">${escapeHtml(editionLabel)}</p>
+<p style="margin:4px 0 8px;text-align:center;font-family:${LETTER_FONT};font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#888888;">${escapeHtml(dateLabel)}</p>`);
   text.push("traverse.news");
   text.push(editionLabel);
   text.push("");
@@ -572,7 +587,7 @@ export function buildMorningLetter(
     text.push(rendered.text, "");
   }
 
-  html.push(`<p style="margin:32px 0 0;padding-top:16px;border-top:1px solid #eeeeee;font-size:12px;line-height:1.5;color:#888888;">
+  html.push(`<p style="margin:32px 0 0;padding-top:16px;border-top:1px solid #eeeeee;font-family:${LETTER_FONT};font-size:12px;line-height:1.5;color:#888888;text-align:center;">
 traverse.news · Traverse City, Michigan<br>
 <a href="${SITE_ORIGIN}/tips" style="color:#555555;">Send a tip</a> · <a href="${SITE_ORIGIN}/email/${escapeHtml(letter.date)}" style="color:#555555;">Archive</a> · <a href="${escapeHtml(unsubscribeHref)}" style="color:#555555;">Unsubscribe</a>
 </p>
