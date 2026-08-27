@@ -151,7 +151,12 @@ function isInsiderSubjectPhrase(value: string): boolean {
   );
 }
 
-/** Coverage-area labels that must never stand alone in a subject line. */
+/**
+ * Coverage-area labels that must never stand alone in a subject line,
+ * and must not lead a phrase that only has one leftover word
+ * (“Grand Traverse Area Genealogical”). Place + two+ words is fine
+ * (“Grand Traverse Area Genealogical Society”).
+ */
 const REGION_ONLY_SUBJECT_PHRASES = [
   "grand traverse area",
   "grand traverse county",
@@ -161,8 +166,8 @@ const REGION_ONLY_SUBJECT_PHRASES = [
   "kalkaska county",
   "traverse city",
   "northern michigan",
-  "the bay",
   "around the bay",
+  "the bay",
 ];
 
 function normalizeSubjectPhrase(value: string): string {
@@ -174,15 +179,31 @@ function normalizeSubjectPhrase(value: string): string {
     .trim();
 }
 
-function isRegionOnlySubjectPhrase(value: string): boolean {
+function isGenericPlaceSubjectPhrase(value: string): boolean {
   const normalized = normalizeSubjectPhrase(value);
   if (!normalized) return false;
-  return REGION_ONLY_SUBJECT_PHRASES.includes(normalized);
+  if (REGION_ONLY_SUBJECT_PHRASES.includes(normalized)) return true;
+
+  // Longest prefix first so “around the bay” wins over “the bay”.
+  const regionsByLength = [...REGION_ONLY_SUBJECT_PHRASES].sort(
+    (a, b) => b.length - a.length,
+  );
+  for (const region of regionsByLength) {
+    if (!normalized.startsWith(`${region} `)) continue;
+    const restWords = normalized
+      .slice(region.length)
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+    // Place alone or place + one word → unusable. Place + two+ → ok.
+    return restWords.length <= 1;
+  }
+  return false;
 }
 
-/** Reject insider shorthand and region-only coverage labels alike. */
+/** Reject insider shorthand and generic-place leftovers alike. */
 function isUnusableSubjectPhrase(value: string): boolean {
-  return isInsiderSubjectPhrase(value) || isRegionOnlySubjectPhrase(value);
+  return isInsiderSubjectPhrase(value) || isGenericPlaceSubjectPhrase(value);
 }
 
 /** Chop a title into a short subject phrase without trailing glue words. */
@@ -225,14 +246,19 @@ function buildMorningLetterSubject(letter: EmailEditionSnapshot): string {
     }
   }
 
-  // 🌙: walk tonight until a phrase survives phraseFromTitle + usability.
-  // Do not take [0] blindly — long org names chop into region labels.
+  // 🌙: walk tonight until a usable phrase exists. Prefer the full title
+  // when it is already parseable (place + two+ words). Otherwise try a
+  // phraseFromTitle chop — place-only / place+one-word leftovers are skipped.
   for (const event of letter.tonight) {
     const raw = event.title?.replace(/\s+/g, " ").trim();
     if (!raw) continue;
-    const title = phraseFromTitle(raw, 28);
-    if (title && !isUnusableSubjectPhrase(title)) {
-      candidates.push({ text: title, kind: "tonight" });
+    if (!isUnusableSubjectPhrase(raw)) {
+      candidates.push({ text: raw, kind: "tonight" });
+      break;
+    }
+    const chopped = phraseFromTitle(raw, 28);
+    if (chopped && !isUnusableSubjectPhrase(chopped)) {
+      candidates.push({ text: chopped, kind: "tonight" });
       break;
     }
   }
