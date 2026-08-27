@@ -138,7 +138,11 @@ function letterUrl(value: string | null | undefined): string | null {
   }
 }
 
-function isWeakSubjectTitle(value: string): boolean {
+/**
+ * Insider shorthand a stranger cannot parse: empty, tiny one-word stubs,
+ * or a lone capitalized last name.
+ */
+function isInsiderSubjectPhrase(value: string): boolean {
   const title = value.trim();
   return Boolean(
     !title ||
@@ -147,12 +151,47 @@ function isWeakSubjectTitle(value: string): boolean {
   );
 }
 
-function shortenSubjectTitle(value: string, maxLength = 40): string {
+/** Coverage-area labels that must never stand alone in a subject line. */
+const REGION_ONLY_SUBJECT_PHRASES = [
+  "grand traverse area",
+  "grand traverse county",
+  "leelanau county",
+  "benzie county",
+  "antrim county",
+  "kalkaska county",
+  "traverse city",
+  "northern michigan",
+  "the bay",
+  "around the bay",
+];
+
+function normalizeSubjectPhrase(value: string): string {
+  return value
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase()
+    .replace(/[.…]+$/g, "")
+    .trim();
+}
+
+function isRegionOnlySubjectPhrase(value: string): boolean {
+  const normalized = normalizeSubjectPhrase(value);
+  if (!normalized) return false;
+  return REGION_ONLY_SUBJECT_PHRASES.includes(normalized);
+}
+
+/** Reject insider shorthand and region-only coverage labels alike. */
+function isUnusableSubjectPhrase(value: string): boolean {
+  return isInsiderSubjectPhrase(value) || isRegionOnlySubjectPhrase(value);
+}
+
+/** Chop a title into a short subject phrase without trailing glue words. */
+function phraseFromTitle(value: string, maxLength = 40): string {
   let title = value.replace(/\s+/g, " ").trim();
   title = title.replace(/\s+near\s+.+$/i, "").trim();
   if (title.length <= maxLength) return title;
 
-  for (const separator of [": ", " - ", " - ", " - ", "; ", ", "]) {
+  for (const separator of [": ", " — ", " – ", " - ", "; ", ", "]) {
     const index = title.indexOf(separator);
     if (index >= 12 && index <= maxLength) {
       return title.slice(0, index).trim();
@@ -172,40 +211,49 @@ function shortenSubjectTitle(value: string, maxLength = 40): string {
   return shortened || title.slice(0, maxLength).trim();
 }
 
-function buildSubject(letter: EmailEditionSnapshot): string {
+function subjectFallbackDate(): string {
+  return `🗞️ traverse.news · ${emailDetroitDateKey()}`;
+}
+
+function buildMorningLetterSubject(letter: EmailEditionSnapshot): string {
   const candidates: SubjectItem[] = [];
 
   if (letter.lead?.title) {
-    const title = shortenSubjectTitle(letter.lead.title, 44);
-    if (title && !isWeakSubjectTitle(title)) {
+    const title = phraseFromTitle(letter.lead.title, 44);
+    if (title && !isUnusableSubjectPhrase(title)) {
       candidates.push({ text: title, kind: "lead" });
     }
   }
 
-  if (letter.tonight[0]?.title) {
-    const title = letter.tonight[0].title.replace(/\s+/g, " ").trim();
-    if (title && !isWeakSubjectTitle(title)) {
+  // 🌙: walk tonight until a phrase survives phraseFromTitle + usability.
+  // Do not take [0] blindly — long org names chop into region labels.
+  for (const event of letter.tonight) {
+    const raw = event.title?.replace(/\s+/g, " ").trim();
+    if (!raw) continue;
+    const title = phraseFromTitle(raw, 28);
+    if (title && !isUnusableSubjectPhrase(title)) {
       candidates.push({ text: title, kind: "tonight" });
+      break;
     }
   }
 
   if (letter.around[0]?.title) {
-    const title = shortenSubjectTitle(letter.around[0].title, 36);
-    if (title && !isWeakSubjectTitle(title)) {
+    const title = phraseFromTitle(letter.around[0].title, 36);
+    if (title && !isUnusableSubjectPhrase(title)) {
       candidates.push({ text: title, kind: "around" });
     }
   }
 
   if (candidates.length < 2 && letter.alerts[0]?.title) {
-    const title = shortenSubjectTitle(letter.alerts[0].title, 36);
-    if (title && !isWeakSubjectTitle(title)) {
+    const title = phraseFromTitle(letter.alerts[0].title, 36);
+    if (title && !isUnusableSubjectPhrase(title)) {
       candidates.push({ text: title, kind: "alert" });
     }
   }
 
   let selected = candidates.slice(0, 3);
   if (selected.length === 0) {
-    return `🗞️ traverse.news · ${emailDetroitDateKey()}`;
+    return subjectFallbackDate();
   }
 
   const format = (items: SubjectItem[]): string =>
@@ -215,23 +263,50 @@ function buildSubject(letter: EmailEditionSnapshot): string {
       )
       .join(" · ")}`;
 
+  const keepUsable = (items: SubjectItem[]): SubjectItem[] =>
+    items.filter(
+      (item) => item.text.trim() && !isUnusableSubjectPhrase(item.text),
+    );
+
   let subject = format(selected);
   if (subject.length > 80 && selected.length === 3) {
     selected = selected.slice(0, 2);
     subject = format(selected);
   }
   if (subject.length > 80) {
-    selected = selected.map((item) => ({
-      ...item,
-      text: shortenSubjectTitle(item.text, 28),
-    }));
+    selected = keepUsable(
+      selected.map((item) => ({
+        ...item,
+        text: phraseFromTitle(item.text, 28),
+      })),
+    );
+    if (selected.length === 0) {
+      return subjectFallbackDate();
+    }
     subject = format(selected);
   }
+
+  // Prefer dropping a trailing phrase over an opaque mid-string chop that
+  // can leave a region-only stub in the subject.
+  while (subject.length > 84 && selected.length > 1) {
+    selected = selected.slice(0, -1);
+    subject = format(selected);
+  }
+
   if (subject.length > 84) {
     subject = `${subject
       .slice(0, 81)
       .replace(/\s+\S*$/, "")
       .replace(/[·,\s]+$/, "")}…`;
+
+    const leftover = subject
+      .replace(/^🗞️\s*/, "")
+      .replace(/^🌙\s*/, "")
+      .replace(/…$/u, "")
+      .trim();
+    if (!leftover || isUnusableSubjectPhrase(leftover)) {
+      return subjectFallbackDate();
+    }
   }
 
   return subject;
@@ -345,7 +420,7 @@ export function buildMorningLetter(
   letter: EmailEditionSnapshot,
   options: { school?: LetterSchoolDate | null } = {},
 ): { subject: string; html: string; text: string } {
-  const subject = buildSubject(letter);
+  const subject = buildMorningLetterSubject(letter);
   const editionLabel = formatEmailEditionLabel(letter.date);
   const dateLabel = emailDateLabel(
     (() => {
