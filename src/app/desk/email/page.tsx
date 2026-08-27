@@ -1,8 +1,23 @@
 import Link from "next/link";
 import { DeskChrome } from "@/components/desk/DeskChrome";
+import { DeskLetterSendControls } from "@/components/desk/DeskLetterSendControls";
 import { formatStoryDateline } from "@/lib/dates";
-import { getAppData, listEmailEditions } from "@/lib/data/store";
-import { formatEmailEditionLabel } from "@/lib/email-editions";
+import {
+  getAppData,
+  getEmailEdition,
+  getEmailLetterPreview,
+  getEmailLetterSend,
+  listEmailEditions,
+} from "@/lib/data/store";
+import {
+  buildEmailEditionSnapshot,
+  emailDetroitDateKey,
+  formatEmailEditionLabel,
+} from "@/lib/email-editions";
+import {
+  buildMorningLetter,
+  pickLetterSchoolDate,
+} from "@/lib/email-letter";
 
 export const dynamic = "force-dynamic";
 
@@ -14,14 +29,28 @@ export default async function DeskEmailPage() {
       new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
   );
 
+  const today = emailDetroitDateKey();
+  const edition =
+    (await getEmailEdition(today)) ?? buildEmailEditionSnapshot(data);
+  const school = pickLetterSchoolDate(data.schools ?? []);
+  const { subject } = buildMorningLetter(edition, { school });
+  const sent = await getEmailLetterSend(today);
+  const previewed = await getEmailLetterPreview(today);
+
   return (
     <DeskChrome active="email">
       <div className="mx-auto max-w-3xl px-4 py-10 md:px-6">
         <h1 className="font-serif text-3xl">Email</h1>
         <p className="mt-2 text-[#444]">
-          Send pipeline comes later. Preview the morning scan, archive dated
-          letters, and collect addresses now. Do not invent a letter.
+          Morning letter for signups. Check the subject, send live from here,
+          and keep the archive. Do not invent a letter.
         </p>
+
+        <DeskLetterSendControls
+          subject={subject}
+          alreadySent={Boolean(sent)}
+          alreadyPreviewed={Boolean(previewed)}
+        />
 
         <section className="mt-8">
           <h2 className="font-display text-lg font-black tracking-tight">
@@ -32,8 +61,7 @@ export default async function DeskEmailPage() {
             <code className="bg-paper-2 px-1">POST /api/subscribe</code>
             {" · "}
             {subscribers.length} stored
-            {subscribers.length ? "" : " (none yet)"}. No Mailchimp export —
-            sending is not wired.
+            {subscribers.length ? "" : " (none yet)"}.
           </p>
 
           {subscribers.length === 0 ? (
@@ -66,7 +94,7 @@ export default async function DeskEmailPage() {
 
         <div className="mt-8 flex flex-wrap gap-3">
           <Link href="/email" className="btn-teal inline-flex">
-            Open live preview
+            Open web preview
           </Link>
           <Link
             href="/email/archive"
@@ -80,9 +108,8 @@ export default async function DeskEmailPage() {
           Letter archive
         </h2>
         <p className="mt-1 text-sm text-muted">
-          Capture today:{" "}
-          <code className="bg-paper-2 px-1">POST /api/desk/email/snapshot</code>{" "}
-          (Bearer desk). Also runs after a successful pull.
+          Dated letters after a pull or send. Web copies live at{" "}
+          <code className="bg-paper-2 px-1">/email/[date]</code>.
         </p>
 
         {letters.length === 0 ? (

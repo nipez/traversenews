@@ -103,6 +103,13 @@ function normalizeAppData(data: AppData): { data: AppData; scrubbed: boolean } {
   ) {
     data.email_letter_sends = {};
   }
+  if (
+    !data.email_letter_previews ||
+    typeof data.email_letter_previews !== "object" ||
+    Array.isArray(data.email_letter_previews)
+  ) {
+    data.email_letter_previews = {};
+  }
   if (!Array.isArray(data.tips)) {
     data.tips = [];
   }
@@ -464,6 +471,19 @@ export async function addSubscriber(email: string): Promise<Subscriber> {
   return row;
 }
 
+/** Remove an address from the morning-letter list. Idempotent. */
+export async function removeSubscriber(
+  email: string,
+): Promise<{ email: string; removed: boolean }> {
+  const data = await loadStore();
+  const normalized = email.trim().toLowerCase();
+  const before = data.subscribers.length;
+  data.subscribers = data.subscribers.filter((s) => s.email !== normalized);
+  const removed = data.subscribers.length < before;
+  if (removed) await saveStore(data);
+  return { email: normalized, removed };
+}
+
 const TIPS_SOFT_CAP = 200;
 
 export async function addTip(input: {
@@ -717,6 +737,54 @@ export async function markEmailLetterSent(
   const data = await loadStore();
   data.email_letter_sends = {
     ...(data.email_letter_sends ?? {}),
+    [date]: record,
+  };
+  await saveStore(data);
+}
+
+/** Cheap read: Nick-only preview key (does not imply public send). */
+export async function getEmailLetterPreview(
+  date: string,
+): Promise<EmailLetterSendRecord | null> {
+  const kv = await getTraverseDataKv();
+  if (kv) {
+    const { morningLetterPreviewKvKey } = await import("@/lib/email-letter");
+    const raw = await kv.get(morningLetterPreviewKvKey(date));
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw) as EmailLetterSendRecord;
+        if (parsed && typeof parsed.sent_at === "string") return parsed;
+      } catch {
+        return { sent_at: raw };
+      }
+    }
+  }
+
+  const data = await loadStore();
+  const record = data.email_letter_previews?.[date];
+  return record && typeof record.sent_at === "string" ? record : null;
+}
+
+/**
+ * Mark a Detroit date as previewed to Nick only.
+ * Must not touch morning_letter_sent / email_letter_sends.
+ */
+export async function markEmailLetterPreviewed(
+  date: string,
+  record: EmailLetterSendRecord,
+): Promise<void> {
+  const kv = await getTraverseDataKv();
+  if (kv) {
+    const { morningLetterPreviewKvKey } = await import("@/lib/email-letter");
+    await kv.put(
+      morningLetterPreviewKvKey(date),
+      JSON.stringify({ date, ...record }),
+    );
+  }
+
+  const data = await loadStore();
+  data.email_letter_previews = {
+    ...(data.email_letter_previews ?? {}),
     [date]: record,
   };
   await saveStore(data);

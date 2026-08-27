@@ -19,7 +19,12 @@ import type {
 
 const SITE_ORIGIN = "https://traverse.news";
 const DETROIT_TIME_ZONE = "America/Detroit";
-const DEFAULT_TEST_RECIPIENT = "nickperez@gmail.com";
+
+/** Fallback when the signup list is empty or still has fake/example/verify addresses. */
+export const DESK_LETTER_FALLBACK = "nickperez@gmail.com";
+
+/** Subject prefix for Nick-only 8am previews (live send keeps the bare subject). */
+export const PREVIEW_SUBJECT_PREFIX = "Preview · ";
 
 const LETTER_SCHOOL_TITLE_MARKERS = [
   "orientation",
@@ -442,9 +447,21 @@ function textSectionHeading(emoji: string, label: string): string {
   return `${emoji} ${label.toUpperCase()}`;
 }
 
+/** Absolute unsubscribe URL for the morning letter footer. */
+export function unsubscribeUrl(email?: string | null): string {
+  const base = `${SITE_ORIGIN}/email/unsubscribe`;
+  const normalized = email?.trim().toLowerCase() ?? "";
+  if (!normalized || !normalized.includes("@")) return base;
+  return `${base}?email=${encodeURIComponent(normalized)}`;
+}
+
 export function buildMorningLetter(
   letter: EmailEditionSnapshot,
-  options: { school?: LetterSchoolDate | null } = {},
+  options: {
+    school?: LetterSchoolDate | null;
+    /** Personalized one-click opt-out when sending to a single address. */
+    unsubscribeEmail?: string | null;
+  } = {},
 ): { subject: string; html: string; text: string } {
   const subject = buildMorningLetterSubject(letter);
   const editionLabel = formatEmailEditionLabel(letter.date);
@@ -460,6 +477,7 @@ export function buildMorningLetter(
   );
   const html: string[] = [];
   const text: string[] = [];
+  const unsubscribeHref = unsubscribeUrl(options.unsubscribeEmail);
 
   html.push(`<!DOCTYPE html>
 <html lang="en">
@@ -556,7 +574,7 @@ export function buildMorningLetter(
 
   html.push(`<p style="margin:32px 0 0;padding-top:16px;border-top:1px solid #eeeeee;font-size:12px;line-height:1.5;color:#888888;">
 traverse.news · Traverse City, Michigan<br>
-<a href="${SITE_ORIGIN}/tips" style="color:#555555;">Send a tip</a> · <a href="${SITE_ORIGIN}/email/${escapeHtml(letter.date)}" style="color:#555555;">Archive</a>
+<a href="${SITE_ORIGIN}/tips" style="color:#555555;">Send a tip</a> · <a href="${SITE_ORIGIN}/email/${escapeHtml(letter.date)}" style="color:#555555;">Archive</a> · <a href="${escapeHtml(unsubscribeHref)}" style="color:#555555;">Unsubscribe</a>
 </p>
 </div>
 </body>
@@ -564,6 +582,7 @@ traverse.news · Traverse City, Michigan<br>
   text.push("traverse.news · Traverse City, Michigan");
   text.push(`Send a tip: ${SITE_ORIGIN}/tips`);
   text.push(`Archive: ${SITE_ORIGIN}/email/${letter.date}`);
+  text.push(`Unsubscribe: ${unsubscribeHref}`);
 
   return {
     subject,
@@ -583,6 +602,15 @@ export function isDetroitSunday(at = new Date()): boolean {
 
 export function morningLetterSentKvKey(date: string): string {
   return `morning_letter_sent:${date}`;
+}
+
+/** Nick-only preview idempotency (separate from public `morning_letter_sent`). */
+export function morningLetterPreviewKvKey(date: string): string {
+  return `morning_letter_preview:${date}`;
+}
+
+export function previewLetterSubject(subject: string): string {
+  return `${PREVIEW_SUBJECT_PREFIX}${subject}`;
 }
 
 export function pickLetterSchoolDate(
@@ -621,9 +649,14 @@ export function resolveLetterRecipients(subscribers: Subscriber[]): string[] {
   ];
 
   if (emails.some(isFakeSubscriberEmail)) {
-    return [DEFAULT_TEST_RECIPIENT];
+    return [DESK_LETTER_FALLBACK];
   }
 
   const realEmails = emails.filter((email) => !isFakeSubscriberEmail(email));
-  return realEmails.length > 0 ? realEmails : [DEFAULT_TEST_RECIPIENT];
+  return realEmails.length > 0 ? realEmails : [DESK_LETTER_FALLBACK];
+}
+
+/** 8am preview always goes only to Nick — never the public list. */
+export function resolvePreviewLetterRecipients(): string[] {
+  return [DESK_LETTER_FALLBACK];
 }
