@@ -8,7 +8,6 @@ import {
   getSectionHeadersSnapshot,
 } from "@/lib/public-snapshots";
 import type { EventItem } from "@/lib/types";
-import { GOING_OUT } from "@/lib/useful-local";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -107,61 +106,18 @@ export default async function WhatsOnPage() {
           header={headers.headers["whats-on"]}
           dek={
             <>
-              Concerts, festivals, markets, library programs. Meetings live on
-              Civic Calendar.{" "}
-              <a
-                href="#event-tip"
-                className="font-semibold text-teal hover:underline"
-              >
-                Something missing?
+              Concerts, festivals, markets, library programs. Meetings live on{" "}
+              <Link href="/civic" className="events-dek-link">
+                Civic Calendar
+              </Link>
+              . Something missing?{" "}
+              <a href="#event-tip" className="events-dek-link">
+                Let us know
               </a>
+              .
             </>
           }
-        >
-          <p className="events-dek events-dek-local section-photo-extra">
-            For a night out:{" "}
-            <a
-              href={GOING_OUT[0].href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="events-dek-link"
-            >
-              wine country
-            </a>
-            ,{" "}
-            <a
-              href={GOING_OUT[1].href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="events-dek-link"
-            >
-              happy hours
-            </a>
-            ,{" "}
-            <a
-              href={GOING_OUT[2].href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="events-dek-link"
-            >
-              Nauti-Cat
-            </a>
-            ,{" "}
-            <a
-              href={GOING_OUT[3].href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="events-dek-link"
-            >
-              Discovery Cruises
-            </a>
-            . More on{" "}
-            <Link href="/local" className="events-dek-link">
-              Local
-            </Link>
-            .
-          </p>
-        </SectionHero>
+        />
 
         <section className="events-featured" aria-label="Featured nights out">
           <div className="events-featured-inner">
