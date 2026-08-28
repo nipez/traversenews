@@ -2,12 +2,16 @@ import Link from "next/link";
 import { DeskRail } from "@/components/DeskRail";
 import { PublicShell } from "@/components/PublicShell";
 import { SectionHero } from "@/components/SectionHero";
-import { detroitDayKey, formatShowDateRange, parseEventStartsAt } from "@/lib/dates";
+import {
+  detroitDayKey,
+  formatCivicDate,
+  formatShowDateRange,
+  parseEventStartsAt,
+} from "@/lib/dates";
 import {
   getSectionHeadersSnapshot,
   getShowsSnapshot,
 } from "@/lib/public-snapshots";
-import { printedClockMinutes, sortPrintedShowTimes } from "@/lib/shows";
 import type { ShowListing } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -39,32 +43,6 @@ const VENUE_LINKS = [
   },
 ];
 
-function dayClocks(item: ShowListing): string[] {
-  return sortPrintedShowTimes(item.times);
-}
-
-/** Earliest printed clock that day. Never invent a showtime. */
-function firstClock(item: ShowListing): string {
-  if (item.time_unknown) return "—";
-  return dayClocks(item)[0] || "—";
-}
-
-function extraWhen(item: ShowListing): string {
-  const bits: string[] = [];
-  if (item.ends_at) {
-    const startDay = detroitDayKey(item.starts_at);
-    const endDay = detroitDayKey(item.ends_at);
-    if (endDay !== startDay) {
-      const range = formatShowDateRange(item.starts_at, item.ends_at);
-      const startOnly = formatShowDateRange(item.starts_at);
-      if (range !== startOnly) bits.push(range);
-    }
-  }
-  const rest = dayClocks(item).slice(1);
-  if (rest.length) bits.push(rest.join(" · "));
-  return bits.join(" · ");
-}
-
 function labelFromDayKey(key: string): string {
   const noon = parseEventStartsAt(`${key}T12:00`);
   const d = noon ?? new Date(`${key}T12:00:00`);
@@ -74,6 +52,12 @@ function labelFromDayKey(key: string): string {
     month: "short",
     day: "numeric",
   }).format(d);
+}
+
+function runRange(item: ShowListing): string | null {
+  if (!item.ends_at) return null;
+  if (detroitDayKey(item.ends_at) === detroitDayKey(item.starts_at)) return null;
+  return formatShowDateRange(item.starts_at, item.ends_at);
 }
 
 function groupByStartDay(items: ShowListing[]) {
@@ -86,21 +70,14 @@ function groupByStartDay(items: ShowListing[]) {
   }
   return [...groups.entries()]
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([key, list]) => {
-      const sorted = [...list].sort((a, b) => {
-        const am = printedClockMinutes(firstClock(a));
-        const bm = printedClockMinutes(firstClock(b));
-        if (am == null && bm == null) return a.title.localeCompare(b.title);
-        if (am == null) return 1;
-        if (bm == null) return -1;
-        if (am !== bm) return am - bm;
-        return a.title.localeCompare(b.title);
-      });
-      return { key, dayLabel: labelFromDayKey(key), items: sorted };
-    });
+    .map(([key, list]) => ({
+      key,
+      dayLabel: labelFromDayKey(key),
+      items: [...list].sort((a, b) => a.title.localeCompare(b.title)),
+    }));
 }
 
-function ShowDayList({
+function ShowAgenda({
   groups,
   empty,
 }: {
@@ -108,50 +85,51 @@ function ShowDayList({
   empty?: string;
 }) {
   if (groups.length === 0) {
-    return empty ? <p className="sports-week-empty">{empty}</p> : null;
+    return empty ? <li className="civic-empty">{empty}</li> : null;
   }
   return (
-    <div className="sports-week-days">
+    <>
       {groups.map((group) => (
-        <div key={group.key} className="sports-week-day">
-          <h3 className="sports-week-day-label">{group.dayLabel}</h3>
-          <ul className="sports-week-list">
-            {group.items.map((item) => {
-              const time = firstClock(item);
-              const extra = extraWhen(item);
-              const inner = (
-                <>
-                  <span className="sports-week-time">{time}</span>
-                  <span className="sports-week-school">{item.venue}</span>
-                  <span className="sports-week-title">{item.title}</span>
-                  {extra ? (
-                    <span className="sports-week-place">{extra}</span>
-                  ) : null}
-                </>
-              );
-              return (
-                <li key={item.id} className="sports-week-item">
-                  {item.url ? (
-                    <a
-                      href={item.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="sports-week-link"
-                    >
-                      {inner}
-                    </a>
-                  ) : (
-                    <div className="sports-week-link sports-week-nolink">
-                      {inner}
-                    </div>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        </div>
+        <ShowDay key={group.key} group={group} />
       ))}
-    </div>
+    </>
+  );
+}
+
+function ShowDay({
+  group,
+}: {
+  group: ReturnType<typeof groupByStartDay>[number];
+}) {
+  return (
+    <>
+      <li className="civic-month-hed">{group.dayLabel}</li>
+      {group.items.map((item) => {
+        const d = formatCivicDate(item.starts_at);
+        const range = runRange(item);
+        const title = item.url ? (
+          <a href={item.url} target="_blank" rel="noopener noreferrer">
+            {item.title}
+          </a>
+        ) : (
+          item.title
+        );
+        return (
+          <li key={item.id} className="civic-agenda-row">
+            <div className="civic-datebox">
+              <div className="civic-datebox-dow">{d.day}</div>
+              <div className="civic-datebox-day">{d.label}</div>
+              <div className="civic-datebox-month">{d.monthAbbr}</div>
+            </div>
+            <div className="civic-agenda-copy">
+              <p className="civic-agenda-title">{title}</p>
+              <p className="civic-agenda-place">{item.venue}</p>
+              {range ? <p className="civic-agenda-place">{range}</p> : null}
+            </div>
+          </li>
+        );
+      })}
+    </>
   );
 }
 
@@ -175,24 +153,26 @@ export default async function ShowsPage() {
         header={headers.headers.shows}
         dek="Movies and live theatre around the bay."
       />
-      <div className="about-layout sports-layout">
-        <div className="about-essay events-main">
+      <div className="about-layout civic-layout">
+        <div className="about-essay civic-main">
           {byDay.length === 0 ? (
-            <p className="sports-week-empty">No listings yet.</p>
+            <ul className="civic-agenda">
+              <li className="civic-empty">No listings yet.</li>
+            </ul>
           ) : (
             <>
-              <h2 className="sports-week-hed">This week</h2>
-              <ShowDayList
-                groups={thisWeek}
-                empty="No movies or plays this week."
-              />
+              <ul className="civic-agenda">
+                <li className="civic-month-hed">This week</li>
+                <ShowAgenda
+                  groups={thisWeek}
+                  empty="No movies or plays this week."
+                />
+              </ul>
               {coming.length > 0 ? (
-                <>
-                  <h2 className="sports-week-hed sports-week-hed-next">
-                    Coming up
-                  </h2>
-                  <ShowDayList groups={coming} />
-                </>
+                <ul className="civic-agenda">
+                  <li className="civic-month-hed">Coming up</li>
+                  <ShowAgenda groups={coming} />
+                </ul>
               ) : null}
             </>
           )}

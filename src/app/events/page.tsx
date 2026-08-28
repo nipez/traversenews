@@ -2,7 +2,7 @@ import { DeskRail } from "@/components/DeskRail";
 import { EventTipsForm } from "@/components/EventTipsForm";
 import { PublicShell } from "@/components/PublicShell";
 import { SectionHero } from "@/components/SectionHero";
-import { detroitDayKey, formatEventWhenParts } from "@/lib/dates";
+import { formatCivicDate, formatEventWhenParts } from "@/lib/dates";
 import { venueKicker } from "@/lib/events";
 import {
   getEventsSnapshot,
@@ -17,49 +17,42 @@ export const metadata = {
   title: "Events",
 };
 
-function groupByDay(
-  events: EventItem[],
-): Array<{ key: string; dayLabel: string; items: EventItem[] }> {
-  const groups = new Map<string, EventItem[]>();
-  for (const event of events) {
-    const key = detroitDayKey(event.starts_at);
-    const list = groups.get(key) ?? [];
-    list.push(event);
-    groups.set(key, list);
-  }
-
-  return [...groups.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([key, items]) => {
-      const sorted = [...items].sort((a, b) => {
-        if (Boolean(a.time_unknown) !== Boolean(b.time_unknown)) {
-          return a.time_unknown ? 1 : -1;
-        }
-        return (
-          new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime()
-        );
-      });
-      const d = new Date(sorted[0].starts_at);
-      const dayLabel = new Intl.DateTimeFormat("en-US", {
-        timeZone: "America/Detroit",
-        weekday: "long",
-        month: "short",
-        day: "numeric",
-      }).format(d);
-      return { key, dayLabel, items: sorted };
-    });
-}
-
 function eventTime(event: EventItem): string {
-  return formatEventWhenParts(event.starts_at, new Date(), {
+  const t = formatEventWhenParts(event.starts_at, new Date(), {
     timeUnknown: event.time_unknown,
   }).time;
+  if (t === "—" || /^12:00\s*AM$/i.test(t.trim())) return "—";
+  return t;
+}
+
+type AgendaRow =
+  | { kind: "month"; key: string; name: string }
+  | { kind: "event"; event: EventItem };
+
+function withMonthHeadings(events: EventItem[]): AgendaRow[] {
+  const sorted = [...events].sort((a, b) => {
+    if (Boolean(a.time_unknown) !== Boolean(b.time_unknown)) {
+      return a.time_unknown ? 1 : -1;
+    }
+    return new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime();
+  });
+  const rows: AgendaRow[] = [];
+  let lastMonth = "";
+  for (const event of sorted) {
+    const d = formatCivicDate(event.starts_at);
+    if (d.monthKey !== lastMonth) {
+      rows.push({ kind: "month", key: d.monthKey, name: d.monthName });
+      lastMonth = d.monthKey;
+    }
+    rows.push({ kind: "event", event });
+  }
+  return rows;
 }
 
 export default async function EventsPage() {
   const snap = await getEventsSnapshot();
   const headers = await getSectionHeadersSnapshot();
-  const byDay = groupByDay(snap.upcoming);
+  const rows = withMonthHeadings(snap.upcoming);
 
   return (
     <PublicShell active="/events" header="compact">
@@ -80,53 +73,51 @@ export default async function EventsPage() {
           </>
         }
       />
-      <div className="about-layout sports-layout">
-        <div className="about-essay events-main">
-          {byDay.length === 0 ? (
-            <p className="sports-week-empty">No community listings yet.</p>
-          ) : (
-            <div className="sports-week-days">
-              {byDay.map((group) => (
-                <div key={group.key} className="sports-week-day">
-                  <h3 className="sports-week-day-label">{group.dayLabel}</h3>
-                  <ul className="sports-week-list">
-                    {group.items.map((event) => {
-                      const time = eventTime(event);
-                      const inner = (
-                        <>
-                          <span className="sports-week-time">{time}</span>
-                          <span className="sports-week-school">
-                            {venueKicker(event.place)}
-                          </span>
-                          <span className="sports-week-title">
-                            {event.title}
-                          </span>
-                        </>
-                      );
-                      return (
-                        <li key={event.id} className="sports-week-item">
-                          {event.url ? (
-                            <a
-                              href={event.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="sports-week-link"
-                            >
-                              {inner}
-                            </a>
-                          ) : (
-                            <div className="sports-week-link sports-week-nolink">
-                              {inner}
-                            </div>
-                          )}
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              ))}
-            </div>
-          )}
+      <div className="about-layout civic-layout">
+        <div className="about-essay civic-main">
+          <ul className="civic-agenda">
+            {rows.map((row) => {
+              if (row.kind === "month") {
+                return (
+                  <li key={`month-${row.key}`} className="civic-month-hed">
+                    {row.name}
+                  </li>
+                );
+              }
+              const event = row.event;
+              const d = formatCivicDate(event.starts_at);
+              const title = event.url ? (
+                <a
+                  href={event.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {event.title}
+                </a>
+              ) : (
+                event.title
+              );
+              return (
+                <li key={event.id} className="civic-agenda-row">
+                  <div className="civic-datebox">
+                    <div className="civic-datebox-dow">{d.day}</div>
+                    <div className="civic-datebox-day">{d.label}</div>
+                    <div className="civic-datebox-month">{d.monthAbbr}</div>
+                  </div>
+                  <div className="civic-agenda-copy">
+                    <p className="civic-agenda-title">{title}</p>
+                    <p className="civic-agenda-place">
+                      {venueKicker(event.place)}
+                    </p>
+                  </div>
+                  <p className="civic-agenda-time">{eventTime(event)}</p>
+                </li>
+              );
+            })}
+            {snap.upcoming.length === 0 ? (
+              <li className="civic-empty">No community listings yet.</li>
+            ) : null}
+          </ul>
 
           <EventTipsForm />
         </div>
