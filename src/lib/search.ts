@@ -113,7 +113,7 @@ export function collapseEventSearchHits(
       id: primary.id,
       title: primary.title,
       dek,
-      href: primary.url || "/whats-on",
+      href: primary.url || "/events",
       meta: sourceName(primary.source_id) || undefined,
       external: Boolean(primary.url),
     });

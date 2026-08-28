@@ -2249,7 +2249,11 @@ a:hover {
 }
 
 /* Sports main column inside about-layout */
-.sports-main {
+.sports-main,
+.events-main,
+.civic-main,
+.schools-main,
+.local-main {
   max-width: none;
 }
 

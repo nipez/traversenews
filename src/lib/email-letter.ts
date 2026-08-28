@@ -513,7 +513,10 @@ export function buildMorningLetter(
   if (letter.lead) {
     html.push(sectionHeading("📰", "The one to read"));
     text.push(textSectionHeading("📰", "The one to read"));
-    const rendered = renderStory(letter.lead, "traverse.news");
+    const rendered = renderStory(
+      letter.lead,
+      letter.lead.desk_original ? "traverse.news" : undefined,
+    );
     html.push(rendered.html);
     text.push(rendered.text, "");
   }
@@ -539,7 +542,7 @@ export function buildMorningLetter(
   }
 
   if (letter.tonight.length > 0) {
-    html.push(sectionHeading("🌙", "What's on", `${SITE_ORIGIN}/whats-on`));
+    html.push(sectionHeading("🌙", "What's on", `${SITE_ORIGIN}/events`));
     text.push(textSectionHeading("🌙", "What's on"));
     for (const event of letter.tonight) {
       const rendered = renderEvent(event);

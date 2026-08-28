@@ -1,3 +1,4 @@
+import { DeskRail } from "@/components/DeskRail";
 import { PublicShell } from "@/components/PublicShell";
 import { SectionHero } from "@/components/SectionHero";
 import { getSectionHeadersSnapshot } from "@/lib/public-snapshots";
@@ -14,14 +15,15 @@ export default async function LocalPage() {
 
   return (
     <PublicShell active="/local" header="compact">
-      <div className="local-page">
-        <SectionHero
-          kicker="Bay side"
-          title="Useful local"
-          header={headers.headers.local}
-          dek="Standing outbound directories and places. Not Events, and not news."
-        />
-
+      <SectionHero
+        kicker="Bay side"
+        title="Useful local"
+        header={headers.headers.local}
+        dek="Standing outbound directories and places."
+      />
+      <div className="about-layout local-layout">
+        <div className="about-essay local-main">
+        <div className="local-page">
         <div className="local-groups">
           {LOCAL_GROUPS.map((group) => (
             <section key={group.id} className="local-group">
@@ -45,6 +47,9 @@ export default async function LocalPage() {
             </section>
           ))}
         </div>
+        </div>
+        </div>
+        <DeskRail active="/local" />
       </div>
     </PublicShell>
   );

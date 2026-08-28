@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { formatShortDate } from "@/lib/dates";
-import { formatPublicOriginalByline } from "@/lib/originals";
 
 /** Fields LeadStory actually renders (full Story / ClusteredStory / public snapshot). */
 type Lead = {
@@ -32,19 +31,11 @@ export function LeadStory({ lead }: { lead: Lead }) {
 
   return (
     <article className="lead-original anim-rise">
-      <div className="lead-kicker-row">
-        <span className="lead-sq" aria-hidden />
-        <p className="lead-kicker">traverse.news reporting</p>
-      </div>
       <h1 className="lead-hed">
         <Link href={href}>{lead.title}</Link>
       </h1>
       {lead.dek ? <p className="lead-dek">{lead.dek}</p> : null}
-      <p className="lead-byline">
-        {formatPublicOriginalByline(lead.byline)}
-        {" · "}
-        {formatShortDate(lead.published_at)}
-      </p>
+      <p className="lead-byline">{formatShortDate(lead.published_at)}</p>
       {lead.image_url ? (
         <figure className="mt-5">
           {/* eslint-disable-next-line @next/next/no-img-element */}

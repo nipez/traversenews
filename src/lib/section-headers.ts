@@ -29,7 +29,7 @@ export const SECTION_HEADER_LABELS: Record<
   SectionHeaderId,
   { title: string; path: string; kicker: string }
 > = {
-  "whats-on": { title: "Events", path: "/whats-on", kicker: "Night out" },
+  "whats-on": { title: "Events", path: "/events", kicker: "Local happenings" },
   shows: { title: "Shows", path: "/shows", kicker: "On screen & stage" },
   sports: { title: "Sports", path: "/sports", kicker: "Scores & prep" },
   civic: { title: "Civic Calendar", path: "/civic", kicker: "Agenda" },

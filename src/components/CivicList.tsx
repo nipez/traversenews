@@ -65,7 +65,7 @@ export function CivicList({
           );
         })}
         {shown.length === 0 ? (
-          <li className="civic-empty">No upcoming meetings in the pull yet.</li>
+          <li className="civic-empty">No upcoming meetings yet.</li>
         ) : null}
       </ul>
 

@@ -19,15 +19,14 @@ export default async function SchoolsPage() {
 
   return (
     <PublicShell active="/schools" header="compact">
+      <SectionHero
+        kicker="Parents"
+        title="Schools"
+        header={headers.headers.schools}
+        dek="Important dates by district — half days, no-school, orientation, conferences, spring break, first and last day."
+      />
       <div className="about-layout schools-layout">
         <div className="about-essay schools-main">
-          <SectionHero
-            kicker="Parents"
-            title="Schools"
-            header={headers.headers.schools}
-            dek="Important dates by district — half days, no-school, orientation, conferences, spring break, first and last day. Not PTA nights, not sports, not every elementary listing. We do not invent half days."
-          />
-
           <SchoolsDistrictToggle districts={snap.districts} />
         </div>
 

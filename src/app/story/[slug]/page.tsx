@@ -63,18 +63,15 @@ export default async function StoryPage({ params }: Props) {
     <PublicShell active="/" header="compact">
       <div className="story-page">
         <header className="story-hero">
-          <div className="lead-kicker-row">
-            <span className="lead-sq" aria-hidden />
-            <p className="lead-kicker">
-              {section ? `${section} · ` : null}
-              traverse.news reporting
-            </p>
-          </div>
+          {section ? (
+            <div className="lead-kicker-row">
+              <span className="lead-sq" aria-hidden />
+              <p className="lead-kicker">{section}</p>
+            </div>
+          ) : null}
           <h1 className="story-hed">{story.title}</h1>
           {story.dek ? <p className="story-dek">{story.dek}</p> : null}
           <p className="lead-byline story-byline">
-            By <strong>{PUBLIC_ORIGINAL_BYLINE}</strong>
-            {" · "}
             {dateline}
             {readMins ? ` · ${readMins} min read` : null}
           </p>

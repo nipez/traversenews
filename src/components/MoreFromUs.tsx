@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { formatShortDate } from "@/lib/dates";
-import { formatPublicOriginalByline } from "@/lib/originals";
 import type { Story } from "@/lib/types";
 
 export function MoreFromUs({ stories }: { stories: Story[] }) {
@@ -8,7 +7,7 @@ export function MoreFromUs({ stories }: { stories: Story[] }) {
   return (
     <section className="anim-rise anim-delay-2">
       <h2 className="mb-5 font-serif text-[1.85rem] leading-none tracking-tight text-ink md:text-[2.1rem]">
-        More from us
+        More stories
       </h2>
       <div className="grid gap-8 md:grid-cols-3">
         {stories.map((story) => (
@@ -21,13 +20,11 @@ export function MoreFromUs({ stories }: { stories: Story[] }) {
                 className="mb-3 aspect-[16/10] w-full object-cover"
               />
             ) : null}
-            <p className="kicker">traverse.news reporting</p>
             <h3 className="mt-2 font-serif text-xl leading-snug">
               <Link href={`/story/${story.slug}`}>{story.title}</Link>
             </h3>
             <p className="mt-2 text-sm leading-relaxed text-[#444]">{story.dek}</p>
             <p className="mt-2 text-xs text-muted">
-              {formatPublicOriginalByline(story.byline)} ·{" "}
               {formatShortDate(story.published_at)}
             </p>
           </article>

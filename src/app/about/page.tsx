@@ -46,11 +46,10 @@ export default function AboutPage() {
               <strong>Today</strong> is the paper. A traverse.news original
               leads when we have published one. Under that, Around the bay is
               other desks — Record-Eagle, the Ticker, IPR, 9&amp;10, Northern
-              Express, and local orgs — as headlines that link out. We do not
-              reprint their stories.
+              Express, and local orgs.
             </p>
             <p>
-              <Link href="/whats-on">
+              <Link href="/events">
                 <strong>Events</strong>
               </Link>{" "}
               is concerts, markets, library programs, and nights out.{" "}

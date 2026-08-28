@@ -135,9 +135,7 @@ export function SportsThisWeek({
       ? "1 more school"
       : `${surroundingCount} more schools`;
 
-  const coreChips = ATHLETICS_CORE_SCHOOLS.filter((name) =>
-    chipPool.some((g) => gameMatchesSchoolFilter(g, name)),
-  );
+  const coreChips = ATHLETICS_CORE_SCHOOLS;
 
   return (
     <section className="sports-week" aria-label="Prep calendar">

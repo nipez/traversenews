@@ -1,7 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { formatCivicDate, formatEventWhenParts } from "@/lib/dates";
+import {
+  isCoreSchoolDistrict,
+  schoolDistrictChipLabel,
+} from "@/lib/schools";
 import type { SchoolCalendarItem } from "@/lib/types";
 
 export type SchoolsDistrictBlock = {
@@ -26,9 +30,14 @@ function itemCount(block: SchoolsDistrictBlock): number {
   return block.months.reduce((n, m) => n + m.items.length, 0);
 }
 
+function pickDefaultDistrict(tabs: SchoolsDistrictBlock[]): string {
+  return tabs.find((d) => d.district === "TCAPS")?.district ?? tabs[0]?.district ?? "";
+}
+
 /**
  * District tabs for /schools. Only districts with imported Important dates.
- * TCAPS is first when present; empty districts stay hidden until KV has rows.
+ * TC core chips always visible; map-ring districts behind Surrounding.
+ * TCAPS is first when present; empty districts stay hidden until data exists.
  */
 export function SchoolsDistrictToggle({
   districts,
@@ -40,29 +49,41 @@ export function SchoolsDistrictToggle({
     [districts],
   );
 
-  const [active, setActive] = useState(
-    () => tabs.find((d) => d.district === "TCAPS")?.district ?? tabs[0]?.district ?? "",
+  const coreTabs = useMemo(
+    () => tabs.filter((block) => isCoreSchoolDistrict(block.district)),
+    [tabs],
+  );
+  const surroundingTabs = useMemo(
+    () => tabs.filter((block) => !isCoreSchoolDistrict(block.district)),
+    [tabs],
   );
 
-  useEffect(() => {
-    if (tabs.length === 0) {
-      setActive("");
-      return;
-    }
-    if (!tabs.some((d) => d.district === active)) {
-      setActive(
-        tabs.find((d) => d.district === "TCAPS")?.district ?? tabs[0].district,
-      );
-    }
-  }, [tabs, active]);
+  const [showSurrounding, setShowSurrounding] = useState(false);
+  const [active, setActive] = useState<string | null>(null);
 
-  const selected = tabs.find((d) => d.district === active) ?? tabs[0];
+  const selectable = showSurrounding ? tabs : coreTabs;
+
+  const selected = useMemo(() => {
+    if (selectable.length === 0) return undefined;
+    if (active && selectable.some((d) => d.district === active)) {
+      return selectable.find((d) => d.district === active);
+    }
+    return (
+      selectable.find((d) => d.district === "TCAPS") ?? selectable[0]
+    );
+  }, [selectable, active]);
+
   const count = selected ? itemCount(selected) : 0;
+  const surroundingCount = surroundingTabs.length;
+  const surroundingLabel =
+    surroundingCount === 1
+      ? "1 more district"
+      : `${surroundingCount} more districts`;
 
   if (tabs.length === 0) {
     return (
       <p className="schools-district-empty">
-        No official district dates in the pull yet — we do not invent half days.
+        No official district dates yet.
       </p>
     );
   }
@@ -74,7 +95,7 @@ export function SchoolsDistrictToggle({
         role="tablist"
         aria-label="School district"
       >
-        {tabs.map((block) => {
+        {coreTabs.map((block) => {
           const on = block.district === selected?.district;
           return (
             <button
@@ -87,11 +108,64 @@ export function SchoolsDistrictToggle({
               }
               onClick={() => setActive(block.district)}
             >
-              {block.district}
+              {schoolDistrictChipLabel(block.district)}
             </button>
           );
         })}
+        {surroundingCount > 0 ? (
+          <button
+            type="button"
+            className={
+              showSurrounding
+                ? "schools-surrounding-btn schools-surrounding-btn-on"
+                : "schools-surrounding-btn"
+            }
+            aria-expanded={showSurrounding}
+            aria-controls="schools-surrounding-tabs"
+            onClick={() => {
+              const next = !showSurrounding;
+              if (!next && selected && !isCoreSchoolDistrict(selected.district)) {
+                setActive(pickDefaultDistrict(coreTabs));
+              }
+              setShowSurrounding(next);
+            }}
+          >
+            {showSurrounding ? "Surrounding" : surroundingLabel}
+            <span className="schools-surrounding-caret" aria-hidden="true">
+              {showSurrounding ? "▴" : "▾"}
+            </span>
+          </button>
+        ) : null}
       </div>
+
+      {showSurrounding && surroundingCount > 0 ? (
+        <div
+          id="schools-surrounding-tabs"
+          className="schools-toggle-tabs schools-toggle-tabs-surrounding"
+          role="tablist"
+          aria-label="Surrounding districts"
+        >
+          {surroundingTabs.map((block) => {
+            const on = block.district === selected?.district;
+            return (
+              <button
+                key={block.district}
+                type="button"
+                role="tab"
+                aria-selected={on}
+                className={
+                  on
+                    ? "schools-toggle-tab schools-toggle-tab-on"
+                    : "schools-toggle-tab"
+                }
+                onClick={() => setActive(block.district)}
+              >
+                {schoolDistrictChipLabel(block.district)}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
 
       {selected ? (
         <section
