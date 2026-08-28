@@ -1,7 +1,7 @@
 import { DeskRail } from "@/components/DeskRail";
 import { PublicShell } from "@/components/PublicShell";
 import { SectionHero } from "@/components/SectionHero";
-import { formatBayDay } from "@/lib/dates";
+import { formatShowDateRange } from "@/lib/dates";
 import {
   getSectionHeadersSnapshot,
   getShowsSnapshot,
@@ -37,19 +37,9 @@ const VENUE_LINKS = [
   },
 ];
 
-function formatShowWhen(item: ShowListing): string {
-  const start = formatBayDay(item.starts_at);
-  if (item.ends_at) {
-    const end = formatBayDay(item.ends_at);
-    if (end !== start) return `${start} – ${end}`;
-  }
-  return start;
-}
-
 function ShowCard({ item }: { item: ShowListing }) {
-  const when = formatShowWhen(item);
-  const times =
-    item.times.length > 0 ? item.times.join(" · ") : null;
+  const when = formatShowDateRange(item.starts_at, item.ends_at);
+  const times = item.times.length > 0 ? item.times.join(" · ") : null;
   const inner = (
     <>
       <h3 className="shows-title">{item.title}</h3>

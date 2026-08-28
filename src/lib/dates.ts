@@ -387,6 +387,25 @@ export function formatEventWhenParts(
   return { dayLabel, time, dayKey: detroitEvent };
 }
 
+/** Calendar label for /shows runs — always month+day, never weekday-only. */
+export function formatShowDateRange(
+  startsAt: string,
+  endsAt?: string | null,
+): string {
+  const fmt = (iso: string) =>
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: DETROIT,
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+    }).format(new Date(iso));
+  const start = fmt(startsAt);
+  if (!endsAt) return start;
+  const end = fmt(endsAt);
+  if (end === start) return start;
+  return `${start} – ${end}`;
+}
+
 /** Homepage bay dateline, e.g. "Saturday, August 22 · Traverse City". */
 export function formatBayDateline(at = new Date()): string {
   const day = new Intl.DateTimeFormat("en-US", {
