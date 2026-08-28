@@ -226,8 +226,7 @@ export default async function WhatsOnPage() {
             })}
             {featured.length === 0 ? (
               <p className="events-featured-empty">
-                No timed nights-out in the next couple of weeks — we do not
-                invent showtimes.
+                No timed nights-out in the next couple of weeks.
               </p>
             ) : null}
           </div>
@@ -285,11 +284,7 @@ export default async function WhatsOnPage() {
             </section>
           ))}
           {byDay.length === 0 ? (
-            <p className="events-empty">
-              No community listings yet. Need Traverse News to pull Visit TC on
-              the live computer if the calendar is empty — we do not invent
-              events.
-            </p>
+            <p className="events-empty">No community listings yet.</p>
           ) : null}
         </div>
 

@@ -45,9 +45,8 @@ export default function AboutPage() {
             <p>
               <strong>Today</strong> is the paper. A traverse.news original
               leads when we have published one. Under that, Around the bay is
-              other desks — Record-Eagle, the Ticker, IPR, 9&amp;10, Northern
-              Express, and local orgs — as headlines that link out. We do not
-              reprint their stories.
+              other outlets — Record-Eagle, the Ticker, IPR, 9&amp;10, Northern
+              Express, and local orgs — as their headlines.
             </p>
             <p>
               <Link href="/whats-on">
@@ -61,8 +60,7 @@ export default function AboutPage() {
               <Link href="/schools">
                 <strong>Schools</strong>
               </Link>{" "}
-              is important district dates — calendars you can trust, not every
-              bake sale.{" "}
+              is important district dates.{" "}
               <Link href="/sports">
                 <strong>Sports</strong>
               </Link>{" "}
@@ -71,45 +69,18 @@ export default function AboutPage() {
                 <strong>Local</strong>
               </Link>{" "}
               is useful outbound directories: where to look when you need a
-              number, a map, or an office. We pull from public listings. If a
-              source does not print a time, we leave it blank.
+              number, a map, or an office.
             </p>
             <p>
               <Link href="/#alerts">
                 <strong>Alerts</strong>
               </Link>{" "}
-              is official only: crashes, outages, closures, and warnings —
-              Grand Traverse 911 and the same class of notice from the Ticker
-              when it is that kind of post. It is not a Facebook firehose.
+              is official notices: crashes, outages, closures, and warnings —
+              Grand Traverse 911 and the same class of notice from the Ticker.
             </p>
             <p>
               <strong>Morning email</strong> is the same paper in your inbox.
               One pass before the day starts.
-            </p>
-
-            <h2>How we write</h2>
-            <p>
-              Original reporting on this site is traverse.news reporting. We do
-              not invent people, quotes, crashes, or events. If a sentence came
-              from another outlet, we say so and we link it.
-            </p>
-            <p>
-              When a story is a synthesis of the local record, the article ends
-              with those permalinks. That is the paper trail, not a reprint.
-            </p>
-
-            <h2>What we will not do</h2>
-            <p>
-              We will not scrape a paywall and paste the body. Record-Eagle and
-              anyone else with a wall stay as headline, dek, and a link.
-            </p>
-            <p>
-              We will not dump group-chat accusations onto the homepage.
-              Complaint pile-ons, doxxing, and unverified claims stay off the
-              public site.
-            </p>
-            <p>
-              We will not publish a calendar item we cannot point back to.
             </p>
 
             <h2>Who</h2>

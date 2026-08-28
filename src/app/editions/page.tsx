@@ -17,15 +17,11 @@ export default async function EditionsIndexPage() {
       <div className="mx-auto max-w-2xl">
         <h1 className="font-serif text-3xl text-ink md:text-4xl">Editions</h1>
         <p className="mt-2 text-[#444]">
-          A dated log of what ran on the homepage after each day&apos;s last
-          successful pull. Times are America/Detroit.
+          A dated log of what ran on the homepage. Times are America/Detroit.
         </p>
 
         {editions.length === 0 ? (
-          <p className="mt-10 text-sm text-muted">
-            No editions yet. Run{" "}
-            <code className="bg-paper-2 px-1">/api/pull</code> to capture today.
-          </p>
+          <p className="mt-10 text-sm text-muted">No editions yet.</p>
         ) : (
           <ul className="mt-8">
             {editions.map((edition) => (

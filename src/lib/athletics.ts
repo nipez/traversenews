@@ -14,6 +14,70 @@ export const ATHLETICS_WEEK_DAYS = 7;
 
 export const ATHLETICS_SOURCE_IDS = HS_ATHLETICS_EVENT_SOURCE_IDS;
 
+/**
+ * Traverse City core slate for Sports This week (default).
+ * Surrounding map-ring schools stay behind the Surrounding control.
+ * Central calendars: tcctrojans.net → src_tcc_ath.
+ */
+export const ATHLETICS_CORE_SOURCE_IDS = new Set([
+  "src_tcc_ath",
+  "src_tcw_ath",
+  "src_tcsf_ath",
+  "src_tcch_ath",
+]);
+
+export const ATHLETICS_SURROUNDING_SOURCE_IDS = new Set([
+  "src_elk_ath",
+  "src_suttons_ath",
+  "src_leland_ath",
+  "src_glenlake_ath",
+  "src_kingsley_ath",
+]);
+
+export const ATHLETICS_CORE_SCHOOLS = [
+  "Central",
+  "West",
+  "St. Francis",
+  "TC Christian",
+] as const;
+
+export const ATHLETICS_SURROUNDING_SCHOOLS = [
+  "Elk Rapids",
+  "Suttons Bay",
+  "Leland",
+  "Glen Lake",
+  "Kingsley",
+] as const;
+
+export function isCoreAthleticsGame(game: AthleticsGame): boolean {
+  if (ATHLETICS_CORE_SOURCE_IDS.has(game.source_id)) return true;
+  return (ATHLETICS_CORE_SCHOOLS as readonly string[]).includes(game.school);
+}
+
+export function isSurroundingAthleticsGame(game: AthleticsGame): boolean {
+  if (ATHLETICS_SURROUNDING_SOURCE_IDS.has(game.source_id)) return true;
+  return (ATHLETICS_SURROUNDING_SCHOOLS as readonly string[]).includes(
+    game.school,
+  );
+}
+
+/** Default Sports This week: TC only. Pass includeSurrounding for map-ring. */
+export function filterAthleticsSlate(
+  games: AthleticsGame[],
+  options: { includeSurrounding?: boolean; school?: string | null } = {},
+): AthleticsGame[] {
+  const includeSurrounding = options.includeSurrounding === true;
+  const school = options.school?.trim() || null;
+  return games.filter((g) => {
+    const inCore = isCoreAthleticsGame(g);
+    const inSurrounding = isSurroundingAthleticsGame(g);
+    if (!inCore && !inSurrounding) return false;
+    if (!includeSurrounding && !inCore) return false;
+    if (school && g.school !== school) return false;
+    return true;
+  });
+}
+
 export type AthleticsImportRow = {
   title: string;
   starts_at?: string;
@@ -116,6 +180,39 @@ export function sanitizeStoredAthletics(games: AthleticsGame[]): {
   return { games: next, changed };
 }
 
+/** Detroit day-key window for Sports This week / Next week (rolling, not Mon–Sun). */
+export function athleticsWeekDayBounds(
+  now = new Date(),
+  weekOffset: 0 | 1 = 0,
+): { startKey: string; endKey: string } {
+  const dayMs = 24 * 60 * 60 * 1000;
+  if (weekOffset === 0) {
+    const end = new Date(now.getTime() + ATHLETICS_WEEK_DAYS * dayMs);
+    return { startKey: detroitDayKey(now), endKey: detroitDayKey(end) };
+  }
+  const thisEnd = new Date(now.getTime() + ATHLETICS_WEEK_DAYS * dayMs);
+  const nextEnd = new Date(now.getTime() + ATHLETICS_WEEK_DAYS * 2 * dayMs);
+  // Day after This week end → +14 days from now (no overlap with This week).
+  const start = new Date(thisEnd.getTime() + dayMs);
+  return { startKey: detroitDayKey(start), endKey: detroitDayKey(nextEnd) };
+}
+
+function selectAthleticsInDayBounds(
+  games: AthleticsGame[],
+  startKey: string,
+  endKey: string,
+): AthleticsGame[] {
+  return sanitizeStoredAthletics(games)
+    .games.filter((g) => {
+      const key = detroitDayKey(g.starts_at);
+      return key >= startKey && key <= endKey;
+    })
+    .sort(
+      (a, b) =>
+        new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime(),
+    );
+}
+
 /**
  * Public Sports page: Detroit start-of-today through +7 days only.
  * Do not render a full season into HTML.
@@ -124,19 +221,20 @@ export function selectThisWeekAthletics(
   games: AthleticsGame[],
   now = new Date(),
 ): AthleticsGame[] {
-  const todayKey = detroitDayKey(now);
-  const end = new Date(now.getTime() + ATHLETICS_WEEK_DAYS * 24 * 60 * 60 * 1000);
-  const endKey = detroitDayKey(end);
+  const { startKey, endKey } = athleticsWeekDayBounds(now, 0);
+  return selectAthleticsInDayBounds(games, startKey, endKey);
+}
 
-  return sanitizeStoredAthletics(games)
-    .games.filter((g) => {
-      const key = detroitDayKey(g.starts_at);
-      return key >= todayKey && key <= endKey;
-    })
-    .sort(
-      (a, b) =>
-        new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime(),
-    );
+/**
+ * Public Sports page: the seven-day window after This week.
+ * Same rolling horizon; does not invent games.
+ */
+export function selectNextWeekAthletics(
+  games: AthleticsGame[],
+  now = new Date(),
+): AthleticsGame[] {
+  const { startKey, endKey } = athleticsWeekDayBounds(now, 1);
+  return selectAthleticsInDayBounds(games, startKey, endKey);
 }
 
 export function groupAthleticsByDay(

@@ -222,6 +222,44 @@ export const SCHOOL_DISTRICT_ORDER = [
 ] as const;
 
 /**
+ * Traverse City core — always visible on /schools.
+ * Surrounding map-ring districts stay behind the Surrounding control.
+ */
+export const SCHOOL_DISTRICT_CORE = [
+  "TCAPS",
+  "GTACS",
+  "TC Christian",
+  "Grand Traverse Academy",
+] as const;
+
+export const SCHOOL_DISTRICT_CORE_SET = new Set<string>(SCHOOL_DISTRICT_CORE);
+
+export const SCHOOL_DISTRICT_SURROUNDING = [
+  "Elk Rapids",
+  "Leland",
+  "Kingsley",
+  "Glen Lake",
+  "Northport",
+  "Benzie Central",
+  "Frankfort-Elberta",
+  "Buckley",
+  "Kalkaska",
+  "Forest Area",
+  "Mancelona",
+  "Central Lake",
+] as const;
+
+/** Short chip label — GT Academy, not the full charter name. */
+export function schoolDistrictChipLabel(district: string): string {
+  if (district === "Grand Traverse Academy") return "GT Academy";
+  return district;
+}
+
+export function isCoreSchoolDistrict(district: string): boolean {
+  return SCHOOL_DISTRICT_CORE_SET.has(district);
+}
+
+/**
  * Official full calendars (link out only — do not host/reprint PDFs).
  * From Traverse News district map; do not invent URLs.
  */

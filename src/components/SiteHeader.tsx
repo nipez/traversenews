@@ -48,7 +48,7 @@ function NavInkBar({ active }: { active: string }) {
         </nav>
         <div className="nav-ink-actions">
           <NavSearch />
-          <Link href="/email#signup" className="btn-email">
+          <Link href="/email#signup" className="nav-email-link">
             Morning email
           </Link>
         </div>

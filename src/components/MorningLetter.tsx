@@ -119,7 +119,7 @@ export function MorningLetter({
         ))}
         {letter.around.length === 0 ? (
           <li className="border-t border-rule py-4 text-sm text-muted">
-            No wire yet — we do not invent stories.
+            No headlines yet.
           </li>
         ) : null}
       </ul>
@@ -187,7 +187,7 @@ export function MorningLetter({
             </li>
           ))}
           {letter.civic.length === 0 ? (
-            <li className="text-muted">No meetings in the pull yet.</li>
+            <li className="text-muted">No meetings yet.</li>
           ) : null}
         </ul>
       </div>
@@ -229,7 +229,6 @@ export function MorningLetter({
         </p>
         <p className="mt-2 text-xs">
           Traverse City, Michigan · Unsubscribe · Weekdays and Saturdays
-          {mode === "archive" ? " · Archive copy (not sent)" : null}
         </p>
         {mode === "preview" ? (
           <p className="mt-3 text-xs">
@@ -240,7 +239,7 @@ export function MorningLetter({
         ) : (
           <p className="mt-3 text-xs">
             <Link href="/email" className="font-bold text-teal">
-              Live preview →
+              Morning email →
             </Link>
           </p>
         )}

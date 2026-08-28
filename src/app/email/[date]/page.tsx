@@ -38,8 +38,7 @@ export default async function EmailEditionPage({ params }: Props) {
             No letter that morning
           </h1>
           <p className="mt-2 text-[#444]">
-            Nothing was captured for {formatEmailEditionLabel(date)}. We do not
-            invent a letter after the fact.
+            No letter for {formatEmailEditionLabel(date)}.
           </p>
         </div>
       </PublicShell>
@@ -50,9 +49,7 @@ export default async function EmailEditionPage({ params }: Props) {
     <PublicShell active="/" header="compact">
       <div className="mx-auto max-w-2xl">
         <div className="flex flex-wrap items-baseline justify-between gap-3">
-          <p className="text-sm text-muted">
-            Archive copy. Sending is not wired up yet.
-          </p>
+          <p className="text-sm text-muted">Morning email</p>
           <Link
             href="/email/archive"
             className="text-sm font-bold text-teal underline-offset-2 hover:underline"

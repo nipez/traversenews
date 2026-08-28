@@ -1,6 +1,7 @@
 import { selectAlerts } from "@/lib/alerts";
 import { selectAroundTheBay } from "@/lib/around";
 import {
+  filterAthleticsSlate,
   isVarsityGameTitle,
   selectThisWeekAthletics,
 } from "@/lib/athletics";
@@ -135,7 +136,10 @@ export function buildEmailEditionSnapshot(
     .slice(0, 2)
     .map(toEventCard);
 
-  const weekGames = selectThisWeekAthletics(data.athletics ?? [], at);
+  const weekGames = filterAthleticsSlate(
+    selectThisWeekAthletics(data.athletics ?? [], at),
+    { includeSurrounding: false },
+  );
   const varsity = weekGames.filter((g) => isVarsityGameTitle(g.title));
   const sportsPool = (varsity.length > 0 ? varsity : weekGames).slice(0, 4);
   const sports: EmailSportsCard[] = sportsPool.map((g) => {

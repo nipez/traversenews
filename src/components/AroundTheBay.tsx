@@ -12,16 +12,13 @@ export function AroundTheBay({ items }: { items: ClusteredStory[] }) {
       <div className="bay-head">
         <div>
           <h2 className="bay-hed">Around the bay</h2>
-          <p className="bay-kicker">Headlines link out — we don’t reprint</p>
         </div>
         <Link href="/sports" className="bay-sports-link">
           Sports →
         </Link>
       </div>
       {shown.length === 0 ? (
-        <p className="bay-empty">
-          No live wire yet. Run a pull — we do not invent headlines.
-        </p>
+        <p className="bay-empty">No headlines yet.</p>
       ) : (
         <ul className="bay-grid">
           {shown.map((item) => {
