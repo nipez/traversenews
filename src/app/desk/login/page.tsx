@@ -18,6 +18,7 @@ export default function DeskLoginPage() {
       const res = await fetch("/api/desk/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ email, password }),
       });
       const json = (await res.json()) as { error?: string };
@@ -41,7 +42,12 @@ export default function DeskLoginPage() {
           </span>
         </div>
 
-        <form onSubmit={onSubmit} className="mt-8 space-y-4">
+        <form
+          method="POST"
+          action="/api/desk/login"
+          onSubmit={onSubmit}
+          className="mt-8 space-y-4"
+        >
           <label className="block">
             <span className="text-[0.68rem] font-bold tracking-[0.08em] text-muted-2 uppercase">
               Email
@@ -49,10 +55,13 @@ export default function DeskLoginPage() {
             <input
               className="input mt-1"
               type="email"
+              name="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
               autoComplete="username"
+              autoCapitalize="none"
+              autoCorrect="off"
             />
           </label>
           <label className="block">
@@ -62,6 +71,7 @@ export default function DeskLoginPage() {
             <input
               className="input mt-1"
               type="password"
+              name="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
