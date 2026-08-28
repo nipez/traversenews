@@ -11,7 +11,21 @@ type WorkerEnv = {
 };
 
 export default {
-  fetch: handler.fetch,
+  async fetch(request: Request, env: WorkerEnv, ctx: ExecutionContext) {
+    const url = new URL(request.url);
+    if (url.hostname === "www.traverse.news") {
+      url.hostname = "traverse.news";
+      url.protocol = "https:";
+      url.port = "";
+      return Response.redirect(url.toString(), 308);
+    }
+    // stub worker.js types fetch() with 0 args during next build
+    return (handler.fetch as (
+      request: Request,
+      env: unknown,
+      ctx: ExecutionContext,
+    ) => Promise<Response> | Response)(request, env, ctx);
+  },
 
   /**
    * Weekday morning pull + Mon-Sat Nick-only letter preview (see wrangler.jsonc
