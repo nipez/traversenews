@@ -238,11 +238,15 @@ export function SportsThisWeek({
         empty="No games on the calendar this week."
       />
 
-      <h2 className="sports-week-hed sports-week-hed-next">Next week</h2>
-      <WeekDayList
-        games={scopedNext}
-        empty="No games on the calendar next week."
-      />
+      {nextWeek.length > 0 ? (
+        <>
+          <h2 className="sports-week-hed sports-week-hed-next">Next week</h2>
+          <WeekDayList
+            games={scopedNext}
+            empty="No matching games for this filter."
+          />
+        </>
+      ) : null}
     </section>
   );
 }
