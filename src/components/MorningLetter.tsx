@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { formatCivicDate, formatEventWhenParts, emailDateLabel } from "@/lib/dates";
 import type { EmailEditionSnapshot } from "@/lib/types";
+import { canonicalPublicUrl } from "@/lib/email-letter";
 
 function civicLabel(startsAt: string): string {
   const d = formatCivicDate(startsAt);
@@ -82,7 +83,11 @@ export function MorningLetter({
             <p className="lead-kicker">The one to read</p>
           </div>
           <h2 className="mt-2 font-display text-2xl leading-snug font-black tracking-tight">
-            <a href={letter.lead.url}>{letter.lead.title}</a>
+            {canonicalPublicUrl(letter.lead.url) ? (
+              <a href={canonicalPublicUrl(letter.lead.url)!}>{letter.lead.title}</a>
+            ) : (
+              letter.lead.title
+            )}
           </h2>
           {letter.lead.dek ? (
             <p className="mt-2 font-serif text-sm text-muted-2">

@@ -79,7 +79,7 @@ function getSeedCatalog(): AppData {
 function siteOrigin(): string {
   return (
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
-    "https://traverse-news.nickperez.workers.dev"
+    "https://traverse.news"
   );
 }
 
