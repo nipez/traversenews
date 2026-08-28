@@ -174,6 +174,26 @@ export const SCHOOL_DISTRICT_ORDER = [
   "Kingsley",
 ] as const;
 
+/** Traverse City core — always visible on /schools. */
+export const SCHOOL_DISTRICT_CORE = [
+  "TCAPS",
+  "GTACS",
+  "TC Christian",
+  "Grand Traverse Academy",
+] as const;
+
+export const SCHOOL_DISTRICT_CORE_SET = new Set<string>(SCHOOL_DISTRICT_CORE);
+
+/** Chip text only. Stored district keys stay full names. */
+export function schoolDistrictChipLabel(district: string): string {
+  if (district === "Grand Traverse Academy") return "GT Academy";
+  return district;
+}
+
+export function isCoreSchoolDistrict(district: string): boolean {
+  return SCHOOL_DISTRICT_CORE_SET.has(district);
+}
+
 /**
  * Official full calendars (link out only — do not host/reprint PDFs).
  * From Traverse News district map; do not invent URLs.

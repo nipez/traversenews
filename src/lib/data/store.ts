@@ -26,6 +26,7 @@ import type {
   EditionSnapshot,
   EmailEditionSnapshot,
   EmailLetterSendRecord,
+  EmailOneOffSendsRecord,
   EventItem,
   EventTip,
   OriginalDraft,
@@ -114,6 +115,13 @@ function normalizeAppData(data: AppData): { data: AppData; scrubbed: boolean } {
     Array.isArray(data.email_letter_previews)
   ) {
     data.email_letter_previews = {};
+  }
+  if (
+    !data.email_one_off_sends ||
+    typeof data.email_one_off_sends !== "object" ||
+    Array.isArray(data.email_one_off_sends)
+  ) {
+    data.email_one_off_sends = {};
   }
   if (!Array.isArray(data.tips)) {
     data.tips = [];
@@ -817,6 +825,64 @@ export async function markEmailLetterPreviewed(
     [date]: record,
   };
   await saveStore(data);
+}
+
+function morningLetterOneOffKvKey(date: string): string {
+  return `morning_letter_oneoff:${date}`;
+}
+
+function normalizeOneOffEmails(raw: unknown): string[] {
+  if (!raw || typeof raw !== "object") return [];
+  const emails = (raw as EmailOneOffSendsRecord).emails;
+  if (!Array.isArray(emails)) return [];
+  return [
+    ...new Set(
+      emails
+        .filter((e): e is string => typeof e === "string")
+        .map((e) => e.trim().toLowerCase())
+        .filter(Boolean),
+    ),
+  ];
+}
+
+export async function getEmailOneOffSends(date: string): Promise<string[]> {
+  const kv = await getTraverseDataKv();
+  if (kv) {
+    const raw = await kv.get(morningLetterOneOffKvKey(date));
+    if (raw) {
+      try {
+        return normalizeOneOffEmails(JSON.parse(raw));
+      } catch {
+        return [];
+      }
+    }
+  }
+  const data = await loadStore();
+  return normalizeOneOffEmails(data.email_one_off_sends?.[date]);
+}
+
+export async function markEmailOneOffSent(
+  date: string,
+  email: string,
+): Promise<string[]> {
+  const next = email.trim().toLowerCase();
+  if (!next) return getEmailOneOffSends(date);
+  const emails = [...new Set([...(await getEmailOneOffSends(date)), next])];
+  const rec: EmailOneOffSendsRecord = {
+    emails,
+    updated_at: new Date().toISOString(),
+  };
+  const kv = await getTraverseDataKv();
+  if (kv) {
+    await kv.put(
+      morningLetterOneOffKvKey(date),
+      JSON.stringify({ date, ...rec }),
+    );
+  }
+  const data = await loadStore();
+  data.email_one_off_sends = { ...(data.email_one_off_sends ?? {}), [date]: rec };
+  await saveStore(data);
+  return emails;
 }
 
 /**

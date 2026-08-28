@@ -521,7 +521,8 @@ export function buildEmailEditionSnapshot(
           title: leadCluster.title,
           dek: leadCluster.dek,
           url: leadCluster.url,
-          sources: ["traverse.news"],
+          sources: [],
+          desk_original: false,
         }
       : null;
 

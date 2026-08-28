@@ -1,4 +1,4 @@
-import { MorningScanSignup } from "@/components/MorningScanSignup";
+import { DeskRail } from "@/components/DeskRail";
 import { PublicShell } from "@/components/PublicShell";
 import { SectionHero } from "@/components/SectionHero";
 import { formatCivicDate, formatEventWhenParts } from "@/lib/dates";
@@ -59,7 +59,8 @@ export default async function CivicPage() {
         dek="City, county, and school board meetings. Concerts and markets are on Events."
       />
 
-      <div className="civic-page-grid">
+      <div className="about-layout civic-layout">
+        <div className="about-essay civic-main">
         <ul className="civic-agenda">
           {rows.map((row) => {
             if (row.kind === "month") {
@@ -91,20 +92,12 @@ export default async function CivicPage() {
             );
           })}
           {events.length === 0 ? (
-            <li className="civic-empty">No upcoming meetings in the pull yet.</li>
+            <li className="civic-empty">No upcoming meetings yet.</li>
           ) : null}
         </ul>
 
-        <aside className="civic-page-rail">
-          <div className="civic-rail-card">
-            <h2 className="civic-rail-hed">Where this comes from</h2>
-            <p className="civic-rail-copy">
-              Meeting listings are pulled from city, county, and school board
-              calendars. We do not invent agendas or invent times.
-            </p>
-          </div>
-          <MorningScanSignup variant="teal" />
-        </aside>
+        </div>
+        <DeskRail active="/civic" />
       </div>
     </PublicShell>
   );

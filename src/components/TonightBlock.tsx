@@ -85,7 +85,7 @@ export function TonightBlock({
         ) : null}
       </ul>
 
-      <Link href="/whats-on" className="tonight-more">
+      <Link href="/events" className="tonight-more">
         All Events →
       </Link>
     </section>

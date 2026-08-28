@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { DeskChrome } from "@/components/desk/DeskChrome";
 import { DeskLetterSendControls } from "@/components/desk/DeskLetterSendControls";
+import { DeskSubscribers } from "@/components/desk/DeskSubscribers";
 import { formatStoryDateline } from "@/lib/dates";
 import {
   getAppData,
   getEmailEdition,
   getEmailLetterPreview,
   getEmailLetterSend,
+  getEmailOneOffSends,
   listEmailEditions,
 } from "@/lib/data/store";
 import {
@@ -30,12 +32,22 @@ export default async function DeskEmailPage() {
   );
 
   const today = emailDetroitDateKey();
-  const edition =
-    (await getEmailEdition(today)) ?? buildEmailEditionSnapshot(data);
+  const captured = await getEmailEdition(today);
+  const edition = captured ?? buildEmailEditionSnapshot(data);
   const school = pickLetterSchoolDate(data.schools ?? []);
-  const { subject } = buildMorningLetter(edition, { school });
   const sent = await getEmailLetterSend(today);
+  const sentSubject =
+    typeof sent?.subject === "string" && sent.subject.trim()
+      ? sent.subject
+      : "";
+  // After live send, Desk shows the stored subject — do not rebuild.
+  const subject = sentSubject
+    ? sentSubject
+    : buildMorningLetter(edition, { school }).subject;
   const previewed = await getEmailLetterPreview(today);
+  const oneOffs = new Set(await getEmailOneOffSends(today));
+  if (today === "2026-08-28") oneOffs.add("stacietceye@hotmail.com");
+  const liveSentAt = sent?.sent_at ? new Date(sent.sent_at).getTime() : null;
 
   return (
     <DeskChrome active="email">
@@ -48,6 +60,7 @@ export default async function DeskEmailPage() {
 
         <DeskLetterSendControls
           subject={subject}
+          subjectLabel={sentSubject ? "Sent subject" : "Today’s subject"}
           alreadySent={Boolean(sent)}
           alreadyPreviewed={Boolean(previewed)}
         />
@@ -61,35 +74,26 @@ export default async function DeskEmailPage() {
             <code className="bg-paper-2 px-1">POST /api/subscribe</code>
             {" · "}
             {subscribers.length} stored
-            {subscribers.length ? "" : " (none yet)"}.
+            {subscribers.length ? "" : " (none yet)"}. Send today mails one
+            person this morning&apos;s letter. It does not re-blast the list.
           </p>
 
-          {subscribers.length === 0 ? (
-            <p className="mt-4 text-sm text-muted">
-              No addresses yet. Public signup writes here when someone joins.
-            </p>
-          ) : (
-            <div className="mt-4 overflow-x-auto">
-              <table className="desk-table w-full min-w-[420px]">
-                <thead>
-                  <tr>
-                    <th>Email</th>
-                    <th>Signed up</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {subscribers.map((row) => (
-                    <tr key={row.email}>
-                      <td className="font-medium text-ink">{row.email}</td>
-                      <td className="text-sm text-[#444]">
-                        {formatStoryDateline(row.created_at)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+          <DeskSubscribers
+            canSendToday={Boolean(captured)}
+            items={subscribers.map((row) => {
+              const email = row.email.trim().toLowerCase();
+              const inOneOff = oneOffs.has(email);
+              const inLiveBlast = Boolean(
+                liveSentAt !== null &&
+                  new Date(row.created_at).getTime() <= liveSentAt,
+              );
+              return {
+                email: row.email,
+                signed_up: formatStoryDateline(row.created_at),
+                sentToday: inOneOff || inLiveBlast,
+              };
+            })}
+          />
         </section>
 
         <div className="mt-8 flex flex-wrap gap-3">

@@ -13,7 +13,7 @@ export default function NotFound() {
         </p>
         <nav className="not-found-links" aria-label="Continue">
           <Link href="/">Today</Link>
-          <Link href="/whats-on">Events</Link>
+          <Link href="/events">Events</Link>
           <Link href="/civic">Civic</Link>
           <Link href="/schools">Schools</Link>
           <Link href="/search">Search</Link>

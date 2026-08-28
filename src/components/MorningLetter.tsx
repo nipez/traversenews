@@ -71,7 +71,7 @@ export function MorningLetter({
 
       <p className="mt-5 font-serif text-[1.05rem] leading-relaxed text-muted-2">
         {letter.lead
-          ? "Good morning. Start with our reporting, then the rest of the town and what's on tonight."
+          ? "Good morning. Here's the bay, then what's on tonight."
           : "Good morning. Here's the rest of the town from other desks, then what's on tonight."}
       </p>
 
@@ -89,9 +89,11 @@ export function MorningLetter({
               {letter.lead.dek}
             </p>
           ) : null}
-          <div className="mt-3">
-            <span className="source-box">traverse.news</span>
-          </div>
+          {letter.lead.desk_original ? (
+            <div className="mt-3">
+              <span className="source-box">traverse.news</span>
+            </div>
+          ) : null}
         </div>
       ) : null}
 
@@ -119,7 +121,7 @@ export function MorningLetter({
         ))}
         {letter.around.length === 0 ? (
           <li className="border-t border-rule py-4 text-sm text-muted">
-            No wire yet — we do not invent stories.
+            No headlines yet.
           </li>
         ) : null}
       </ul>
@@ -187,7 +189,7 @@ export function MorningLetter({
             </li>
           ))}
           {letter.civic.length === 0 ? (
-            <li className="text-muted">No meetings in the pull yet.</li>
+            <li className="text-muted">No meetings yet.</li>
           ) : null}
         </ul>
       </div>
@@ -229,7 +231,7 @@ export function MorningLetter({
         </p>
         <p className="mt-2 text-xs">
           Traverse City, Michigan ·{" "}
-          <Link href="/email/unsubscribe" className="font-bold text-teal">
+          <Link href="/unsubscribe" className="font-bold text-teal">
             Unsubscribe
           </Link>{" "}
           · Weekdays and Saturdays

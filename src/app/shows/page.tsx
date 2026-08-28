@@ -1,7 +1,13 @@
+import Link from "next/link";
 import { DeskRail } from "@/components/DeskRail";
 import { PublicShell } from "@/components/PublicShell";
 import { SectionHero } from "@/components/SectionHero";
-import { formatShowDateRange } from "@/lib/dates";
+import {
+  detroitDayKey,
+  formatCivicDate,
+  formatShowDateRange,
+  parseEventStartsAt,
+} from "@/lib/dates";
 import {
   getSectionHeadersSnapshot,
   getShowsSnapshot,
@@ -37,89 +43,143 @@ const VENUE_LINKS = [
   },
 ];
 
-function ShowCard({ item }: { item: ShowListing }) {
-  const when = formatShowDateRange(item.starts_at, item.ends_at);
-  const times = item.times.length > 0 ? item.times.join(" · ") : null;
-  const inner = (
+function labelFromDayKey(key: string): string {
+  const noon = parseEventStartsAt(`${key}T12:00`);
+  const d = noon ?? new Date(`${key}T12:00:00`);
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Detroit",
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+  }).format(d);
+}
+
+function runRange(item: ShowListing): string | null {
+  if (!item.ends_at) return null;
+  if (detroitDayKey(item.ends_at) === detroitDayKey(item.starts_at)) return null;
+  return formatShowDateRange(item.starts_at, item.ends_at);
+}
+
+function groupByStartDay(items: ShowListing[]) {
+  const groups = new Map<string, ShowListing[]>();
+  for (const item of items) {
+    const key = detroitDayKey(item.starts_at);
+    const list = groups.get(key) ?? [];
+    list.push(item);
+    groups.set(key, list);
+  }
+  return [...groups.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([key, list]) => ({
+      key,
+      dayLabel: labelFromDayKey(key),
+      items: [...list].sort((a, b) => a.title.localeCompare(b.title)),
+    }));
+}
+
+function ShowAgenda({
+  groups,
+  empty,
+}: {
+  groups: ReturnType<typeof groupByStartDay>;
+  empty?: string;
+}) {
+  if (groups.length === 0) {
+    return empty ? <li className="civic-empty">{empty}</li> : null;
+  }
+  return (
     <>
-      <h3 className="shows-title">{item.title}</h3>
-      <div className="shows-meta">
-        <span className="shows-when">{when}</span>
-        {times ? <span className="shows-times">{times}</span> : null}
-      </div>
-      <p className="shows-venue-credit">{item.venue}</p>
+      {groups.map((group) => (
+        <ShowDay key={group.key} group={group} />
+      ))}
     </>
   );
+}
 
-  if (item.url) {
-    return (
-      <li className="shows-item">
-        <a
-          href={item.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="shows-item-link"
-        >
-          {inner}
-        </a>
-      </li>
-    );
-  }
-
-  return <li className="shows-item shows-item-nolink">{inner}</li>;
+function ShowDay({
+  group,
+}: {
+  group: ReturnType<typeof groupByStartDay>[number];
+}) {
+  return (
+    <>
+      <li className="civic-month-hed">{group.dayLabel}</li>
+      {group.items.map((item) => {
+        const d = formatCivicDate(item.starts_at);
+        const range = runRange(item);
+        const title = item.url ? (
+          <a href={item.url} target="_blank" rel="noopener noreferrer">
+            {item.title}
+          </a>
+        ) : (
+          item.title
+        );
+        return (
+          <li key={item.id} className="civic-agenda-row">
+            <div className="civic-datebox">
+              <div className="civic-datebox-dow">{d.day}</div>
+              <div className="civic-datebox-day">{d.label}</div>
+              <div className="civic-datebox-month">{d.monthAbbr}</div>
+            </div>
+            <div className="civic-agenda-copy">
+              <p className="civic-agenda-title">{title}</p>
+              <p className="civic-agenda-place">{item.venue}</p>
+              {range ? <p className="civic-agenda-place">{range}</p> : null}
+            </div>
+          </li>
+        );
+      })}
+    </>
+  );
 }
 
 export default async function ShowsPage() {
   const snap = await getShowsSnapshot();
   const headers = await getSectionHeadersSnapshot();
-  const anyListings = snap.venues.some((v) => v.listings.length > 0);
+  const listings = snap.venues.flatMap((v) => v.listings);
+  const byDay = groupByStartDay(listings);
+  const now = new Date();
+  const weekEndKey = detroitDayKey(
+    new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000),
+  );
+  const thisWeek = byDay.filter((g) => g.key <= weekEndKey);
+  const coming = byDay.filter((g) => g.key > weekEndKey);
 
   return (
     <PublicShell active="/shows" header="compact">
-      <div className="about-layout shows-layout">
-        <div className="about-essay shows-main">
-          <SectionHero
-            kicker="On screen & stage"
-            title="Shows"
-            header={headers.headers.shows}
-            dek="Movies and live theatre around the bay. Listings credit the venue and link out. If a source page does not print a time, we leave it blank."
-          />
-
-          {!anyListings ? (
-            <p className="shows-empty">
-              No showtimes in the pull yet. Venue pages are linked below — we do
-              not invent titles or clocks.
-            </p>
-          ) : null}
-
-          <div className="shows-venues">
-            {snap.venues.map((venue) => (
-              <section key={venue.source_id} className="shows-venue">
-                <div className="shows-venue-head">
-                  <h2 className="shows-venue-hed">{venue.name}</h2>
-                  <a
-                    href={venue.homepage}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="shows-venue-link"
-                  >
-                    Venue site ↗
-                  </a>
-                </div>
-                {venue.listings.length === 0 ? (
-                  <p className="shows-venue-empty">
-                    No listings yet from this venue.
-                  </p>
-                ) : (
-                  <ul className="shows-list">
-                    {venue.listings.map((item) => (
-                      <ShowCard key={item.id} item={item} />
-                    ))}
-                  </ul>
-                )}
-              </section>
-            ))}
-          </div>
+      <SectionHero
+        kicker="On screen & stage"
+        title="Shows"
+        header={headers.headers.shows}
+        dek="Movies and live theatre around the bay."
+      />
+      <div className="about-layout civic-layout">
+        <div className="about-essay civic-main">
+          {byDay.length === 0 ? (
+            <ul className="civic-agenda">
+              <li className="civic-empty">No listings yet.</li>
+            </ul>
+          ) : (
+            <>
+              <ul className="civic-agenda">
+                <li className="civic-month-hed">This week</li>
+                <ShowAgenda
+                  groups={thisWeek}
+                  empty="No movies or plays this week."
+                />
+              </ul>
+              {coming.length > 0 ? (
+                <ul className="civic-agenda">
+                  <li className="civic-month-hed">Coming up</li>
+                  <ShowAgenda groups={coming} />
+                </ul>
+              ) : null}
+            </>
+          )}
+          <p className="sports-foot">
+            Also on <Link href="/events">Events</Link> /{" "}
+            <Link href="/">Today</Link>.
+          </p>
         </div>
 
         <DeskRail

@@ -36,7 +36,7 @@ function SportsList({ items }: { items: PublicSportsStoryCard[] }) {
   if (items.length === 0) {
     return (
       <p className="sports-empty">
-        No sports headlines in the pull yet — we do not invent games or scores.
+        No sports headlines yet.
       </p>
     );
   }
@@ -78,21 +78,14 @@ export default async function SportsPage() {
 
   return (
     <PublicShell active="/sports" header="compact">
+      <SectionHero
+        kicker="Scores & prep"
+        title="Sports"
+        header={headers.headers.sports}
+        dek="Headlines from 9&10 Sports, Record-Eagle Sports, and local prep across the greater bay."
+      />
       <div className="about-layout sports-layout">
         <div className="about-essay sports-main">
-          <SectionHero
-            kicker="Scores & prep"
-            title="Sports"
-            header={headers.headers.sports}
-            dek={
-              <>
-                Headlines from 9&10 Sports, Record-Eagle Sports, and local prep
-                across the greater bay. They link out — we do not reprint game
-                stories or invent scores.
-              </>
-            }
-          />
-
           <SportsThisWeek thisWeek={weekGames} nextWeek={nextWeekGames} />
 
           {showHsSubhead ? (
@@ -111,8 +104,7 @@ export default async function SportsPage() {
           )}
 
           <p className="sports-foot">
-            Also on <Link href="/">Today</Link> in Around the bay when the wire
-            carries them.
+            Also on <Link href="/">Today</Link> in Around the bay.
           </p>
         </div>
 

@@ -1214,6 +1214,11 @@ a:hover {
   margin: 0 0 1.75rem;
 }
 
+/* Photo hero sits inside .stage — cancel the cream pad so it kisses the nav. */
+.stage:has(> .section-photo-hero:first-child) {
+  padding-top: 0;
+}
+
 .section-photo-band {
   position: relative;
   /* Full-bleed like homepage .hero-photo */
@@ -1359,7 +1364,7 @@ a:hover {
   color: #52493c;
 }
 
-/* Events page — v4 night-out layout */
+/* Events page — hero + about-layout list (Sports-style rows) */
 .events-page {
   padding-bottom: 3rem;
 }
@@ -1431,93 +1436,21 @@ a:hover {
   color: #1c1712;
 }
 
-.events-featured {
-  /* Full-bleed peach band without 100vw scrollbar overflow */
-  margin: 32px 0 0;
-  margin-inline: calc(50% - 50vw);
-  width: 100vw;
-  max-width: 100vw;
-  background: #f3cfae;
-  border-top: 1px solid #1c1712;
-  border-bottom: 1px solid #1c1712;
-  padding: 28px 0 32px;
-  box-sizing: border-box;
-}
-
-.events-featured-inner {
-  max-width: 1120px;
-  margin: 0 auto;
-  padding: 0 16px;
-  display: grid;
-  gap: 28px;
-}
-
-@media (min-width: 768px) {
-  .events-featured-inner {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 40px;
-    padding: 0 40px;
-  }
-}
-
+/* Featured peach band removed — listings stay in the left column. */
+.events-featured,
+.events-featured-inner,
 .events-featured-card {
-  min-width: 0;
-}
-
-.events-featured-time {
   margin: 0;
-  font-family: var(--font-archivo), system-ui, sans-serif;
-  font-weight: 800;
-  font-size: 46px;
-  line-height: 0.95;
-  letter-spacing: -0.04em;
-  color: #1c1712;
-}
-
-.events-featured-meridiem {
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #52493c;
-}
-
-.events-featured-meta {
-  margin: 10px 0 0;
-  font-family: var(--font-archivo), system-ui, sans-serif;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: #c45c26;
-}
-
-.events-featured-title {
-  margin: 10px 0 0;
-  font-family: var(--font-source-serif), Georgia, serif;
-  font-size: 22px;
-  font-weight: 600;
-  line-height: 1.25;
-  color: #1c1712;
-}
-
-.events-featured-title a:hover {
-  color: #2a6f6c;
-}
-
-.events-featured-empty {
-  margin: 0;
-  font-size: 15px;
-  color: #52493c;
-  grid-column: 1 / -1;
+  width: auto;
+  max-width: 100%;
 }
 
 .events-days {
-  margin-top: 48px;
-  max-width: 960px;
+  margin-top: 0;
+  max-width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 48px;
+  gap: 1.1rem;
 }
 
 .events-day-head {
@@ -1553,14 +1486,9 @@ a:hover {
   list-style: none;
   margin: 0;
   padding: 0;
-  display: grid;
-  gap: 0 56px;
-}
-
-@media (min-width: 720px) {
-  .events-day-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
 }
 
 .events-row {
@@ -1753,6 +1681,16 @@ a:hover {
   font-weight: 800;
   line-height: 1.25;
   color: #1c1712;
+}
+
+.civic-agenda-title a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.12em;
+}
+
+.civic-agenda-title a:hover {
+  color: #2a6f6c;
 }
 
 .civic-agenda-place {
@@ -2246,10 +2184,17 @@ a:hover {
     padding-right: 40px;
     padding-top: 44px;
   }
+  .site-shell:has(.about-layout) .stage:has(> .section-photo-hero:first-child) {
+    padding-top: 0;
+  }
 }
 
 /* Sports main column inside about-layout */
-.sports-main {
+.sports-main,
+.events-main,
+.civic-main,
+.schools-main,
+.local-main {
   max-width: none;
 }
 

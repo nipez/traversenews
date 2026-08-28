@@ -17,7 +17,6 @@ export function AroundTheBay({ items }: { items: BayItem[] }) {
       <div className="bay-head">
         <div>
           <h2 className="bay-hed">Around the bay</h2>
-          <p className="bay-kicker">Headlines link out — we don’t reprint</p>
         </div>
         <Link href="/sports" className="bay-sports-link">
           Sports →
@@ -25,7 +24,7 @@ export function AroundTheBay({ items }: { items: BayItem[] }) {
       </div>
       {shown.length === 0 ? (
         <p className="bay-empty">
-          No live wire yet. Run a pull — we do not invent headlines.
+          No headlines yet.
         </p>
       ) : (
         <ul className="bay-grid">

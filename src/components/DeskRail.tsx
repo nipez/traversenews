@@ -24,11 +24,7 @@ export function DeskRail({
     : sportsBeats
       ? "Sports desks"
       : outboundKicker;
-  const copy = outboundLinks
-    ? "Showtimes link out. We do not invent clocks."
-    : sportsBeats
-      ? "Headlines link out. We do not invent scores."
-      : null;
+  const copy = null;
 
   return (
     <aside className="about-rail">
@@ -56,9 +52,9 @@ export function DeskRail({
           </li>
           <li>
             <Link
-              href="/whats-on"
+              href="/events"
               className={
-                active === "/whats-on" ? "about-rail-nav-active" : undefined
+                active === "/events" ? "about-rail-nav-active" : undefined
               }
             >
               Events
@@ -83,9 +79,6 @@ export function DeskRail({
             >
               Schools
             </Link>
-          </li>
-          <li>
-            <Link href="/#alerts">Alerts</Link>
           </li>
           <li>
             <Link

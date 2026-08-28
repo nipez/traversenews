@@ -250,6 +250,8 @@ export type EmailStoryCard = {
   sources: string[];
   /** Record-Eagle paywall honesty mark. */
   paywalled?: boolean;
+  /** True only for a staff original, never a recap. */
+  desk_original?: boolean;
 };
 
 export type EmailAlertCard = {
@@ -281,6 +283,12 @@ export type EmailLetterSendRecord = {
   sent_at: string;
   resend_id?: string;
   subject?: string;
+};
+
+/** Detroit date → one-off Send today addresses (not the live blast). */
+export type EmailOneOffSendsRecord = {
+  emails: string[];
+  updated_at: string;
 };
 
 /**
@@ -358,6 +366,8 @@ export type AppData = {
    * preview must not block Desk from sending live later.
    */
   email_letter_previews?: Record<string, EmailLetterSendRecord>;
+  /** Desk one-off Send today log, keyed by Detroit YYYY-MM-DD. */
+  email_one_off_sends?: Record<string, EmailOneOffSendsRecord>;
   /** Desk originals workflow. Drafts are never public. */
   drafts: OriginalDraft[];
   /**

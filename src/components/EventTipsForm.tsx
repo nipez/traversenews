@@ -62,9 +62,8 @@ export function EventTipsForm() {
     <section id="event-tip" className="event-tip-box">
       <h2 className="font-serif text-2xl text-ink">Something missing?</h2>
       <p className="mt-1 max-w-xl text-sm text-muted">
-        Concerts, markets, nights out that are not listed. Civic and government
-        meetings belong on Civic — not here. Submissions stay with the desk
-        until confirmed; we do not invent a time if you leave it blank.
+        Concerts, markets, nights out that are not listed. Meetings belong on
+        Civic.
       </p>
 
       {status === "ok" ? (
