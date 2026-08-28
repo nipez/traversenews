@@ -236,6 +236,8 @@ const TRAILING_SUBJECT_FUNCTION_WORDS = new Set([
   "at",
   "on",
   "with",
+  "as",
+  "except",
 ]);
 
 /** Strip trailing glue words until the phrase ends on content. */
@@ -257,7 +259,11 @@ function stripTrailingSubjectFunctionWords(value: string): string {
  */
 function phraseFromTitle(value: string, maxLength = 40): string {
   let title = value.replace(/\s+/g, " ").trim();
+  // Drop "except near …" as a unit before a bare "near …" strip, so we never
+  // leave a dangling trailing "except".
+  title = title.replace(/\s+except\s+near\s+.+$/i, "").trim();
   title = title.replace(/\s+near\s+.+$/i, "").trim();
+  title = stripTrailingSubjectFunctionWords(title) || title;
   if (title.length <= maxLength) {
     return stripTrailingSubjectFunctionWords(title) || title;
   }
@@ -313,79 +319,41 @@ function phraseFromTitle(value: string, maxLength = 40): string {
   return shortened || title.slice(0, maxLength).trim();
 }
 
-/** Morning kids / storytime — skip when a later evening listing exists. */
-function isKidsStorytimeSubjectTitle(value: string): boolean {
-  const title = value.toLowerCase();
-  return (
-    title.includes("sing & stomp") ||
-    title.includes("sing and stomp") ||
-    title.includes("wigglers") ||
-    title.includes("storytime") ||
-    title.includes("story time")
-  );
-}
-
-function eventDetroitHour(startsAt: string): number | null {
-  const ms = Date.parse(startsAt);
-  if (Number.isNaN(ms)) return null;
-  const hour = Number(
-    new Intl.DateTimeFormat("en-US", {
-      timeZone: DETROIT_TIME_ZONE,
-      hour: "numeric",
-      hourCycle: "h23",
-    }).formatToParts(new Date(ms)).find((part) => part.type === "hour")
-      ?.value,
-  );
-  return Number.isFinite(hour) ? hour : null;
-}
-
-/** Dennos or 4pm+ timed nights preferred for the 🌙 subject slot. */
-function isPreferredTonightSubjectEvent(event: EmailEventCard): boolean {
-  if (isKidsStorytimeSubjectTitle(event.title)) return false;
-  const hay = `${event.title} ${event.place}`.toLowerCase();
-  if (hay.includes("dennos")) return true;
-  if (event.time_unknown) return false;
-  const hour = eventDetroitHour(event.starts_at);
-  return hour != null && hour >= 16;
-}
-
-/**
- * Order tonight for the subject: prefer Dennos / 4pm+ nights; skip morning
- * kids/storytime when any later usable evening listing exists.
- */
-function tonightSubjectEvents(tonight: EmailEventCard[]): EmailEventCard[] {
-  const preferred: EmailEventCard[] = [];
-  const other: EmailEventCard[] = [];
-  const kids: EmailEventCard[] = [];
-
-  for (const event of tonight) {
-    if (isKidsStorytimeSubjectTitle(event.title)) {
-      kids.push(event);
-      continue;
-    }
-    if (isPreferredTonightSubjectEvent(event)) preferred.push(event);
-    else other.push(event);
-  }
-
-  if (preferred.length > 0) return [...preferred, ...other];
-  if (other.length > 0) return other;
-  return kids;
-}
-
-/** Stale / duplicate Boardman body-contact advisory heads — skip for 🌊. */
-function isStaleBoardmanAdvisoryTitle(value: string): boolean {
+/** Stale / duplicate Boardman no-body-contact advisory heads — skip. */
+function isStaleBoardmanBodyContactTitle(value: string): boolean {
   const title = value.toLowerCase();
   if (!title.includes("boardman")) return false;
   return (
     title.includes("no body contact") ||
     title.includes("no-body contact") ||
     title.includes("nobody contact") ||
-    title.includes("body contact advisory") ||
-    (title.includes("advisory") &&
-      (title.includes("lifts") ||
-        title.includes("lifted") ||
-        title.includes("issued") ||
-        title.includes("except")))
+    title.includes("body contact advisory")
+  );
+}
+
+/**
+ * Lifestyle / feature / sports-roundup heads stay out of the subject.
+ * Tonight/events also stay out (letter body only).
+ */
+function isLifestyleOrFeatureSubjectTitle(value: string): boolean {
+  const title = value.toLowerCase();
+  return (
+    title.includes("wine grape") ||
+    title.includes("wildfire smoke") ||
+    title.includes("hamlet of hundreds") ||
+    title.includes("wings and wheels") ||
+    title.includes("sports overtime") ||
+    title.includes("congregational summer assembly") ||
+    title.includes("flavor of wine")
+  );
+}
+
+/** Hard-news markers Nick wants in the subject scan. */
+function isNewsSubjectTitle(value: string): boolean {
+  if (isLifestyleOrFeatureSubjectTitle(value)) return false;
+  if (isStaleBoardmanBodyContactTitle(value)) return false;
+  return /\b(court|crash|vote|voted|advisory|suit|lawsuit|freeze|freezes|charged|arrest|outage|closure|closed|sewer|spill|lifts|lifted)\b/i.test(
+    value,
   );
 }
 
@@ -404,43 +372,26 @@ function buildMorningLetterSubject(letter: EmailEditionSnapshot): string {
     }
   }
 
-  // 🌙: prefer Dennos / 4pm+ nights; skip morning kids/storytime when a
-  // later usable evening listing exists. Prefer the full title when it is
-  // already parseable. Otherwise try a phraseFromTitle chop — place-only /
-  // place+one-word leftovers are skipped.
-  for (const event of tonightSubjectEvents(letter.tonight)) {
-    const raw = event.title?.replace(/\s+/g, " ").trim();
-    if (!raw) continue;
-    if (!isUnusableSubjectPhrase(raw)) {
-      candidates.push({ text: raw, source: raw, kind: "tonight" });
-      break;
-    }
-    const chopped = phraseFromTitle(raw, 28);
-    if (chopped && !isUnusableSubjectPhrase(chopped)) {
-      candidates.push({ text: chopped, source: raw, kind: "tonight" });
-      break;
-    }
-  }
-
-  // 🌊: walk around past stale Boardman body-contact advisory cards.
+  // News only in the subject. Tonight/events stay in the letter body.
+  // Prefer staff lead + 1–2 real news around cards (court, crash, vote,
+  // advisory, suit). Skip lifestyle/feature heads and stale Boardman
+  // no-body-contact advisories.
   for (const story of letter.around) {
+    if (candidates.length >= 3) break;
     const raw = story.title?.replace(/\s+/g, " ").trim();
-    if (!raw || isStaleBoardmanAdvisoryTitle(raw)) continue;
-    const title = phraseFromTitle(raw, 36);
+    if (!raw || !isNewsSubjectTitle(raw)) continue;
+    const title = phraseFromTitle(raw, 40);
     if (title && !isUnusableSubjectPhrase(title)) {
       candidates.push({ text: title, source: raw, kind: "around" });
-      break;
     }
   }
 
-  if (candidates.length < 2 && letter.alerts[0]?.title) {
-    const raw = letter.alerts[0].title.replace(/\s+/g, " ").trim();
-    const title = phraseFromTitle(raw, 36);
-    if (
-      title &&
-      !isUnusableSubjectPhrase(title) &&
-      !isStaleBoardmanAdvisoryTitle(title)
-    ) {
+  for (const alert of letter.alerts) {
+    if (candidates.length >= 3) break;
+    const raw = alert.title?.replace(/\s+/g, " ").trim();
+    if (!raw || !isNewsSubjectTitle(raw)) continue;
+    const title = phraseFromTitle(raw, 40);
+    if (title && !isUnusableSubjectPhrase(title)) {
       candidates.push({ text: title, source: raw, kind: "alert" });
     }
   }
@@ -477,47 +428,41 @@ function buildMorningLetterSubject(letter: EmailEditionSnapshot): string {
 
   let subject = format(selected);
 
-  // Prefer keeping 2–3 scan phrases. Shorten non-lead first so the lead
-  // closer ("for a year") survives; only then trim the lead; drop a slot last.
-  if (subject.length > 110 && selected.length === 3) {
+  // Prefer readable news phrases over opaque chops. If three phrases run
+  // long, drop the trailing slot (often the alert) before mangling titles.
+  if (subject.length > 100 && selected.length === 3) {
     selected = keepUsable(
       selected.map((item) =>
         item.kind === "lead"
           ? item
           : {
               ...item,
-              text: phraseFromTitle(item.source, 24),
+              text: phraseFromTitle(item.source, 40),
             },
       ),
     );
     subject = format(selected);
   }
-  if (subject.length > 110 && selected.length === 3) {
-    selected = reshorten(selected, 44, 22);
-    subject = format(selected);
-  }
-  if (subject.length > 118 && selected.length === 3) {
+  if (subject.length > 100 && selected.length === 3) {
     selected = selected.slice(0, 2);
     subject = format(selected);
   }
-  if (subject.length > 110) {
-    selected = reshorten(selected, 44, 28);
+  if (subject.length > 100) {
+    selected = reshorten(selected, 44, 40);
     if (selected.length === 0) {
       return subjectFallbackDate();
     }
     subject = format(selected);
   }
 
-  // Prefer dropping a trailing phrase over an opaque mid-string chop that
-  // can leave a region-only stub in the subject.
-  while (subject.length > 118 && selected.length > 1) {
+  while (subject.length > 110 && selected.length > 1) {
     selected = selected.slice(0, -1);
     subject = format(selected);
   }
 
-  if (subject.length > 118) {
+  if (subject.length > 110) {
     subject = `${subject
-      .slice(0, 115)
+      .slice(0, 107)
       .replace(/\s+\S*$/, "")
       .replace(/[,·\s]+$/, "")}…`;
 
