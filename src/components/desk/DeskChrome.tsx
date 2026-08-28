@@ -99,6 +99,19 @@ export async function DeskChrome({
             <SignOutButton />
           </div>
         </div>
+        {!backHref ? (
+          <nav className="desk-mobile-nav md:hidden" aria-label="Desk">
+            {nav.map((item) => (
+              <Link
+                key={item.id}
+                href={item.href}
+                data-active={active === item.id ? "true" : "false"}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+        ) : null}
       </header>
       {children}
     </>
