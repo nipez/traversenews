@@ -2,11 +2,12 @@ import Link from "next/link";
 import { DeskRail } from "@/components/DeskRail";
 import { PublicShell } from "@/components/PublicShell";
 import { SectionHero } from "@/components/SectionHero";
-import { detroitDayKey, formatShowDateRange } from "@/lib/dates";
+import { detroitDayKey, formatShowDateRange, parseEventStartsAt } from "@/lib/dates";
 import {
   getSectionHeadersSnapshot,
   getShowsSnapshot,
 } from "@/lib/public-snapshots";
+import { printedClockMinutes, sortPrintedShowTimes } from "@/lib/shows";
 import type { ShowListing } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -38,23 +39,41 @@ const VENUE_LINKS = [
   },
 ];
 
-/** First source-printed clock only. Never invent a showtime. */
+function dayClocks(item: ShowListing): string[] {
+  return sortPrintedShowTimes(item.times);
+}
+
+/** Earliest printed clock that day. Never invent a showtime. */
 function firstClock(item: ShowListing): string {
   if (item.time_unknown) return "—";
-  const raw = item.times[0]?.replace(/\s+/g, " ").trim() ?? "";
-  return raw || "—";
+  return dayClocks(item)[0] || "—";
 }
 
 function extraWhen(item: ShowListing): string {
   const bits: string[] = [];
   if (item.ends_at) {
-    const range = formatShowDateRange(item.starts_at, item.ends_at);
-    const startOnly = formatShowDateRange(item.starts_at);
-    if (range !== startOnly) bits.push(range);
+    const startDay = detroitDayKey(item.starts_at);
+    const endDay = detroitDayKey(item.ends_at);
+    if (endDay !== startDay) {
+      const range = formatShowDateRange(item.starts_at, item.ends_at);
+      const startOnly = formatShowDateRange(item.starts_at);
+      if (range !== startOnly) bits.push(range);
+    }
   }
-  const rest = item.times.slice(1);
+  const rest = dayClocks(item).slice(1);
   if (rest.length) bits.push(rest.join(" · "));
   return bits.join(" · ");
+}
+
+function labelFromDayKey(key: string): string {
+  const noon = parseEventStartsAt(`${key}T12:00`);
+  const d = noon ?? new Date(`${key}T12:00:00`);
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Detroit",
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+  }).format(d);
 }
 
 function groupByStartDay(items: ShowListing[]) {
@@ -69,19 +88,15 @@ function groupByStartDay(items: ShowListing[]) {
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([key, list]) => {
       const sorted = [...list].sort((a, b) => {
-        const aT = a.times[0] ? 0 : 1;
-        const bT = b.times[0] ? 0 : 1;
-        if (aT !== bT) return aT - bT;
+        const am = printedClockMinutes(firstClock(a));
+        const bm = printedClockMinutes(firstClock(b));
+        if (am == null && bm == null) return a.title.localeCompare(b.title);
+        if (am == null) return 1;
+        if (bm == null) return -1;
+        if (am !== bm) return am - bm;
         return a.title.localeCompare(b.title);
       });
-      const d = new Date(sorted[0].starts_at);
-      const dayLabel = new Intl.DateTimeFormat("en-US", {
-        timeZone: "America/Detroit",
-        weekday: "long",
-        month: "short",
-        day: "numeric",
-      }).format(d);
-      return { key, dayLabel, items: sorted };
+      return { key, dayLabel: labelFromDayKey(key), items: sorted };
     });
 }
 

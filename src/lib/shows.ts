@@ -75,26 +75,53 @@ function normalizeTitleKey(title: string): string {
   return title.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
-function mergeTimes(a: string[], b: string[]): string[] {
+/** Minutes from a printed clock like "3:30 PM" / "3:30pm". Null if unparsed. */
+export function printedClockMinutes(label: string): number | null {
+  const raw = label.trim().replace(/\s+/g, " ");
+  const m = raw.match(/^(\d{1,2}):(\d{2})\s*([AaPp][Mm])$/);
+  if (!m) return null;
+  let hour = Number(m[1]);
+  const minute = Number(m[2]);
+  const ap = m[3].toUpperCase();
+  if (ap === "PM" && hour < 12) hour += 12;
+  if (ap === "AM" && hour === 12) hour = 0;
+  return hour * 60 + minute;
+}
+
+/** Sort source-printed clocks; never invents a time. */
+export function sortPrintedShowTimes(times: string[]): string[] {
   const seen = new Set<string>();
   const out: string[] = [];
-  for (const t of [...a, ...b]) {
-    const key = t.trim().toLowerCase();
+  for (const t of times) {
+    const trimmed = t.trim();
+    const key = trimmed.toLowerCase();
     if (!key || seen.has(key)) continue;
     seen.add(key);
-    out.push(t.trim());
+    out.push(trimmed);
   }
-  return out;
+  return out.sort((a, b) => {
+    const am = printedClockMinutes(a);
+    const bm = printedClockMinutes(b);
+    if (am == null && bm == null) return a.localeCompare(b);
+    if (am == null) return 1;
+    if (bm == null) return -1;
+    return am - bm;
+  });
+}
+
+function mergeTimes(a: string[], b: string[]): string[] {
+  return sortPrintedShowTimes([...a, ...b]);
 }
 
 /**
- * Prefer one row per title+venue. Merge times; keep earliest starts_at.
+ * One row per title + venue + Detroit day.
+ * Merge same-day clocks only — do not mash Fri–Sun onto Friday.
  * Never invents clocks — only unions what sources already printed.
  */
 export function dedupeShows(listings: ShowListing[]): ShowListing[] {
   const byKey = new Map<string, ShowListing>();
   for (const row of listings) {
-    const key = `${row.source_id}|${normalizeTitleKey(row.title)}`;
+    const key = `${row.source_id}|${normalizeTitleKey(row.title)}|${detroitDayKey(row.starts_at)}`;
     const existing = byKey.get(key);
     if (!existing) {
       byKey.set(key, {
@@ -275,12 +302,14 @@ export function normalizeImportedShows(
       if (ends) ends_at = ends.toISOString();
     }
 
-    const times = Array.isArray(row.times)
-      ? row.times
-          .filter((t): t is string => typeof t === "string")
-          .map((t) => t.trim())
-          .filter(Boolean)
-      : [];
+    const times = sortPrintedShowTimes(
+      Array.isArray(row.times)
+        ? row.times
+            .filter((t): t is string => typeof t === "string")
+            .map((t) => t.trim())
+            .filter(Boolean)
+        : [],
+    );
 
     const venue =
       (typeof row.venue === "string" && row.venue.trim()) ||
@@ -288,9 +317,7 @@ export function normalizeImportedShows(
     const url =
       typeof row.url === "string" && row.url.trim() ? row.url.trim() : null;
 
-    const uid = url
-      ? `${url}|${normalizeTitleKey(title)}`
-      : `${normalizeTitleKey(title)}|${detroitDayKey(starts)}`;
+    const uid = `${normalizeTitleKey(title)}|${detroitDayKey(starts)}`;
 
     const listing: ShowListing = {
       id: stableShowId(sourceId, uid),
