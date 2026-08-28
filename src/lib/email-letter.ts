@@ -367,7 +367,7 @@ function titleThenDekHtml(titleHtml: string, dekHtml: string): string {
     return `<p style="margin:0;font-family:${LETTER_FONT};font-size:16px;line-height:1.35;">${titleHtml}</p>`;
   }
   return `<p style="margin:0;font-family:${LETTER_FONT};font-size:16px;line-height:1.35;">${titleHtml}</p>
-<p style="margin:0;padding:0;font-size:14px;line-height:18px;height:18px;">&nbsp;</p>
+<p style="margin:0;padding:0;font-size:16px;line-height:24px;height:24px;">&nbsp;</p>
 <p style="margin:0 0 6px;font-family:${LETTER_FONT};font-size:14px;line-height:1.5;color:#333333;">${dekHtml}</p>`;
 }
 

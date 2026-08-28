@@ -83,12 +83,12 @@ assert.match(
 // Title block, blank-line spacer, then dek (Gmail collapses tiny margins).
 assert.match(
   letter.html,
-  /Garfield Township freezes data centers for a year<\/a><\/p>\s*<p style="margin:0;padding:0;font-size:14px;line-height:18px;height:18px;">&nbsp;<\/p>\s*<p[^>]*>A pause while planners rewrite the zoning rules\.<\/p>/,
+  /Garfield Township freezes data centers for a year<\/a><\/p>\s*<p style="margin:0;padding:0;font-size:16px;line-height:24px;height:24px;">&nbsp;<\/p>\s*<p[^>]*>A pause while planners rewrite the zoning rules\.<\/p>/,
   "story title and dek must be separated by a blank-line spacer",
 );
 assert.match(
   letter.html,
-  /High wind advisory for Grand Traverse County<\/a><\/p>\s*<p style="margin:0;padding:0;font-size:14px;line-height:18px;height:18px;">&nbsp;<\/p>\s*<p[^>]*>Gusts near 50 mph through evening\.<\/p>/,
+  /High wind advisory for Grand Traverse County<\/a><\/p>\s*<p style="margin:0;padding:0;font-size:16px;line-height:24px;height:24px;">&nbsp;<\/p>\s*<p[^>]*>Gusts near 50 mph through evening\.<\/p>/,
   "alert title and dek must be separated by a blank-line spacer",
 );
 assert.match(
