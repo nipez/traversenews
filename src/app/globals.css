@@ -2127,6 +2127,12 @@ a:hover {
   color: #1c1712;
 }
 
+.sports-week-hed-next {
+  margin-top: 1.75rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid #d9cfb8;
+}
+
 .sports-week-dek {
   margin: 0.35rem 0 0;
   font-family: var(--font-source-serif), Georgia, serif;

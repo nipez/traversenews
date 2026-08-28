@@ -18,31 +18,114 @@ function gameClock(game: AthleticsGame): string {
   }).time;
 }
 
+function WeekDayList({
+  games,
+  empty,
+}: {
+  games: AthleticsGame[];
+  empty: string;
+}) {
+  const days = groupAthleticsByDay(games);
+  if (days.length === 0) {
+    return <p className="sports-week-empty">{empty}</p>;
+  }
+  return (
+    <div className="sports-week-days">
+      {days.map((day) => (
+        <div key={day.key} className="sports-week-day">
+          <h3 className="sports-week-day-label">{day.label}</h3>
+          <ul className="sports-week-list">
+            {day.items.map((game) => {
+              const varsity = isVarsityGameTitle(game.title);
+              const time = gameClock(game);
+              const inner = (
+                <>
+                  <span className="sports-week-time">{time}</span>
+                  <span className="sports-week-school">{game.school}</span>
+                  <span
+                    className={
+                      varsity
+                        ? "sports-week-title sports-week-title-varsity"
+                        : "sports-week-title"
+                    }
+                  >
+                    {game.title}
+                  </span>
+                  {game.place ? (
+                    <span className="sports-week-place">{game.place}</span>
+                  ) : null}
+                </>
+              );
+              return (
+                <li key={game.id} className="sports-week-item">
+                  {game.url ? (
+                    <a
+                      href={game.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="sports-week-link"
+                    >
+                      {inner}
+                    </a>
+                  ) : (
+                    <div className="sports-week-link sports-week-nolink">
+                      {inner}
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /**
- * Sports This week: TC core slate by default; Surrounding reveals map-ring
- * school chips and their games. Never invents kickoffs.
+ * Sports This week + Next week: TC core slate by default; Surrounding reveals
+ * map-ring school chips and their games. Shared school filters. Never invents
+ * kickoffs.
  */
-export function SportsThisWeek({ games }: { games: AthleticsGame[] }) {
+export function SportsThisWeek({
+  thisWeek,
+  nextWeek = [],
+}: {
+  thisWeek: AthleticsGame[];
+  nextWeek?: AthleticsGame[];
+}) {
+  const chipPool = useMemo(
+    () => [...thisWeek, ...nextWeek],
+    [thisWeek, nextWeek],
+  );
+
   const surroundingPresent = useMemo(() => {
     const have = new Set(
-      games.filter(isSurroundingAthleticsGame).map((g) => g.school),
+      chipPool.filter(isSurroundingAthleticsGame).map((g) => g.school),
     );
     return ATHLETICS_SURROUNDING_SCHOOLS.filter((name) => have.has(name));
-  }, [games]);
+  }, [chipPool]);
 
   const [showSurrounding, setShowSurrounding] = useState(false);
   const [activeSchool, setActiveSchool] = useState<string | null>(null);
 
-  const scoped = useMemo(
-    () =>
-      filterAthleticsSlate(games, {
-        includeSurrounding: showSurrounding,
-        school: activeSchool,
-      }),
-    [games, showSurrounding, activeSchool],
+  const filterOpts = useMemo(
+    () => ({
+      includeSurrounding: showSurrounding,
+      school: activeSchool,
+    }),
+    [showSurrounding, activeSchool],
   );
 
-  const days = groupAthleticsByDay(scoped);
+  const scopedThis = useMemo(
+    () => filterAthleticsSlate(thisWeek, filterOpts),
+    [thisWeek, filterOpts],
+  );
+  const scopedNext = useMemo(
+    () => filterAthleticsSlate(nextWeek, filterOpts),
+    [nextWeek, filterOpts],
+  );
+
   const surroundingCount = surroundingPresent.length;
   const surroundingLabel =
     surroundingCount === 1
@@ -50,11 +133,11 @@ export function SportsThisWeek({ games }: { games: AthleticsGame[] }) {
       : `${surroundingCount} more schools`;
 
   const coreChips = ATHLETICS_CORE_SCHOOLS.filter((name) =>
-    games.some((g) => g.school === name),
+    chipPool.some((g) => g.school === name),
   );
 
   return (
-    <section className="sports-week" aria-label="This week">
+    <section className="sports-week" aria-label="Prep calendar">
       <h2 className="sports-week-hed">This week</h2>
       <p className="sports-week-dek">
         Traverse City prep — Central, West, St. Francis, TC Christian.
@@ -147,59 +230,16 @@ export function SportsThisWeek({ games }: { games: AthleticsGame[] }) {
         </div>
       ) : null}
 
-      {days.length === 0 ? (
-        <p className="sports-week-empty">No games on the calendar this week.</p>
-      ) : (
-        <div className="sports-week-days">
-          {days.map((day) => (
-            <div key={day.key} className="sports-week-day">
-              <h3 className="sports-week-day-label">{day.label}</h3>
-              <ul className="sports-week-list">
-                {day.items.map((game) => {
-                  const varsity = isVarsityGameTitle(game.title);
-                  const time = gameClock(game);
-                  const inner = (
-                    <>
-                      <span className="sports-week-time">{time}</span>
-                      <span className="sports-week-school">{game.school}</span>
-                      <span
-                        className={
-                          varsity
-                            ? "sports-week-title sports-week-title-varsity"
-                            : "sports-week-title"
-                        }
-                      >
-                        {game.title}
-                      </span>
-                      {game.place ? (
-                        <span className="sports-week-place">{game.place}</span>
-                      ) : null}
-                    </>
-                  );
-                  return (
-                    <li key={game.id} className="sports-week-item">
-                      {game.url ? (
-                        <a
-                          href={game.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="sports-week-link"
-                        >
-                          {inner}
-                        </a>
-                      ) : (
-                        <div className="sports-week-link sports-week-nolink">
-                          {inner}
-                        </div>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          ))}
-        </div>
-      )}
+      <WeekDayList
+        games={scopedThis}
+        empty="No games on the calendar this week."
+      />
+
+      <h2 className="sports-week-hed sports-week-hed-next">Next week</h2>
+      <WeekDayList
+        games={scopedNext}
+        empty="No games on the calendar next week."
+      />
     </section>
   );
 }
