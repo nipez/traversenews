@@ -35,8 +35,15 @@ export default async function DeskEmailPage() {
   const captured = await getEmailEdition(today);
   const edition = captured ?? buildEmailEditionSnapshot(data);
   const school = pickLetterSchoolDate(data.schools ?? []);
-  const { subject } = buildMorningLetter(edition, { school });
   const sent = await getEmailLetterSend(today);
+  const sentSubject =
+    typeof sent?.subject === "string" && sent.subject.trim()
+      ? sent.subject
+      : "";
+  // After live send, Desk shows the stored subject — do not rebuild.
+  const subject = sentSubject
+    ? sentSubject
+    : buildMorningLetter(edition, { school }).subject;
   const previewed = await getEmailLetterPreview(today);
   const oneOffs = new Set(await getEmailOneOffSends(today));
   if (today === "2026-08-28") oneOffs.add("stacietceye@hotmail.com");
@@ -53,6 +60,7 @@ export default async function DeskEmailPage() {
 
         <DeskLetterSendControls
           subject={subject}
+          subjectLabel={sentSubject ? "Sent subject" : "Today’s subject"}
           alreadySent={Boolean(sent)}
           alreadyPreviewed={Boolean(previewed)}
         />

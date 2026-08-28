@@ -72,13 +72,33 @@ type SubjectItem = {
   kind: "lead" | "tonight" | "around" | "alert";
 };
 
-/** TLDR-style: emoji follows each phrase (Brothers Osborne 🌙, … 🌊). */
-const SUBJECT_EMOJI: Record<SubjectItem["kind"], string> = {
-  lead: "⚡️",
-  tonight: "🌙",
-  around: "🌊",
-  alert: "🚨",
-};
+/** Regular game recap — not subject-worthy unless it is a real news story. */
+function isRegularSportsRecap(title: string): boolean {
+  if (
+    /state (title|championship|final)|mhsaa (final|championship)|playoff/i.test(
+      title,
+    )
+  ) {
+    return false;
+  }
+  return /squeaks out|win vs\.?|wins vs\.?|play to (a )?(somber )?tie|sports overtime|scores and highlights|prep roundup|defeats |quad meet/i.test(
+    title,
+  );
+}
+
+/** Feature / night-out / anniversary — fine in the letter body, not the subject. */
+function isLifestyleOrEventTitle(title: string): boolean {
+  return /wine grapes|wildfire smoke|hamlet of hundreds|wings and wheels|sports overtime|scores and highlights|silent disco|artist talk|artist reception|concert|festival|fly-in|open mic|storytime|sing\s*&\s*stomp|chorus|celebrat|anniversary|opera house|exhibit|gallery opening/i.test(
+    title,
+  );
+}
+
+/** Court, crash, vote, charges — prefer these over features for the subject. */
+function isHardNewsTitle(title: string): boolean {
+  return /court|crash|lawsuit|\bsuit\b|vote|killed|fatal|arrest|charges|sentenc|zoning|ordinance|budget|spill(?!.*wine)/i.test(
+    title,
+  );
+}
 
 function isFakeSubscriberEmail(value: string): boolean {
   const email = value.trim().toLowerCase();
@@ -155,206 +175,208 @@ function letterUrl(value: string | null | undefined): string | null {
   }
 }
 
-/**
- * Insider shorthand a stranger cannot parse: empty, tiny one-word stubs,
- * or a lone capitalized last name.
- */
-function isInsiderSubjectPhrase(value: string): boolean {
-  const title = value.trim();
-  return Boolean(
-    !title ||
-      (!/\s/.test(title) && title.length < 12) ||
-      /^[A-Z][a-z]{1,14}$/.test(title),
-  );
-}
-
-/**
- * Coverage-area labels that must never stand alone in a subject line,
- * and must not lead a phrase that only has one leftover word
- * (“Grand Traverse Area Genealogical”). Place + two+ words is fine
- * (“Grand Traverse Area Genealogical Society”).
- */
-const REGION_ONLY_SUBJECT_PHRASES = [
-  "grand traverse area",
-  "grand traverse county",
-  "leelanau county",
-  "benzie county",
-  "antrim county",
-  "kalkaska county",
-  "traverse city",
-  "northern michigan",
-  "around the bay",
-  "the bay",
-];
-
-function normalizeSubjectPhrase(value: string): string {
-  return value
-    .replace(/\s+/g, " ")
-    .trim()
-    .toLowerCase()
-    .replace(/[.…]+$/g, "")
-    .trim();
-}
-
-function isGenericPlaceSubjectPhrase(value: string): boolean {
-  const normalized = normalizeSubjectPhrase(value);
-  if (!normalized) return false;
-  if (REGION_ONLY_SUBJECT_PHRASES.includes(normalized)) return true;
-
-  // Longest prefix first so “around the bay” wins over “the bay”.
-  const regionsByLength = [...REGION_ONLY_SUBJECT_PHRASES].sort(
-    (a, b) => b.length - a.length,
-  );
-  for (const region of regionsByLength) {
-    if (!normalized.startsWith(`${region} `)) continue;
-    const restWords = normalized
-      .slice(region.length)
-      .trim()
-      .split(/\s+/)
-      .filter(Boolean);
-    // Place alone or place + one word → unusable. Place + two+ → ok.
-    return restWords.length <= 1;
-  }
+function isInsiderShorthand(phrase: string): boolean {
+  const t = phrase.trim();
+  if (!t) return true;
+  // Last name / one-word insider tag alone is not parseable to a stranger.
+  if (!/\s/.test(t) && t.length < 12) return true;
+  if (/^[A-Z][a-z]{1,14}$/.test(t)) return true;
   return false;
 }
 
-/** Reject insider shorthand and generic-place leftovers alike. */
-function isUnusableSubjectPhrase(value: string): boolean {
-  return isInsiderSubjectPhrase(value) || isGenericPlaceSubjectPhrase(value);
-}
-
-/** Chop a title into a short subject phrase without trailing glue words. */
-function phraseFromTitle(value: string, maxLength = 40): string {
-  let title = value.replace(/\s+/g, " ").trim();
-  title = title.replace(/\s+near\s+.+$/i, "").trim();
-  if (title.length <= maxLength) return title;
-
-  for (const separator of [": ", " — ", " – ", " - ", "; ", ", "]) {
-    const index = title.indexOf(separator);
-    if (index >= 12 && index <= maxLength) {
-      return title.slice(0, index).trim();
-    }
-  }
-
-  let shortened = "";
-  for (const word of title.split(" ")) {
-    const candidate = shortened ? `${shortened} ${word}` : word;
-    if (candidate.length > maxLength) break;
-    shortened = candidate;
-  }
-
-  shortened = shortened
-    .replace(/\s+(on|at|for|of|in|with|and|the|a|an)$/i, "")
+function isGenericPlace(phrase: string): boolean {
+  const n = phrase
+    .toLowerCase()
+    .replace(/[.,’']/g, "")
+    .replace(/\s+/g, " ")
     .trim();
-  return shortened || title.slice(0, maxLength).trim();
+  return /^(the )?(grand traverse( area| county)?|leelanau( county)?|benzie( county)?|antrim( county)?|kalkaska( county)?|traverse city|northern michigan|up north|the bay|around the bay)$/.test(
+    n,
+  );
 }
 
-function subjectFallbackDate(): string {
-  return `🗞️ traverse.news · ${emailDetroitDateKey()}`;
+function usableSubjectPhrase(phrase: string): boolean {
+  if (!phrase || isInsiderShorthand(phrase) || isGenericPlace(phrase)) return false;
+  // "Grand Traverse Area Genealogical" is still just a place + one leftover word.
+  const n = phrase
+    .toLowerCase()
+    .replace(/[.,’']/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  const prefixes = [
+    "grand traverse area",
+    "grand traverse county",
+    "grand traverse",
+    "leelanau county",
+    "benzie county",
+    "antrim county",
+    "kalkaska county",
+    "traverse city",
+    "northern michigan",
+  ];
+  for (const prefix of prefixes) {
+    if (n === prefix) return false;
+    if (n.startsWith(`${prefix} `)) {
+      const rest = n.slice(prefix.length).trim();
+      if (rest.split(/\s+/).filter(Boolean).length < 2) return false;
+    }
+  }
+  return true;
 }
 
-function buildMorningLetterSubject(letter: EmailEditionSnapshot): string {
-  const candidates: SubjectItem[] = [];
+const TRAIL_STOP = /\s+(on|at|for|of|in|with|and|the|a|an|as|vs|versus)$/i;
 
-  if (letter.lead?.title) {
-    const title = phraseFromTitle(letter.lead.title, 44);
-    if (title && !isUnusableSubjectPhrase(title)) {
-      candidates.push({ text: title, kind: "lead" });
-    }
+function stripTrailingStops(s: string): string {
+  let out = s.trim();
+  for (let i = 0; i < 6; i += 1) {
+    const next = out.replace(TRAIL_STOP, "").trim();
+    if (next === out) break;
+    out = next;
   }
+  return out;
+}
 
-  // 🌙: walk tonight until a usable phrase exists. Prefer the full title
-  // when it is already parseable (place + two+ words). Otherwise try a
-  // phraseFromTitle chop — place-only / place+one-word leftovers are skipped.
-  for (const event of letter.tonight) {
-    const raw = event.title?.replace(/\s+/g, " ").trim();
-    if (!raw) continue;
-    if (!isUnusableSubjectPhrase(raw)) {
-      candidates.push({ text: raw, kind: "tonight" });
+function phraseFromTitle(title: string, budget = 40): string {
+  let t = title.replace(/\s+/g, " ").trim().replace(/[?]+$/, "");
+  t = t.replace(/\s+except\s+near\s+.+$/i, "").trim();
+  // Keep "near Cadillac" on crash heads so subject compress can use the real place.
+  if (!/\b(crash|collision)\b/i.test(t)) {
+    t = t.replace(/\s+near\s+.+$/i, "").trim();
+  }
+  t = t.replace(/\s+except$/i, "").trim();
+  t = t.replace(/\b(Township|County)\b/g, " ").replace(/\s+/g, " ").trim();
+  t = t.replace(/^(could|would|will|how|why|what|is|are)\s+/i, "");
+  if (/wildfire smoke/i.test(t) && /wine grapes/i.test(t)) {
+    return "Smoke and wine grapes";
+  }
+  if (t.length <= budget) return stripTrailingStops(t);
+  for (const sep of [": ", " — ", " – ", " - ", "; ", ", "]) {
+    const i = t.indexOf(sep);
+    if (i >= 12 && i <= budget) return stripTrailingStops(t.slice(0, i));
+  }
+  const words = t.split(" ");
+  let out = "";
+  for (const w of words) {
+    const next = out ? `${out} ${w}` : w;
+    if (next.length > budget) {
+      const rest = t.slice(out.length).trim();
+      const closer = rest.match(/^(for a year|for a month|for a week|for a day)\b/i);
+      if (closer && `${out} ${closer[1]}`.length <= budget + 10) {
+        out = `${out} ${closer[1]}`;
+      }
       break;
     }
-    const chopped = phraseFromTitle(raw, 28);
-    if (chopped && !isUnusableSubjectPhrase(chopped)) {
-      candidates.push({ text: chopped, kind: "tonight" });
-      break;
-    }
+    out = next;
   }
+  return stripTrailingStops(out) || t.slice(0, budget).trim();
+}
 
-  if (letter.around[0]?.title) {
-    const title = phraseFromTitle(letter.around[0].title, 36);
-    if (title && !isUnusableSubjectPhrase(title)) {
-      candidates.push({ text: title, kind: "around" });
-    }
-  }
+function isDuplicateBoardmanTitle(title: string): boolean {
+  return /no[- ]?body[- ]contact advisory|issued for boardman|boardman advisory|level 2 advisory|sewage spill/i.test(
+    title,
+  );
+}
 
-  if (candidates.length < 2 && letter.alerts[0]?.title) {
-    const title = phraseFromTitle(letter.alerts[0].title, 36);
-    if (title && !isUnusableSubjectPhrase(title)) {
-      candidates.push({ text: title, kind: "alert" });
-    }
-  }
-
-  let selected = candidates.slice(0, 3);
-  if (selected.length === 0) {
-    return subjectFallbackDate();
-  }
-
-  const format = (items: SubjectItem[]): string =>
-    items
-      .map((item) => `${item.text} ${SUBJECT_EMOJI[item.kind]}`)
-      .join(", ");
-
-  const keepUsable = (items: SubjectItem[]): SubjectItem[] =>
-    items.filter(
-      (item) => item.text.trim() && !isUnusableSubjectPhrase(item.text),
-    );
-
-  let subject = format(selected);
-  if (subject.length > 80 && selected.length === 3) {
-    selected = selected.slice(0, 2);
-    subject = format(selected);
-  }
-  if (subject.length > 80) {
-    selected = keepUsable(
-      selected.map((item) => ({
-        ...item,
-        text: phraseFromTitle(item.text, 28),
-      })),
-    );
-    if (selected.length === 0) {
-      return subjectFallbackDate();
-    }
-    subject = format(selected);
-  }
-
-  // Prefer dropping a trailing phrase over an opaque mid-string chop that
-  // can leave a region-only stub in the subject.
-  while (subject.length > 84 && selected.length > 1) {
-    selected = selected.slice(0, -1);
-    subject = format(selected);
-  }
-
-  if (subject.length > 84) {
-    subject = `${subject
-      .slice(0, 81)
-      .replace(/\s+\S*$/, "")
-      .replace(/[,·\s]+$/, "")}…`;
-
-    const leftover = subject
-      .replace(/…$/u, "")
-      .split(/,\s*/)
-      .map((part) =>
-        part.replace(/\s*(?:⚡️|🌙|🌊|🚨|🗞️)\s*$/u, "").trim(),
-      )
-      .filter(Boolean);
+function pickAroundNews(
+  around: EmailEditionSnapshot["around"],
+  limit = 2,
+): string[] {
+  const ranked = [...around].sort((a, b) => {
+    const ta = a.title || "";
+    const tb = b.title || "";
+    const ra = isHardNewsTitle(ta) ? 0 : 1;
+    const rb = isHardNewsTitle(tb) ? 0 : 1;
+    return ra - rb;
+  });
+  const out: string[] = [];
+  for (const card of ranked) {
+    const title = (card.title || "").replace(/\s+/g, " ").trim();
     if (
-      leftover.length === 0 ||
-      leftover.some((phrase) => isUnusableSubjectPhrase(phrase))
+      !title ||
+      isDuplicateBoardmanTitle(title) ||
+      isLifestyleOrEventTitle(title) ||
+      isRegularSportsRecap(title)
     ) {
-      return subjectFallbackDate();
+      continue;
+    }
+    const text = phraseFromTitle(title, 44);
+    if (!usableSubjectPhrase(text)) continue;
+    if (out.includes(text)) continue;
+    out.push(text);
+    if (out.length >= limit) break;
+  }
+  return out;
+}
+
+/**
+ * News-only 2–3 parseable phrases. Deterministic from snapshot fields only.
+ * Never a last name, lifestyle/tonight item, or regular sports recap.
+ */
+export function buildMorningLetterSubject(snapshot: EmailEditionSnapshot): string {
+  const parts: SubjectItem[] = [];
+  if (snapshot.lead?.title) {
+    const text = phraseFromTitle(snapshot.lead.title, 48);
+    if (usableSubjectPhrase(text)) parts.push({ text, kind: "lead" });
+  }
+  for (const text of pickAroundNews(snapshot.around, 2)) {
+    parts.push({ text, kind: "around" });
+  }
+  if (parts.length < 2 && snapshot.alerts[0]?.title) {
+    const alertTitle = snapshot.alerts[0].title;
+    if (!/lifts? |lifted|back open|reopened/i.test(alertTitle)) {
+      const text = phraseFromTitle(alertTitle, 36);
+      if (usableSubjectPhrase(text)) parts.push({ text, kind: "alert" });
     }
   }
 
+  let chosen = parts.slice(0, 3);
+  if (chosen.length === 0) {
+    return `🗞️ traverse.news · ${emailDetroitDateKey()}`;
+  }
+
+  const render = (items: SubjectItem[]): string => {
+    const bits = items.map((i) =>
+      i.kind === "tonight" ? `🌙 ${i.text}` : i.text,
+    );
+    return `🗞️ ${bits.join(" · ")}`;
+  };
+
+  chosen = chosen.map((p) => {
+    let text = p.text.replace(/\s+for a (year|month|week|day)$/i, "").trim();
+    text = text.replace(/\bheads back to court\b/i, "back in court");
+    text = text.replace(/\bPark back in court\b/i, "back in court");
+    text = text.replace(/\bsqueaks out (?:a )?win vs\.?\s+/i, "over ");
+    text = text.replace(/\bsqueaks out (?:a )?win\b/i, "wins");
+    text = text.replace(/\bwins? vs\.?\s+/i, "over ");
+    text = text.replace(
+      /^(?:three-vehicle |head-on )?crash on (M-\d+) near ([A-Za-z][A-Za-z .]+)$/i,
+      "$1 crash near $2",
+    );
+    text = stripTrailingStops(text);
+    return { ...p, text: usableSubjectPhrase(text) ? text : p.text };
+  });
+  const phraseLen = (s: string) => s.replace(/^🗞️\s*/, "").length;
+  let subject = render(chosen);
+  // Prefer 3 news phrases when they still parse. Emoji is not in the 84-char budget.
+  if (phraseLen(subject) > 84 && chosen.length === 3) {
+    chosen = chosen.slice(0, 2);
+    subject = render(chosen);
+  }
+  if (phraseLen(subject) > 80 && chosen.length < 3) {
+    chosen = chosen
+      .map((p) => ({
+        ...p,
+        text: phraseFromTitle(p.text, 28),
+      }))
+      .filter((p) => usableSubjectPhrase(p.text));
+    if (chosen.length === 0) {
+      return `🗞️ traverse.news · ${emailDetroitDateKey()}`;
+    }
+    subject = render(chosen);
+  }
+  if (phraseLen(subject) > 84) {
+    subject = `${subject.slice(0, 81).replace(/\s+\S*$/, "").replace(/[·,\s]+$/, "")}…`;
+  }
   return subject;
 }
 

@@ -9,12 +9,15 @@ type Props = {
   subject: string;
   alreadySent: boolean;
   alreadyPreviewed: boolean;
+  /** Desk label: "Sent subject" after live, else "Today’s subject". */
+  subjectLabel?: string;
 };
 
 export function DeskLetterSendControls({
   subject,
   alreadySent,
   alreadyPreviewed,
+  subjectLabel = "Today’s subject",
 }: Props) {
   const router = useRouter();
   const [busy, setBusy] = useState<SendMode | null>(null);
@@ -76,7 +79,7 @@ export function DeskLetterSendControls({
         8am preview hits Nick’s inbox. Send live when the subject looks right.
       </p>
 
-      <p className="mt-4 text-sm text-muted">Today’s subject</p>
+      <p className="mt-4 text-sm text-muted">{subjectLabel}</p>
       <p className="mt-1 font-serif text-xl text-ink">{subject}</p>
 
       <p className="mt-3 text-sm text-muted">
