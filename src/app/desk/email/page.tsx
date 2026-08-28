@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { DeskChrome } from "@/components/desk/DeskChrome";
 import { DeskLetterSendControls } from "@/components/desk/DeskLetterSendControls";
+import { DeskSubscribersList } from "@/components/desk/DeskSubscribersList";
 import { formatStoryDateline } from "@/lib/dates";
 import {
   getAppData,
@@ -64,32 +65,12 @@ export default async function DeskEmailPage() {
             {subscribers.length ? "" : " (none yet)"}.
           </p>
 
-          {subscribers.length === 0 ? (
-            <p className="mt-4 text-sm text-muted">
-              No addresses yet. Public signup writes here when someone joins.
-            </p>
-          ) : (
-            <div className="mt-4 overflow-x-auto">
-              <table className="desk-table w-full min-w-[420px]">
-                <thead>
-                  <tr>
-                    <th>Email</th>
-                    <th>Signed up</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {subscribers.map((row) => (
-                    <tr key={row.email}>
-                      <td className="font-medium text-ink">{row.email}</td>
-                      <td className="text-sm text-[#444]">
-                        {formatStoryDateline(row.created_at)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+          <DeskSubscribersList
+            subscribers={subscribers.map((row) => ({
+              email: row.email,
+              signed_up_label: formatStoryDateline(row.created_at),
+            }))}
+          />
         </section>
 
         <div className="mt-8 flex flex-wrap gap-3">

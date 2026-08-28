@@ -20,7 +20,7 @@ import type {
 const SITE_ORIGIN = "https://traverse.news";
 const DETROIT_TIME_ZONE = "America/Detroit";
 
-/** Fallback when the signup list is empty or still has fake/example/verify addresses. */
+/** Fallback when no real signup addresses remain after stripping fakes. */
 export const DESK_LETTER_FALLBACK = "nickperez@gmail.com";
 
 /** Subject prefix for Nick-only 8am previews (live send keeps the bare subject). */
@@ -69,6 +69,8 @@ type RenderedItem = {
 
 type SubjectItem = {
   text: string;
+  /** Original title for re-chop when the subject runs long. */
+  source: string;
   kind: "lead" | "tonight" | "around" | "alert";
 };
 
@@ -223,30 +225,136 @@ function isUnusableSubjectPhrase(value: string): boolean {
   return isInsiderSubjectPhrase(value) || isGenericPlaceSubjectPhrase(value);
 }
 
-/** Chop a title into a short subject phrase without trailing glue words. */
+const TRAILING_SUBJECT_FUNCTION_WORDS = new Set([
+  "for",
+  "of",
+  "in",
+  "a",
+  "an",
+  "the",
+  "and",
+  "at",
+  "on",
+  "with",
+  "as",
+  "except",
+]);
+
+/** Strip trailing glue words until the phrase ends on content. */
+function stripTrailingSubjectFunctionWords(value: string): string {
+  let words = value.replace(/\s+/g, " ").trim().split(" ").filter(Boolean);
+  while (
+    words.length > 1 &&
+    TRAILING_SUBJECT_FUNCTION_WORDS.has(words[words.length - 1]!.toLowerCase())
+  ) {
+    words = words.slice(0, -1);
+  }
+  return words.join(" ");
+}
+
+/**
+ * Chop a title into a short subject phrase without trailing glue words.
+ * Prefer completing a short closer ("for a year") when the next 1–2 words
+ * still fit a slightly larger budget than the hard chop.
+ */
 function phraseFromTitle(value: string, maxLength = 40): string {
   let title = value.replace(/\s+/g, " ").trim();
+  // Drop "except near …" as a unit before a bare "near …" strip, so we never
+  // leave a dangling trailing "except".
+  title = title.replace(/\s+except\s+near\s+.+$/i, "").trim();
   title = title.replace(/\s+near\s+.+$/i, "").trim();
-  if (title.length <= maxLength) return title;
+  title = stripTrailingSubjectFunctionWords(title) || title;
+  if (title.length <= maxLength) {
+    return stripTrailingSubjectFunctionWords(title) || title;
+  }
 
   for (const separator of [": ", " — ", " – ", " - ", "; ", ", "]) {
     const index = title.indexOf(separator);
     if (index >= 12 && index <= maxLength) {
-      return title.slice(0, index).trim();
+      const cut = title.slice(0, index).trim();
+      return stripTrailingSubjectFunctionWords(cut) || cut;
     }
   }
 
+  const words = title.split(" ").filter(Boolean);
+  let used = 0;
   let shortened = "";
-  for (const word of title.split(" ")) {
+  for (const word of words) {
     const candidate = shortened ? `${shortened} ${word}` : word;
     if (candidate.length > maxLength) break;
     shortened = candidate;
+    used += 1;
   }
 
-  shortened = shortened
-    .replace(/\s+(on|at|for|of|in|with|and|the|a|an)$/i, "")
-    .trim();
+  // Prefer completing a short closer like "for a year" (function word +
+  // 1–2 words, or 1–2 words after a chop that already ends on glue).
+  const closerBudget = maxLength + 10;
+  const remaining = words.slice(used);
+  if (shortened && remaining.length > 0) {
+    const lastChopped =
+      shortened.split(" ").pop()?.toLowerCase() ?? "";
+    const next = remaining[0]!.toLowerCase();
+    let take = 0;
+    if (
+      TRAILING_SUBJECT_FUNCTION_WORDS.has(lastChopped) &&
+      remaining.length <= 2
+    ) {
+      take = remaining.length;
+    } else if (
+      TRAILING_SUBJECT_FUNCTION_WORDS.has(next) &&
+      remaining.length >= 2 &&
+      remaining.length <= 3
+    ) {
+      take = remaining.length;
+    }
+    if (take > 0) {
+      const withCloser = `${shortened} ${remaining.slice(0, take).join(" ")}`.trim();
+      if (withCloser.length <= closerBudget) {
+        shortened = withCloser;
+      }
+    }
+  }
+
+  shortened = stripTrailingSubjectFunctionWords(shortened).trim();
   return shortened || title.slice(0, maxLength).trim();
+}
+
+/** Stale / duplicate Boardman no-body-contact advisory heads — skip. */
+function isStaleBoardmanBodyContactTitle(value: string): boolean {
+  const title = value.toLowerCase();
+  if (!title.includes("boardman")) return false;
+  return (
+    title.includes("no body contact") ||
+    title.includes("no-body contact") ||
+    title.includes("nobody contact") ||
+    title.includes("body contact advisory")
+  );
+}
+
+/**
+ * Lifestyle / feature / sports-roundup heads stay out of the subject.
+ * Tonight/events also stay out (letter body only).
+ */
+function isLifestyleOrFeatureSubjectTitle(value: string): boolean {
+  const title = value.toLowerCase();
+  return (
+    title.includes("wine grape") ||
+    title.includes("wildfire smoke") ||
+    title.includes("hamlet of hundreds") ||
+    title.includes("wings and wheels") ||
+    title.includes("sports overtime") ||
+    title.includes("congregational summer assembly") ||
+    title.includes("flavor of wine")
+  );
+}
+
+/** Hard-news markers Nick wants in the subject scan. */
+function isNewsSubjectTitle(value: string): boolean {
+  if (isLifestyleOrFeatureSubjectTitle(value)) return false;
+  if (isStaleBoardmanBodyContactTitle(value)) return false;
+  return /\b(court|crash|vote|voted|advisory|suit|lawsuit|freeze|freezes|charged|arrest|outage|closure|closed|sewer|spill|lifts|lifted)\b/i.test(
+    value,
+  );
 }
 
 function subjectFallbackDate(): string {
@@ -257,40 +365,34 @@ function buildMorningLetterSubject(letter: EmailEditionSnapshot): string {
   const candidates: SubjectItem[] = [];
 
   if (letter.lead?.title) {
-    const title = phraseFromTitle(letter.lead.title, 44);
+    const source = letter.lead.title.replace(/\s+/g, " ").trim();
+    const title = phraseFromTitle(source, 44);
     if (title && !isUnusableSubjectPhrase(title)) {
-      candidates.push({ text: title, kind: "lead" });
+      candidates.push({ text: title, source, kind: "lead" });
     }
   }
 
-  // 🌙: walk tonight until a usable phrase exists. Prefer the full title
-  // when it is already parseable (place + two+ words). Otherwise try a
-  // phraseFromTitle chop — place-only / place+one-word leftovers are skipped.
-  for (const event of letter.tonight) {
-    const raw = event.title?.replace(/\s+/g, " ").trim();
-    if (!raw) continue;
-    if (!isUnusableSubjectPhrase(raw)) {
-      candidates.push({ text: raw, kind: "tonight" });
-      break;
-    }
-    const chopped = phraseFromTitle(raw, 28);
-    if (chopped && !isUnusableSubjectPhrase(chopped)) {
-      candidates.push({ text: chopped, kind: "tonight" });
-      break;
+  // News only in the subject. Tonight/events stay in the letter body.
+  // Prefer staff lead + 1–2 real news around cards (court, crash, vote,
+  // advisory, suit). Skip lifestyle/feature heads and stale Boardman
+  // no-body-contact advisories.
+  for (const story of letter.around) {
+    if (candidates.length >= 3) break;
+    const raw = story.title?.replace(/\s+/g, " ").trim();
+    if (!raw || !isNewsSubjectTitle(raw)) continue;
+    const title = phraseFromTitle(raw, 40);
+    if (title && !isUnusableSubjectPhrase(title)) {
+      candidates.push({ text: title, source: raw, kind: "around" });
     }
   }
 
-  if (letter.around[0]?.title) {
-    const title = phraseFromTitle(letter.around[0].title, 36);
+  for (const alert of letter.alerts) {
+    if (candidates.length >= 3) break;
+    const raw = alert.title?.replace(/\s+/g, " ").trim();
+    if (!raw || !isNewsSubjectTitle(raw)) continue;
+    const title = phraseFromTitle(raw, 40);
     if (title && !isUnusableSubjectPhrase(title)) {
-      candidates.push({ text: title, kind: "around" });
-    }
-  }
-
-  if (candidates.length < 2 && letter.alerts[0]?.title) {
-    const title = phraseFromTitle(letter.alerts[0].title, 36);
-    if (title && !isUnusableSubjectPhrase(title)) {
-      candidates.push({ text: title, kind: "alert" });
+      candidates.push({ text: title, source: raw, kind: "alert" });
     }
   }
 
@@ -309,34 +411,58 @@ function buildMorningLetterSubject(letter: EmailEditionSnapshot): string {
       (item) => item.text.trim() && !isUnusableSubjectPhrase(item.text),
     );
 
+  const reshorten = (
+    items: SubjectItem[],
+    leadMax: number,
+    otherMax: number,
+  ): SubjectItem[] =>
+    keepUsable(
+      items.map((item) => ({
+        ...item,
+        text: phraseFromTitle(
+          item.source,
+          item.kind === "lead" ? leadMax : otherMax,
+        ),
+      })),
+    );
+
   let subject = format(selected);
-  if (subject.length > 80 && selected.length === 3) {
+
+  // Prefer readable news phrases over opaque chops. If three phrases run
+  // long, drop the trailing slot (often the alert) before mangling titles.
+  if (subject.length > 100 && selected.length === 3) {
+    selected = keepUsable(
+      selected.map((item) =>
+        item.kind === "lead"
+          ? item
+          : {
+              ...item,
+              text: phraseFromTitle(item.source, 40),
+            },
+      ),
+    );
+    subject = format(selected);
+  }
+  if (subject.length > 100 && selected.length === 3) {
     selected = selected.slice(0, 2);
     subject = format(selected);
   }
-  if (subject.length > 80) {
-    selected = keepUsable(
-      selected.map((item) => ({
-        ...item,
-        text: phraseFromTitle(item.text, 28),
-      })),
-    );
+  if (subject.length > 100) {
+    selected = reshorten(selected, 44, 40);
     if (selected.length === 0) {
       return subjectFallbackDate();
     }
     subject = format(selected);
   }
 
-  // Prefer dropping a trailing phrase over an opaque mid-string chop that
-  // can leave a region-only stub in the subject.
-  while (subject.length > 84 && selected.length > 1) {
+  while (subject.length > 110 && selected.length > 1) {
     selected = selected.slice(0, -1);
     subject = format(selected);
   }
 
-  if (subject.length > 84) {
+  if (subject.length > 110) {
     subject = `${subject
-      .slice(0, 81)
+      .slice(0, 107)
       .replace(/\s+\S*$/, "")
       .replace(/[,·\s]+$/, "")}…`;
 
@@ -663,10 +789,8 @@ export function resolveLetterRecipients(subscribers: Subscriber[]): string[] {
     ),
   ];
 
-  if (emails.some(isFakeSubscriberEmail)) {
-    return [DESK_LETTER_FALLBACK];
-  }
-
+  // Strip fake/example/verify addresses; mail the remaining real ones.
+  // One verify address must not lock the whole list to the desk fallback.
   const realEmails = emails.filter((email) => !isFakeSubscriberEmail(email));
   return realEmails.length > 0 ? realEmails : [DESK_LETTER_FALLBACK];
 }
