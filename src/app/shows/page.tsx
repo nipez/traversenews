@@ -38,21 +38,22 @@ const VENUE_LINKS = [
   },
 ];
 
-function firstClock(item: ShowListing): { clock: string; meridiem: string } {
+/** First source-printed clock only. Never invent a showtime. */
+function firstClock(item: ShowListing): string {
+  if (item.time_unknown) return "—";
   const raw = item.times[0]?.replace(/\s+/g, " ").trim() ?? "";
-  if (!raw) return { clock: "—", meridiem: "" };
-  const parts = raw.split(" ");
-  const last = parts[parts.length - 1] ?? "";
-  if (/^(AM|PM)$/i.test(last) && parts.length >= 2) {
-    return { clock: parts.slice(0, -1).join(" "), meridiem: last };
-  }
-  return { clock: raw, meridiem: "" };
+  return raw || "—";
 }
 
 function extraWhen(item: ShowListing): string {
-  const range = formatShowDateRange(item.starts_at, item.ends_at);
+  const bits: string[] = [];
+  if (item.ends_at) {
+    const range = formatShowDateRange(item.starts_at, item.ends_at);
+    const startOnly = formatShowDateRange(item.starts_at);
+    if (range !== startOnly) bits.push(range);
+  }
   const rest = item.times.slice(1);
-  const bits = [range, rest.length ? rest.join(" · ") : ""].filter(Boolean);
+  if (rest.length) bits.push(rest.join(" · "));
   return bits.join(" · ");
 }
 
@@ -74,18 +75,69 @@ function groupByStartDay(items: ShowListing[]) {
         return a.title.localeCompare(b.title);
       });
       const d = new Date(sorted[0].starts_at);
-      const dayNum = new Intl.DateTimeFormat("en-US", {
-        timeZone: "America/Detroit",
-        day: "numeric",
-      }).format(d);
       const dayLabel = new Intl.DateTimeFormat("en-US", {
         timeZone: "America/Detroit",
         weekday: "long",
-        month: "long",
+        month: "short",
         day: "numeric",
       }).format(d);
-      return { key, dayNum, dayLabel, items: sorted };
+      return { key, dayLabel, items: sorted };
     });
+}
+
+function ShowDayList({
+  groups,
+  empty,
+}: {
+  groups: ReturnType<typeof groupByStartDay>;
+  empty?: string;
+}) {
+  if (groups.length === 0) {
+    return empty ? <p className="sports-week-empty">{empty}</p> : null;
+  }
+  return (
+    <div className="sports-week-days">
+      {groups.map((group) => (
+        <div key={group.key} className="sports-week-day">
+          <h3 className="sports-week-day-label">{group.dayLabel}</h3>
+          <ul className="sports-week-list">
+            {group.items.map((item) => {
+              const time = firstClock(item);
+              const extra = extraWhen(item);
+              const inner = (
+                <>
+                  <span className="sports-week-time">{time}</span>
+                  <span className="sports-week-school">{item.venue}</span>
+                  <span className="sports-week-title">{item.title}</span>
+                  {extra ? (
+                    <span className="sports-week-place">{extra}</span>
+                  ) : null}
+                </>
+              );
+              return (
+                <li key={item.id} className="sports-week-item">
+                  {item.url ? (
+                    <a
+                      href={item.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="sports-week-link"
+                    >
+                      {inner}
+                    </a>
+                  ) : (
+                    <div className="sports-week-link sports-week-nolink">
+                      {inner}
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 export default async function ShowsPage() {
@@ -93,7 +145,12 @@ export default async function ShowsPage() {
   const headers = await getSectionHeadersSnapshot();
   const listings = snap.venues.flatMap((v) => v.listings);
   const byDay = groupByStartDay(listings);
-  const todayKey = detroitDayKey(new Date());
+  const now = new Date();
+  const weekEndKey = detroitDayKey(
+    new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000),
+  );
+  const thisWeek = byDay.filter((g) => g.key <= weekEndKey);
+  const coming = byDay.filter((g) => g.key > weekEndKey);
 
   return (
     <PublicShell active="/shows" header="compact">
@@ -105,65 +162,25 @@ export default async function ShowsPage() {
       />
       <div className="about-layout sports-layout">
         <div className="about-essay events-main">
-          <div className="events-page">
-            <div className="events-days">
-              {byDay.map((group) => (
-                <section
-                  key={group.key}
-                  className="events-day"
-                  data-today={group.key === todayKey ? "true" : undefined}
-                >
-                  <header className="events-day-head">
-                    <p className="events-day-num">{group.dayNum}</p>
-                    <p className="events-day-label">{group.dayLabel}</p>
-                  </header>
-                  <ul className="events-day-grid">
-                    {group.items.map((item) => {
-                      const { clock, meridiem } = firstClock(item);
-                      const extra = extraWhen(item);
-                      return (
-                        <li key={item.id} className="events-row">
-                          <div className="events-row-when">
-                            <p className="events-row-time">
-                              {clock}
-                              {meridiem ? (
-                                <span className="events-row-meridiem">
-                                  {" "}
-                                  {meridiem}
-                                </span>
-                              ) : null}
-                            </p>
-                          </div>
-                          <div className="events-row-copy">
-                            <p className="events-row-venue">{item.venue}</p>
-                            <h3 className="events-row-title">
-                              {item.url ? (
-                                <a
-                                  href={item.url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                >
-                                  {item.title} ↗
-                                </a>
-                              ) : (
-                                item.title
-                              )}
-                            </h3>
-                            {extra ? (
-                              <p className="events-row-venue">{extra}</p>
-                            ) : null}
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </section>
-              ))}
-              {byDay.length === 0 ? (
-                <p className="events-empty">No listings yet.</p>
+          {byDay.length === 0 ? (
+            <p className="sports-week-empty">No listings yet.</p>
+          ) : (
+            <>
+              <h2 className="sports-week-hed">This week</h2>
+              <ShowDayList
+                groups={thisWeek}
+                empty="No movies or plays this week."
+              />
+              {coming.length > 0 ? (
+                <>
+                  <h2 className="sports-week-hed sports-week-hed-next">
+                    Coming up
+                  </h2>
+                  <ShowDayList groups={coming} />
+                </>
               ) : null}
-            </div>
-          </div>
+            </>
+          )}
           <p className="sports-foot">
             Also on <Link href="/events">Events</Link> /{" "}
             <Link href="/">Today</Link>.

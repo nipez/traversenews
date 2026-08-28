@@ -19,20 +19,13 @@ export const metadata = {
 
 function groupByDay(
   events: EventItem[],
-): Array<{
-  key: string;
-  dayNum: string;
-  dayLabel: string;
-  items: EventItem[];
-}> {
+): Array<{ key: string; dayLabel: string; items: EventItem[] }> {
   const groups = new Map<string, EventItem[]>();
   for (const event of events) {
-    const { dayKey } = formatEventWhenParts(event.starts_at, new Date(), {
-      timeUnknown: event.time_unknown,
-    });
-    const list = groups.get(dayKey) ?? [];
+    const key = detroitDayKey(event.starts_at);
+    const list = groups.get(key) ?? [];
     list.push(event);
-    groups.set(dayKey, list);
+    groups.set(key, list);
   }
 
   return [...groups.entries()]
@@ -47,56 +40,26 @@ function groupByDay(
         );
       });
       const d = new Date(sorted[0].starts_at);
-      const dayNum = new Intl.DateTimeFormat("en-US", {
-        timeZone: "America/Detroit",
-        day: "numeric",
-      }).format(d);
       const dayLabel = new Intl.DateTimeFormat("en-US", {
         timeZone: "America/Detroit",
         weekday: "long",
-        month: "long",
+        month: "short",
         day: "numeric",
       }).format(d);
-      return { key, dayNum, dayLabel, items: sorted };
+      return { key, dayLabel, items: sorted };
     });
 }
 
-function eventClock(event: EventItem) {
-  const when = formatEventWhenParts(event.starts_at, new Date(), {
+function eventTime(event: EventItem): string {
+  return formatEventWhenParts(event.starts_at, new Date(), {
     timeUnknown: event.time_unknown,
-  });
-  if (when.time === "—") {
-    return { when, clock: "—", meridiem: "" };
-  }
-  const timeParts = when.time.replace(/\s+/g, " ").split(" ");
-  return {
-    when,
-    clock: timeParts[0] ?? when.time,
-    meridiem: timeParts[1] ?? "",
-  };
-}
-
-/** Featured meta: "Tuesday 8/25 · Interlochen" */
-function featuredMeta(event: EventItem): string {
-  const d = new Date(event.starts_at);
-  const weekday = new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/Detroit",
-    weekday: "long",
-  }).format(d);
-  const md = new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/Detroit",
-    month: "numeric",
-    day: "numeric",
-  }).format(d);
-  return `${weekday} ${md} · ${venueKicker(event.place)}`;
+  }).time;
 }
 
 export default async function EventsPage() {
   const snap = await getEventsSnapshot();
   const headers = await getSectionHeadersSnapshot();
-  const featured = snap.featured;
   const byDay = groupByDay(snap.upcoming);
-  const todayKey = detroitDayKey(new Date());
 
   return (
     <PublicShell active="/events" header="compact">
@@ -117,109 +80,55 @@ export default async function EventsPage() {
           </>
         }
       />
-      <div className="about-layout events-layout">
+      <div className="about-layout sports-layout">
         <div className="about-essay events-main">
-        <div className="events-page">
-        <section className="events-featured" aria-label="Featured nights out">
-          <div className="events-featured-inner">
-            {featured.map((event) => {
-              const { clock, meridiem } = eventClock(event);
-              return (
-                <article key={event.id} className="events-featured-card">
-                  <p className="events-featured-time">
-                    {clock}
-                    {meridiem ? (
-                      <span className="events-featured-meridiem">
-                        {" "}
-                        {meridiem}
-                      </span>
-                    ) : null}
-                  </p>
-                  <p className="events-featured-meta">{featuredMeta(event)}</p>
-                  <h2 className="events-featured-title">
-                    {event.url ? (
-                      <a
-                        href={event.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        {event.title} ↗
-                      </a>
-                    ) : (
-                      event.title
-                    )}
-                  </h2>
-                </article>
-              );
-            })}
-            {featured.length === 0 ? (
-              <p className="events-featured-empty">
-                No timed nights-out in the next couple of weeks.
-              </p>
-            ) : null}
-          </div>
-        </section>
-
-        <div className="events-days">
-          {byDay.map((group) => (
-            <section
-              key={group.key}
-              className="events-day"
-              data-today={group.key === todayKey ? "true" : undefined}
-            >
-              <header className="events-day-head">
-                <p className="events-day-num">{group.dayNum}</p>
-                <p className="events-day-label">{group.dayLabel}</p>
-              </header>
-              <ul className="events-day-grid">
-                {group.items.map((event) => {
-                  const { clock, meridiem } = eventClock(event);
-                  return (
-                    <li key={event.id} className="events-row">
-                      <div className="events-row-when">
-                        <p className="events-row-time">
-                          {clock}
-                          {meridiem ? (
-                            <span className="events-row-meridiem">
-                              {" "}
-                              {meridiem}
-                            </span>
-                          ) : null}
-                        </p>
-                      </div>
-                      <div className="events-row-copy">
-                        <p className="events-row-venue">
-                          {venueKicker(event.place)}
-                        </p>
-                        <h3 className="events-row-title">
+          {byDay.length === 0 ? (
+            <p className="sports-week-empty">No community listings yet.</p>
+          ) : (
+            <div className="sports-week-days">
+              {byDay.map((group) => (
+                <div key={group.key} className="sports-week-day">
+                  <h3 className="sports-week-day-label">{group.dayLabel}</h3>
+                  <ul className="sports-week-list">
+                    {group.items.map((event) => {
+                      const time = eventTime(event);
+                      const inner = (
+                        <>
+                          <span className="sports-week-time">{time}</span>
+                          <span className="sports-week-school">
+                            {venueKicker(event.place)}
+                          </span>
+                          <span className="sports-week-title">
+                            {event.title}
+                          </span>
+                        </>
+                      );
+                      return (
+                        <li key={event.id} className="sports-week-item">
                           {event.url ? (
                             <a
                               href={event.url}
                               target="_blank"
                               rel="noopener noreferrer"
+                              className="sports-week-link"
                             >
-                              {event.title} ↗
+                              {inner}
                             </a>
                           ) : (
-                            event.title
+                            <div className="sports-week-link sports-week-nolink">
+                              {inner}
+                            </div>
                           )}
-                        </h3>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            </section>
-          ))}
-          {byDay.length === 0 ? (
-            <p className="events-empty">
-              No community listings yet.
-            </p>
-          ) : null}
-        </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          )}
 
-        <EventTipsForm />
-        </div>
+          <EventTipsForm />
         </div>
         <DeskRail active="/events" />
       </div>
