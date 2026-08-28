@@ -14,12 +14,13 @@ const beats: Beat[] = [
   { id: "beat_schools", name: "Schools", slug: "schools", sort: 4 },
   { id: "beat_transit", name: "Transit", slug: "transit", sort: 5 },
   { id: "beat_events", name: "Events", slug: "events", sort: 6 },
-  { id: "beat_arts", name: "Arts", slug: "arts", sort: 7 },
-  { id: "beat_business", name: "Business", slug: "business", sort: 8 },
-  { id: "beat_social", name: "Social", slug: "social", sort: 9 },
-  { id: "beat_sports", name: "Sports", slug: "sports", sort: 10 },
-  { id: "beat_hs_sports", name: "High school sports", slug: "high-school-sports", sort: 11 },
-  { id: "beat_original", name: "Original", slug: "original", sort: 12 },
+  { id: "beat_shows", name: "Shows", slug: "shows", sort: 7 },
+  { id: "beat_arts", name: "Arts", slug: "arts", sort: 8 },
+  { id: "beat_business", name: "Business", slug: "business", sort: 9 },
+  { id: "beat_social", name: "Social", slug: "social", sort: 10 },
+  { id: "beat_sports", name: "Sports", slug: "sports", sort: 11 },
+  { id: "beat_hs_sports", name: "High school sports", slug: "high-school-sports", sort: 12 },
+  { id: "beat_original", name: "Original", slug: "original", sort: 13 },
 ];
 
 const sources: Source[] = [
@@ -391,13 +392,59 @@ const sources: Source[] = [
   {
     id: "src_oldtown",
     name: "Old Town Playhouse",
-    homepage: "https://www.oldtownplayhouse.com/performances/all-performances.html",
-    feed_url: "https://www.oldtownplayhouse.com/performances/all-performances.html",
+    homepage: "https://www.oldtownplayhouse.com/",
+    feed_url: "https://www.oldtownplayhouse.com/allshows/all-shows.html",
     pull_method: "html",
-    beat_id: "beat_arts",
+    beat_id: "beat_shows",
     enabled: true,
     notes:
-      "No Worker scrape. Traverse News pulls on the box → POST /api/desk/events/import (/whats-on).",
+      "Shows (/shows), never Events. IP-blocked from datacenter. Traverse News pulls on the box → POST /api/desk/shows/import. Never invent titles or dates.",
+  },
+  {
+    id: "src_state_theatre",
+    name: "State Theatre / Bijou",
+    homepage: "https://stateandbijou.org/",
+    feed_url: "https://stateandbijou.org/",
+    pull_method: "html",
+    beat_id: "beat_shows",
+    enabled: true,
+    notes:
+      "Worker tries homepage HTML for Now Playing times (/shows). RSS feed has no showtimes. Never invent clocks. If empty, Traverse News → POST /api/desk/shows/import.",
+  },
+  {
+    id: "src_bay_theatre",
+    name: "The Bay Theatre",
+    homepage: "https://thebaytheatre.org/",
+    feed_url: "https://thebaytheatre.org/",
+    pull_method: "html",
+    beat_id: "beat_shows",
+    enabled: true,
+    notes:
+      "JS ticket app — Worker usually gets nothing. Shows via POST /api/desk/shows/import. Never invent showtimes.",
+  },
+  {
+    id: "src_elk_cinema",
+    name: "Elk Rapids Cinema",
+    homepage: "https://www.elkrapidscinema.com/",
+    feed_url: "https://www.elkrapidscinema.com/",
+    pull_method: "html",
+    beat_id: "beat_shows",
+    enabled: true,
+    notes:
+      "Worker tries homepage HTML showtimes (/shows). Group by title; only times printed on the page. No RSS.",
+  },
+  {
+    id: "src_amc_cherry",
+    name: "AMC Cherry Blossom 14",
+    homepage:
+      "https://www.amctheatres.com/movie-theatres/traverse-city-mi/amc-cherry-blossom-14",
+    feed_url:
+      "https://www.amctheatres.com/movie-theatres/traverse-city-mi/amc-cherry-blossom-14",
+    pull_method: "html",
+    beat_id: "beat_shows",
+    enabled: true,
+    notes:
+      "Cloudflare blocks Worker. Do not scrape a 14-screen grid into dozens of rows. Traverse News browser import → POST /api/desk/shows/import (group by title).",
   },
   {
     id: "src_pride",
@@ -734,6 +781,7 @@ export function createSeedData(): AppData {
     events,
     athletics: [],
     schools: [],
+    shows: [],
     subscribers: [],
     tips: [],
     event_tips: [],

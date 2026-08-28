@@ -3,20 +3,23 @@ import {
   loadStore,
   replacePulledEvents,
   replacePulledStories,
+  replaceShowListings,
   saveStore,
   snapshotTodaysEdition,
   withSkippedPublicSnapshots,
 } from "@/lib/data/store";
 import { isInventedStory, keepRealOriginals } from "@/lib/data/scrub";
 import { pullHtmlEvents } from "@/lib/pull/html-events";
+import { pullHtmlShows } from "@/lib/pull/html-shows";
 import { pullIcsSource } from "@/lib/pull/ics";
 import { pullRssSource } from "@/lib/pull/rss";
-import type { EventItem, Story } from "@/lib/types";
+import type { EventItem, ShowListing, Story } from "@/lib/types";
 
 export type PullResult = {
   ok: boolean;
   storiesAdded: number;
   eventsAdded: number;
+  showsAdded: number;
   errors: Array<{ source: string; error: string }>;
   last_pull_at: string;
   persisted: "kv" | "file" | "memory";
@@ -30,6 +33,12 @@ const HTML_EVENT_SOURCE_IDS = new Set([
   "src_interlochen",
   "src_tadl",
   "src_visit_events",
+]);
+
+/** Shows venues with static HTML showtimes the Worker can read. */
+const HTML_SHOW_SOURCE_IDS = new Set([
+  "src_state_theatre",
+  "src_elk_cinema",
 ]);
 
 export async function runPull(): Promise<PullResult> {
@@ -53,6 +62,7 @@ async function runPullInner(): Promise<PullResult> {
   const errors: Array<{ source: string; error: string }> = [];
   const pulledStories: Story[] = [];
   const pulledEvents: EventItem[] = [];
+  const pulledShows: ShowListing[] = [];
   const pulledAt = new Date().toISOString();
   const touch = new Map<
     string,
@@ -69,6 +79,29 @@ async function runPullInner(): Promise<PullResult> {
         const items = await pullIcsSource(source);
         pulledEvents.push(...items);
         touch.set(source.id, { ok: true, error: null, attempted: true });
+      } else if (
+        source.pull_method === "html" &&
+        HTML_SHOW_SOURCE_IDS.has(source.id)
+      ) {
+        const htmlResult = await pullHtmlShows(source);
+        pulledShows.push(...htmlResult.shows);
+        if (htmlResult.bot_blocked) {
+          const msg =
+            `Bot-blocked or empty Shows page (${htmlResult.status ?? "n/a"}). ` +
+            "Do not invent showtimes. Need Traverse News to pull this URL on the live computer " +
+            "and POST the list to /api/desk/shows/import.";
+          errors.push({ source: source.name, error: msg });
+          touch.set(source.id, { ok: false, error: msg, attempted: true });
+        } else if (htmlResult.error) {
+          errors.push({ source: source.name, error: htmlResult.error });
+          touch.set(source.id, {
+            ok: false,
+            error: htmlResult.error,
+            attempted: true,
+          });
+        } else {
+          touch.set(source.id, { ok: true, error: null, attempted: true });
+        }
       } else if (
         source.pull_method === "html" &&
         HTML_EVENT_SOURCE_IDS.has(source.id)
@@ -95,7 +128,9 @@ async function runPullInner(): Promise<PullResult> {
         const hint =
           source.pull_method === "original"
             ? "Staff originals — Desk publish only."
-            : `Worker does not scrape ${source.pull_method}. Traverse News pulls on the box and POSTs the matching /api/desk/*/import route.`;
+            : source.beat_id === "beat_shows"
+              ? "Worker does not scrape this Shows venue. Traverse News pulls on the box → POST /api/desk/shows/import."
+              : `Worker does not scrape ${source.pull_method}. Traverse News pulls on the box and POSTs the matching /api/desk/*/import route.`;
         touch.set(source.id, {
           ok: true,
           error: hint,
@@ -136,6 +171,10 @@ async function runPullInner(): Promise<PullResult> {
     ];
     await replacePulledEvents(pulledEvents, icsSourceIds);
   }
+  if (pulledShows.length > 0) {
+    const showSourceIds = [...new Set(pulledShows.map((s) => s.source_id))];
+    await replaceShowListings(pulledShows, showSourceIds);
+  }
 
   const store = await loadStore();
   store.last_pull_at = pulledAt;
@@ -175,8 +214,9 @@ async function runPullInner(): Promise<PullResult> {
     ok: errors.length === 0,
     storiesAdded: pulledStories.length,
     eventsAdded: pulledEvents.length,
+    showsAdded: pulledShows.length,
     errors,
-    last_pull_at: store.last_pull_at,
+    last_pull_at: store.last_pull_at ?? pulledAt,
     persisted,
     edition_date: edition.date,
     email_date,

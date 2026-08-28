@@ -9,6 +9,7 @@ import {
 } from "@/lib/email-editions";
 import { sanitizeStoredAthletics } from "@/lib/athletics";
 import { sanitizeStoredSchools } from "@/lib/schools";
+import { sanitizeStoredShows } from "@/lib/shows";
 import { dedupeEvents, sanitizeStoredEvents } from "@/lib/events";
 import {
   DEFAULT_ORIGINAL_BYLINE,
@@ -31,6 +32,7 @@ import type {
   SchoolCalendarItem,
   SectionHeaderId,
   SectionHeaderMeta,
+  ShowListing,
   Source,
   Story,
   Subscriber,
@@ -92,6 +94,9 @@ function normalizeAppData(data: AppData): { data: AppData; scrubbed: boolean } {
   }
   if (!Array.isArray(data.schools)) {
     data.schools = [];
+  }
+  if (!Array.isArray(data.shows)) {
+    data.shows = [];
   }
   if (!Array.isArray(data.email_editions)) {
     data.email_editions = [];
@@ -449,6 +454,30 @@ export async function replaceSchoolCalendarItems(
     ...kept,
     ...incoming.values(),
   ]).items;
+  await saveStore(data);
+}
+
+/**
+ * Replace movie/theatre listings for the given sources.
+ * Never writes into `events` — Shows stay on AppData.shows only.
+ */
+export async function replaceShowListings(
+  listings: ShowListing[],
+  pulledSourceIds?: string[],
+): Promise<void> {
+  const data = await loadStore();
+  if (!Array.isArray(data.shows)) data.shows = [];
+  const sourceIds = new Set(
+    pulledSourceIds && pulledSourceIds.length > 0
+      ? pulledSourceIds
+      : listings.map((s) => s.source_id),
+  );
+  const kept = data.shows.filter((s) => !sourceIds.has(s.source_id));
+  const incoming = new Map<string, ShowListing>();
+  for (const item of listings) {
+    incoming.set(item.id, item);
+  }
+  data.shows = sanitizeStoredShows([...kept, ...incoming.values()]).shows;
   await saveStore(data);
 }
 

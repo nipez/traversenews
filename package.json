@@ -11,6 +11,7 @@
     "dry-run:letter-fresh": "tsx scripts/dry-run-letter-fresh.ts",
     "dry-run:letter-preview": "tsx scripts/dry-run-letter-preview.ts",
     "dry-run:bay-fresh": "tsx scripts/dry-run-bay-fresh.ts",
+    "test:shows-parsers": "tsx scripts/test-shows-parsers.ts",
     "pull": "tsx scripts/pull.ts",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",

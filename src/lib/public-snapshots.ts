@@ -41,6 +41,7 @@ import {
   SITEMAP_TTL_SECONDS,
 } from "@/lib/sitemap";
 import { selectSportsStories } from "@/lib/sports";
+import { groupShowsByVenue, type PublicShowVenueGroup } from "@/lib/shows";
 import { storySectionLabel } from "@/lib/story-display";
 import {
   emptySectionHeaders,
@@ -76,6 +77,7 @@ export const PUBLIC_KEYS = {
   events: "public:events:v1",
   civic: "public:civic:v1",
   sports: "public:sports:v1",
+  shows: "public:shows:v1",
   email: "public:email:v1",
   alerts: "public:alerts:v1",
   editions: "public:editions:v1",
@@ -179,6 +181,13 @@ export type PublicSportsSnapshot = {
   /** Rolling window after This week. Missing on stale v1 KV rows. */
   nextWeekGames?: AthleticsGame[];
   stories: PublicSportsStoryCard[];
+};
+
+export type PublicShowsSnapshot = {
+  v: 1;
+  captured_at: string;
+  /** Every venue slot; listings may be empty. */
+  venues: PublicShowVenueGroup[];
 };
 
 /** Section page photo headers — pointers only. */
@@ -447,6 +456,17 @@ export function buildSportsSnapshot(
   };
 }
 
+export function buildShowsSnapshot(
+  data: AppData,
+  at = new Date(),
+): PublicShowsSnapshot {
+  return {
+    v: 1,
+    captured_at: at.toISOString(),
+    venues: groupShowsByVenue(data.shows ?? [], at),
+  };
+}
+
 export function buildEmailSnapshot(
   data: AppData,
   at = new Date(),
@@ -536,6 +556,7 @@ export function buildAllPublicSnapshots(data: AppData, at = new Date()) {
     events: buildEventsSnapshot(data, at),
     civic: buildCivicSnapshot(data, at),
     sports: buildSportsSnapshot(data, at),
+    shows: buildShowsSnapshot(data, at),
     email: buildEmailSnapshot(data, at),
     alerts: buildAlertsSnapshot(data, at),
     editions: buildEditionsSnapshot(data, at),
@@ -558,6 +579,7 @@ function rememberAll(
   memSnapshots.set(PUBLIC_KEYS.events, all.events);
   memSnapshots.set(PUBLIC_KEYS.civic, all.civic);
   memSnapshots.set(PUBLIC_KEYS.sports, all.sports);
+  memSnapshots.set(PUBLIC_KEYS.shows, all.shows);
   memSnapshots.set(PUBLIC_KEYS.email, all.email);
   memSnapshots.set(PUBLIC_KEYS.alerts, all.alerts);
   memSnapshots.set(PUBLIC_KEYS.editions, all.editions);
@@ -587,6 +609,7 @@ export async function writeAllPublicSnapshots(data: AppData): Promise<void> {
       kv.put(PUBLIC_KEYS.events, JSON.stringify(all.events)),
       kv.put(PUBLIC_KEYS.civic, JSON.stringify(all.civic)),
       kv.put(PUBLIC_KEYS.sports, JSON.stringify(all.sports)),
+      kv.put(PUBLIC_KEYS.shows, JSON.stringify(all.shows)),
       kv.put(PUBLIC_KEYS.email, JSON.stringify(all.email)),
       kv.put(PUBLIC_KEYS.alerts, JSON.stringify(all.alerts)),
       kv.put(PUBLIC_KEYS.editions, JSON.stringify(all.editions)),
@@ -682,6 +705,10 @@ export async function getSportsSnapshot(): Promise<PublicSportsSnapshot> {
     await kv.put(PUBLIC_KEYS.sports, JSON.stringify(rebuilt));
   }
   return rebuilt;
+}
+
+export async function getShowsSnapshot(): Promise<PublicShowsSnapshot> {
+  return readPublicSnapshot(PUBLIC_KEYS.shows, (a) => a.shows);
 }
 
 export async function getEmailSnapshot(): Promise<PublicEmailSnapshot> {

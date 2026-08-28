@@ -39,7 +39,13 @@ These are live on the Cloudflare Worker (`wrangler.jsonc` crons → `cloudflare-
 
    (default `source_id`: `src_visit_events`). See README → Browser event import.
 
-4. Do **not** stop at a shrug or a silent empty pull without that handoff line.
+4. For movie / theatre pages blocked from the Worker (AMC, Old Town Playhouse, Bay Theatre JS app), land listings with:
+
+   `POST /api/desk/shows/import`
+
+   Group by title. Never invent showtimes. Never write Shows into `/whats-on`.
+
+5. Do **not** stop at a shrug or a silent empty pull without that handoff line.
 
 ## First handoff URL
 

@@ -1,4 +1,8 @@
-import { isHsAthleticsEventSource, isSchoolCalendarSource } from "@/lib/events";
+import {
+  isHsAthleticsEventSource,
+  isSchoolCalendarSource,
+  isShowEventSource,
+} from "@/lib/events";
 import type { Source } from "@/lib/types";
 
 /** Civic calendar desks — meetings on /civic via civic/import. */
@@ -45,6 +49,20 @@ export function ingestPathForSource(source: Source): {
       importPath: "/api/desk/schools/import",
       summary:
         "Traverse News pulls on the box → POST /api/desk/schools/import (/schools).",
+    };
+  }
+
+  if (isShowEventSource(source.id) || source.beat_id === "beat_shows") {
+    const workerHtml = new Set([
+      "src_state_theatre",
+      "src_elk_cinema",
+    ]).has(source.id);
+    return {
+      workerPulls: workerHtml,
+      importPath: "/api/desk/shows/import",
+      summary: workerHtml
+        ? "Worker tries HTML showtimes; if bot-blocked or empty, Traverse News → POST /api/desk/shows/import (/shows)."
+        : "Traverse News pulls on the box → POST /api/desk/shows/import (/shows, never Events).",
     };
   }
 
@@ -100,4 +118,8 @@ export function ingestPathForSource(source: Source): {
 /** Short Desk note when HTML calendars cannot be Worker-scraped. */
 export function boxBrowserEventsNote(url: string): string {
   return `No Worker scrape (bot wall / JS / PDF). Traverse News pulls ${url} on the box and POSTs /api/desk/events/import. Never invent listings.`;
+}
+
+export function boxBrowserShowsNote(url: string): string {
+  return `No Worker scrape (bot wall / JS). Traverse News pulls ${url} on the box and POSTs /api/desk/shows/import. Never invent showtimes.`;
 }

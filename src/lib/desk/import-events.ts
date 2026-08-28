@@ -7,6 +7,7 @@ import {
   isCivicSource,
   isHsAthleticsEventSource,
   isSchoolCalendarSource,
+  isShowEventSource,
   stableEventId,
 } from "@/lib/events";
 import type { EventItem, Source } from "@/lib/types";
@@ -103,6 +104,14 @@ export function normalizeImportedEvents(
         index,
         reason:
           "District school calendars are /schools, not Events — POST /api/desk/schools/import",
+      });
+      return;
+    }
+    if (isShowEventSource(sourceId)) {
+      skipped.push({
+        index,
+        reason:
+          "Movie and theatre listings are /shows, not Events — POST /api/desk/shows/import",
       });
       return;
     }

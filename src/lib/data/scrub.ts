@@ -1,6 +1,7 @@
 import type { AppData, EditionSnapshot, EditionStoryCard, Story } from "@/lib/types";
 import { sanitizeStoredAthletics } from "@/lib/athletics";
 import { sanitizeStoredSchools } from "@/lib/schools";
+import { sanitizeStoredShows } from "@/lib/shows";
 import { sanitizeStoredEvents } from "@/lib/events";
 import {
   PUBLIC_ORIGINAL_BYLINE,
@@ -168,6 +169,19 @@ export function scrubAppData(data: AppData): { data: AppData; changed: boolean }
       data.schools = sch.items;
     } else {
       data.schools = sch.items;
+    }
+  }
+
+  if (!Array.isArray(data.shows)) {
+    data.shows = [];
+    changed = true;
+  } else {
+    const sh = sanitizeStoredShows(data.shows);
+    if (sh.changed) {
+      changed = true;
+      data.shows = sh.shows;
+    } else {
+      data.shows = sh.shows;
     }
   }
 

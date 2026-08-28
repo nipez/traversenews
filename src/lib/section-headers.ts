@@ -18,6 +18,7 @@ export type { SectionHeaderId, SectionHeaderMeta, SectionHeadersMap };
 
 export const SECTION_HEADER_IDS: readonly SectionHeaderId[] = [
   "whats-on",
+  "shows",
   "sports",
   "civic",
   "schools",
@@ -29,6 +30,7 @@ export const SECTION_HEADER_LABELS: Record<
   { title: string; path: string; kicker: string }
 > = {
   "whats-on": { title: "Events", path: "/whats-on", kicker: "Night out" },
+  shows: { title: "Shows", path: "/shows", kicker: "On screen & stage" },
   sports: { title: "Sports", path: "/sports", kicker: "Scores & prep" },
   civic: { title: "Civic Calendar", path: "/civic", kicker: "Agenda" },
   schools: { title: "Schools", path: "/schools", kicker: "Parents" },
@@ -52,6 +54,7 @@ export const SECTION_HEADER_SEEDS: Partial<
 export function emptySectionHeaders(): SectionHeadersMap {
   return {
     "whats-on": null,
+    shows: null,
     sports: null,
     civic: null,
     schools: null,
