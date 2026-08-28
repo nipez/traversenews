@@ -85,7 +85,7 @@ export function MorningLetter({
             <a href={letter.lead.url}>{letter.lead.title}</a>
           </h2>
           {letter.lead.dek ? (
-            <p className="mt-2 font-serif text-sm text-muted-2">
+            <p className="mt-4 font-serif text-sm text-muted-2">
               {letter.lead.dek}
             </p>
           ) : null}
@@ -105,7 +105,7 @@ export function MorningLetter({
               <a href={item.url}>{item.title}</a>
             </h3>
             {item.dek ? (
-              <p className="mt-1 text-sm text-muted-2">{item.dek}</p>
+              <p className="mt-3 text-sm text-muted-2">{item.dek}</p>
             ) : null}
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <p className="text-sm font-bold text-teal">
@@ -139,7 +139,7 @@ export function MorningLetter({
                   </a>
                 </p>
                 {a.dek ? (
-                  <p className="mt-0.5 text-muted-2">{a.dek}</p>
+                  <p className="mt-3 text-muted-2">{a.dek}</p>
                 ) : null}
               </li>
             ))}
@@ -229,8 +229,8 @@ export function MorningLetter({
         </p>
         <p className="mt-2 text-xs">
           Traverse City, Michigan ·{" "}
-          <Link href="/email/unsubscribe" className="font-bold text-teal">
-            Unsubscribe
+          <Link href="/unsubscribe" className="font-bold text-teal">
+            Unsubscribe / Opt out
           </Link>{" "}
           · Weekdays and Saturdays
           {mode === "archive" ? " · Archive copy (not sent)" : null}

@@ -14,9 +14,21 @@ const SHEETS_URL =
 const snapshot: EmailEditionSnapshot = {
   date: "2026-08-25",
   captured_at: "2026-08-25T12:00:00.000Z",
-  lead: null,
+  lead: {
+    title: "Garfield Township freezes data centers for a year",
+    dek: "A pause while planners rewrite the zoning rules.",
+    url: "https://traverse.news/story/garfield-data-centers",
+    sources: ["traverse.news"],
+  },
   around: [],
-  alerts: [],
+  alerts: [
+    {
+      title: "High wind advisory for Grand Traverse County",
+      dek: "Gusts near 50 mph through evening.",
+      url: "https://www.weather.gov/",
+      source_name: "NWS",
+    },
+  ],
   tonight: [],
   civic: [],
   sports: [
@@ -67,15 +79,38 @@ assert.match(
   /href=["']https:\/\/traverse\.news\/sports["']/,
   "section heads may still link to /sports",
 );
+
+// Title block, blank-line spacer, then dek (Gmail collapses tiny margins).
 assert.match(
   letter.html,
-  /href=["']https:\/\/traverse\.news\/email\/unsubscribe["']/,
-  "footer must include Unsubscribe",
+  /Garfield Township freezes data centers for a year<\/a><\/p>\s*<p style="margin:0;padding:0;font-size:16px;line-height:24px;height:24px;">&nbsp;<\/p>\s*<p[^>]*>A pause while planners rewrite the zoning rules\.<\/p>/,
+  "story title and dek must be separated by a blank-line spacer",
+);
+assert.match(
+  letter.html,
+  /High wind advisory for Grand Traverse County<\/a><\/p>\s*<p style="margin:0;padding:0;font-size:16px;line-height:24px;height:24px;">&nbsp;<\/p>\s*<p[^>]*>Gusts near 50 mph through evening\.<\/p>/,
+  "alert title and dek must be separated by a blank-line spacer",
 );
 assert.match(
   letter.text,
-  /Unsubscribe: https:\/\/traverse\.news\/email\/unsubscribe/,
-  "plaintext footer must include Unsubscribe",
+  /Garfield Township freezes data centers for a year https:\/\/traverse\.news\/story\/garfield-data-centers\n\nA pause while planners rewrite the zoning rules\./,
+  "plaintext title and dek must keep a blank line between them",
+);
+
+assert.match(
+  letter.html,
+  /href=["']https:\/\/traverse\.news\/unsubscribe["']/,
+  "footer must include Unsubscribe / Opt out",
+);
+assert.match(
+  letter.html,
+  />Unsubscribe \/ Opt out</,
+  "footer link label is Unsubscribe / Opt out",
+);
+assert.match(
+  letter.text,
+  /Unsubscribe \/ Opt out: https:\/\/traverse\.news\/unsubscribe/,
+  "plaintext footer must include Unsubscribe / Opt out",
 );
 
 const personalized = buildMorningLetter(snapshot, {
@@ -83,8 +118,8 @@ const personalized = buildMorningLetter(snapshot, {
 });
 assert.match(
   personalized.html,
-  /href=["']https:\/\/traverse\.news\/email\/unsubscribe\?email=reader%40example\.com["']/,
+  /href=["']https:\/\/traverse\.news\/unsubscribe\?email=reader%40example\.com["']/,
   "single-recipient send may personalize Unsubscribe",
 );
 
-console.log("dry-run-morning-letter: ok (Drive/Sheets URLs stay unlinked)");
+console.log("dry-run-morning-letter: ok (Drive/Sheets unlinked; title/dek gap; unsubscribe)");

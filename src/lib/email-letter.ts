@@ -358,29 +358,49 @@ function buildMorningLetterSubject(letter: EmailEditionSnapshot): string {
   return subject;
 }
 
+/**
+ * Gmail collapses small margins (incl. 4px). Keep the title in its own
+ * block, insert a real blank-line spacer, then the dek in a separate block.
+ */
+function titleThenDekHtml(titleHtml: string, dekHtml: string): string {
+  if (!dekHtml) {
+    return `<p style="margin:0;font-family:${LETTER_FONT};font-size:16px;line-height:1.35;">${titleHtml}</p>`;
+  }
+  return `<p style="margin:0;font-family:${LETTER_FONT};font-size:16px;line-height:1.35;">${titleHtml}</p>
+<p style="margin:0;padding:0;font-size:16px;line-height:24px;height:24px;">&nbsp;</p>
+<p style="margin:0 0 6px;font-family:${LETTER_FONT};font-size:14px;line-height:1.5;color:#333333;">${dekHtml}</p>`;
+}
+
+function titleThenDekText(titleLine: string, dek: string): string {
+  if (!dek) return titleLine;
+  return `${titleLine}\n\n${dek}`;
+}
+
 function renderStory(
   story: EmailStoryCard,
   sourceOverride?: string,
 ): RenderedItem {
   const url = letterUrl(story.url);
   const title = escapeHtml(story.title);
-  const dek = story.dek?.trim() ? escapeHtml(story.dek.trim()) : "";
+  const dekRaw = story.dek?.trim() || "";
+  const dek = dekRaw ? escapeHtml(dekRaw) : "";
   const source =
     sourceOverride || (story.sources?.length ? story.sources.join(" · ") : "");
+  const titleHtml = url
+    ? `<a href="${escapeHtml(url)}" style="color:#111111;font-weight:700;text-decoration:underline;">${title}</a>`
+    : `<strong>${title}</strong>`;
+  const titleLine = url ? `${story.title} ${url}` : story.title;
+  const sourceHtml = source
+    ? `<p style="margin:0 0 18px;font-family:${LETTER_FONT};font-size:12px;color:#666666;">${escapeHtml(source)}${story.paywalled ? " · Paywall" : ""}</p>`
+    : '<p style="margin:0 0 18px;"></p>';
+  const sourceText = source
+    ? `${source}${story.paywalled ? " · Paywall" : ""}`
+    : "";
 
   return {
-    html: `<p style="margin:0;font-family:${LETTER_FONT};font-size:16px;line-height:1.35;">${
-      url
-        ? `<a href="${escapeHtml(url)}" style="color:#111111;font-weight:700;text-decoration:underline;">${title}</a>`
-        : `<strong>${title}</strong>`
-    }</p>
-${dek ? `<p style="margin:12px 0 6px;font-family:${LETTER_FONT};font-size:14px;line-height:1.5;color:#333333;">${dek}</p>` : ""}
-${source ? `<p style="margin:0 0 18px;font-family:${LETTER_FONT};font-size:12px;color:#666666;">${escapeHtml(source)}${story.paywalled ? " · Paywall" : ""}</p>` : '<p style="margin:0 0 18px;"></p>'}`,
-    text: [
-      url ? `${story.title} ${url}` : story.title,
-      story.dek?.trim() || "",
-      source ? `${source}${story.paywalled ? " · Paywall" : ""}` : "",
-    ]
+    html: `${titleThenDekHtml(titleHtml, dek)}
+${sourceHtml}`,
+    text: [titleThenDekText(titleLine, dekRaw), sourceText]
       .filter(Boolean)
       .join("\n"),
   };
@@ -389,21 +409,17 @@ ${source ? `<p style="margin:0 0 18px;font-family:${LETTER_FONT};font-size:12px;
 function renderAlert(alert: EmailAlertCard): RenderedItem {
   const url = letterUrl(alert.url);
   const title = escapeHtml(alert.title);
-  const dek = alert.dek?.trim() ? escapeHtml(alert.dek.trim()) : "";
+  const dekRaw = alert.dek?.trim() || "";
+  const dek = dekRaw ? escapeHtml(dekRaw) : "";
+  const titleHtml = url
+    ? `<a href="${escapeHtml(url)}" style="color:#111111;font-weight:700;text-decoration:underline;">${title}</a>`
+    : `<strong>${title}</strong>`;
+  const titleLine = url ? `${alert.title} ${url}` : alert.title;
 
   return {
-    html: `<p style="margin:0;font-family:${LETTER_FONT};font-size:16px;line-height:1.35;">${
-      url
-        ? `<a href="${escapeHtml(url)}" style="color:#111111;font-weight:700;text-decoration:underline;">${title}</a>`
-        : `<strong>${title}</strong>`
-    }</p>
-${dek ? `<p style="margin:12px 0 6px;font-family:${LETTER_FONT};font-size:14px;line-height:1.5;color:#333333;">${dek}</p>` : ""}
+    html: `${titleThenDekHtml(titleHtml, dek)}
 <p style="margin:0 0 18px;font-family:${LETTER_FONT};font-size:12px;color:#666666;">${escapeHtml(alert.source_name)}</p>`,
-    text: [
-      url ? `${alert.title} ${url}` : alert.title,
-      alert.dek?.trim() || "",
-      alert.source_name,
-    ]
+    text: [titleThenDekText(titleLine, dekRaw), alert.source_name]
       .filter(Boolean)
       .join("\n"),
   };
@@ -462,9 +478,9 @@ function textSectionHeading(emoji: string, label: string): string {
   return `${emoji} ${label.toUpperCase()}`;
 }
 
-/** Absolute unsubscribe URL for the morning letter footer. */
+/** Absolute unsubscribe / opt-out URL for the morning letter footer. */
 export function unsubscribeUrl(email?: string | null): string {
-  const base = `${SITE_ORIGIN}/email/unsubscribe`;
+  const base = `${SITE_ORIGIN}/unsubscribe`;
   const normalized = email?.trim().toLowerCase() ?? "";
   if (!normalized || !normalized.includes("@")) return base;
   return `${base}?email=${encodeURIComponent(normalized)}`;
@@ -589,7 +605,7 @@ export function buildMorningLetter(
 
   html.push(`<p style="margin:32px 0 0;padding-top:16px;border-top:1px solid #eeeeee;font-family:${LETTER_FONT};font-size:12px;line-height:1.5;color:#888888;text-align:center;">
 traverse.news · Traverse City, Michigan<br>
-<a href="${SITE_ORIGIN}/tips" style="color:#555555;">Send a tip</a> · <a href="${SITE_ORIGIN}/email/${escapeHtml(letter.date)}" style="color:#555555;">Archive</a> · <a href="${escapeHtml(unsubscribeHref)}" style="color:#555555;">Unsubscribe</a>
+<a href="${SITE_ORIGIN}/tips" style="color:#555555;">Send a tip</a> · <a href="${SITE_ORIGIN}/email/${escapeHtml(letter.date)}" style="color:#555555;">Archive</a> · <a href="${escapeHtml(unsubscribeHref)}" style="color:#555555;">Unsubscribe / Opt out</a>
 </p>
 </div>
 </body>
@@ -597,7 +613,7 @@ traverse.news · Traverse City, Michigan<br>
   text.push("traverse.news · Traverse City, Michigan");
   text.push(`Send a tip: ${SITE_ORIGIN}/tips`);
   text.push(`Archive: ${SITE_ORIGIN}/email/${letter.date}`);
-  text.push(`Unsubscribe: ${unsubscribeHref}`);
+  text.push(`Unsubscribe / Opt out: ${unsubscribeHref}`);
 
   return {
     subject,
