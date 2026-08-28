@@ -87,4 +87,91 @@ assert.match(
   "single-recipient send may personalize Unsubscribe",
 );
 
-console.log("dry-run-morning-letter: ok (Drive/Sheets URLs stay unlinked)");
+/** Today's live mix (Fri Aug 28): real titles only — do not invent. */
+const todaySubjectSnapshot: EmailEditionSnapshot = {
+  date: "2026-08-28",
+  captured_at: "2026-08-28T12:00:00.000Z",
+  lead: {
+    title: "Garfield Township freezes data centers for a year",
+    dek: "Trustees voted unanimously Tuesday.",
+    url: "https://traverse.news/story/garfield-township-freezes-data-centers-for-a-year",
+    sources: ["traverse.news"],
+  },
+  around: [
+    {
+      title: "No Body Contact Advisory Issued for Boardman River/Lake",
+      dek: "Stale advisory card — subject must walk past this.",
+      url: "https://example.com/boardman-advisory",
+      sources: ["Grand Traverse 911"],
+    },
+    {
+      title:
+        "Could wildfire smoke change the flavor of wine grapes in northern Michigan?",
+      dek: "When wildfire smoke blanketed northern Michigan skies…",
+      url: "https://glenarborsun.com/could-wildfire-smoke-change-the-flavor-of-wine-grapes-in-northern-michigan/",
+      sources: ["Glen Arbor Sun"],
+    },
+  ],
+  alerts: [],
+  tonight: [
+    {
+      title: "Sing & Stomp",
+      starts_at: "2026-08-28T14:00:00.000Z",
+      place: "East Bay Branch Library",
+      url: null,
+    },
+    {
+      title: "Simon Anton Artist Talk",
+      starts_at: "2026-08-28T21:00:00.000Z",
+      place: "Dennos Museum Center",
+      url: null,
+    },
+    {
+      title: "Full Circle Artist Reception",
+      starts_at: "2026-08-28T22:30:00.000Z",
+      place: "Dennos Museum Center",
+      url: null,
+    },
+  ],
+  civic: [],
+  sports: [],
+};
+
+const todaySubject = buildMorningLetter(todaySubjectSnapshot).subject;
+assert.match(
+  todaySubject,
+  /Garfield Township freezes data centers for a year/,
+  "lead closer 'for a year' must stay (not chop onto 'for')",
+);
+assert.doesNotMatch(
+  todaySubject,
+  /\bfor\s*(?:⚡️|🌙|🌊|🚨|,|$)/,
+  "subject must not end a phrase on trailing 'for'",
+);
+assert.doesNotMatch(
+  todaySubject,
+  /Sing\s*&\s*Stomp/,
+  "morning kids/storytime skipped when Dennos evening exists",
+);
+assert.match(
+  todaySubject,
+  /Simon Anton Artist Talk/,
+  "prefer Dennos / 4pm+ night over Sing & Stomp",
+);
+assert.doesNotMatch(
+  todaySubject,
+  /No Body Contact Advisory|Boardman River\/Lake/,
+  "skip stale Boardman body-contact advisory for around",
+);
+assert.match(
+  todaySubject,
+  /wildfire smoke|wine grapes/i,
+  "next usable bay head (smoke / wine grapes) in subject",
+);
+assert.match(todaySubject, /⚡️/);
+assert.match(todaySubject, /🌙/);
+assert.match(todaySubject, /🌊/);
+
+console.log(
+  `dry-run-morning-letter: ok (Drive unlinked; subject=${todaySubject})`,
+);

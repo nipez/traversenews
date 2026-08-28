@@ -49,6 +49,25 @@ assert.deepEqual(resolveLetterRecipients(fakeList), [
   "nickperez@gmail.com",
 ]);
 
+const mixedList: Subscriber[] = [
+  {
+    email: "desk-list-verify@example.com",
+    created_at: "2026-08-01T12:00:00.000Z",
+  },
+  {
+    email: "reader@traverse.news",
+    created_at: "2026-08-02T12:00:00.000Z",
+  },
+  {
+    email: "friend@gmail.com",
+    created_at: "2026-08-03T12:00:00.000Z",
+  },
+];
+assert.deepEqual(resolveLetterRecipients(mixedList), [
+  "reader@traverse.news",
+  "friend@gmail.com",
+]);
+
 assert.equal(unsubscribeUrl(), "https://traverse.news/email/unsubscribe");
 assert.equal(
   unsubscribeUrl("NickPerez@gmail.com"),

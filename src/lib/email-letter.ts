@@ -20,7 +20,7 @@ import type {
 const SITE_ORIGIN = "https://traverse.news";
 const DETROIT_TIME_ZONE = "America/Detroit";
 
-/** Fallback when the signup list is empty or still has fake/example/verify addresses. */
+/** Fallback when no real signup addresses remain after stripping fakes. */
 export const DESK_LETTER_FALLBACK = "nickperez@gmail.com";
 
 /** Subject prefix for Nick-only 8am previews (live send keeps the bare subject). */
@@ -69,6 +69,8 @@ type RenderedItem = {
 
 type SubjectItem = {
   text: string;
+  /** Original title for re-chop when the subject runs long. */
+  source: string;
   kind: "lead" | "tonight" | "around" | "alert";
 };
 
@@ -223,30 +225,168 @@ function isUnusableSubjectPhrase(value: string): boolean {
   return isInsiderSubjectPhrase(value) || isGenericPlaceSubjectPhrase(value);
 }
 
-/** Chop a title into a short subject phrase without trailing glue words. */
+const TRAILING_SUBJECT_FUNCTION_WORDS = new Set([
+  "for",
+  "of",
+  "in",
+  "a",
+  "an",
+  "the",
+  "and",
+  "at",
+  "on",
+  "with",
+]);
+
+/** Strip trailing glue words until the phrase ends on content. */
+function stripTrailingSubjectFunctionWords(value: string): string {
+  let words = value.replace(/\s+/g, " ").trim().split(" ").filter(Boolean);
+  while (
+    words.length > 1 &&
+    TRAILING_SUBJECT_FUNCTION_WORDS.has(words[words.length - 1]!.toLowerCase())
+  ) {
+    words = words.slice(0, -1);
+  }
+  return words.join(" ");
+}
+
+/**
+ * Chop a title into a short subject phrase without trailing glue words.
+ * Prefer completing a short closer ("for a year") when the next 1–2 words
+ * still fit a slightly larger budget than the hard chop.
+ */
 function phraseFromTitle(value: string, maxLength = 40): string {
   let title = value.replace(/\s+/g, " ").trim();
   title = title.replace(/\s+near\s+.+$/i, "").trim();
-  if (title.length <= maxLength) return title;
+  if (title.length <= maxLength) {
+    return stripTrailingSubjectFunctionWords(title) || title;
+  }
 
   for (const separator of [": ", " — ", " – ", " - ", "; ", ", "]) {
     const index = title.indexOf(separator);
     if (index >= 12 && index <= maxLength) {
-      return title.slice(0, index).trim();
+      const cut = title.slice(0, index).trim();
+      return stripTrailingSubjectFunctionWords(cut) || cut;
     }
   }
 
+  const words = title.split(" ").filter(Boolean);
+  let used = 0;
   let shortened = "";
-  for (const word of title.split(" ")) {
+  for (const word of words) {
     const candidate = shortened ? `${shortened} ${word}` : word;
     if (candidate.length > maxLength) break;
     shortened = candidate;
+    used += 1;
   }
 
-  shortened = shortened
-    .replace(/\s+(on|at|for|of|in|with|and|the|a|an)$/i, "")
-    .trim();
+  // Prefer completing a short closer like "for a year" (function word +
+  // 1–2 words, or 1–2 words after a chop that already ends on glue).
+  const closerBudget = maxLength + 10;
+  const remaining = words.slice(used);
+  if (shortened && remaining.length > 0) {
+    const lastChopped =
+      shortened.split(" ").pop()?.toLowerCase() ?? "";
+    const next = remaining[0]!.toLowerCase();
+    let take = 0;
+    if (
+      TRAILING_SUBJECT_FUNCTION_WORDS.has(lastChopped) &&
+      remaining.length <= 2
+    ) {
+      take = remaining.length;
+    } else if (
+      TRAILING_SUBJECT_FUNCTION_WORDS.has(next) &&
+      remaining.length >= 2 &&
+      remaining.length <= 3
+    ) {
+      take = remaining.length;
+    }
+    if (take > 0) {
+      const withCloser = `${shortened} ${remaining.slice(0, take).join(" ")}`.trim();
+      if (withCloser.length <= closerBudget) {
+        shortened = withCloser;
+      }
+    }
+  }
+
+  shortened = stripTrailingSubjectFunctionWords(shortened).trim();
   return shortened || title.slice(0, maxLength).trim();
+}
+
+/** Morning kids / storytime — skip when a later evening listing exists. */
+function isKidsStorytimeSubjectTitle(value: string): boolean {
+  const title = value.toLowerCase();
+  return (
+    title.includes("sing & stomp") ||
+    title.includes("sing and stomp") ||
+    title.includes("wigglers") ||
+    title.includes("storytime") ||
+    title.includes("story time")
+  );
+}
+
+function eventDetroitHour(startsAt: string): number | null {
+  const ms = Date.parse(startsAt);
+  if (Number.isNaN(ms)) return null;
+  const hour = Number(
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: DETROIT_TIME_ZONE,
+      hour: "numeric",
+      hourCycle: "h23",
+    }).formatToParts(new Date(ms)).find((part) => part.type === "hour")
+      ?.value,
+  );
+  return Number.isFinite(hour) ? hour : null;
+}
+
+/** Dennos or 4pm+ timed nights preferred for the 🌙 subject slot. */
+function isPreferredTonightSubjectEvent(event: EmailEventCard): boolean {
+  if (isKidsStorytimeSubjectTitle(event.title)) return false;
+  const hay = `${event.title} ${event.place}`.toLowerCase();
+  if (hay.includes("dennos")) return true;
+  if (event.time_unknown) return false;
+  const hour = eventDetroitHour(event.starts_at);
+  return hour != null && hour >= 16;
+}
+
+/**
+ * Order tonight for the subject: prefer Dennos / 4pm+ nights; skip morning
+ * kids/storytime when any later usable evening listing exists.
+ */
+function tonightSubjectEvents(tonight: EmailEventCard[]): EmailEventCard[] {
+  const preferred: EmailEventCard[] = [];
+  const other: EmailEventCard[] = [];
+  const kids: EmailEventCard[] = [];
+
+  for (const event of tonight) {
+    if (isKidsStorytimeSubjectTitle(event.title)) {
+      kids.push(event);
+      continue;
+    }
+    if (isPreferredTonightSubjectEvent(event)) preferred.push(event);
+    else other.push(event);
+  }
+
+  if (preferred.length > 0) return [...preferred, ...other];
+  if (other.length > 0) return other;
+  return kids;
+}
+
+/** Stale / duplicate Boardman body-contact advisory heads — skip for 🌊. */
+function isStaleBoardmanAdvisoryTitle(value: string): boolean {
+  const title = value.toLowerCase();
+  if (!title.includes("boardman")) return false;
+  return (
+    title.includes("no body contact") ||
+    title.includes("no-body contact") ||
+    title.includes("nobody contact") ||
+    title.includes("body contact advisory") ||
+    (title.includes("advisory") &&
+      (title.includes("lifts") ||
+        title.includes("lifted") ||
+        title.includes("issued") ||
+        title.includes("except")))
+  );
 }
 
 function subjectFallbackDate(): string {
@@ -257,40 +397,51 @@ function buildMorningLetterSubject(letter: EmailEditionSnapshot): string {
   const candidates: SubjectItem[] = [];
 
   if (letter.lead?.title) {
-    const title = phraseFromTitle(letter.lead.title, 44);
+    const source = letter.lead.title.replace(/\s+/g, " ").trim();
+    const title = phraseFromTitle(source, 44);
     if (title && !isUnusableSubjectPhrase(title)) {
-      candidates.push({ text: title, kind: "lead" });
+      candidates.push({ text: title, source, kind: "lead" });
     }
   }
 
-  // 🌙: walk tonight until a usable phrase exists. Prefer the full title
-  // when it is already parseable (place + two+ words). Otherwise try a
-  // phraseFromTitle chop — place-only / place+one-word leftovers are skipped.
-  for (const event of letter.tonight) {
+  // 🌙: prefer Dennos / 4pm+ nights; skip morning kids/storytime when a
+  // later usable evening listing exists. Prefer the full title when it is
+  // already parseable. Otherwise try a phraseFromTitle chop — place-only /
+  // place+one-word leftovers are skipped.
+  for (const event of tonightSubjectEvents(letter.tonight)) {
     const raw = event.title?.replace(/\s+/g, " ").trim();
     if (!raw) continue;
     if (!isUnusableSubjectPhrase(raw)) {
-      candidates.push({ text: raw, kind: "tonight" });
+      candidates.push({ text: raw, source: raw, kind: "tonight" });
       break;
     }
     const chopped = phraseFromTitle(raw, 28);
     if (chopped && !isUnusableSubjectPhrase(chopped)) {
-      candidates.push({ text: chopped, kind: "tonight" });
+      candidates.push({ text: chopped, source: raw, kind: "tonight" });
       break;
     }
   }
 
-  if (letter.around[0]?.title) {
-    const title = phraseFromTitle(letter.around[0].title, 36);
+  // 🌊: walk around past stale Boardman body-contact advisory cards.
+  for (const story of letter.around) {
+    const raw = story.title?.replace(/\s+/g, " ").trim();
+    if (!raw || isStaleBoardmanAdvisoryTitle(raw)) continue;
+    const title = phraseFromTitle(raw, 36);
     if (title && !isUnusableSubjectPhrase(title)) {
-      candidates.push({ text: title, kind: "around" });
+      candidates.push({ text: title, source: raw, kind: "around" });
+      break;
     }
   }
 
   if (candidates.length < 2 && letter.alerts[0]?.title) {
-    const title = phraseFromTitle(letter.alerts[0].title, 36);
-    if (title && !isUnusableSubjectPhrase(title)) {
-      candidates.push({ text: title, kind: "alert" });
+    const raw = letter.alerts[0].title.replace(/\s+/g, " ").trim();
+    const title = phraseFromTitle(raw, 36);
+    if (
+      title &&
+      !isUnusableSubjectPhrase(title) &&
+      !isStaleBoardmanAdvisoryTitle(title)
+    ) {
+      candidates.push({ text: title, source: raw, kind: "alert" });
     }
   }
 
@@ -309,18 +460,48 @@ function buildMorningLetterSubject(letter: EmailEditionSnapshot): string {
       (item) => item.text.trim() && !isUnusableSubjectPhrase(item.text),
     );
 
+  const reshorten = (
+    items: SubjectItem[],
+    leadMax: number,
+    otherMax: number,
+  ): SubjectItem[] =>
+    keepUsable(
+      items.map((item) => ({
+        ...item,
+        text: phraseFromTitle(
+          item.source,
+          item.kind === "lead" ? leadMax : otherMax,
+        ),
+      })),
+    );
+
   let subject = format(selected);
-  if (subject.length > 80 && selected.length === 3) {
+
+  // Prefer keeping 2–3 scan phrases. Shorten non-lead first so the lead
+  // closer ("for a year") survives; only then trim the lead; drop a slot last.
+  if (subject.length > 110 && selected.length === 3) {
+    selected = keepUsable(
+      selected.map((item) =>
+        item.kind === "lead"
+          ? item
+          : {
+              ...item,
+              text: phraseFromTitle(item.source, 24),
+            },
+      ),
+    );
+    subject = format(selected);
+  }
+  if (subject.length > 110 && selected.length === 3) {
+    selected = reshorten(selected, 44, 22);
+    subject = format(selected);
+  }
+  if (subject.length > 118 && selected.length === 3) {
     selected = selected.slice(0, 2);
     subject = format(selected);
   }
-  if (subject.length > 80) {
-    selected = keepUsable(
-      selected.map((item) => ({
-        ...item,
-        text: phraseFromTitle(item.text, 28),
-      })),
-    );
+  if (subject.length > 110) {
+    selected = reshorten(selected, 44, 28);
     if (selected.length === 0) {
       return subjectFallbackDate();
     }
@@ -329,14 +510,14 @@ function buildMorningLetterSubject(letter: EmailEditionSnapshot): string {
 
   // Prefer dropping a trailing phrase over an opaque mid-string chop that
   // can leave a region-only stub in the subject.
-  while (subject.length > 84 && selected.length > 1) {
+  while (subject.length > 118 && selected.length > 1) {
     selected = selected.slice(0, -1);
     subject = format(selected);
   }
 
-  if (subject.length > 84) {
+  if (subject.length > 118) {
     subject = `${subject
-      .slice(0, 81)
+      .slice(0, 115)
       .replace(/\s+\S*$/, "")
       .replace(/[,·\s]+$/, "")}…`;
 
@@ -663,10 +844,8 @@ export function resolveLetterRecipients(subscribers: Subscriber[]): string[] {
     ),
   ];
 
-  if (emails.some(isFakeSubscriberEmail)) {
-    return [DESK_LETTER_FALLBACK];
-  }
-
+  // Strip fake/example/verify addresses; mail the remaining real ones.
+  // One verify address must not lock the whole list to the desk fallback.
   const realEmails = emails.filter((email) => !isFakeSubscriberEmail(email));
   return realEmails.length > 0 ? realEmails : [DESK_LETTER_FALLBACK];
 }
