@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 import { isDeskRequestAuthed } from "@/lib/auth";
 import {
   getAppData,
+  getEmailLetterPreview,
   getEmailLetterSend,
+  markEmailLetterPreviewed,
   markEmailLetterSent,
   snapshotTodaysEmailEdition,
 } from "@/lib/data/store";
@@ -11,7 +13,9 @@ import {
   buildMorningLetter,
   isDetroitSunday,
   pickLetterSchoolDate,
+  previewLetterSubject,
   resolveLetterRecipients,
+  resolvePreviewLetterRecipients,
 } from "@/lib/email-letter";
 import { runPull } from "@/lib/pull/run";
 
@@ -36,7 +40,13 @@ async function getResendApiKey(): Promise<string | null> {
 }
 
 /**
- * Send today's morning letter via Resend (Worker cron + Desk).
+ * Send today's morning letter via Resend (Worker cron preview + Desk live).
+ *
+ * Body:
+ * - `{ preview: true }` — Nick-only preview (`Preview · ` subject). Own
+ *   idempotency key; does NOT mark the day as publicly sent.
+ * - `{}` or `{ force: true }` — live send to resolveLetterRecipients; marks
+ *   morning_letter_sent.
  *
  * Auth: Desk cookie OR Authorization: Bearer <DESK_IMPORT_TOKEN|DEV_DESK_PASSWORD>
  *
@@ -52,15 +62,27 @@ export async function POST(request: Request) {
 
   const body = (await request.json().catch(() => ({}))) as {
     force?: unknown;
+    preview?: unknown;
   };
   const force = body.force === true;
+  const preview = body.preview === true;
 
   if (isDetroitSunday()) {
     return NextResponse.json({ ok: true, skipped: "sunday" });
   }
 
   const today = emailDetroitDateKey();
-  if (!force && (await getEmailLetterSend(today))) {
+
+  if (preview) {
+    if (!force && (await getEmailLetterPreview(today))) {
+      return NextResponse.json({
+        ok: true,
+        already_previewed: true,
+        preview: true,
+        date: today,
+      });
+    }
+  } else if (!force && (await getEmailLetterSend(today))) {
     return NextResponse.json({ ok: true, already_sent: true, date: today });
   }
 
@@ -69,8 +91,17 @@ export async function POST(request: Request) {
   const edition = await snapshotTodaysEmailEdition();
   const data = await getAppData();
   const school = pickLetterSchoolDate(data.schools ?? []);
-  const letter = buildMorningLetter(edition, { school });
-  const recipients = resolveLetterRecipients(data.subscribers ?? []);
+  const recipients = preview
+    ? resolvePreviewLetterRecipients()
+    : resolveLetterRecipients(data.subscribers ?? []);
+  const letter = buildMorningLetter(edition, {
+    school,
+    unsubscribeEmail:
+      recipients.length === 1 ? recipients[0] : undefined,
+  });
+  const subject = preview
+    ? previewLetterSubject(letter.subject)
+    : letter.subject;
   const apiKey = await getResendApiKey();
 
   if (!apiKey) {
@@ -79,7 +110,8 @@ export async function POST(request: Request) {
         error:
           "RESEND_API_KEY is not set on the Worker. Letter was not sent.",
         date: edition.date,
-        subject: letter.subject,
+        subject,
+        preview,
       },
       { status: 500 },
     );
@@ -91,7 +123,7 @@ export async function POST(request: Request) {
     from: "Traverse News <info@traverse.news>",
     to: recipients,
     reply_to: "info@traverse.news",
-    subject: letter.subject,
+    subject,
     html: letter.html,
     text: letter.text,
   };
@@ -109,12 +141,15 @@ export async function POST(request: Request) {
   if (!resendResponse.ok) {
     return NextResponse.json(
       {
-        error: "Resend rejected the send. Letter was not marked sent.",
+        error: preview
+          ? "Resend rejected the preview. Preview was not marked sent."
+          : "Resend rejected the send. Letter was not marked sent.",
         status: resendResponse.status,
         detail: responseBody.slice(0, 300),
         date: edition.date,
-        subject: letter.subject,
+        subject,
         recipient_count: recipients.length,
+        preview,
       },
       { status: 502 },
     );
@@ -128,19 +163,27 @@ export async function POST(request: Request) {
     resendId = null;
   }
 
-  await markEmailLetterSent(edition.date, {
+  const record = {
     sent_at: new Date().toISOString(),
     resend_id: resendId ?? undefined,
-    subject: letter.subject,
-  });
+    subject,
+  };
+
+  if (preview) {
+    // Preview must not flip morning_letter_sent — Desk can still send live.
+    await markEmailLetterPreviewed(edition.date, record);
+  } else {
+    await markEmailLetterSent(edition.date, record);
+  }
 
   return NextResponse.json({
     ok: true,
     date: edition.date,
-    subject: letter.subject,
+    subject,
     recipient_count: recipients.length,
     resend_id: resendId,
     archive_url: `/email/${edition.date}`,
+    preview,
   });
 }
 

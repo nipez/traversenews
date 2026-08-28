@@ -67,5 +67,24 @@ assert.match(
   /href=["']https:\/\/traverse\.news\/sports["']/,
   "section heads may still link to /sports",
 );
+assert.match(
+  letter.html,
+  /href=["']https:\/\/traverse\.news\/email\/unsubscribe["']/,
+  "footer must include Unsubscribe",
+);
+assert.match(
+  letter.text,
+  /Unsubscribe: https:\/\/traverse\.news\/email\/unsubscribe/,
+  "plaintext footer must include Unsubscribe",
+);
+
+const personalized = buildMorningLetter(snapshot, {
+  unsubscribeEmail: "reader@example.com",
+});
+assert.match(
+  personalized.html,
+  /href=["']https:\/\/traverse\.news\/email\/unsubscribe\?email=reader%40example\.com["']/,
+  "single-recipient send may personalize Unsubscribe",
+);
 
 console.log("dry-run-morning-letter: ok (Drive/Sheets URLs stay unlinked)");
