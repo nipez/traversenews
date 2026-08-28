@@ -78,9 +78,7 @@ export default function AboutPage() {
               <Link href="/#alerts">
                 <strong>Alerts</strong>
               </Link>{" "}
-              is official only: crashes, outages, closures, and warnings —
-              Grand Traverse 911 and the same class of notice from the Ticker
-              when it is that kind of post. It is not a Facebook firehose.
+              is official only: crashes, outages, closures, and warnings.
             </p>
             <p>
               <strong>Morning email</strong> is the same paper in your inbox.
