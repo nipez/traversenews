@@ -2309,12 +2309,91 @@ a:hover {
   color: #1c1712;
 }
 
+.sports-week-hed-next {
+  margin-top: 1.75rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid #d9cfb8;
+}
+
 .sports-week-dek {
   margin: 0.35rem 0 0;
   font-family: var(--font-source-serif), Georgia, serif;
   font-size: 0.92rem;
   line-height: 1.35;
   color: #52493c;
+}
+
+.sports-week-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0.85rem 0 0;
+}
+
+.sports-week-filters-surrounding {
+  margin-top: 0.45rem;
+  padding-top: 0.45rem;
+  border-top: 1px solid #d9cfb8;
+}
+
+.sports-week-chip {
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.45rem 0.65rem;
+  border: 1px solid #1c1712;
+  background: #f4edde;
+  color: #1c1712;
+  cursor: pointer;
+  color-scheme: only light;
+}
+
+.sports-week-chip:hover {
+  background: #efe6d4;
+  color: #1c1712;
+}
+
+.sports-week-chip-on {
+  background: #1c1712;
+  color: #f4edde;
+}
+
+.sports-week-chip-on:hover {
+  background: #1c1712;
+  color: #f4edde;
+}
+
+.sports-surrounding-btn {
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.45rem 0.65rem;
+  border: 1px solid #c8ba9a;
+  background: transparent;
+  color: #52493c;
+  cursor: pointer;
+  color-scheme: only light;
+}
+
+.sports-surrounding-btn:hover {
+  border-color: #1c1712;
+  color: #1c1712;
+  background: #efe6d4;
+}
+
+.sports-surrounding-btn-on {
+  border-color: #1c1712;
+  color: #1c1712;
+  background: #efe6d4;
+}
+
+.sports-surrounding-caret {
+  margin-left: 0.3rem;
+  font-size: 0.65rem;
 }
 
 .sports-week-empty {
