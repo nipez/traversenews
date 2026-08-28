@@ -180,6 +180,39 @@ export function sanitizeStoredAthletics(games: AthleticsGame[]): {
   return { games: next, changed };
 }
 
+/** Detroit day-key window for Sports This week / Next week (rolling, not Mon–Sun). */
+export function athleticsWeekDayBounds(
+  now = new Date(),
+  weekOffset: 0 | 1 = 0,
+): { startKey: string; endKey: string } {
+  const dayMs = 24 * 60 * 60 * 1000;
+  if (weekOffset === 0) {
+    const end = new Date(now.getTime() + ATHLETICS_WEEK_DAYS * dayMs);
+    return { startKey: detroitDayKey(now), endKey: detroitDayKey(end) };
+  }
+  const thisEnd = new Date(now.getTime() + ATHLETICS_WEEK_DAYS * dayMs);
+  const nextEnd = new Date(now.getTime() + ATHLETICS_WEEK_DAYS * 2 * dayMs);
+  // Day after This week end → +14 days from now (no overlap with This week).
+  const start = new Date(thisEnd.getTime() + dayMs);
+  return { startKey: detroitDayKey(start), endKey: detroitDayKey(nextEnd) };
+}
+
+function selectAthleticsInDayBounds(
+  games: AthleticsGame[],
+  startKey: string,
+  endKey: string,
+): AthleticsGame[] {
+  return sanitizeStoredAthletics(games)
+    .games.filter((g) => {
+      const key = detroitDayKey(g.starts_at);
+      return key >= startKey && key <= endKey;
+    })
+    .sort(
+      (a, b) =>
+        new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime(),
+    );
+}
+
 /**
  * Public Sports page: Detroit start-of-today through +7 days only.
  * Do not render a full season into HTML.
@@ -188,19 +221,20 @@ export function selectThisWeekAthletics(
   games: AthleticsGame[],
   now = new Date(),
 ): AthleticsGame[] {
-  const todayKey = detroitDayKey(now);
-  const end = new Date(now.getTime() + ATHLETICS_WEEK_DAYS * 24 * 60 * 60 * 1000);
-  const endKey = detroitDayKey(end);
+  const { startKey, endKey } = athleticsWeekDayBounds(now, 0);
+  return selectAthleticsInDayBounds(games, startKey, endKey);
+}
 
-  return sanitizeStoredAthletics(games)
-    .games.filter((g) => {
-      const key = detroitDayKey(g.starts_at);
-      return key >= todayKey && key <= endKey;
-    })
-    .sort(
-      (a, b) =>
-        new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime(),
-    );
+/**
+ * Public Sports page: the seven-day window after This week.
+ * Same rolling horizon; does not invent games.
+ */
+export function selectNextWeekAthletics(
+  games: AthleticsGame[],
+  now = new Date(),
+): AthleticsGame[] {
+  const { startKey, endKey } = athleticsWeekDayBounds(now, 1);
+  return selectAthleticsInDayBounds(games, startKey, endKey);
 }
 
 export function groupAthleticsByDay(

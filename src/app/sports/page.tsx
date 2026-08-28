@@ -2,7 +2,10 @@ import Link from "next/link";
 import { DeskRail } from "@/components/DeskRail";
 import { PublicShell } from "@/components/PublicShell";
 import { SportsThisWeek } from "@/components/SportsThisWeek";
-import { selectThisWeekAthletics } from "@/lib/athletics";
+import {
+  selectNextWeekAthletics,
+  selectThisWeekAthletics,
+} from "@/lib/athletics";
 import { formatBayDay } from "@/lib/dates";
 import { getAppData } from "@/lib/data/store";
 import { isRecordEagleStory } from "@/lib/paywall";
@@ -63,7 +66,9 @@ function SportsList({ items }: { items: SportsStory[] }) {
 
 export default async function SportsPage() {
   const data = await getAppData();
-  const weekGames = selectThisWeekAthletics(data.athletics ?? []);
+  const athletics = data.athletics ?? [];
+  const weekGames = selectThisWeekAthletics(athletics);
+  const nextWeekGames = selectNextWeekAthletics(athletics);
   const all = selectSportsStories(data.stories, data.sources, { limit: 40 });
   const seen = new Set<string>();
   const unique: typeof all = [];
@@ -90,7 +95,7 @@ export default async function SportsPage() {
             </p>
           </header>
 
-          <SportsThisWeek games={weekGames} />
+          <SportsThisWeek thisWeek={weekGames} nextWeek={nextWeekGames} />
 
           {showHsSubhead ? (
             <>
