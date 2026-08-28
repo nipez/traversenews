@@ -109,25 +109,6 @@ export default function AboutPage() {
             <p>
               We will not publish a calendar item we cannot point back to.
             </p>
-
-            <h2>Who</h2>
-            <p>
-              This is a Traverse City desk. Tips, corrections, and things we
-              missed go through the{" "}
-              <Link href="/tips" className="font-semibold text-teal hover:underline">
-                tip form
-              </Link>
-              {" "}
-              on this site — or the one in the rail.
-            </p>
-
-            <h2>Useful local</h2>
-            <p>
-              Standing outbound directories and places live on{" "}
-              <Link href="/local">Useful local</Link>
-              . Not news. Not Events. Just the links you reach for twice a
-              week.
-            </p>
           </div>
         </article>
 
