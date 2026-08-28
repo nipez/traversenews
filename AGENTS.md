@@ -9,6 +9,17 @@
 
 There is **no API from cloud agent → Traverse News** yet. The bridge is **Nick + that chat**: write the ask in the PR and in user-visible status; Nick (and Traverse News watching the repo work) will see it.
 
+## Shared source
+
+GitHub `main` is the only source of truth for live traverse.news. Both this cloud agent and Traverse News (Grok Bot) write here. Overwrites happen when one side deploys a Worker from a tree that is behind `main`.
+
+- Always branch from latest `origin/main`. Never from an old `cursor/*` draft.
+- After you change code, PR + merge to `main` before or with any `wrangler deploy`.
+- Never deploy a Worker from a checkout that is behind `main`.
+- Do not merge stale draft PRs from before the 2026-08-28 live-sync. Rebase unique work onto current `main` first.
+- KV / AppData (subscribers, editions, sources, Desk content) is not in git. A code deploy does not wipe it.
+
+
 ## Jobs that already run on the Worker
 
 These are live on the Cloudflare Worker (`wrangler.jsonc` crons → `cloudflare-worker.ts` `scheduled`).
