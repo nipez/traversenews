@@ -3,10 +3,10 @@ import Link from "next/link";
 const ITEMS = [
   { href: "/", label: "Today" },
   { href: "/whats-on", label: "Events" },
-  { href: "/shows", label: "Shows" },
   { href: "/civic", label: "Civic" },
   { href: "/schools", label: "Schools" },
   { href: "/sports", label: "Sports" },
+  { href: "/shows", label: "Shows" },
 ] as const;
 
 export function MobileBottomNav({ active = "/" }: { active?: string }) {

@@ -66,16 +66,6 @@ export function DeskRail({
           </li>
           <li>
             <Link
-              href="/shows"
-              className={
-                active === "/shows" ? "about-rail-nav-active" : undefined
-              }
-            >
-              Shows
-            </Link>
-          </li>
-          <li>
-            <Link
               href="/civic"
               className={
                 active === "/civic" ? "about-rail-nav-active" : undefined
@@ -105,6 +95,16 @@ export function DeskRail({
               }
             >
               Sports
+            </Link>
+          </li>
+          <li>
+            <Link
+              href="/shows"
+              className={
+                active === "/shows" ? "about-rail-nav-active" : undefined
+              }
+            >
+              Shows
             </Link>
           </li>
         </ul>
