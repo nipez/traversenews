@@ -138,7 +138,8 @@ function escapeHtml(value: string): string {
  * even when Resend sends multipart/alternative with no real attachments.
  * Keep the real title and dek; leave the title as plain strong text.
  */
-function letterUrl(value: string | null | undefined): string | null {
+/** Public href: apex host, never workers.dev. Drive/Docs URLs stay unlinked. */
+export function canonicalPublicUrl(value: string | null | undefined): string | null {
   if (!value) return null;
 
   const trimmed = value.trim();
@@ -384,7 +385,7 @@ function renderStory(
   story: EmailStoryCard,
   sourceOverride?: string,
 ): RenderedItem {
-  const url = letterUrl(story.url);
+  const url = canonicalPublicUrl(story.url);
   const title = escapeHtml(story.title);
   const dek = story.dek?.trim() ? escapeHtml(story.dek.trim()) : "";
   const source =
@@ -409,7 +410,7 @@ ${source ? `<p style="margin:0 0 18px;font-family:${LETTER_FONT};font-size:12px;
 }
 
 function renderAlert(alert: EmailAlertCard): RenderedItem {
-  const url = letterUrl(alert.url);
+  const url = canonicalPublicUrl(alert.url);
   const title = escapeHtml(alert.title);
   const dek = alert.dek?.trim() ? escapeHtml(alert.dek.trim()) : "";
 
@@ -447,7 +448,7 @@ function renderEvent(
   const time =
     event.time_unknown || whenParts.time === "-" ? "" : whenParts.time;
   const when = time ? `${day} ${time}` : day;
-  const url = letterUrl(event.url);
+  const url = canonicalPublicUrl(event.url);
   const title = escapeHtml(event.title);
   const titleHtml = url
     ? `<a href="${escapeHtml(url)}" style="color:#111111;font-weight:700;text-decoration:underline;">${title}</a>`

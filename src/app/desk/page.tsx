@@ -27,14 +27,14 @@ export default async function DeskSourcesPage({ searchParams }: Props) {
   return (
     <DeskChrome active="sources">
       <div className="mx-auto grid max-w-6xl gap-6 px-4 py-6 md:grid-cols-[220px_minmax(0,1fr)] md:px-6">
-        <aside>
+        <aside className="desk-beats">
           <div className="mb-3 flex items-center justify-between">
             <p className="text-[0.68rem] font-bold tracking-[0.1em] text-ink uppercase">
               Beats
             </p>
-            <span className="text-xs font-semibold text-teal">Add</span>
+            <span className="hidden text-xs font-semibold text-teal md:inline">Add</span>
           </div>
-          <ul className="space-y-0.5">
+          <ul className="desk-beats-list">
             {data.beats.map((beat) => {
               const active = beat.id === selected.id;
               return (
@@ -43,8 +43,8 @@ export default async function DeskSourcesPage({ searchParams }: Props) {
                     href={
                       beat.slug === "all" ? "/desk" : `/desk?beat=${beat.slug}`
                     }
-                    className={`flex items-center justify-between px-2 py-1.5 text-sm ${
-                      active ? "bg-paper-3 font-medium" : "hover:bg-paper-2"
+                    className={`desk-beat-link ${
+                      active ? "is-active" : ""
                     }`}
                   >
                     <span>{beat.name}</span>
@@ -55,7 +55,7 @@ export default async function DeskSourcesPage({ searchParams }: Props) {
             })}
           </ul>
           <input
-            className="input mt-3"
+            className="input mt-3 hidden md:block"
             placeholder="New beat"
             disabled
             title="Beat creation ships next"
@@ -95,7 +95,18 @@ export default async function DeskSourcesPage({ searchParams }: Props) {
             </Link>
           </div>
 
-          <div className="mt-6 overflow-x-auto">
+          <ul className="desk-source-cards mt-6 md:hidden">
+            {sources.map((source) => (
+              <li key={source.id}>
+                <Link href={`/desk/sources/${source.id}`}>
+                  <strong>{source.name}</strong>
+                  <span>{beatName(source.beat_id)} · {source.enabled ? "On" : "Off"}</span>
+                  <em>{source.pull_method}</em>
+                </Link>
+              </li>
+            ))}
+          </ul>
+          <div className="mt-6 hidden overflow-x-auto md:block">
             <table className="desk-table w-full min-w-[760px]">
               <thead>
                 <tr>
