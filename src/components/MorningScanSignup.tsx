@@ -5,7 +5,7 @@ import { useState, type FormEvent } from "react";
 export function MorningScanSignup({
   variant = "sidebar",
 }: {
-  variant?: "sidebar" | "box" | "inline" | "teal";
+  variant?: "sidebar" | "box" | "inline" | "teal" | "page";
 }) {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "ok" | "err">("idle");
@@ -29,6 +29,34 @@ export function MorningScanSignup({
       setStatus("err");
       setMessage(err instanceof Error ? err.message : "Something went wrong");
     }
+  }
+
+  if (variant === "page") {
+    return (
+      <section id="signup" className="email-join">
+        <form onSubmit={onSubmit} className="email-join-form">
+          <input
+            className="input"
+            type="email"
+            required
+            placeholder="Your email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            aria-label="Email"
+          />
+          <button type="submit" className="btn-teal shrink-0">
+            Join
+          </button>
+        </form>
+        {status !== "idle" ? (
+          <p
+            className={`mt-2 text-sm ${status === "ok" ? "text-teal" : "text-red-700"}`}
+          >
+            {message}
+          </p>
+        ) : null}
+      </section>
+    );
   }
 
   if (variant === "teal") {

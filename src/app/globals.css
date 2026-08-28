@@ -3613,3 +3613,53 @@ a:hover {
 .not-found-links a:hover {
   text-decoration: underline;
 }
+
+/* Morning email signup page (/email) */
+.email-page {
+  padding-bottom: 3rem;
+}
+
+.email-join {
+  margin: 1.5rem 0 0;
+}
+
+.email-join-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  max-width: 32rem;
+}
+
+.email-join-form .input {
+  flex: 1;
+  min-width: 14rem;
+  font-size: 16px;
+}
+
+.email-join-form .btn-teal {
+  padding: 0.75rem 1.25rem;
+  font-size: 0.95rem;
+}
+
+.email-join-links {
+  margin: 1rem 0 0;
+  font-family: var(--font-source-serif), Georgia, serif;
+  font-size: 0.95rem;
+  color: #52493c;
+}
+
+.email-join-links a {
+  font-weight: 700;
+  color: #2a6f6c;
+  text-underline-offset: 2px;
+}
+
+.email-join-links a:hover {
+  text-decoration: underline;
+}
+
+.email-letter-rule {
+  margin: 2.25rem 0 1.75rem;
+  border: 0;
+  border-top: 1px solid var(--rule, #d4c9b4);
+}
