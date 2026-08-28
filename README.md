@@ -229,6 +229,33 @@ curl -X POST https://traverse-news.nickperez.workers.dev/api/desk/events/import 
 - First handoff URL: https://www.traversecity.com/events/
 - Do **not** re-import wrong Sunday rows for Saturday markets (Sara Hardy, Bubbly Brunch, etc.).
 
+### Browser shows import (AMC / Bay / Old Town)
+
+Movies and live theatre live on `/shows`, never `/whats-on`. Cloudflare / IP blocks mean the Worker cannot pull AMC, Old Town Playhouse, or the Bay Theatre JS app. **Do not invent showtimes.** Group by title — do not dump a 14-screen grid as separate rows.
+
+```bash
+curl -X POST https://traverse-news.nickperez.workers.dev/api/desk/shows/import \
+  -H "Authorization: Bearer $DESK_IMPORT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "source_id": "src_amc_cherry",
+    "replace": true,
+    "shows": [
+      {
+        "title": "Example Film",
+        "starts_at": "2026-08-28",
+        "times": ["1:00 PM", "4:00 PM", "7:00 PM"],
+        "venue": "AMC Cherry Blossom 14",
+        "url": "https://www.amctheatres.com/movie-theatres/traverse-city-mi/amc-cherry-blossom-14"
+      }
+    ]
+  }'
+```
+
+- Source ids: `src_state_theatre`, `src_bay_theatre`, `src_elk_cinema`, `src_amc_cherry`, `src_oldtown`.
+- State Theatre + Elk Rapids have Worker HTML pulls; AMC / Bay / OTP are import-only until a browser pull lands.
+- Date-only `starts_at` → midnight Detroit + blank clock display (never invent noon).
+
 ### Browser story import (Facebook alerts)
 
 Cloud Agents do not scrape Facebook. **Do not invent posts.** Traverse News pulls Grand Traverse 911 and Ticker (Facebook) alert posts on the live computer and POSTs here. The homepage **Alerts** strip shows `src_gt911` and `src_ticker_fb` stories only (1–3 total, newest first); it stays hidden when both are empty. Separate from The Ticker RSS (`src_ticker`) Around the bay wire.

@@ -3,16 +3,33 @@ import { MorningScanSignup } from "@/components/MorningScanSignup";
 import { TipsForm } from "@/components/TipsForm";
 
 /**
- * Shared cream/ink rail for About + Sports (morning email, tips, section links).
+ * Shared cream/ink rail for About + Sports + Shows (morning email, tips, sections).
  */
 export function DeskRail({
   active = "/",
   sportsBeats,
+  outboundLinks,
+  outboundKicker = "Links",
 }: {
   active?: string;
   /** Optional sports-specific beat links (homepage URLs). */
   sportsBeats?: Array<{ name: string; href: string }>;
+  /** Optional outbound links (e.g. Shows venues). */
+  outboundLinks?: Array<{ name: string; href: string }>;
+  outboundKicker?: string;
 }) {
+  const links = outboundLinks ?? sportsBeats;
+  const kicker = outboundLinks
+    ? outboundKicker
+    : sportsBeats
+      ? "Sports desks"
+      : outboundKicker;
+  const copy = outboundLinks
+    ? "Showtimes link out. We do not invent clocks."
+    : sportsBeats
+      ? "Headlines link out. We do not invent scores."
+      : null;
+
   return (
     <aside className="about-rail">
       <div className="about-rail-card about-rail-email">
@@ -45,6 +62,16 @@ export function DeskRail({
               }
             >
               Events
+            </Link>
+          </li>
+          <li>
+            <Link
+              href="/shows"
+              className={
+                active === "/shows" ? "about-rail-nav-active" : undefined
+              }
+            >
+              Shows
             </Link>
           </li>
           <li>
@@ -83,14 +110,12 @@ export function DeskRail({
         </ul>
       </div>
 
-      {sportsBeats && sportsBeats.length > 0 ? (
+      {links && links.length > 0 ? (
         <div className="about-rail-card">
-          <p className="about-rail-kicker">Sports desks</p>
-          <p className="about-rail-copy">
-            Headlines link out. We do not invent scores.
-          </p>
+          <p className="about-rail-kicker">{kicker}</p>
+          {copy ? <p className="about-rail-copy">{copy}</p> : null}
           <ul className="about-rail-links">
-            {sportsBeats.map((b) => (
+            {links.map((b) => (
               <li key={b.href}>
                 <a href={b.href} target="_blank" rel="noopener noreferrer">
                   {b.name} ↗

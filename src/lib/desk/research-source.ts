@@ -185,10 +185,19 @@ function guessBeatId(url: URL, html: string, beats: Beat[]): string {
     return pick("transit");
   }
   if (
+    blob.includes("cinema") ||
+    blob.includes("movie") ||
+    blob.includes("showtimes") ||
+    blob.includes("playhouse") ||
+    blob.includes("amc") ||
+    (blob.includes("theatre") && !blob.includes("opera")) ||
+    (blob.includes("theater") && !blob.includes("opera"))
+  ) {
+    return pick("shows");
+  }
+  if (
     blob.includes("opera") ||
     blob.includes("museum") ||
-    blob.includes("theatre") ||
-    blob.includes("theater") ||
     blob.includes("concert") ||
     blob.includes("interlochen") ||
     blob.includes("arts")

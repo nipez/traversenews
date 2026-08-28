@@ -54,6 +54,10 @@ export default function AboutPage() {
                 <strong>Events</strong>
               </Link>{" "}
               is concerts, markets, library programs, and nights out.{" "}
+              <Link href="/shows">
+                <strong>Shows</strong>
+              </Link>{" "}
+              is movies and live theatre.{" "}
               <Link href="/civic">
                 <strong>Civic</strong>
               </Link>{" "}

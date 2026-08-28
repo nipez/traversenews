@@ -5,7 +5,7 @@ import {
   normalizeImportedEvents,
   type EventImportRow,
 } from "@/lib/desk/import-events";
-import { isCivicSource, isHsAthleticsEventSource } from "@/lib/events";
+import { isCivicSource, isHsAthleticsEventSource, isShowEventSource } from "@/lib/events";
 
 /**
  * Accept browser-pulled event lists (Visit TC Simpleview first).
@@ -64,6 +64,15 @@ export async function POST(request: Request) {
       {
         error:
           "HS athletics calendars are Sports — POST /api/desk/athletics/import.",
+      },
+      { status: 400 },
+    );
+  }
+  if (isShowEventSource(defaultSource)) {
+    return NextResponse.json(
+      {
+        error:
+          "Movie and theatre listings are Shows — POST /api/desk/shows/import (not Events).",
       },
       { status: 400 },
     );

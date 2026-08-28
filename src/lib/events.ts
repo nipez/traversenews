@@ -165,6 +165,19 @@ export function isSchoolCalendarSource(sourceId: string): boolean {
   return SCHOOL_CALENDAR_SOURCE_IDS.has(sourceId);
 }
 
+/** Movies + live theatre belong on /shows, never What's on / Tonight. */
+export const SHOW_EVENT_SOURCE_IDS = new Set([
+  "src_state_theatre",
+  "src_bay_theatre",
+  "src_elk_cinema",
+  "src_amc_cherry",
+  "src_oldtown",
+]);
+
+export function isShowEventSource(sourceId: string): boolean {
+  return SHOW_EVENT_SOURCE_IDS.has(sourceId);
+}
+
 /** Soft ceiling so a fat import cannot take down public pages. */
 export const MAX_STORED_EVENTS = 250;
 
@@ -179,7 +192,8 @@ export function sanitizeStoredEvents(events: EventItem[]): {
   const without = events.filter(
     (e) =>
       !isHsAthleticsEventSource(e.source_id) &&
-      !isSchoolCalendarSource(e.source_id),
+      !isSchoolCalendarSource(e.source_id) &&
+      !isShowEventSource(e.source_id),
   );
   let next = dedupeEvents(without);
   let changed =
@@ -216,7 +230,6 @@ const NIGHT_OUT_SOURCES = new Set([
   "src_opera",
   "src_tcphil",
   "src_dennos",
-  "src_oldtown",
   "src_pride",
   "src_cherry",
   "src_ticker_cal",
@@ -288,6 +301,7 @@ export function selectTonightEvents(
 
   const windowed = dedupeEvents(events).filter((e) => {
     if (isHsAthleticsEventSource(e.source_id)) return false;
+    if (isShowEventSource(e.source_id)) return false;
     if (timedOnly && e.time_unknown) return false;
     return (
       eventInUpcomingWindow(e, now, {

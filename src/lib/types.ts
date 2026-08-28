@@ -128,6 +128,33 @@ export type SchoolCalendarItem = {
   time_unknown?: boolean;
 };
 
+/**
+ * Movies + live theatre for /shows.
+ * Stored separately from `events` so cinema grids never balloon What's on.
+ * Never invent showtimes — `times` only holds clocks the source printed.
+ */
+export type ShowListing = {
+  id: string;
+  title: string;
+  /** Venue display name (State Theatre, Elk Rapids Cinema, …). */
+  venue: string;
+  /**
+   * Sort anchor. Date-only runs use midnight America/Detroit + time_unknown.
+   * Never invent noon when the source omitted a clock.
+   */
+  starts_at: string;
+  /** Optional end of run (ISO). Null/omitted when the source gave one day. */
+  ends_at?: string | null;
+  /**
+   * Clock labels as stated by the source (e.g. "1:00 PM", "Fri 7:00 pm").
+   * Empty when the page gave dates without times — display must not guess.
+   */
+  times: string[];
+  url: string | null;
+  source_id: string;
+  time_unknown?: boolean;
+};
+
 export type Subscriber = {
   email: string;
   created_at: string;
@@ -281,6 +308,7 @@ export type SectionHeaderMeta = {
 
 export type SectionHeaderId =
   | "whats-on"
+  | "shows"
   | "sports"
   | "civic"
   | "schools"
@@ -306,6 +334,11 @@ export type AppData = {
    * into Tonight / What's on / civic.
    */
   schools: SchoolCalendarItem[];
+  /**
+   * Movies + live theatre for /shows. Not EventItems — never mix into
+   * Tonight / What's on / civic.
+   */
+  shows: ShowListing[];
   subscribers: Subscriber[];
   /** Public tip form submissions. Newest first in Desk. */
   tips: Tip[];
