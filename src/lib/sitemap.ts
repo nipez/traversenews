@@ -11,10 +11,10 @@ const SITEMAP_TTL_SECONDS = 15 * 60;
 const STATIC_PATHS = [
   "/",
   "/whats-on",
-  "/shows",
   "/civic",
   "/schools",
   "/sports",
+  "/shows",
   "/local",
   "/about",
   "/editions",
