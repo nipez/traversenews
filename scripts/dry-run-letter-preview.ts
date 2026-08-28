@@ -49,10 +49,10 @@ assert.deepEqual(resolveLetterRecipients(fakeList), [
   "nickperez@gmail.com",
 ]);
 
-assert.equal(unsubscribeUrl(), "https://traverse.news/email/unsubscribe");
+assert.equal(unsubscribeUrl(), "https://traverse.news/unsubscribe");
 assert.equal(
   unsubscribeUrl("NickPerez@gmail.com"),
-  "https://traverse.news/email/unsubscribe?email=nickperez%40gmail.com",
+  "https://traverse.news/unsubscribe?email=nickperez%40gmail.com",
 );
 
 console.log("dry-run-letter-preview: ok");

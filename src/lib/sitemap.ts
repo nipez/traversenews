@@ -4,7 +4,7 @@ import { isBannedOriginalSlug } from "@/lib/data/scrub";
 /** Canonical public host — never workers.dev in sitemap locs. */
 const SITE = "https://traverse.news";
 
-const SITEMAP_CACHE_KEY = "cache:sitemap.xml:v1";
+const SITEMAP_CACHE_KEY = "cache:sitemap.xml:v2";
 /** Minutes — keep crawler hits off the full store path. */
 const SITEMAP_TTL_SECONDS = 15 * 60;
 
@@ -20,6 +20,7 @@ const STATIC_PATHS = [
   "/email",
   "/email/archive",
   "/tips",
+  "/unsubscribe",
 ] as const;
 
 type SitemapSlice = {
