@@ -9,6 +9,7 @@
 
 import { selectAlerts } from "@/lib/alerts";
 import {
+  selectNextWeekAthletics,
   selectThisWeekAthletics,
 } from "@/lib/athletics";
 import { getTraverseDataKv } from "@/lib/data/kv";
@@ -172,9 +173,11 @@ export type PublicSportsStoryCard = {
 };
 
 export type PublicSportsSnapshot = {
-  v: 1;
+  v: 1 | 2;
   captured_at: string;
   weekGames: AthleticsGame[];
+  /** Rolling window after This week. Missing on stale v1 KV rows. */
+  nextWeekGames?: AthleticsGame[];
   stories: PublicSportsStoryCard[];
 };
 
@@ -415,7 +418,9 @@ export function buildSportsSnapshot(
   data: AppData,
   at = new Date(),
 ): PublicSportsSnapshot {
-  const weekGames = selectThisWeekAthletics(data.athletics ?? [], at);
+  const athletics = data.athletics ?? [];
+  const weekGames = selectThisWeekAthletics(athletics, at);
+  const nextWeekGames = selectNextWeekAthletics(athletics, at);
   const all = selectSportsStories(data.stories, data.sources, { limit: 40 });
   const seen = new Set<string>();
   const stories: PublicSportsStoryCard[] = [];
@@ -434,9 +439,10 @@ export function buildSportsSnapshot(
     });
   }
   return {
-    v: 1,
+    v: 2,
     captured_at: at.toISOString(),
     weekGames,
+    nextWeekGames,
     stories,
   };
 }
@@ -662,7 +668,20 @@ export async function getCivicSnapshot(): Promise<PublicCivicSnapshot> {
 }
 
 export async function getSportsSnapshot(): Promise<PublicSportsSnapshot> {
-  return readPublicSnapshot(PUBLIC_KEYS.sports, (a) => a.sports);
+  const snap = await readPublicSnapshot(PUBLIC_KEYS.sports, (a) => a.sports);
+  if (Array.isArray(snap.nextWeekGames)) return snap;
+
+  // Stale v1 sports KV row without Next week — rebuild that slice.
+  memSnapshots.delete(PUBLIC_KEYS.sports);
+  const { loadStore } = await import("@/lib/data/store");
+  const data = await loadStore();
+  const rebuilt = buildSportsSnapshot(data);
+  memSnapshots.set(PUBLIC_KEYS.sports, rebuilt);
+  const kv = await getTraverseDataKv();
+  if (kv) {
+    await kv.put(PUBLIC_KEYS.sports, JSON.stringify(rebuilt));
+  }
+  return rebuilt;
 }
 
 export async function getEmailSnapshot(): Promise<PublicEmailSnapshot> {

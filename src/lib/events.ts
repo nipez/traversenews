@@ -132,6 +132,14 @@ export const HS_ATHLETICS_EVENT_SOURCE_IDS = new Set([
   "src_leland_ath",
   "src_glenlake_ath",
   "src_kingsley_ath",
+  "src_benzie_ath",
+  "src_frankfort_ath",
+  "src_kalkaska_ath",
+  "src_forest_ath",
+  "src_mancelona_ath",
+  "src_buckley_ath",
+  "src_northport_ath",
+  "src_centrallake_ath",
 ]);
 
 /**

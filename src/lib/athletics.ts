@@ -31,14 +31,57 @@ export const ATHLETICS_SURROUNDING_SOURCE_IDS = new Set([
   "src_leland_ath",
   "src_glenlake_ath",
   "src_kingsley_ath",
+  "src_benzie_ath",
+  "src_frankfort_ath",
+  "src_kalkaska_ath",
+  "src_forest_ath",
+  "src_mancelona_ath",
+  "src_buckley_ath",
+  "src_northport_ath",
+  "src_centrallake_ath",
 ]);
 
+/** Chip labels for the TC core slate (Sports This week / Next week). */
 export const ATHLETICS_CORE_SCHOOLS = [
   "Central",
   "West",
-  "St. Francis",
+  "TC St. Francis",
   "TC Christian",
 ] as const;
+
+export type AthleticsCoreChip = {
+  label: (typeof ATHLETICS_CORE_SCHOOLS)[number];
+  sourceId: string;
+  aliases: string[];
+};
+
+export const ATHLETICS_CORE_CHIPS: AthleticsCoreChip[] = [
+  {
+    label: "Central",
+    sourceId: "src_tcc_ath",
+    aliases: ["central", "traverse city central", "tc central"],
+  },
+  {
+    label: "West",
+    sourceId: "src_tcw_ath",
+    aliases: ["west", "traverse city west", "tc west"],
+  },
+  {
+    label: "TC St. Francis",
+    sourceId: "src_tcsf_ath",
+    aliases: [
+      "tc st. francis",
+      "st. francis",
+      "st francis",
+      "traverse city st. francis",
+    ],
+  },
+  {
+    label: "TC Christian",
+    sourceId: "src_tcch_ath",
+    aliases: ["tc christian", "traverse city christian"],
+  },
+];
 
 export const ATHLETICS_SURROUNDING_SCHOOLS = [
   "Elk Rapids",
@@ -46,11 +89,63 @@ export const ATHLETICS_SURROUNDING_SCHOOLS = [
   "Leland",
   "Glen Lake",
   "Kingsley",
+  "Benzie Central",
+  "Frankfort-Elberta",
+  "Kalkaska",
+  "Forest Area",
+  "Mancelona",
+  "Buckley",
+  "Northport",
+  "Central Lake",
 ] as const;
+
+function normalizeSchoolName(raw: string): string {
+  return raw.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+export function coreChipForGame(
+  game: AthleticsGame,
+): AthleticsCoreChip | null {
+  const bySource = ATHLETICS_CORE_CHIPS.find(
+    (c) => c.sourceId === game.source_id,
+  );
+  if (bySource) return bySource;
+  const school = normalizeSchoolName(game.school);
+  return (
+    ATHLETICS_CORE_CHIPS.find((c) => c.aliases.includes(school)) ?? null
+  );
+}
+
+/** Public school label in the slate (St. Francis chip wording). */
+export function displayAthleticsSchool(game: AthleticsGame): string {
+  const chip = coreChipForGame(game);
+  if (chip?.sourceId === "src_tcsf_ath") return chip.label;
+  return game.school;
+}
+
+export function gameMatchesSchoolFilter(
+  game: AthleticsGame,
+  school: string,
+): boolean {
+  const wanted = school.trim();
+  if (!wanted) return true;
+  const chip =
+    ATHLETICS_CORE_CHIPS.find((c) => c.label === wanted) ??
+    ATHLETICS_CORE_CHIPS.find((c) =>
+      c.aliases.includes(normalizeSchoolName(wanted)),
+    );
+  if (chip) {
+    return (
+      game.source_id === chip.sourceId ||
+      chip.aliases.includes(normalizeSchoolName(game.school))
+    );
+  }
+  return game.school === wanted;
+}
 
 export function isCoreAthleticsGame(game: AthleticsGame): boolean {
   if (ATHLETICS_CORE_SOURCE_IDS.has(game.source_id)) return true;
-  return (ATHLETICS_CORE_SCHOOLS as readonly string[]).includes(game.school);
+  return coreChipForGame(game) != null;
 }
 
 export function isSurroundingAthleticsGame(game: AthleticsGame): boolean {
@@ -72,7 +167,7 @@ export function filterAthleticsSlate(
     const inSurrounding = isSurroundingAthleticsGame(g);
     if (!inCore && !inSurrounding) return false;
     if (!includeSurrounding && !inCore) return false;
-    if (school && g.school !== school) return false;
+    if (school && !gameMatchesSchoolFilter(g, school)) return false;
     return true;
   });
 }
@@ -99,7 +194,7 @@ export function schoolFromSourceId(sourceId: string): string {
     case "src_tcw_ath":
       return "West";
     case "src_tcsf_ath":
-      return "St. Francis";
+      return "TC St. Francis";
     case "src_tcch_ath":
       return "TC Christian";
     case "src_elk_ath":
@@ -112,6 +207,22 @@ export function schoolFromSourceId(sourceId: string): string {
       return "Glen Lake";
     case "src_kingsley_ath":
       return "Kingsley";
+    case "src_benzie_ath":
+      return "Benzie Central";
+    case "src_frankfort_ath":
+      return "Frankfort-Elberta";
+    case "src_kalkaska_ath":
+      return "Kalkaska";
+    case "src_forest_ath":
+      return "Forest Area";
+    case "src_mancelona_ath":
+      return "Mancelona";
+    case "src_buckley_ath":
+      return "Buckley";
+    case "src_northport_ath":
+      return "Northport";
+    case "src_centrallake_ath":
+      return "Central Lake";
     default:
       return "Prep";
   }
@@ -193,23 +304,52 @@ export function sanitizeStoredAthletics(games: AthleticsGame[]): {
  * Public Sports page: Detroit start-of-today through +7 days only.
  * Do not render a full season into HTML.
  */
-export function selectThisWeekAthletics(
-  games: AthleticsGame[],
+export function athleticsWeekDayBounds(
   now = new Date(),
-): AthleticsGame[] {
-  const todayKey = detroitDayKey(now);
-  const end = new Date(now.getTime() + ATHLETICS_WEEK_DAYS * 24 * 60 * 60 * 1000);
-  const endKey = detroitDayKey(end);
+  weekOffset: 0 | 1 = 0,
+): { startKey: string; endKey: string } {
+  const dayMs = 24 * 60 * 60 * 1000;
+  if (weekOffset === 0) {
+    const end = new Date(now.getTime() + ATHLETICS_WEEK_DAYS * dayMs);
+    return { startKey: detroitDayKey(now), endKey: detroitDayKey(end) };
+  }
+  const thisEnd = new Date(now.getTime() + ATHLETICS_WEEK_DAYS * dayMs);
+  const nextEnd = new Date(now.getTime() + ATHLETICS_WEEK_DAYS * 2 * dayMs);
+  const start = new Date(thisEnd.getTime() + dayMs);
+  return { startKey: detroitDayKey(start), endKey: detroitDayKey(nextEnd) };
+}
 
+function selectAthleticsInDayBounds(
+  games: AthleticsGame[],
+  startKey: string,
+  endKey: string,
+): AthleticsGame[] {
   return sanitizeStoredAthletics(games)
     .games.filter((g) => {
       const key = detroitDayKey(g.starts_at);
-      return key >= todayKey && key <= endKey;
+      return key >= startKey && key <= endKey;
     })
     .sort(
       (a, b) =>
         new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime(),
     );
+}
+
+export function selectThisWeekAthletics(
+  games: AthleticsGame[],
+  now = new Date(),
+): AthleticsGame[] {
+  const { startKey, endKey } = athleticsWeekDayBounds(now, 0);
+  return selectAthleticsInDayBounds(games, startKey, endKey);
+}
+
+/** Seven-day window after This week. Does not invent games. */
+export function selectNextWeekAthletics(
+  games: AthleticsGame[],
+  now = new Date(),
+): AthleticsGame[] {
+  const { startKey, endKey } = athleticsWeekDayBounds(now, 1);
+  return selectAthleticsInDayBounds(games, startKey, endKey);
 }
 
 export function groupAthleticsByDay(
