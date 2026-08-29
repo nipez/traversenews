@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { formatBayDay } from "@/lib/dates";
 import { isRecordEagleCluster } from "@/lib/paywall";
 import type { ClusteredStory } from "@/lib/types";
@@ -15,12 +14,7 @@ export function AroundTheBay({ items }: { items: BayItem[] }) {
   return (
     <section className="bay-section">
       <div className="bay-head">
-        <div>
-          <h2 className="bay-hed">Around the bay</h2>
-        </div>
-        <Link href="/sports" className="bay-sports-link">
-          Sports →
-        </Link>
+        <h2 className="bay-hed">Around the bay</h2>
       </div>
       {shown.length === 0 ? (
         <p className="bay-empty">

@@ -785,19 +785,6 @@ a:hover {
   color: #7a7060;
 }
 
-.bay-sports-link {
-  font-family: var(--font-archivo), system-ui, sans-serif;
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-  color: #2a6f6c;
-  white-space: nowrap;
-}
-
-.bay-sports-link:hover {
-  text-decoration: underline;
-}
-
 .bay-empty {
   margin: 16px 0 0;
   border-top: 2px solid #1c1712;
