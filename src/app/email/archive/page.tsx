@@ -24,10 +24,6 @@ export default async function EmailArchivePage() {
         <h1 className="mt-3 font-serif text-3xl text-ink md:text-4xl">
           Past mornings
         </h1>
-        <p className="mt-2 text-[#444]">
-          Dated letter snapshots. Sending is not wired — these are for reading
-          the mix before mail goes out. Times are America/Detroit.
-        </p>
 
         {editions.length === 0 ? (
           <p className="mt-10 text-sm text-muted">
