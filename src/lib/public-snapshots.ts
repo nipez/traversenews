@@ -318,8 +318,8 @@ function toAlert(a: {
 export function buildHomeSnapshot(data: AppData, at = new Date()): PublicHomeSnapshot {
   const clusters = clusterStories(data.stories, data.sources);
   const originals = clusters.filter((c) => c.is_original);
-  // Drop yesterday’s edition bay heads (+ stale multi-day leftovers). Staff
-  // original lead stays even if it also ran yesterday — never invent a lead.
+  // Drop yesterday’s edition bay heads only (not the whole older archive).
+  // Staff original lead stays even if it also ran yesterday — never invent a lead.
   const around = selectFreshAroundTheBay(clusters, data.editions, at, {
     maxUpNorth: 3,
   });
