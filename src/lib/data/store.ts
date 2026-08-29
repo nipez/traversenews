@@ -20,6 +20,10 @@ import {
   emptySectionHeaders,
   withSectionHeaderSeeds,
 } from "@/lib/section-headers";
+import {
+  emptyPageCopy,
+  normalizePageCopyInput,
+} from "@/lib/page-copy";
 import type {
   AppData,
   AthleticsGame,
@@ -30,6 +34,7 @@ import type {
   EventItem,
   EventTip,
   OriginalDraft,
+  PageCopy,
   SchoolCalendarItem,
   SectionHeaderId,
   SectionHeaderMeta,
@@ -143,6 +148,9 @@ function normalizeAppData(data: AppData): { data: AppData; scrubbed: boolean } {
       ...emptySectionHeaders(),
       ...data.section_headers,
     };
+  }
+  if (!data.page_copy || typeof data.page_copy !== "object") {
+    data.page_copy = emptyPageCopy();
   }
 
   let catalogChanged = false;
@@ -728,6 +736,16 @@ export async function setSectionHeader(
     ...(data.section_headers ?? {}),
   };
   data.section_headers[id] = meta;
+  await saveStore(data);
+  return data;
+}
+
+/** Save Desk page copy (Events dek, About) and rebuild public snapshots. */
+export async function setPageCopy(
+  input: Partial<PageCopy>,
+): Promise<AppData> {
+  const data = await loadStore();
+  data.page_copy = normalizePageCopyInput(input, data.page_copy);
   await saveStore(data);
   return data;
 }

@@ -335,6 +335,16 @@ export type SectionHeadersMap = Record<
   SectionHeaderMeta | null
 >;
 
+/** Desk-editable static page copy (Events dek, About essay). */
+export type PageCopy = {
+  events_dek: string;
+  about_title: string;
+  about_dek: string;
+  /** Markdown-lite: ## headings, blank-line paragraphs, [label](/path), **bold**. */
+  about_body: string;
+  updated_at: string | null;
+};
+
 export type AppData = {
   beats: Beat[];
   sources: Source[];
@@ -389,4 +399,9 @@ export type AppData = {
    * image bytes here (R2 / static /art). Homepage bay masthead is separate.
    */
   section_headers: SectionHeadersMap;
+  /**
+   * Desk-editable static page copy (Events dek, About essay, …).
+   * Missing on older KV blobs; normalize via resolvePageCopy defaults.
+   */
+  page_copy?: PageCopy;
 };
