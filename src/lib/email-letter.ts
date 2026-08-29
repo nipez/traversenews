@@ -546,25 +546,6 @@ export function unsubscribeUrl(email?: string | null): string {
   return `${base}?email=${encodeURIComponent(normalized)}`;
 }
 
-/** Default opening line when Desk has not saved a custom greeting. */
-export function defaultMorningLetterGreeting(hasLead: boolean): string {
-  return hasLead
-    ? "Good morning. Here's the bay, then what's on tonight."
-    : "Good morning. Here's the rest of the town from other desks, then what's on tonight.";
-}
-
-/**
- * Greeting shown on /email, archives, and Resend. Uses Nick's Desk edit when
- * present; otherwise the lead/no-lead default. Never invents new copy.
- */
-export function resolveMorningLetterGreeting(
-  letter: Pick<EmailEditionSnapshot, "lead" | "greeting">,
-): string {
-  const saved = letter.greeting?.replace(/\s+/g, " ").trim();
-  if (saved) return saved;
-  return defaultMorningLetterGreeting(Boolean(letter.lead));
-}
-
 export function buildMorningLetter(
   letter: EmailEditionSnapshot,
   options: {
@@ -574,7 +555,6 @@ export function buildMorningLetter(
   } = {},
 ): { subject: string; html: string; text: string } {
   const subject = buildMorningLetterSubject(letter);
-  const greeting = resolveMorningLetterGreeting(letter);
   const editionLabel = formatEmailEditionLabel(letter.date);
   const dateLabel = emailDateLabel(
     (() => {
@@ -601,12 +581,9 @@ export function buildMorningLetter(
 <div style="max-width:560px;margin:0 auto;padding:28px 20px 40px;">
 <p style="margin:0;text-align:center;font-family:${LETTER_FONT};font-size:24px;font-weight:800;letter-spacing:-0.02em;"><a href="${SITE_ORIGIN}" style="color:#111111;text-decoration:none;">traverse.news</a></p>
 <p style="margin:10px 0 0;text-align:center;font-family:${LETTER_FONT};font-size:15px;font-weight:600;color:#111111;">${escapeHtml(editionLabel)}</p>
-<p style="margin:4px 0 8px;text-align:center;font-family:${LETTER_FONT};font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#888888;">${escapeHtml(dateLabel)}</p>
-<p style="margin:18px 0 8px;font-family:${LETTER_FONT};font-size:16px;line-height:1.5;color:#333333;">${escapeHtml(greeting)}</p>`);
+<p style="margin:4px 0 8px;text-align:center;font-family:${LETTER_FONT};font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#888888;">${escapeHtml(dateLabel)}</p>`);
   text.push("traverse.news");
   text.push(editionLabel);
-  text.push("");
-  text.push(greeting);
   text.push("");
 
   if (letter.lead) {

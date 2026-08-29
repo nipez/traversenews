@@ -77,31 +77,6 @@ assert.match(
   /Unsubscribe: https:\/\/traverse\.news\/email\/unsubscribe/,
   "plaintext footer must include Unsubscribe",
 );
-assert.match(
-  letter.html,
-  /Good morning\. Here&#39;s the rest of the town from other desks, then what&#39;s on tonight\./,
-  "default no-lead greeting ships in Resend HTML",
-);
-assert.match(
-  letter.text,
-  /Good morning\. Here's the rest of the town from other desks, then what's on tonight\./,
-  "default no-lead greeting ships in Resend plaintext",
-);
-
-const withGreeting = buildMorningLetter({
-  ...snapshot,
-  greeting: "Good morning from the bay.",
-});
-assert.match(
-  withGreeting.html,
-  /Good morning from the bay\./,
-  "Desk-saved greeting ships in Resend HTML",
-);
-assert.doesNotMatch(
-  withGreeting.html,
-  /rest of the town from other desks/,
-  "saved greeting replaces the default in HTML",
-);
 
 const personalized = buildMorningLetter(snapshot, {
   unsubscribeEmail: "reader@example.com",

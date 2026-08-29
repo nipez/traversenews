@@ -151,6 +151,12 @@ const PREFERRED_NEWS_SOURCE_IDS = new Set([
   "src_antrim_review",
 ]);
 
+/**
+ * High-volume free desks that can crowd out IPR / TCBN / Northern / Betsie.
+ * Cap separately so a Saturday bay is not Ticker + 9&10 only.
+ */
+const HEAVY_FREE_WIRE_SOURCE_IDS = new Set(["src_ticker", "src_910"]);
+
 /** Official desks — keep a few on the bay even when older than the wire. */
 const OFFICIAL_NEWS_SOURCE_IDS = new Set([
   "src_city_news",
@@ -273,7 +279,7 @@ export const BAY_MAX_AGE_DAYS = 14;
 
 export type AroundSelectOptions = {
   limit?: number;
-  /** Soft cap per primary desk. Default 4 of 18. */
+  /** Soft cap per primary desk. Default 3 of 18. */
   maxPerSource?: number;
   /** Cap for sports/HS sports clusters. Default 4 of 18. */
   maxSports?: number;
@@ -281,6 +287,11 @@ export type AroundSelectOptions = {
   maxRecordEagle?: number;
   /** Cap for UpNorthLive so the TV wire does not eat the bay. Default 3. */
   maxUpNorth?: number;
+  /**
+   * Cap for high-volume free desks (Ticker + 9&10 News) so smaller preferred
+   * desks still get bay slots. Default 2 each.
+   */
+  maxHeavyWire?: number;
   /** Reserved slots for official city/county/tribal headlines. Default 2. */
   maxOfficial?: number;
   /** Clock for the 14-day max-age window. Defaults to now. */
@@ -305,6 +316,7 @@ function takeFromPool(
     maxSports: number;
     maxRecordEagle: number;
     maxUpNorth: number;
+    maxHeavyWire: number;
     sportsCount: { n: number };
     reCount: { n: number };
     upNorthCount: { n: number };
@@ -319,10 +331,14 @@ function takeFromPool(
     queues.set(key, q);
   }
 
-  // Preferred free desks / 9&10 sports first in round-robin order.
-  const preferredKeys = [...queues.keys()].filter(
-    (k) => PREFERRED_NEWS_SOURCE_IDS.has(k) || k === "src_910_sports",
-  );
+  // Smaller preferred desks first, then Ticker/9&10, then everyone else.
+  const preferredKeys = [...queues.keys()]
+    .filter((k) => PREFERRED_NEWS_SOURCE_IDS.has(k) || k === "src_910_sports")
+    .sort((a, b) => {
+      const ha = HEAVY_FREE_WIRE_SOURCE_IDS.has(a) ? 1 : 0;
+      const hb = HEAVY_FREE_WIRE_SOURCE_IDS.has(b) ? 1 : 0;
+      return ha - hb;
+    });
   const otherKeys = [...queues.keys()].filter(
     (k) => !PREFERRED_NEWS_SOURCE_IDS.has(k) && k !== "src_910_sports",
   );
@@ -334,6 +350,12 @@ function takeFromPool(
     for (const key of keyOrder) {
       if (picked.length >= options.limit) break;
       if ((counts.get(key) ?? 0) >= options.maxPerSource) continue;
+      if (
+        HEAVY_FREE_WIRE_SOURCE_IDS.has(key) &&
+        (counts.get(key) ?? 0) >= options.maxHeavyWire
+      ) {
+        continue;
+      }
       const queue = queues.get(key);
       if (!queue || queue.length === 0) continue;
       while (queue.length > 0) {
@@ -363,18 +385,20 @@ function takeFromPool(
  * drop lifestyle junk, require real permalinks, prefer multi-source local,
  * interleave desks so one outlet cannot fill the rail.
  * Sports/HS is capped — full sports list lives on /sports.
- * UpNorthLive is capped like Record-Eagle. Official city/county/tribal
- * headlines get a few reserved slots even when older than the wire.
+ * Ticker + 9&10 News are capped so smaller preferred desks (IPR, TCBN,
+ * Northern, Betsie, …) still get slots. UpNorthLive and Record-Eagle stay
+ * capped. Official city/county/tribal headlines get a few reserved slots.
  */
 export function selectAroundTheBay(
   clusters: ClusteredStory[],
   options: AroundSelectOptions = {},
 ): ClusteredStory[] {
   const limit = options.limit ?? 18;
-  const maxPerSource = options.maxPerSource ?? 4;
+  const maxPerSource = options.maxPerSource ?? 3;
   const maxSports = options.maxSports ?? 4;
   const maxRecordEagle = options.maxRecordEagle ?? 2;
   const maxUpNorth = options.maxUpNorth ?? 3;
+  const maxHeavyWire = options.maxHeavyWire ?? 2;
   const maxOfficial = options.maxOfficial ?? 2;
   const now = options.now ?? new Date();
 
@@ -415,6 +439,10 @@ export function selectAroundTheBay(
   const reCount = { n: 0 };
   const upNorthCount = { n: 0 };
 
+  const underHeavy = (key: string) =>
+    !HEAVY_FREE_WIRE_SOURCE_IDS.has(key) ||
+    (counts.get(key) ?? 0) < maxHeavyWire;
+
   // Majority free desks: leave room for sports + RE + UpNorth + official.
   const freeTarget = Math.max(
     0,
@@ -430,6 +458,7 @@ export function selectAroundTheBay(
     if (used.has(c.id)) continue;
     const key = primarySourceKey(c);
     if ((counts.get(key) ?? 0) >= maxPerSource) continue;
+    if (!underHeavy(key)) continue;
     used.add(c.id);
     counts.set(key, (counts.get(key) ?? 0) + 1);
     picked.push(c);
@@ -442,6 +471,7 @@ export function selectAroundTheBay(
     if (used.has(c.id)) continue;
     const key = primarySourceKey(c);
     if ((counts.get(key) ?? 0) >= maxPerSource) continue;
+    if (!underHeavy(key)) continue;
     used.add(c.id);
     counts.set(key, (counts.get(key) ?? 0) + 1);
     picked.push(c);
@@ -452,12 +482,13 @@ export function selectAroundTheBay(
     maxSports,
     maxRecordEagle,
     maxUpNorth,
+    maxHeavyWire,
     sportsCount,
     reCount,
     upNorthCount,
   };
 
-  // 2) Preferred free desks, then other free non-sports.
+  // 2) Preferred free desks (smaller desks before Ticker/9&10), then others.
   takeFromPool(freeNews, picked, used, counts, {
     ...poolOpts,
     limit: freeTarget,
@@ -472,13 +503,19 @@ export function selectAroundTheBay(
   // 5) Up to maxUpNorth TV wire.
   takeFromPool(upNorthNews, picked, used, counts, { ...poolOpts, limit });
 
-  // 6) Soft fill under caps.
+  // 6) Soft fill under caps — still respect heavy-wire limits.
   if (picked.length < limit) {
     for (const c of [...freeNews, ...sports, ...reNews, ...upNorthNews]) {
       if (picked.length >= limit) break;
       if (used.has(c.id)) continue;
       const key = primarySourceKey(c);
       if ((counts.get(key) ?? 0) >= maxPerSource + 1) continue;
+      if (
+        HEAVY_FREE_WIRE_SOURCE_IDS.has(key) &&
+        (counts.get(key) ?? 0) >= maxHeavyWire
+      ) {
+        continue;
+      }
       const sportsItem = isSportsCluster(c);
       if (sportsItem && sportsCount.n >= maxSports) continue;
       const reItem = isRecordEagleCluster(c);
