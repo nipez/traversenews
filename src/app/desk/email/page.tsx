@@ -26,9 +26,14 @@ export const dynamic = "force-dynamic";
 export default async function DeskEmailPage() {
   const data = await getAppData();
   const letters = await listEmailEditions();
-  const subscribers = [...data.subscribers].sort(
+  const subscribers = [...(data.subscribers ?? [])].sort(
     (a, b) =>
       new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+  );
+  const unsubscribed = [...(data.unsubscribed ?? [])].sort(
+    (a, b) =>
+      new Date(b.unsubscribed_at).getTime() -
+      new Date(a.unsubscribed_at).getTime(),
   );
 
   const today = emailDetroitDateKey();
@@ -67,13 +72,13 @@ export default async function DeskEmailPage() {
 
         <section className="mt-8">
           <h2 className="font-display text-lg font-black tracking-tight">
-            Morning-scan signups
+            Active signups
           </h2>
           <p className="mt-1 text-sm text-muted">
             From{" "}
             <code className="bg-paper-2 px-1">POST /api/subscribe</code>
             {" · "}
-            {subscribers.length} stored
+            {subscribers.length} active
             {subscribers.length ? "" : " (none yet)"}. Send today mails one
             person this morning&apos;s letter. It does not re-blast the list.
           </p>
@@ -94,6 +99,35 @@ export default async function DeskEmailPage() {
               };
             })}
           />
+        </section>
+
+        <section className="mt-10">
+          <h2 className="font-display text-lg font-black tracking-tight">
+            Unsubscribed
+          </h2>
+          <p className="mt-1 text-sm text-muted">
+            {unsubscribed.length} opted out
+            {unsubscribed.length ? "" : " (none yet)"}. Never mailed. Signing up
+            again moves them back to Active.
+          </p>
+
+          {unsubscribed.length === 0 ? (
+            <p className="mt-4 text-sm text-muted">
+              Empty until someone opts out. Past removals before this list
+              cannot be reconstructed.
+            </p>
+          ) : (
+            <ul className="mt-4 divide-y divide-[var(--rule)] border-t border-[var(--rule)]">
+              {unsubscribed.map((row) => (
+                <li key={row.email} className="py-3">
+                  <p className="font-medium text-ink break-all">{row.email}</p>
+                  <p className="mt-0.5 text-sm text-[#444]">
+                    Left {formatStoryDateline(row.unsubscribed_at)}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
         </section>
 
         <div className="mt-8 flex flex-wrap gap-3">

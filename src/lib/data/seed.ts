@@ -783,6 +783,7 @@ export function createSeedData(): AppData {
     schools: [],
     shows: [],
     subscribers: [],
+    unsubscribed: [],
     tips: [],
     event_tips: [],
     last_pull_at: null,

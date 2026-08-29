@@ -5,7 +5,7 @@ import { removeSubscriber } from "@/lib/data/store";
 export const dynamic = "force-dynamic";
 
 /**
- * Desk: remove one morning-scan signup.
+ * Desk: move one morning-scan signup to Unsubscribed.
  * Auth: Desk cookie OR Bearer token.
  */
 export async function DELETE(request: Request) {
@@ -22,8 +22,13 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: "Missing email" }, { status: 400 });
   }
   const result = await removeSubscriber(email);
-  if (!result.removed) {
+  if (!result.moved && !result.already) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
-  return NextResponse.json({ ok: true, email: result.email });
+  return NextResponse.json({
+    ok: true,
+    email: result.email,
+    moved: result.moved,
+    already: result.already,
+  });
 }
