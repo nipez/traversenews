@@ -50,10 +50,7 @@ export default async function EmailEditionPage({ params }: Props) {
   return (
     <PublicShell active="/" header="compact">
       <div className="mx-auto max-w-2xl">
-        <div className="flex flex-wrap items-baseline justify-between gap-3">
-          <p className="text-sm text-muted">
-            Archive copy. Sending is not wired up yet.
-          </p>
+        <div className="flex flex-wrap items-baseline justify-end gap-3">
           <Link
             href="/email/archive"
             className="text-sm font-bold text-teal underline-offset-2 hover:underline"
