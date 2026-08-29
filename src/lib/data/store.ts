@@ -5,7 +5,6 @@ import { STAFF_PUBLISHED_ORIGINALS, STAFF_UNPUBLISHED_DRAFTS } from "@/lib/data/
 import { buildEditionSnapshot, upsertEdition } from "@/lib/editions";
 import {
   buildEmailEditionSnapshot,
-  emailDetroitDateKey,
   upsertEmailEdition,
 } from "@/lib/email-editions";
 import { sanitizeStoredAthletics } from "@/lib/athletics";
@@ -768,7 +767,7 @@ export async function getEmailEdition(
 
 /**
  * Capture / replace today's morning-email letter from the live mix.
- * Does not send mail. Keeps a Desk-edited greeting when one is already saved.
+ * Does not send mail.
  */
 export async function snapshotTodaysEmailEdition(
   at = new Date(),
@@ -776,35 +775,6 @@ export async function snapshotTodaysEmailEdition(
   const data = await loadStore();
   if (!Array.isArray(data.email_editions)) data.email_editions = [];
   const snapshot = buildEmailEditionSnapshot(data, at);
-  const existing = data.email_editions.find((e) => e.date === snapshot.date);
-  const savedGreeting = existing?.greeting?.replace(/\s+/g, " ").trim();
-  if (savedGreeting) snapshot.greeting = savedGreeting;
-  data.email_editions = upsertEmailEdition(data.email_editions, snapshot);
-  await saveStore(data);
-  return snapshot;
-}
-
-/**
- * Save Nick's opening line onto today's email edition (creates the edition
- * from the live mix first if missing). Does not send mail.
- */
-export async function saveTodaysEmailGreeting(
-  greeting: string,
-  at = new Date(),
-): Promise<EmailEditionSnapshot> {
-  const cleaned = greeting.replace(/\s+/g, " ").trim();
-  if (!cleaned) {
-    throw new Error("Greeting cannot be empty");
-  }
-
-  const data = await loadStore();
-  if (!Array.isArray(data.email_editions)) data.email_editions = [];
-  const date = emailDetroitDateKey(at);
-  let snapshot = data.email_editions.find((e) => e.date === date);
-  if (!snapshot) {
-    snapshot = buildEmailEditionSnapshot(data, at);
-  }
-  snapshot = { ...snapshot, greeting: cleaned };
   data.email_editions = upsertEmailEdition(data.email_editions, snapshot);
   await saveStore(data);
   return snapshot;

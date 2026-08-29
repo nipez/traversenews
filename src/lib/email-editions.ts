@@ -463,9 +463,10 @@ export function selectFreshAroundTheBay(
 
   const candidates = selectAroundTheBay(unused, {
     limit: BAY_CANDIDATE_POOL,
-    maxPerSource: 4,
+    maxPerSource: 3,
     maxSports: 4,
     maxRecordEagle: 2,
+    maxHeavyWire: 2,
     maxUpNorth: options.maxUpNorth ?? 3,
     now: at,
   });
@@ -519,9 +520,10 @@ export function buildEmailEditionSnapshot(
   );
   const aroundClusters = selectAroundTheBay(unused, {
     limit: 24,
-    maxPerSource: 4,
-    maxSports: 4,
+    maxPerSource: 2,
+    maxSports: 2,
     maxRecordEagle: 2,
+    maxHeavyWire: 2,
     now: at,
   });
   const around = pickFreshAroundForLetter(

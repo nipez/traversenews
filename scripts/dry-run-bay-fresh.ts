@@ -443,13 +443,13 @@ assert.equal(thinEdition.around.length, 2);
 // must still fill today’s bay — do not ban the whole edition archive.
 const mondayOnly = {
   title: "Monday harbor dredging award announced",
-  url: "https://www.traverseticker.com/news/monday-harbor-dredging/",
-  source_id: "src_ticker",
+  url: "https://www.interlochenpublicradio.org/2026/08/24/monday-harbor-dredging/",
+  source_id: "src_ipr",
 } as const;
 const tuesdayOnly = {
   title: "Tuesday trail bridge inspection wraps",
-  url: "https://www.9and10news.com/2026/08/24/trail-bridge/",
-  source_id: "src_910",
+  url: "https://www.northernexpress.com/2026/08/25/trail-bridge/",
+  source_id: "src_northern",
 } as const;
 const boardman910 = {
   title:
@@ -493,7 +493,12 @@ const mondayEdition: EditionSnapshot = {
   captured_at: "2026-08-24T12:00:00.000Z",
   lead: null,
   around: [
-    bayCard(mondayOnly.title, mondayOnly.url, "The Ticker", "2026-08-24"),
+    bayCard(
+      mondayOnly.title,
+      mondayOnly.url,
+      "Interlochen Public Radio",
+      "2026-08-24",
+    ),
   ],
   events: [],
   civic: [],
@@ -504,7 +509,12 @@ const tuesdayEdition: EditionSnapshot = {
   captured_at: "2026-08-25T12:00:00.000Z",
   lead: null,
   around: [
-    bayCard(tuesdayOnly.title, tuesdayOnly.url, "9&10 News", "2026-08-25"),
+    bayCard(
+      tuesdayOnly.title,
+      tuesdayOnly.url,
+      "Northern Express",
+      "2026-08-25",
+    ),
   ],
   events: [],
   civic: [],
@@ -604,6 +614,27 @@ assert.ok(
     (c) => c.url === "https://www.traverseticker.com/news/boardman-river-cleanup/",
   ),
   "unrelated Boardman cleanup must stay distinct from sewage advisory",
+);
+
+const tickerCount = saturdayEdition.around.filter((c) =>
+  c.sources.some((s) => /ticker/i.test(s)),
+).length;
+const nineCount = saturdayEdition.around.filter((c) =>
+  c.sources.some((s) => /9\s*&\s*10/i.test(s)),
+).length;
+assert.ok(
+  tickerCount <= 2,
+  `Ticker heavy-wire bay cap is 2 (got ${tickerCount})`,
+);
+assert.ok(
+  nineCount <= 2,
+  `9&10 News heavy-wire bay cap is 2 (got ${nineCount})`,
+);
+assert.ok(
+  saturdayEdition.around.some((c) =>
+    c.sources.some((s) => /Interlochen|Northern Express|Betsie/i.test(s)),
+  ),
+  "Saturday bay should surface smaller preferred desks when unused stories exist",
 );
 
 console.log(
