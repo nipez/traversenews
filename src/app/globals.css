@@ -2275,6 +2275,11 @@ a:hover {
   margin: 0.85rem 0 0;
 }
 
+/* /shows venue chips — same pills as Sports, above the civic agenda */
+.shows-venue-filters {
+  margin: 0 0 1rem;
+}
+
 .sports-week-filters-surrounding {
   margin-top: 0.45rem;
   padding-top: 0.45rem;

@@ -67,6 +67,28 @@ export function venueNameForSource(sourceId: string): string {
   );
 }
 
+/**
+ * Venue chip labels for /shows. Exact listing.venue strings only —
+ * known SHOW_VENUES order first, then any extras (e.g. Milliken) A–Z.
+ * Empty-slot venues with no listings are omitted.
+ */
+export function venuesPresentInListings(listings: ShowListing[]): string[] {
+  const present = new Set<string>();
+  for (const row of listings) {
+    const name = row.venue.trim();
+    if (name) present.add(name);
+  }
+  const ordered: string[] = [];
+  for (const slot of SHOW_VENUES) {
+    if (present.has(slot.name)) {
+      ordered.push(slot.name);
+      present.delete(slot.name);
+    }
+  }
+  const rest = [...present].sort((a, b) => a.localeCompare(b));
+  return [...ordered, ...rest];
+}
+
 export function stableShowId(sourceId: string, uid: string): string {
   return `show_${shortHash(`${sourceId}:${uid}`)}`;
 }
