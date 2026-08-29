@@ -102,7 +102,7 @@ function isHardNewsTitle(title: string): boolean {
 
 /**
  * Lower is better for subject slots. Civic hard news (bans, housing, FEMA,
- * under-oath reports) beats parking-rate / routine hard news.
+ * under-oath reports) beats parking-rate / crash / routine hard news.
  */
 function hardNewsSubjectRank(title: string): number {
   if (
@@ -112,11 +112,12 @@ function hardNewsSubjectRank(title: string): number {
   ) {
     return 0;
   }
-  if (/parking rates?|crash|court|arrest|charges|lawsuit|zoning|ordinance|budget/i.test(title)) {
-    return 1;
+  if (/parking rates?/i.test(title)) return 1;
+  if (/crash|killed|fatal|arrest|charges|lawsuit|zoning|ordinance|budget|court/i.test(title)) {
+    return 2;
   }
-  if (isHardNewsTitle(title)) return 2;
-  return 3;
+  if (isHardNewsTitle(title)) return 3;
+  return 4;
 }
 
 function isFakeSubscriberEmail(value: string): boolean {
