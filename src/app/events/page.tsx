@@ -6,10 +6,11 @@ import { formatCivicDate, formatEventWhenParts } from "@/lib/dates";
 import { venueKicker } from "@/lib/events";
 import {
   getEventsSnapshot,
+  getPageCopySnapshot,
   getSectionHeadersSnapshot,
 } from "@/lib/public-snapshots";
+import { SafeInlineCopy } from "@/lib/safe-copy";
 import type { EventItem } from "@/lib/types";
-import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
@@ -52,6 +53,7 @@ function withMonthHeadings(events: EventItem[]): AgendaRow[] {
 export default async function EventsPage() {
   const snap = await getEventsSnapshot();
   const headers = await getSectionHeadersSnapshot();
+  const pageCopy = await getPageCopySnapshot();
   const rows = withMonthHeadings(snap.upcoming);
 
   return (
@@ -61,16 +63,10 @@ export default async function EventsPage() {
         title="Events"
         header={headers.headers["whats-on"]}
         dek={
-          <>
-            Concerts, festivals, markets, library programs. Meetings live on{" "}
-            <Link href="/civic" className="events-dek-link">
-              Civic
-            </Link>
-            . Something missing?{" "}
-            <a href="#event-tip" className="events-dek-link">
-              Let us know
-            </a>
-          </>
+          <SafeInlineCopy
+            text={pageCopy.copy.events_dek}
+            linkClassName="events-dek-link"
+          />
         }
       />
       <div className="about-layout civic-layout">

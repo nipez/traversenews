@@ -791,6 +791,7 @@ export function createSeedData(): AppData {
     email_editions: [],
     drafts: [],
     section_headers: withSectionHeaderSeeds(null),
+    page_copy: undefined,
   };
 }
 

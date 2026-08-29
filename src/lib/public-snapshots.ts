@@ -47,6 +47,7 @@ import {
   emptySectionHeaders,
   type SectionHeadersMap,
 } from "@/lib/section-headers";
+import { resolvePageCopy } from "@/lib/page-copy";
 import type {
   AppData,
   AthleticsGame,
@@ -54,6 +55,7 @@ import type {
   EditionSnapshot,
   EmailEditionSnapshot,
   EventItem,
+  PageCopy,
   SchoolCalendarItem,
   Source,
   Story,
@@ -85,6 +87,8 @@ export const PUBLIC_KEYS = {
   originals: "public:originals:v1",
   /** Thin photo-header pointers for section pages (no image bytes). */
   sectionHeaders: "public:section-headers:v1",
+  /** Desk-editable Events dek + About essay (thin text only). */
+  pageCopy: "public:page-copy:v1",
 } as const;
 
 export type PublicSnapshotKey = (typeof PUBLIC_KEYS)[keyof typeof PUBLIC_KEYS];
@@ -195,6 +199,13 @@ export type PublicSectionHeadersSnapshot = {
   v: 1;
   captured_at: string;
   headers: SectionHeadersMap;
+};
+
+/** Desk-editable static page copy (resolved defaults applied). */
+export type PublicPageCopySnapshot = {
+  v: 1;
+  captured_at: string;
+  copy: PageCopy;
 };
 
 export type PublicEmailSnapshot = {
@@ -548,6 +559,17 @@ export function buildSectionHeadersSnapshot(
   return { v: 1, captured_at: at.toISOString(), headers };
 }
 
+export function buildPageCopySnapshot(
+  data: AppData,
+  at = new Date(),
+): PublicPageCopySnapshot {
+  return {
+    v: 1,
+    captured_at: at.toISOString(),
+    copy: resolvePageCopy(data.page_copy),
+  };
+}
+
 /** Build every public snapshot from an in-memory store (no KV reads). */
 export function buildAllPublicSnapshots(data: AppData, at = new Date()) {
   return {
@@ -563,6 +585,7 @@ export function buildAllPublicSnapshots(data: AppData, at = new Date()) {
     emailArchive: buildEmailArchiveSnapshot(data, at),
     originals: buildOriginalsSnapshot(data, at),
     sectionHeaders: buildSectionHeadersSnapshot(data, at),
+    pageCopy: buildPageCopySnapshot(data, at),
   };
 }
 
@@ -586,6 +609,7 @@ function rememberAll(
   memSnapshots.set(PUBLIC_KEYS.emailArchive, all.emailArchive);
   memSnapshots.set(PUBLIC_KEYS.originals, all.originals);
   memSnapshots.set(PUBLIC_KEYS.sectionHeaders, all.sectionHeaders);
+  memSnapshots.set(PUBLIC_KEYS.pageCopy, all.pageCopy);
 }
 
 /**
@@ -616,6 +640,7 @@ export async function writeAllPublicSnapshots(data: AppData): Promise<void> {
       kv.put(PUBLIC_KEYS.emailArchive, JSON.stringify(all.emailArchive)),
       kv.put(PUBLIC_KEYS.originals, JSON.stringify(all.originals)),
       kv.put(PUBLIC_KEYS.sectionHeaders, JSON.stringify(all.sectionHeaders)),
+      kv.put(PUBLIC_KEYS.pageCopy, JSON.stringify(all.pageCopy)),
       kv.put(
         SITEMAP_CACHE_KEY,
         buildSitemapXml({
@@ -733,6 +758,10 @@ export async function getOriginalsSnapshot(): Promise<PublicOriginalsSnapshot> {
 
 export async function getSectionHeadersSnapshot(): Promise<PublicSectionHeadersSnapshot> {
   return readPublicSnapshot(PUBLIC_KEYS.sectionHeaders, (a) => a.sectionHeaders);
+}
+
+export async function getPageCopySnapshot(): Promise<PublicPageCopySnapshot> {
+  return readPublicSnapshot(PUBLIC_KEYS.pageCopy, (a) => a.pageCopy);
 }
 
 /** Story page rail + “also covered” from the home snapshot (1 extra get). */
