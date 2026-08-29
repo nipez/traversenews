@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { DeskLetterGreetingEditor } from "@/components/desk/DeskLetterGreetingEditor";
 
 type SendMode = "live" | "preview";
 
@@ -11,6 +12,9 @@ type Props = {
   alreadyPreviewed: boolean;
   /** Desk label: "Sent subject" after live, else "Today’s subject". */
   subjectLabel?: string;
+  greeting: string;
+  defaultGreeting: string;
+  greetingSaved: boolean;
 };
 
 export function DeskLetterSendControls({
@@ -18,6 +22,9 @@ export function DeskLetterSendControls({
   alreadySent,
   alreadyPreviewed,
   subjectLabel = "Today’s subject",
+  greeting,
+  defaultGreeting,
+  greetingSaved,
 }: Props) {
   const router = useRouter();
   const [busy, setBusy] = useState<SendMode | null>(null);
@@ -83,6 +90,12 @@ export function DeskLetterSendControls({
 
       <p className="mt-4 text-sm text-muted">{subjectLabel}</p>
       <p className="mt-1 font-serif text-xl text-ink">{subject}</p>
+
+      <DeskLetterGreetingEditor
+        initialGreeting={greeting}
+        defaultGreeting={defaultGreeting}
+        saved={greetingSaved}
+      />
 
       <p className="mt-3 text-sm text-muted">
         {alreadySent

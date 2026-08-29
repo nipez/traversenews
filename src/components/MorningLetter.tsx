@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { formatCivicDate, formatEventWhenParts, emailDateLabel } from "@/lib/dates";
 import type { EmailEditionSnapshot } from "@/lib/types";
-import { canonicalPublicUrl } from "@/lib/email-letter";
+import {
+  canonicalPublicUrl,
+  resolveMorningLetterGreeting,
+} from "@/lib/email-letter";
 
 function civicLabel(startsAt: string): string {
   const d = formatCivicDate(startsAt);
@@ -71,9 +74,7 @@ export function MorningLetter({
       </div>
 
       <p className="mt-5 font-serif text-[1.05rem] leading-relaxed text-muted-2">
-        {letter.lead
-          ? "Good morning. Here's the bay, then what's on tonight."
-          : "Good morning. Here's the rest of the town from other desks, then what's on tonight."}
+        {resolveMorningLetterGreeting(letter)}
       </p>
 
       {letter.lead ? (
