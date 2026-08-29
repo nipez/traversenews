@@ -3560,14 +3560,23 @@ a:hover {
 }
 
 
-/* Desk on a phone: section tabs + beat chips, not a desktop rail. */
-.desk-mobile-nav {
-  display: flex;
-  gap: 0.15rem;
-  overflow-x: auto;
-  padding: 0 1rem 0.7rem;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
+/* Desk on a phone: section tabs + beat chips, not a desktop rail.
+   Must win over Tailwind utilities (this file loads after them), so hide
+   above the md breakpoint instead of relying on `md:hidden` alone. */
+@media (max-width: 767px) {
+  .desk-mobile-nav {
+    display: flex;
+    gap: 0.15rem;
+    overflow-x: auto;
+    padding: 0 1rem 0.7rem;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+}
+@media (min-width: 768px) {
+  .desk-mobile-nav {
+    display: none;
+  }
 }
 .desk-mobile-nav::-webkit-scrollbar {
   display: none;
