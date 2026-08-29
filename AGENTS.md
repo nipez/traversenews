@@ -31,6 +31,25 @@ These are live on the Cloudflare Worker (`wrangler.jsonc` crons → `cloudflare-
 - **Recipients:** fake/example/verify addresses are never mailed; fallback is nickperez@gmail.com. No attachments. No Google Drive/Docs/Sheets/Forms hrefs.
 - **Never invent reporting.**
 
+## Worker jobs / Cursor triggers
+
+The Worker owns every job that does not need a signed-in Facebook browser.
+
+**Automatic (crons)**
+- Weekday pull → POST `/api/pull`
+- Mon–Sat letter preview → POST `/api/desk/email/send` with `{"preview":true}` (that route already calls `snapshotTodaysEmailEdition()`, so `/email/YYYY-MM-DD` is written by the send; no separate archive cron)
+- Nightly KV backup → private R2 `traverse-news-backups`
+
+**Cursor / Desk triggers** (Desk cookie or `Authorization: Bearer`)
+- `POST /api/pull`
+- `POST /api/desk/email/send` (preview or live)
+- `POST /api/desk/email/snapshot`
+- `POST /api/desk/backup` → same KV→R2 write as the 2am cron; response `{ok, date, bytes}` only
+
+**Still Grok Bot only**
+- Facebook alerts (signed-in browser)
+- Evening original draft stays off the Worker (never invent reporting on a cron)
+
 ## What Traverse News can do that you cannot
 
 - Drive a **real browser** on a persistent computer (Facebook already signed in; Overheard in TC readable).
