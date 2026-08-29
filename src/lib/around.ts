@@ -32,6 +32,9 @@ const JUNK_TITLE_MARKERS = [
   "old neighborhood on the north shore",
   "glen eyrie",
   "going strong for a century",
+  "supervisor's weekly note",
+  "supervisors weekly note",
+  "weekly note:",
 ];
 
 const JUNK_PATH_MARKERS = [
@@ -583,20 +586,38 @@ export function selectAroundTheBay(
   };
 
   if (preferHardNews) {
-    // Letter: hard free desks first (IPR can take up to maxPerSource), then
-    // hard RE early so paywalled local is not buried after soft fillers.
-    takeFromPool(hardFree, picked, used, counts, {
+    // Letter: smaller preferred desks' hard news first (IPR can take up to
+    // maxPerSource) before Ticker/9&10 crashes flood the top-6 slice. Then
+    // hard RE, one soft local filler (festivals), then heavy-wire hard news.
+    const smallHard = hardFree.filter(
+      (c) => !HEAVY_FREE_WIRE_SOURCE_IDS.has(primarySourceKey(c)),
+    );
+    const heavyHard = hardFree.filter((c) =>
+      HEAVY_FREE_WIRE_SOURCE_IDS.has(primarySourceKey(c)),
+    );
+    takeFromPool(smallHard, picked, used, counts, {
       ...poolOpts,
       limit: freeTarget,
     });
     takeFromPool(hardRe, picked, used, counts, { ...poolOpts, limit });
+    // Keep one soft local slot near the front so festivals are not zeroed.
+    const softTarget = Math.min(picked.length + 1, freeTarget);
     takeFromPool(softFree, picked, used, counts, {
+      ...poolOpts,
+      limit: softTarget,
+    });
+    takeFromPool(heavyHard, picked, used, counts, {
       ...poolOpts,
       limit: freeTarget,
     });
     takeFromPool(sports, picked, used, counts, { ...poolOpts, limit });
     takeFromPool(softRe, picked, used, counts, { ...poolOpts, limit });
     takeFromPool(upNorthNews, picked, used, counts, { ...poolOpts, limit });
+    // Remaining soft after hard+heavy.
+    takeFromPool(softFree, picked, used, counts, {
+      ...poolOpts,
+      limit: freeTarget,
+    });
   } else {
     // 2) Preferred free desks (smaller desks before Ticker/9&10), then others.
     takeFromPool(freeNews, picked, used, counts, {

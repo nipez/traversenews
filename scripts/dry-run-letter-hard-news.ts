@@ -207,6 +207,28 @@ const stories: Story[] = [
     source_id: "src_910",
     published_at: "2026-08-28T13:00:00.000Z",
   }),
+  story({
+    id: "omp_crash",
+    title: "Driver Charged in Center Road Crash That Killed Teenager, Bond Set",
+    url: "https://www.oldmission.net/2026/08/driver-charged-head-on-collision/",
+    source_id: "src_omp_gazette",
+    published_at: "2026-08-28T19:00:00.000Z",
+  }),
+  story({
+    id: "cadillac_crash",
+    title: "Three-vehicle crash on M-115 near Cadillac kills Inkster man",
+    url: "https://www.9and10news.com/2026/08/27/three-vehicle-crash-on-m-115-near-cadillac-kills-inkster-man/",
+    source_id: "src_910",
+    published_at: "2026-08-27T18:00:00.000Z",
+  }),
+  story({
+    id: "weekly_note",
+    title:
+      "Supervisor’s Weekly Note: New Boardwalk Debuts at Pelizzari, WOMP and Bonobo Lawsuit Updates & More",
+    url: "https://www.oldmission.net/2026/08/hemlocks-boardwalk-womp-lawsuit/",
+    source_id: "src_omp_gazette",
+    published_at: "2026-08-28T18:30:00.000Z",
+  }),
 ];
 
 const data = {
@@ -283,12 +305,20 @@ for (const bad of [
   /Ready,? Set,? Locals/i,
   /Glen Eyrie|Old Neighborhood/i,
   /Stimson Street/i,
+  /Weekly Note/i,
+  /M-115 near Cadillac/i,
 ]) {
   assert.ok(
     !titles.some((t) => bad.test(t)),
     `lifestyle/out card must not appear: ${bad}`,
   );
 }
+
+// Smaller desks' hard news should beat 9&10 crash flood; IPR can take 3.
+assert.ok(
+  !urls.some((u) => u.includes("m-115-near-cadillac")),
+  "9&10 Cadillac crash must not crowd out smaller-desk hard news",
+);
 
 const subject = buildMorningLetterSubject(letter);
 const phrasePart = subject.replace(/^🗞️\s*/, "");

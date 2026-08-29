@@ -1,5 +1,5 @@
 import { selectAlerts } from "@/lib/alerts";
-import { selectAroundTheBay } from "@/lib/around";
+import { looksLikeHardNews, selectAroundTheBay } from "@/lib/around";
 import {
   athleticsSchoolLabel,
   filterAthleticsSlate,
@@ -480,11 +480,11 @@ export function selectFreshAroundTheBay(
  * Uniqueness:
  * - Yesterday’s published letter only (not the full yesterday edition) for
  *   all sections.
- * - Around + lead also drop collectStaleEditionBayIdentities (cards that sat
- *   on 2+ older edition days) so a weekly recap cannot get its first email
- *   slot after days on the homepage. One-shot older cards stay eligible.
- * - When a prior/stale identity hits a cluster, every member URL/title is
- *   excluded so a second-desk rewrite cannot follow.
+ * - Soft/recap cards that sat on the homepage for 2+ older edition days stay
+ *   out (weekly leftovers). Hard news that never mailed stays eligible even
+ *   if it lingered on the bay.
+ * - When a prior identity hits a cluster, every member URL/title is excluded
+ *   so a second-desk rewrite cannot follow.
  *
  * Never invents stories, kickoffs, or meetings.
  */
@@ -497,28 +497,30 @@ export function buildEmailEditionSnapshot(
   const staleBay = collectStaleEditionBayIdentities(data.editions, at);
 
   const clusters = clusterStories(data.stories, data.sources);
-  const bayExclude = expandExcludedWithClusterMembers(
-    mergeIdentitySets(prior, staleBay),
-    clusters,
-    priorLetter,
-  );
   const priorExpanded = expandExcludedWithClusterMembers(
     prior,
     clusters,
     priorLetter,
+  );
+  const staleExpanded = expandExcludedWithClusterMembers(
+    staleBay,
+    clusters,
+    // Stale set is edition identities, not a prior letter snapshot.
+    null,
   );
   const priorTitles = priorBayTitles(priorLetter);
 
   const originals = clusters.filter((c) => c.is_original);
   const leadCluster = originals[0] ?? null;
 
-  // Rank unused wire first, then keep cards that did not run yesterday /
-  // sit as multi-day leftovers. Allow 3 distinct IPR; Record-Eagle stays 2.
-  // Hard news before lifestyle; sports has its own letter section.
-  const unused = clusters.filter(
-    (c) =>
-      !c.is_original && !clusterHitsExcluded(c, bayExclude, priorTitles),
-  );
+  // Prior letter blocks everyone. Stale homepage aging only blocks soft
+  // leftovers — unused hard news may still take a letter slot.
+  const unused = clusters.filter((c) => {
+    if (c.is_original) return false;
+    if (clusterHitsExcluded(c, priorExpanded, priorTitles)) return false;
+    if (looksLikeHardNews(c)) return true;
+    return !clusterHitsExcluded(c, staleExpanded, []);
+  });
   const aroundClusters = selectAroundTheBay(unused, {
     limit: 24,
     maxPerSource: 3,
@@ -528,9 +530,10 @@ export function buildEmailEditionSnapshot(
     preferHardNews: true,
     now: at,
   });
+  // Freshness vs yesterday's letter only (hard news may be bay-stale).
   const around = pickFreshAroundForLetter(
     aroundClusters.map(toAroundCard),
-    bayExclude,
+    priorExpanded,
     LETTER_AROUND_MAX,
   );
 
@@ -587,7 +590,7 @@ export function buildEmailEditionSnapshot(
     .slice(0, 4);
 
   const lead: EmailStoryCard | null =
-    leadCluster && !wasInPriorLetter(leadCluster, bayExclude)
+    leadCluster && !wasInPriorLetter(leadCluster, priorExpanded)
       ? {
           title: leadCluster.title,
           dek: leadCluster.dek,
