@@ -15,12 +15,25 @@ function isFormPost(request: Request): boolean {
   );
 }
 
-function deskLocation(request: Request): URL {
+function apexOrigin(request: Request): string {
   const url = new URL(request.url);
-  if (url.hostname === "www.traverse.news") {
-    return new URL("/desk", "https://traverse.news");
+  if (
+    url.hostname === "www.traverse.news" ||
+    url.hostname === "traverse.news"
+  ) {
+    return "https://traverse.news";
   }
-  return new URL("/desk", request.url);
+  return url.origin;
+}
+
+function deskLocation(request: Request): URL {
+  return new URL("/desk", apexOrigin(request));
+}
+
+function loginLocation(request: Request, error?: string): URL {
+  const url = new URL("/desk/login", apexOrigin(request));
+  if (error) url.searchParams.set("error", error);
+  return url;
 }
 
 async function readCredentials(request: Request): Promise<{
@@ -51,17 +64,25 @@ function successResponse(request: Request, mode: "supabase" | "local") {
   return NextResponse.json({ ok: true, mode });
 }
 
+function failureResponse(request: Request, message: string, status: number) {
+  if (isFormPost(request)) {
+    // Full navigation back to the login page — never a raw JSON blob in the browser.
+    return NextResponse.redirect(loginLocation(request, message), 303);
+  }
+  return NextResponse.json({ error: message }, { status });
+}
+
 export async function POST(request: Request) {
   const { email, password } = await readCredentials(request);
 
   if (supabaseConfigured()) {
     const supabase = getSupabaseAnon();
     if (!supabase) {
-      return NextResponse.json({ error: "Auth unavailable" }, { status: 500 });
+      return failureResponse(request, "Auth unavailable", 500);
     }
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
-      return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
+      return failureResponse(request, "Invalid email or password", 401);
     }
     await createDeskSession();
     return successResponse(request, "supabase");
@@ -75,5 +96,5 @@ export async function POST(request: Request) {
     return successResponse(request, "local");
   }
 
-  return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
+  return failureResponse(request, "Invalid email or password", 401);
 }

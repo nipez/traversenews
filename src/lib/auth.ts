@@ -1,6 +1,20 @@
 import { cookies } from "next/headers";
 
 const COOKIE = "tn_desk_session";
+/** Shared across apex + www so a phone that still hits www keeps the session. */
+const COOKIE_DOMAIN =
+  process.env.NODE_ENV === "production" ? ".traverse.news" : undefined;
+
+function sessionCookieOptions(maxAge: number) {
+  return {
+    httpOnly: true as const,
+    sameSite: "lax" as const,
+    path: "/",
+    secure: process.env.NODE_ENV === "production",
+    maxAge,
+    ...(COOKIE_DOMAIN ? { domain: COOKIE_DOMAIN } : {}),
+  };
+}
 
 export function getDevDeskPassword(): string {
   return process.env.DEV_DESK_PASSWORD || "desk";
@@ -21,18 +35,22 @@ export function getDeskImportToken(): string {
 
 export async function createDeskSession(): Promise<void> {
   const jar = await cookies();
-  jar.set(COOKIE, "staff", {
-    httpOnly: true,
-    sameSite: "lax",
-    path: "/",
-    secure: process.env.NODE_ENV === "production",
-    maxAge: 60 * 60 * 24 * 14,
-  });
+  jar.set(COOKIE, "staff", sessionCookieOptions(60 * 60 * 24 * 14));
 }
 
 export async function clearDeskSession(): Promise<void> {
   const jar = await cookies();
-  jar.delete(COOKIE);
+  // Expire domain-scoped cookie (production) and any leftover host-only cookie.
+  jar.set(COOKIE, "", sessionCookieOptions(0));
+  if (COOKIE_DOMAIN) {
+    jar.set(COOKIE, "", {
+      httpOnly: true,
+      sameSite: "lax",
+      path: "/",
+      secure: true,
+      maxAge: 0,
+    });
+  }
 }
 
 export async function isDeskAuthed(): Promise<boolean> {

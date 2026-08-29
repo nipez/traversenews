@@ -1,36 +1,16 @@
-"use client";
+import { getDevDeskEmail } from "@/lib/auth";
 
-import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+type Props = { searchParams: Promise<{ error?: string }> };
 
-export default function DeskLoginPage() {
-  const router = useRouter();
-  const [email, setEmail] = useState("nick@traverse.news");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  async function onSubmit(e: FormEvent) {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-    try {
-      const res = await fetch("/api/desk/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ email, password }),
-      });
-      const json = (await res.json()) as { error?: string };
-      if (!res.ok) throw new Error(json.error || "Sign in failed");
-      router.push("/desk");
-      router.refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Sign in failed");
-    } finally {
-      setLoading(false);
-    }
-  }
+/**
+ * Native form POST only — no client fetch / React-controlled inputs.
+ * iOS Safari autofill often skips onChange on controlled password fields;
+ * preventDefault + router.push also races cookie storage on phones.
+ * The API 303s to /desk (success) or /desk/login?error=… (failure).
+ */
+export default async function DeskLoginPage({ searchParams }: Props) {
+  const { error } = await searchParams;
+  const email = getDevDeskEmail();
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-white px-4">
@@ -45,7 +25,6 @@ export default function DeskLoginPage() {
         <form
           method="POST"
           action="/api/desk/login"
-          onSubmit={onSubmit}
           className="mt-8 space-y-4"
         >
           <label className="block">
@@ -56,8 +35,7 @@ export default function DeskLoginPage() {
               className="input mt-1"
               type="email"
               name="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              defaultValue={email}
               required
               autoComplete="username"
               autoCapitalize="none"
@@ -72,15 +50,13 @@ export default function DeskLoginPage() {
               className="input mt-1"
               type="password"
               name="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
               required
               autoComplete="current-password"
             />
           </label>
           {error ? <p className="text-sm text-red-700">{error}</p> : null}
-          <button type="submit" className="btn-teal w-full" disabled={loading}>
-            {loading ? "Signing in…" : "Sign in"}
+          <button type="submit" className="btn-teal w-full">
+            Sign in
           </button>
         </form>
 
