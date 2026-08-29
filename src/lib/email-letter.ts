@@ -88,7 +88,7 @@ function isRegularSportsRecap(title: string): boolean {
 
 /** Feature / night-out / anniversary — fine in the letter body, not the subject. */
 function isLifestyleOrEventTitle(title: string): boolean {
-  return /wine grapes|wildfire smoke|hamlet of hundreds|wings and wheels|sports overtime|scores and highlights|silent disco|artist talk|artist reception|concert|festival|fly-in|open mic|storytime|sing\s*&\s*stomp|chorus|celebrat|anniversary|opera house|exhibit|gallery opening/i.test(
+  return /wine grapes|wildfire smoke|hamlet of hundreds|wings and wheels|sports overtime|scores and highlights|silent disco|artist talk|artist reception|concert|festival|fly-in|open mic|storytime|sing\s*&\s*stomp|chorus|celebrat|anniversary|opera house|exhibit|gallery opening|old neighborhood|glen eyrie|going strong for a century/i.test(
     title,
   );
 }
@@ -250,6 +250,12 @@ function phraseFromTitle(title: string, budget = 40): string {
   if (/wildfire smoke/i.test(t) && /wine grapes/i.test(t)) {
     return "Smoke and wine grapes";
   }
+  if (/stimson street/i.test(t) && /reconstruction|project|begins/i.test(t)) {
+    return "Stimson Street Project";
+  }
+  if (/rabies/i.test(t) && /bat|tests positive|health/i.test(t)) {
+    return "Bat tests positive for rabies";
+  }
   if (t.length <= budget) return stripTrailingStops(t);
   for (const sep of [": ", " — ", " – ", " - ", "; ", ", "]) {
     const i = t.indexOf(sep);
@@ -278,6 +284,14 @@ function isDuplicateBoardmanTitle(title: string): boolean {
   );
 }
 
+function isSportsSourceCard(card: {
+  sources?: string[] | null;
+}): boolean {
+  return (card.sources ?? []).some((s) =>
+    /sports|athletics|local sports/i.test(s),
+  );
+}
+
 function pickAroundNews(
   around: EmailEditionSnapshot["around"],
   limit = 2,
@@ -296,7 +310,8 @@ function pickAroundNews(
       !title ||
       isDuplicateBoardmanTitle(title) ||
       isLifestyleOrEventTitle(title) ||
-      isRegularSportsRecap(title)
+      isRegularSportsRecap(title) ||
+      isSportsSourceCard(card)
     ) {
       continue;
     }
@@ -309,9 +324,38 @@ function pickAroundNews(
   return out;
 }
 
+function pickAlertNews(
+  alerts: EmailEditionSnapshot["alerts"],
+  limit: number,
+  already: string[],
+): string[] {
+  const ranked = [...alerts].sort((a, b) => {
+    const ta = a.title || "";
+    const tb = b.title || "";
+    const ra = isHardNewsTitle(ta) || /rabies|health/i.test(ta) ? 0 : 1;
+    const rb = isHardNewsTitle(tb) || /rabies|health/i.test(tb) ? 0 : 1;
+    return ra - rb;
+  });
+  const out: string[] = [];
+  for (const alert of ranked) {
+    const title = (alert.title || "").replace(/\s+/g, " ").trim();
+    if (!title) continue;
+    if (/lifts? |lifted|back open|reopened/i.test(title)) continue;
+    if (isLifestyleOrEventTitle(title) || isRegularSportsRecap(title)) continue;
+    const text = phraseFromTitle(title, 36);
+    if (!usableSubjectPhrase(text)) continue;
+    if (already.includes(text) || out.includes(text)) continue;
+    out.push(text);
+    if (out.length >= limit) break;
+  }
+  return out;
+}
+
 /**
  * News-only 2–3 parseable phrases. Deterministic from snapshot fields only.
- * Never a last name, lifestyle/tonight item, or regular sports recap.
+ * Prefer 3 when they still parse. Never a last name, lifestyle/tonight item,
+ * or regular sports recap. Soft cap ~80 on phrases (emoji not counted); drop
+ * to 2 only if still over 84 after shortening.
  */
 export function buildMorningLetterSubject(snapshot: EmailEditionSnapshot): string {
   const parts: SubjectItem[] = [];
@@ -319,14 +363,22 @@ export function buildMorningLetterSubject(snapshot: EmailEditionSnapshot): strin
     const text = phraseFromTitle(snapshot.lead.title, 48);
     if (usableSubjectPhrase(text)) parts.push({ text, kind: "lead" });
   }
-  for (const text of pickAroundNews(snapshot.around, 2)) {
+
+  // Prefer three news phrases. No usable lead → take three from around.
+  const aroundNeed = Math.max(0, 3 - parts.length);
+  for (const text of pickAroundNews(snapshot.around, aroundNeed)) {
     parts.push({ text, kind: "around" });
   }
-  if (parts.length < 2 && snapshot.alerts[0]?.title) {
-    const alertTitle = snapshot.alerts[0].title;
-    if (!/lifts? |lifted|back open|reopened/i.test(alertTitle)) {
-      const text = phraseFromTitle(alertTitle, 36);
-      if (usableSubjectPhrase(text)) parts.push({ text, kind: "alert" });
+
+  // Fill remaining slots from news alerts (e.g. rabies) when around is thin.
+  const alertNeed = Math.max(0, 3 - parts.length);
+  if (alertNeed > 0) {
+    for (const text of pickAlertNews(
+      snapshot.alerts,
+      alertNeed,
+      parts.map((p) => p.text),
+    )) {
+      parts.push({ text, kind: "alert" });
     }
   }
 
@@ -358,12 +410,9 @@ export function buildMorningLetterSubject(snapshot: EmailEditionSnapshot): strin
   });
   const phraseLen = (s: string) => s.replace(/^🗞️\s*/, "").length;
   let subject = render(chosen);
-  // Prefer 3 news phrases when they still parse. Emoji is not in the 84-char budget.
-  if (phraseLen(subject) > 84 && chosen.length === 3) {
-    chosen = chosen.slice(0, 2);
-    subject = render(chosen);
-  }
-  if (phraseLen(subject) > 80 && chosen.length < 3) {
+
+  // Soft cap ~80 (emoji not counted). Shorten first; drop to 2 only if still >84.
+  if (phraseLen(subject) > 80) {
     chosen = chosen
       .map((p) => ({
         ...p,
@@ -373,6 +422,10 @@ export function buildMorningLetterSubject(snapshot: EmailEditionSnapshot): strin
     if (chosen.length === 0) {
       return `🗞️ traverse.news · ${emailDetroitDateKey()}`;
     }
+    subject = render(chosen);
+  }
+  if (phraseLen(subject) > 84 && chosen.length === 3) {
+    chosen = chosen.slice(0, 2);
     subject = render(chosen);
   }
   if (phraseLen(subject) > 84) {
