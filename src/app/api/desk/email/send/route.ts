@@ -44,9 +44,20 @@ type ResendDelivery = {
   resendId: string | null;
 };
 
+/** Stay under Resend's 10 req/s (~5/sec with margin). */
+const RESEND_SEND_GAP_MS = 200;
+/** Retry a 429 once or twice with linear backoff. */
+const RESEND_429_MAX_RETRIES = 2;
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 /**
  * One Resend call, one visible recipient. Never put more than one address in
  * to / cc / bcc on a single payload — that leaked the whole list in Gmail.
+ *
+ * Retries HTTP 429 up to RESEND_429_MAX_RETRIES times (500ms, then 1s).
  */
 async function sendLetterToOneRecipient(args: {
   apiKey: string;
@@ -67,29 +78,37 @@ async function sendLetterToOneRecipient(args: {
     text: args.text,
   };
 
-  const resendResponse = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${args.apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(resendPayload),
-  });
-  const responseBody = await resendResponse.text();
+  for (let attempt = 0; attempt <= RESEND_429_MAX_RETRIES; attempt++) {
+    const resendResponse = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${args.apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(resendPayload),
+    });
+    const responseBody = await resendResponse.text();
 
-  if (!resendResponse.ok) {
+    if (resendResponse.ok) {
+      let resendId: string | null = null;
+      try {
+        const parsed = JSON.parse(responseBody) as { id?: unknown };
+        resendId = typeof parsed.id === "string" ? parsed.id : null;
+      } catch {
+        resendId = null;
+      }
+      return { ok: true, resendId };
+    }
+
+    if (resendResponse.status === 429 && attempt < RESEND_429_MAX_RETRIES) {
+      await sleep(500 * (attempt + 1));
+      continue;
+    }
+
     return { ok: false, resendId: null };
   }
 
-  let resendId: string | null = null;
-  try {
-    const parsed = JSON.parse(responseBody) as { id?: unknown };
-    resendId = typeof parsed.id === "string" ? parsed.id : null;
-  } catch {
-    resendId = null;
-  }
-
-  return { ok: true, resendId };
+  return { ok: false, resendId: null };
 }
 
 /**
@@ -110,6 +129,7 @@ async function sendLetterToOneRecipient(args: {
  *
  * Privacy: one Resend API call per recipient with `to: [thatEmail]` only.
  * Never blast the full list in a single `to` / `cc` / `bcc`.
+ * Pace ~200ms between calls (under Resend 10/s) and retry 429 with backoff.
  */
 export async function POST(request: Request) {
   if (!(await isDeskRequestAuthed(request))) {
@@ -175,7 +195,15 @@ export async function POST(request: Request) {
   let failedCount = 0;
   let firstResendId: string | null = null;
 
-  for (const email of recipients) {
+  // Pace one-at-a-time sends under Resend's 10 req/s. Do not batch to[] /
+  // cc / bcc — that leaked the list. Optional later: Resend batch API with
+  // one to per item.
+  for (let index = 0; index < recipients.length; index++) {
+    if (index > 0) {
+      await sleep(RESEND_SEND_GAP_MS);
+    }
+
+    const email = recipients[index];
     const letter = buildMorningLetter(edition, {
       school,
       unsubscribeEmail: email,
