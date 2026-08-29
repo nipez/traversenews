@@ -18,7 +18,9 @@ import {
 } from "@/lib/email-editions";
 import {
   buildMorningLetter,
+  defaultMorningLetterGreeting,
   pickLetterSchoolDate,
+  resolveMorningLetterGreeting,
 } from "@/lib/email-letter";
 
 export const dynamic = "force-dynamic";
@@ -49,6 +51,9 @@ export default async function DeskEmailPage() {
   const subject = sentSubject
     ? sentSubject
     : buildMorningLetter(edition, { school }).subject;
+  const defaultGreeting = defaultMorningLetterGreeting(Boolean(edition.lead));
+  const greeting = resolveMorningLetterGreeting(edition);
+  const greetingSaved = Boolean(edition.greeting?.trim());
   const previewed = await getEmailLetterPreview(today);
   const oneOffs = new Set(await getEmailOneOffSends(today));
   if (today === "2026-08-28") oneOffs.add("stacietceye@hotmail.com");
@@ -68,6 +73,9 @@ export default async function DeskEmailPage() {
           subjectLabel={sentSubject ? "Sent subject" : "Today’s subject"}
           alreadySent={Boolean(sent)}
           alreadyPreviewed={Boolean(previewed)}
+          greeting={greeting}
+          defaultGreeting={defaultGreeting}
+          greetingSaved={greetingSaved}
         />
 
         <section className="mt-8">

@@ -306,6 +306,12 @@ export type EmailOneOffSendsRecord = {
 export type EmailEditionSnapshot = {
   date: string;
   captured_at: string;
+  /**
+   * Opening line Nick can edit on Desk Email before send. Missing on older
+   * archives — resolveMorningLetterGreeting falls back to the lead/no-lead
+   * defaults.
+   */
+  greeting?: string | null;
   lead: EmailStoryCard | null;
   around: EmailStoryCard[];
   alerts: EmailAlertCard[];
