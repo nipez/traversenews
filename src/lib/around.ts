@@ -23,6 +23,15 @@ const JUNK_TITLE_MARKERS = [
   "celebrity cipher",
   "tv listings",
   "movie times",
+  // Soft features that crowd out unused hard news on Saturday letters.
+  "library news",
+  "dog days of summer",
+  "ski hall of fame",
+  "ready, set, locals",
+  "ready set locals",
+  "old neighborhood on the north shore",
+  "glen eyrie",
+  "going strong for a century",
 ];
 
 const JUNK_PATH_MARKERS = [
@@ -33,16 +42,47 @@ const JUNK_PATH_MARKERS = [
   "/entertainment/horoscope",
 ];
 
+/** Court, housing, bans, aid deadlines — prefer over lifestyle features. */
+const HARD_NEWS_TITLE_MARKERS = [
+  "data center",
+  "data-center",
+  "cryptocurrency",
+  "moratorium",
+  "ban on",
+  "under oath",
+  "treasurer",
+  "housing",
+  "affordable",
+  "can't afford",
+  "cant afford",
+  "fema",
+  "flood",
+  "flooding",
+  "lawsuit",
+  "arrest",
+  "charges",
+  "sentenc",
+  "zoning",
+  "ordinance",
+  "budget",
+  "crash",
+  "killed",
+  "fatal",
+  "parking rates",
+  "parking rate",
+  "survey",
+];
+
 /** Civic calendar / board listings that must not appear in Around the bay. */
 const CIVIC_STORY_MARKERS = [
   "economic development corporation",
   "planning commission",
   "zoning board",
-  "school board",
-  "board of commissioners",
-  "city commission",
-  "township board",
-  "county board",
+  "school board meeting",
+  "board of commissioners meeting",
+  "city commission meeting",
+  "township board meeting",
+  "county board meeting",
   "board study session",
   "board curriculum",
   "board finance",
@@ -55,8 +95,20 @@ function looksLikeCivicListing(input: {
   dek?: string;
   url: string;
 }): boolean {
+  // Hard news about a board (under oath, bans, budgets) is not a calendar listing.
+  if (looksLikeHardNews(input)) return false;
+
   const blob = `${input.title} ${input.dek ?? ""}`.toLowerCase();
   if (CIVIC_STORY_MARKERS.some((m) => blob.includes(m))) return true;
+  // Bare "school board" / "county board" only when it reads like a meeting notice.
+  if (
+    /\b(school board|county board|city commission|township board|board of commissioners)\b/i.test(
+      blob,
+    ) &&
+    /\b(agenda|meets|meeting|session|packets?)\b/i.test(blob)
+  ) {
+    return true;
+  }
   try {
     const u = new URL(input.url);
     const host = u.hostname.toLowerCase();
@@ -194,12 +246,40 @@ export function isLifestyleJunk(input: {
   if (/\bcalendar\s*:/i.test(input.title)) return true;
   if (/\bnews from\s+\d+\s+years?\s+ago\b/i.test(input.title)) return true;
   if (/^\s*brief(s)?\b/i.test(input.title.trim())) return true;
+  if (/^\s*library news\s*:/i.test(input.title.trim())) return true;
 
   try {
     const path = new URL(input.url).pathname.toLowerCase();
     if (JUNK_PATH_MARKERS.some((m) => path.includes(m))) return true;
+    // Northern Express feature rail is usually lifestyle, not hard news.
+    if (path.includes("/news/feature/")) return true;
   } catch {
     // ignore bad urls — homepage check handles empties
+  }
+  return false;
+}
+
+/**
+ * Court, housing, bans, flood aid, under-oath reports — letter/bay should
+ * prefer these over soft desk fillers when both are unused.
+ */
+export function looksLikeHardNews(input: {
+  title: string;
+  dek?: string;
+  url?: string;
+}): boolean {
+  const blob = `${input.title} ${input.dek ?? ""}`.toLowerCase();
+  if (HARD_NEWS_TITLE_MARKERS.some((m) => blob.includes(m))) return true;
+  if (/\b(ban|lawsuit|ordinance|moratorium)\b/i.test(input.title)) return true;
+  try {
+    if (input.url) {
+      const path = new URL(input.url).pathname.toLowerCase();
+      if (path.includes("/local_news/") || path.includes("/ipr-news/")) {
+        // Local news path alone is not enough; keep marker check primary.
+      }
+    }
+  } catch {
+    // ignore
   }
   return false;
 }
@@ -261,6 +341,7 @@ function clusterScore(cluster: ClusteredStory): number {
   let score = 0;
   if (cluster.sources.length > 1) score += 10_000;
   if (looksLikeLocalNews(cluster)) score += 2_000;
+  if (looksLikeHardNews(cluster)) score += 4_000;
   const sid = primarySourceKey(cluster);
   if (PREFERRED_NEWS_SOURCE_IDS.has(sid)) score += 1_500;
   if (OFFICIAL_NEWS_SOURCE_IDS.has(sid)) score += 2_500;
@@ -269,6 +350,8 @@ function clusterScore(cluster: ClusteredStory): number {
   if (isRecordEagleCluster(cluster)) score -= 3_000;
   // UpNorthLive is free but heavy — soft-penalize so it does not dominate.
   if (isUpNorthCluster(cluster)) score -= 2_000;
+  // Heavy free wire (Ticker / 9&10) — soft-penalize vs IPR / TCBN / Betsie.
+  if (HEAVY_FREE_WIRE_SOURCE_IDS.has(sid)) score -= 800;
   // Recency (ms since epoch, scaled) as tiebreaker within the same tier.
   score += new Date(cluster.published_at).getTime() / 1e12;
   return score;
@@ -294,6 +377,11 @@ export type AroundSelectOptions = {
   maxHeavyWire?: number;
   /** Reserved slots for official city/county/tribal headlines. Default 2. */
   maxOfficial?: number;
+  /**
+   * Morning letter: take hard news (free + RE) before soft desk fillers so
+   * unused IPR / RE stories are not buried under lifestyle round-robin.
+   */
+  preferHardNews?: boolean;
   /** Clock for the 14-day max-age window. Defaults to now. */
   now?: Date;
 };
@@ -388,6 +476,7 @@ function takeFromPool(
  * Ticker + 9&10 News are capped so smaller preferred desks (IPR, TCBN,
  * Northern, Betsie, …) still get slots. UpNorthLive and Record-Eagle stay
  * capped. Official city/county/tribal headlines get a few reserved slots.
+ * preferHardNews (letter): hard free + RE before soft lifestyle fillers.
  */
 export function selectAroundTheBay(
   clusters: ClusteredStory[],
@@ -400,6 +489,7 @@ export function selectAroundTheBay(
   const maxUpNorth = options.maxUpNorth ?? 3;
   const maxHeavyWire = options.maxHeavyWire ?? 2;
   const maxOfficial = options.maxOfficial ?? 2;
+  const preferHardNews = options.preferHardNews ?? false;
   const now = options.now ?? new Date();
 
   const eligible = clusters
@@ -430,6 +520,10 @@ export function selectAroundTheBay(
   const reNews = eligible.filter(
     (c) => !isSportsCluster(c) && isRecordEagleCluster(c),
   );
+  const hardFree = freeNews.filter(looksLikeHardNews);
+  const softFree = freeNews.filter((c) => !looksLikeHardNews(c));
+  const hardRe = reNews.filter(looksLikeHardNews);
+  const softRe = reNews.filter((c) => !looksLikeHardNews(c));
   const officialNews = freeNews.filter(isOfficialNewsCluster);
 
   const picked: ClusteredStory[] = [];
@@ -488,24 +582,44 @@ export function selectAroundTheBay(
     upNorthCount,
   };
 
-  // 2) Preferred free desks (smaller desks before Ticker/9&10), then others.
-  takeFromPool(freeNews, picked, used, counts, {
-    ...poolOpts,
-    limit: freeTarget,
-  });
+  if (preferHardNews) {
+    // Letter: hard free desks first (IPR can take up to maxPerSource), then
+    // hard RE early so paywalled local is not buried after soft fillers.
+    takeFromPool(hardFree, picked, used, counts, {
+      ...poolOpts,
+      limit: freeTarget,
+    });
+    takeFromPool(hardRe, picked, used, counts, { ...poolOpts, limit });
+    takeFromPool(softFree, picked, used, counts, {
+      ...poolOpts,
+      limit: freeTarget,
+    });
+    takeFromPool(sports, picked, used, counts, { ...poolOpts, limit });
+    takeFromPool(softRe, picked, used, counts, { ...poolOpts, limit });
+    takeFromPool(upNorthNews, picked, used, counts, { ...poolOpts, limit });
+  } else {
+    // 2) Preferred free desks (smaller desks before Ticker/9&10), then others.
+    takeFromPool(freeNews, picked, used, counts, {
+      ...poolOpts,
+      limit: freeTarget,
+    });
 
-  // 3) Up to maxSports sports (RE sports count toward both caps).
-  takeFromPool(sports, picked, used, counts, { ...poolOpts, limit });
+    // 3) Up to maxSports sports (RE sports count toward both caps).
+    takeFromPool(sports, picked, used, counts, { ...poolOpts, limit });
 
-  // 4) Up to maxRecordEagle RE news.
-  takeFromPool(reNews, picked, used, counts, { ...poolOpts, limit });
+    // 4) Up to maxRecordEagle RE news.
+    takeFromPool(reNews, picked, used, counts, { ...poolOpts, limit });
 
-  // 5) Up to maxUpNorth TV wire.
-  takeFromPool(upNorthNews, picked, used, counts, { ...poolOpts, limit });
+    // 5) Up to maxUpNorth TV wire.
+    takeFromPool(upNorthNews, picked, used, counts, { ...poolOpts, limit });
+  }
 
-  // 6) Soft fill under caps — still respect heavy-wire limits.
+  // Soft fill under caps — still respect heavy-wire limits.
   if (picked.length < limit) {
-    for (const c of [...freeNews, ...sports, ...reNews, ...upNorthNews]) {
+    const fillOrder = preferHardNews
+      ? [...hardFree, ...hardRe, ...softFree, ...sports, ...softRe, ...upNorthNews]
+      : [...freeNews, ...sports, ...reNews, ...upNorthNews];
+    for (const c of fillOrder) {
       if (picked.length >= limit) break;
       if (used.has(c.id)) continue;
       const key = primarySourceKey(c);

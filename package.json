@@ -10,6 +10,8 @@
     "dry-run:morning-letter": "tsx scripts/dry-run-morning-letter.ts",
     "dry-run:letter-fresh": "tsx scripts/dry-run-letter-fresh.ts",
     "dry-run:letter-preview": "tsx scripts/dry-run-letter-preview.ts",
+    "dry-run:letter-hard-news": "tsx scripts/dry-run-letter-hard-news.ts",
+    "dry-run:letter-subject": "tsx scripts/dry-run-letter-subject.ts",
     "dry-run:bay-fresh": "tsx scripts/dry-run-bay-fresh.ts",
     "test:shows-parsers": "tsx scripts/test-shows-parsers.ts",
     "pull": "tsx scripts/pull.ts",

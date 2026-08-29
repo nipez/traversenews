@@ -513,17 +513,19 @@ export function buildEmailEditionSnapshot(
   const leadCluster = originals[0] ?? null;
 
   // Rank unused wire first, then keep cards that did not run yesterday /
-  // sit as multi-day leftovers. Record-Eagle hard-paywall cap stays at 2.
+  // sit as multi-day leftovers. Allow 3 distinct IPR; Record-Eagle stays 2.
+  // Hard news before lifestyle; sports has its own letter section.
   const unused = clusters.filter(
     (c) =>
       !c.is_original && !clusterHitsExcluded(c, bayExclude, priorTitles),
   );
   const aroundClusters = selectAroundTheBay(unused, {
     limit: 24,
-    maxPerSource: 2,
-    maxSports: 2,
+    maxPerSource: 3,
+    maxSports: 0,
     maxRecordEagle: 2,
     maxHeavyWire: 2,
+    preferHardNews: true,
     now: at,
   });
   const around = pickFreshAroundForLetter(

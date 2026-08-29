@@ -88,16 +88,35 @@ function isRegularSportsRecap(title: string): boolean {
 
 /** Feature / night-out / anniversary — fine in the letter body, not the subject. */
 function isLifestyleOrEventTitle(title: string): boolean {
-  return /wine grapes|wildfire smoke|hamlet of hundreds|wings and wheels|sports overtime|scores and highlights|silent disco|artist talk|artist reception|concert|festival|fly-in|open mic|storytime|sing\s*&\s*stomp|chorus|celebrat|anniversary|opera house|exhibit|gallery opening|old neighborhood|glen eyrie|going strong for a century/i.test(
+  return /wine grapes|wildfire smoke|hamlet of hundreds|wings and wheels|sports overtime|scores and highlights|silent disco|artist talk|artist reception|concert|festival|fly-in|open mic|storytime|sing\s*&\s*stomp|chorus|celebrat|anniversary|opera house|exhibit|gallery opening|old neighborhood|glen eyrie|going strong for a century|library news|dog days|ski hall of fame|ready,? set,? locals/i.test(
     title,
   );
 }
 
-/** Court, crash, vote, charges — prefer these over features for the subject. */
+/** Court, crash, vote, charges, housing, FEMA — prefer these over features for the subject. */
 function isHardNewsTitle(title: string): boolean {
-  return /court|crash|lawsuit|\bsuit\b|vote|killed|fatal|arrest|charges|sentenc|zoning|ordinance|budget|spill(?!.*wine)/i.test(
+  return /court|crash|lawsuit|\bsuit\b|vote|killed|fatal|arrest|charges|sentenc|zoning|ordinance|budget|spill(?!.*wine)|data[- ]?center|moratorium|\bban\b|housing|afford|fema|flood|treasurer|under oath|survey|parking rates?/i.test(
     title,
   );
+}
+
+/**
+ * Lower is better for subject slots. Civic hard news (bans, housing, FEMA,
+ * under-oath reports) beats parking-rate / routine hard news.
+ */
+function hardNewsSubjectRank(title: string): number {
+  if (
+    /data[- ]?center|moratorium|\bban\b|under oath|treasurer|fema|flood|housing|afford|survey/i.test(
+      title,
+    )
+  ) {
+    return 0;
+  }
+  if (/parking rates?|crash|court|arrest|charges|lawsuit|zoning|ordinance|budget/i.test(title)) {
+    return 1;
+  }
+  if (isHardNewsTitle(title)) return 2;
+  return 3;
 }
 
 function isFakeSubscriberEmail(value: string): boolean {
@@ -256,6 +275,21 @@ function phraseFromTitle(title: string, budget = 40): string {
   if (/rabies/i.test(t) && /bat|tests positive|health/i.test(t)) {
     return "Bat tests positive for rabies";
   }
+  if (/garfield/i.test(t) && /data[- ]?center/i.test(t) && /ban|moratorium/i.test(t)) {
+    return "Garfield data-center ban";
+  }
+  if (/leelanau/i.test(t) && /hous|afford|live there/i.test(t)) {
+    return "Leelanau housing survey";
+  }
+  if (/fema/i.test(t) && /flood|aid|million/i.test(t)) {
+    return "FEMA deadline Monday";
+  }
+  if (/treasurer/i.test(t) && /under oath|report/i.test(t)) {
+    return "GT treasurer under oath";
+  }
+  if (/parking rates?/i.test(t) && /decrease|labor day|coming/i.test(t)) {
+    return "Decrease in Parking Rates";
+  }
   if (t.length <= budget) return stripTrailingStops(t);
   for (const sep of [": ", " — ", " – ", " - ", "; ", ", "]) {
     const i = t.indexOf(sep);
@@ -299,9 +333,7 @@ function pickAroundNews(
   const ranked = [...around].sort((a, b) => {
     const ta = a.title || "";
     const tb = b.title || "";
-    const ra = isHardNewsTitle(ta) ? 0 : 1;
-    const rb = isHardNewsTitle(tb) ? 0 : 1;
-    return ra - rb;
+    return hardNewsSubjectRank(ta) - hardNewsSubjectRank(tb);
   });
   const out: string[] = [];
   for (const card of ranked) {
