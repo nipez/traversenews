@@ -41,6 +41,8 @@ export function DeskLetterSendControls({
         already_previewed?: boolean;
         subject?: string;
         recipient_count?: number;
+        sent_count?: number;
+        failed_count?: number;
         preview?: boolean;
       };
       if (!res.ok) throw new Error(json.error || "Send failed");
@@ -54,12 +56,12 @@ export function DeskLetterSendControls({
           `Preview sent${json.subject ? `: ${json.subject}` : ""}.`,
         );
       } else {
+        const n =
+          typeof json.sent_count === "number"
+            ? json.sent_count
+            : json.recipient_count;
         setFlash(
-          `Live letter sent${
-            typeof json.recipient_count === "number"
-              ? ` to ${json.recipient_count}`
-              : ""
-          }.`,
+          `Live letter sent${typeof n === "number" ? ` to ${n}` : ""}.`,
         );
       }
       router.refresh();

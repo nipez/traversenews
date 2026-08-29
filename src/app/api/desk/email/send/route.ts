@@ -39,6 +39,59 @@ async function getResendApiKey(): Promise<string | null> {
   return null;
 }
 
+type ResendDelivery = {
+  ok: boolean;
+  resendId: string | null;
+};
+
+/**
+ * One Resend call, one visible recipient. Never put more than one address in
+ * to / cc / bcc on a single payload — that leaked the whole list in Gmail.
+ */
+async function sendLetterToOneRecipient(args: {
+  apiKey: string;
+  email: string;
+  subject: string;
+  html: string;
+  text: string;
+}): Promise<ResendDelivery> {
+  // Attachments are forbidden on the morning letter. Keep this object literal
+  // limited to from/to/reply_to/subject/html/text - never add attachments,
+  // cc, or bcc.
+  const resendPayload = {
+    from: "Traverse News <info@traverse.news>",
+    to: [args.email],
+    reply_to: "info@traverse.news",
+    subject: args.subject,
+    html: args.html,
+    text: args.text,
+  };
+
+  const resendResponse = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${args.apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(resendPayload),
+  });
+  const responseBody = await resendResponse.text();
+
+  if (!resendResponse.ok) {
+    return { ok: false, resendId: null };
+  }
+
+  let resendId: string | null = null;
+  try {
+    const parsed = JSON.parse(responseBody) as { id?: unknown };
+    resendId = typeof parsed.id === "string" ? parsed.id : null;
+  } catch {
+    resendId = null;
+  }
+
+  return { ok: true, resendId };
+}
+
 /**
  * Send today's morning letter via Resend (Worker cron preview + Desk live).
  *
@@ -54,6 +107,9 @@ async function getResendApiKey(): Promise<string | null> {
  * parts, `scheduled_at` file payloads, or an empty `attachments: []` key in
  * the Resend JSON - omit the field entirely. Payload is only
  * from / to / reply_to / subject / html / text.
+ *
+ * Privacy: one Resend API call per recipient with `to: [thatEmail]` only.
+ * Never blast the full list in a single `to` / `cc` / `bcc`.
  */
 export async function POST(request: Request) {
   if (!(await isDeskRequestAuthed(request))) {
@@ -94,15 +150,13 @@ export async function POST(request: Request) {
   const recipients = preview
     ? resolvePreviewLetterRecipients()
     : resolveLetterRecipients(data.subscribers ?? []);
-  const letter = buildMorningLetter(edition, {
-    school,
-    unsubscribeEmail:
-      recipients.length === 1 ? recipients[0] : undefined,
-  });
-  const subject = preview
-    ? previewLetterSubject(letter.subject)
-    : letter.subject;
   const apiKey = await getResendApiKey();
+
+  // Subject is shared; html/text are rebuilt per recipient for unsubscribe.
+  const subjectLetter = buildMorningLetter(edition, { school });
+  const subject = preview
+    ? previewLetterSubject(subjectLetter.subject)
+    : subjectLetter.subject;
 
   if (!apiKey) {
     return NextResponse.json(
@@ -117,55 +171,66 @@ export async function POST(request: Request) {
     );
   }
 
-  // Attachments are forbidden on the morning letter. Keep this object literal
-  // limited to from/to/reply_to/subject/html/text - never add attachments.
-  const resendPayload = {
-    from: "Traverse News <info@traverse.news>",
-    to: recipients,
-    reply_to: "info@traverse.news",
-    subject,
-    html: letter.html,
-    text: letter.text,
-  };
+  let sentCount = 0;
+  let failedCount = 0;
+  let firstResendId: string | null = null;
 
-  const resendResponse = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(resendPayload),
-  });
-  const responseBody = await resendResponse.text();
+  for (const email of recipients) {
+    const letter = buildMorningLetter(edition, {
+      school,
+      unsubscribeEmail: email,
+    });
 
-  if (!resendResponse.ok) {
+    let delivery: ResendDelivery;
+    try {
+      delivery = await sendLetterToOneRecipient({
+        apiKey,
+        email,
+        subject,
+        html: letter.html,
+        text: letter.text,
+      });
+    } catch {
+      delivery = { ok: false, resendId: null };
+    }
+
+    if (delivery.ok) {
+      sentCount += 1;
+      if (!firstResendId && delivery.resendId) {
+        firstResendId = delivery.resendId;
+      }
+    } else {
+      failedCount += 1;
+    }
+  }
+
+  const recipientCount = recipients.length;
+
+  if (failedCount > 0 || sentCount === 0) {
     return NextResponse.json(
       {
-        error: preview
-          ? "Resend rejected the preview. Preview was not marked sent."
-          : "Resend rejected the send. Letter was not marked sent.",
-        status: resendResponse.status,
-        detail: responseBody.slice(0, 300),
+        error:
+          sentCount === 0
+            ? preview
+              ? "Resend rejected every preview delivery. Preview was not marked sent."
+              : "Resend rejected every delivery. Letter was not marked sent."
+            : preview
+              ? `Some preview deliveries failed (${sentCount} sent, ${failedCount} failed). Preview was not marked sent.`
+              : `Some deliveries failed (${sentCount} sent, ${failedCount} failed). Letter was not marked sent.`,
         date: edition.date,
         subject,
-        recipient_count: recipients.length,
+        recipient_count: recipientCount,
+        sent_count: sentCount,
+        failed_count: failedCount,
         preview,
       },
       { status: 502 },
     );
   }
 
-  let resendId: string | null = null;
-  try {
-    const parsed = JSON.parse(responseBody) as { id?: unknown };
-    resendId = typeof parsed.id === "string" ? parsed.id : null;
-  } catch {
-    resendId = null;
-  }
-
   const record = {
     sent_at: new Date().toISOString(),
-    resend_id: resendId ?? undefined,
+    resend_id: firstResendId ?? undefined,
     subject,
   };
 
@@ -180,8 +245,10 @@ export async function POST(request: Request) {
     ok: true,
     date: edition.date,
     subject,
-    recipient_count: recipients.length,
-    resend_id: resendId,
+    recipient_count: recipientCount,
+    sent_count: sentCount,
+    failed_count: failedCount,
+    resend_id: firstResendId,
     archive_url: `/email/${edition.date}`,
     preview,
   });
