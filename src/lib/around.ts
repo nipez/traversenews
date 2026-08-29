@@ -268,6 +268,9 @@ function clusterScore(cluster: ClusteredStory): number {
   return score;
 }
 
+/** Drop bay copy older than this many Detroit calendar days. */
+export const BAY_MAX_AGE_DAYS = 14;
+
 export type AroundSelectOptions = {
   limit?: number;
   /** Soft cap per primary desk. Default 4 of 18. */
@@ -280,7 +283,16 @@ export type AroundSelectOptions = {
   maxUpNorth?: number;
   /** Reserved slots for official city/county/tribal headlines. Default 2. */
   maxOfficial?: number;
+  /** Clock for the 14-day max-age window. Defaults to now. */
+  now?: Date;
 };
+
+function withinBayMaxAge(cluster: ClusteredStory, now: Date): boolean {
+  const published = new Date(cluster.published_at).getTime();
+  if (!Number.isFinite(published)) return false;
+  const maxAgeMs = BAY_MAX_AGE_DAYS * 24 * 60 * 60 * 1000;
+  return published >= now.getTime() - maxAgeMs;
+}
 
 function takeFromPool(
   pool: ClusteredStory[],
@@ -364,6 +376,7 @@ export function selectAroundTheBay(
   const maxRecordEagle = options.maxRecordEagle ?? 2;
   const maxUpNorth = options.maxUpNorth ?? 3;
   const maxOfficial = options.maxOfficial ?? 2;
+  const now = options.now ?? new Date();
 
   const eligible = clusters
     .filter((c) => !c.is_original)
@@ -371,6 +384,7 @@ export function selectAroundTheBay(
     .filter((c) => !isOutletHomepageUrl(c.url))
     .filter((c) => !isLifestyleJunk(c))
     .filter((c) => !looksLikeCivicListing(c))
+    .filter((c) => withinBayMaxAge(c, now))
     .sort((a, b) => {
       const diff = clusterScore(b) - clusterScore(a);
       if (diff !== 0) return diff;

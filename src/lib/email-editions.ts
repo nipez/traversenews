@@ -169,8 +169,9 @@ export function collectPriorEditionBayIdentities(
 /**
  * Collect URL + headline identities from yesterday’s published letter only
  * so today’s letter can drop anything already emailed. Homepage edition bay
- * cards that never made the letter are not excluded here (stale multi-day
- * aging is separate via collectStaleEditionBayIdentities).
+ * cards that never made the letter are not excluded here (multi-day leftovers
+ * that sat on 2+ older edition days are separate via
+ * collectStaleEditionBayIdentities).
  */
 export function collectPriorLetterIdentities(
   priorLetter: EmailEditionSnapshot | null | undefined,
@@ -217,6 +218,17 @@ function tokenJaccard(a: Set<string>, b: Set<string>): number {
   return union === 0 ? 0 : inter / union;
 }
 
+/** Boardman / sewage advisory spill — same incident across desks. */
+function looksLikeBoardmanSewageAdvisory(title: string): boolean {
+  const t = title.toLowerCase();
+  const advisoryOrSpill =
+    /advisory|sewage|spill|no[- ]?body[- ]contact/.test(t);
+  if (!advisoryOrSpill) return false;
+  return /boardman|sewage|level\s*[24]\s*advisory|no[- ]?body[- ]contact/.test(
+    t,
+  );
+}
+
 /**
  * True when two headlines are likely the same story (exact, cluster-strength
  * overlap, or a second-desk rewrite with the same key nouns).
@@ -226,6 +238,11 @@ export function titlesLikelySameStory(a: string, b: string): boolean {
   const nb = normalizeLetterHeadline(b);
   if (!na || !nb) return false;
   if (na === nb) return true;
+
+  // Same Boardman sewage advisory from two desks → one card.
+  if (looksLikeBoardmanSewageAdvisory(a) && looksLikeBoardmanSewageAdvisory(b)) {
+    return true;
+  }
 
   const ta = titleTokens(a);
   const tb = titleTokens(b);
@@ -322,19 +339,37 @@ export function findPriorDetroitDaySnapshot<T extends { date: string }>(
 }
 
 /**
- * Bay/lead identities from editions older than yesterday (2+ Detroit days
- * back). Used to age the homepage / edition pile without inventing stories.
+ * Bay/lead identities that sat on the homepage for multiple Detroit days
+ * (appeared on 2+ dated editions older than yesterday). One-shot cards from
+ * older days stay eligible so a full yesterday does not empty today’s bay.
+ * Do not permanently ban every card that ever ran on any dated edition.
  */
 export function collectStaleEditionBayIdentities(
   editions: EditionSnapshot[] | null | undefined,
   at: Date,
 ): Set<string> {
   const cutoff = addDetroitCalendarDays(emailDetroitDateKey(at), -1);
-  const set = new Set<string>();
+  const dayCounts = new Map<string, number>();
+
   for (const edition of editions ?? []) {
     if (edition.date >= cutoff) continue;
-    if (edition.lead) addIdentity(set, edition.lead);
-    for (const card of edition.around) addIdentity(set, card);
+    const seenThisDay = new Set<string>();
+    const addDayIdentity = (item: { title: string; url?: string | null }) => {
+      const url = normalizeLetterUrl(item.url);
+      if (url) seenThisDay.add(`url:${url}`);
+      const titleKey = `title:${normalizeLetterHeadline(item.title)}`;
+      if (titleKey !== "title:") seenThisDay.add(titleKey);
+    };
+    if (edition.lead) addDayIdentity(edition.lead);
+    for (const card of edition.around) addDayIdentity(card);
+    for (const id of seenThisDay) {
+      dayCounts.set(id, (dayCounts.get(id) ?? 0) + 1);
+    }
+  }
+
+  const set = new Set<string>();
+  for (const [id, days] of dayCounts) {
+    if (days >= 2) set.add(id);
   }
   return set;
 }
@@ -370,20 +405,40 @@ function toEventCard(e: EventItem): EmailEventCard {
 /**
  * Pick Around-the-bay cards that did not run yesterday.
  * Prefer a full slate; if fewer than the soft minimum are new, return the
- * short fresh list — never pad with yesterday’s heads.
+ * short fresh list — never pad with yesterday’s heads. Collapse same-story
+ * second-desk rewrites (and Boardman sewage pairs) within the slate.
  */
 export function pickFreshAroundForLetter<
   T extends { title: string; url: string },
 >(candidates: T[], prior: Set<string>, max = LETTER_AROUND_MAX): T[] {
-  const fresh = candidates.filter((c) => !wasInPriorLetter(c, prior));
-  return fresh.slice(0, max);
+  const out: T[] = [];
+  for (const candidate of candidates) {
+    if (wasInPriorLetter(candidate, prior)) continue;
+    if (out.some((picked) => titlesLikelySameStory(picked.title, candidate.title))) {
+      continue;
+    }
+    out.push(candidate);
+    if (out.length >= max) break;
+  }
+  return out;
+}
+
+function priorBayTitles(priorCards: PriorBayCards): string[] {
+  const titles: string[] = [];
+  if (priorCards?.lead?.title) titles.push(priorCards.lead.title);
+  for (const card of priorCards?.around ?? []) {
+    if (card.title) titles.push(card.title);
+  }
+  return titles;
 }
 
 /**
  * Homepage / dated-edition Around the bay: drop yesterday’s edition cards
- * (URL or normalized title) plus whole-cluster same-story, and age out
- * multi-day leftovers. Pull a wide scored pool, keep only fresh cards up to
- * BAY_AROUND_MAX. Staff originals are not passed in (lead is separate).
+ * only (URL / normalized title / same-story rewrite). Do not ban the whole
+ * older edition archive — one-shot cards from earlier days stay eligible so
+ * Saturday can fill after a full Friday. Multi-day leftovers for the letter
+ * stay in collectStaleEditionBayIdentities. 14-day max age lives in around.ts.
+ * Staff originals are not passed in (lead is separate).
  */
 export function selectFreshAroundTheBay(
   clusters: ClusteredStory[],
@@ -393,23 +448,27 @@ export function selectFreshAroundTheBay(
 ): ClusteredStory[] {
   const priorEdition = findPriorDetroitDaySnapshot(editions, at);
   const priorBay = collectPriorEditionBayIdentities(priorEdition);
-  const staleBay = collectStaleEditionBayIdentities(editions, at);
   const bayExclude = expandExcludedWithClusterMembers(
-    mergeIdentitySets(priorBay, staleBay),
+    priorBay,
     clusters,
     priorEdition,
   );
+  const priorTitles = priorBayTitles(priorEdition);
 
-  const candidates = selectAroundTheBay(
-    clusters.filter((c) => !c.is_original),
-    {
-      limit: BAY_CANDIDATE_POOL,
-      maxPerSource: 4,
-      maxSports: 4,
-      maxRecordEagle: 2,
-      maxUpNorth: options.maxUpNorth ?? 3,
-    },
+  // Rank unused stories first — do not score a top-48 that is mostly Friday.
+  const unused = clusters.filter(
+    (c) =>
+      !c.is_original && !clusterHitsExcluded(c, bayExclude, priorTitles),
   );
+
+  const candidates = selectAroundTheBay(unused, {
+    limit: BAY_CANDIDATE_POOL,
+    maxPerSource: 4,
+    maxSports: 4,
+    maxRecordEagle: 2,
+    maxUpNorth: options.maxUpNorth ?? 3,
+    now: at,
+  });
 
   return pickFreshAroundForLetter(candidates, bayExclude, BAY_AROUND_MAX);
 }
@@ -420,9 +479,9 @@ export function selectFreshAroundTheBay(
  * Uniqueness:
  * - Yesterday’s published letter only (not the full yesterday edition) for
  *   all sections.
- * - Around + lead also drop collectStaleEditionBayIdentities (editions older
- *   than yesterday) so a weekly recap cannot get its first email slot after
- *   days on the homepage.
+ * - Around + lead also drop collectStaleEditionBayIdentities (cards that sat
+ *   on 2+ older edition days) so a weekly recap cannot get its first email
+ *   slot after days on the homepage. One-shot older cards stay eligible.
  * - When a prior/stale identity hits a cluster, every member URL/title is
  *   excluded so a second-desk rewrite cannot follow.
  *
@@ -447,16 +506,24 @@ export function buildEmailEditionSnapshot(
     clusters,
     priorLetter,
   );
+  const priorTitles = priorBayTitles(priorLetter);
 
   const originals = clusters.filter((c) => c.is_original);
   const leadCluster = originals[0] ?? null;
 
-  // Pull a wide pool, then keep only cards that did not run yesterday /
+  // Rank unused wire first, then keep cards that did not run yesterday /
   // sit as multi-day leftovers. Record-Eagle hard-paywall cap stays at 2.
-  const aroundClusters = selectAroundTheBay(
-    clusters.filter((c) => !c.is_original),
-    { limit: 24, maxPerSource: 4, maxSports: 4, maxRecordEagle: 2 },
+  const unused = clusters.filter(
+    (c) =>
+      !c.is_original && !clusterHitsExcluded(c, bayExclude, priorTitles),
   );
+  const aroundClusters = selectAroundTheBay(unused, {
+    limit: 24,
+    maxPerSource: 4,
+    maxSports: 4,
+    maxRecordEagle: 2,
+    now: at,
+  });
   const around = pickFreshAroundForLetter(
     aroundClusters.map(toAroundCard),
     bayExclude,

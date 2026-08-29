@@ -2,7 +2,7 @@
 import { default as handler } from "./.open-next/worker.js";
 import { snapshotAppDataToBackups } from "./src/lib/data/kv-backup";
 
-const PULL_CRON = "30 11 * * 1-5";
+const PULL_CRON = "30 11 * * 1-6";
 const LETTER_CRON = "0 12 * * 1-6";
 /** 2am America/Detroit during EDT (UTC-4). EST → `0 7 * * *`. */
 const BACKUP_CRON = "0 6 * * *";
@@ -33,14 +33,14 @@ export default {
   },
 
   /**
-   * Weekday morning pull + Mon-Sat Nick-only letter preview + nightly KV→R2
+   * Mon–Sat morning pull + Mon–Sat Nick-only letter preview + nightly KV→R2
    * backup (see wrangler.jsonc triggers.crons). Live/public send is from Desk,
    * not the letter cron. Backup uses TRAVERSE_DATA + TRAVERSE_BACKUPS directly
    * (no WORKER_SELF_REFERENCE, no public HTTP route for the cron itself).
    * On-demand: POST /api/desk/backup (Desk cookie or Bearer).
    *
    * Test locally: wrangler dev --test-scheduled
-   *   curl "http://localhost:8787/__scheduled?cron=30+11+*+*+1-5"
+   *   curl "http://localhost:8787/__scheduled?cron=30+11+*+*+1-6"
    *   curl "http://localhost:8787/__scheduled?cron=0+12+*+*+1-6"
    *   curl "http://localhost:8787/__scheduled?cron=0+6+*+*+*"
    */

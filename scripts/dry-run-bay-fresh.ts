@@ -1,7 +1,8 @@
 /**
  * Dry-run: homepage / dated-edition Around the bay must drop yesterday’s
- * edition cards (and multi-day leftovers / same-story rewrites) — never pad
- * with stale heads. Staff original lead may sit a second day.
+ * edition cards (and same-story rewrites) — never pad with stale heads.
+ * One-shot cards from older days may fill today’s bay. Staff original lead
+ * may sit a second day.
  *
  *   npx tsx scripts/dry-run-bay-fresh.ts
  */
@@ -438,6 +439,173 @@ assert.ok(
 );
 assert.equal(thinEdition.around.length, 2);
 
+// After a full yesterday, one-shot cards from older days (not on yesterday)
+// must still fill today’s bay — do not ban the whole edition archive.
+const mondayOnly = {
+  title: "Monday harbor dredging award announced",
+  url: "https://www.traverseticker.com/news/monday-harbor-dredging/",
+  source_id: "src_ticker",
+} as const;
+const tuesdayOnly = {
+  title: "Tuesday trail bridge inspection wraps",
+  url: "https://www.9and10news.com/2026/08/24/trail-bridge/",
+  source_id: "src_910",
+} as const;
+const boardman910 = {
+  title:
+    "Grand Traverse County Health Department continues Level 2 advisory near source of sewage spill",
+  url: "https://www.9and10news.com/2026/08/27/boardman-sewage-advisory/",
+  source_id: "src_910",
+} as const;
+const boardmanTicker = {
+  title: "No Body Contact Advisory Issued for Boardman River/Lake",
+  url: "https://traverseticker.com/news/no-body-contact-advisory-issued-for-boardman-riverlake/",
+  source_id: "src_ticker",
+} as const;
+
+const fridayEdition: EditionSnapshot = {
+  date: "2026-08-28",
+  captured_at: "2026-08-28T12:00:00.000Z",
+  lead: {
+    title: "Staff original on the bay shoreline",
+    dek: "Owned lead.",
+    url: "https://traverse.news/story/staff-shoreline",
+    published_at: "2026-08-25T11:00:00.000Z",
+    sources: ["traverse.news"],
+    byline: "By traverse.news",
+    slug: "staff-shoreline",
+    is_original: true,
+  },
+  around: STALE_HEADS.map((h) =>
+    bayCard(
+      h.title,
+      h.url,
+      sources.find((s) => s.id === h.source_id)?.name ?? "Wire",
+      "2026-08-28",
+    ),
+  ),
+  events: [],
+  civic: [],
+};
+
+const mondayEdition: EditionSnapshot = {
+  date: "2026-08-24",
+  captured_at: "2026-08-24T12:00:00.000Z",
+  lead: null,
+  around: [
+    bayCard(mondayOnly.title, mondayOnly.url, "The Ticker", "2026-08-24"),
+  ],
+  events: [],
+  civic: [],
+};
+
+const tuesdayEdition: EditionSnapshot = {
+  date: "2026-08-25",
+  captured_at: "2026-08-25T12:00:00.000Z",
+  lead: null,
+  around: [
+    bayCard(tuesdayOnly.title, tuesdayOnly.url, "9&10 News", "2026-08-25"),
+  ],
+  events: [],
+  civic: [],
+};
+
+const saturdayFillStories: Story[] = [
+  ...STALE_HEADS.map((h, i) =>
+    story({
+      id: `sat_stale_${i}`,
+      title: h.title,
+      url: h.url,
+      source_id: h.source_id,
+      published_at: "2026-08-28T15:00:00.000Z",
+    }),
+  ),
+  story({
+    id: "sat_monday",
+    title: mondayOnly.title,
+    url: mondayOnly.url,
+    source_id: mondayOnly.source_id,
+    published_at: "2026-08-24T14:00:00.000Z",
+  }),
+  story({
+    id: "sat_tuesday",
+    title: tuesdayOnly.title,
+    url: tuesdayOnly.url,
+    source_id: tuesdayOnly.source_id,
+    published_at: "2026-08-25T14:00:00.000Z",
+  }),
+  ...FRESH.map((h, i) =>
+    story({
+      id: `sat_fresh_${i}`,
+      title: h.title,
+      url: h.url,
+      source_id: h.source_id,
+      published_at: `2026-08-29T0${Math.min(9, i)}:00:00.000Z`,
+    }),
+  ),
+  story({
+    id: "sat_boardman_910",
+    title: boardman910.title,
+    url: boardman910.url,
+    source_id: boardman910.source_id,
+    published_at: "2026-08-27T16:00:00.000Z",
+  }),
+  story({
+    id: "sat_boardman_ticker",
+    title: boardmanTicker.title,
+    url: boardmanTicker.url,
+    source_id: boardmanTicker.source_id,
+    published_at: "2026-08-26T16:00:00.000Z",
+  }),
+  story({
+    id: "sat_original",
+    title: "Staff original on the bay shoreline",
+    url: "https://traverse.news/story/staff-shoreline",
+    source_id: "src_ticker",
+    published_at: "2026-08-25T11:00:00.000Z",
+    is_original: true,
+    byline: "By traverse.news",
+    slug: "staff-shoreline",
+  }),
+];
+
+const saturdayData = {
+  ...data,
+  stories: saturdayFillStories,
+  editions: [fridayEdition, mondayEdition, tuesdayEdition, oldLeftoverEdition],
+} as unknown as AppData;
+
+const saturday = new Date("2026-08-29T16:00:00.000Z");
+const saturdayEdition = buildEditionSnapshot(saturdayData, saturday);
+assertNoStaleHeads(saturdayEdition.around, "saturday after full friday");
+assert.ok(
+  saturdayEdition.around.some((c) => c.url === mondayOnly.url),
+  "Monday one-shot leftover must be eligible on Saturday",
+);
+assert.ok(
+  saturdayEdition.around.some((c) => c.url === tuesdayOnly.url),
+  "Tuesday one-shot leftover must be eligible on Saturday",
+);
+assert.ok(
+  saturdayEdition.around.length >= BAY_AROUND_MIN_FRESH,
+  `Saturday bay should reach soft minimum when unused stories exist (got ${saturdayEdition.around.length})`,
+);
+const boardmanOnBay = saturdayEdition.around.filter(
+  (c) =>
+    c.url === boardman910.url ||
+    c.url === boardmanTicker.url,
+);
+assert.ok(
+  boardmanOnBay.length <= 1,
+  `Boardman sewage spill must be one card, got ${boardmanOnBay.length}`,
+);
+assert.ok(
+  saturdayEdition.around.some(
+    (c) => c.url === "https://www.traverseticker.com/news/boardman-river-cleanup/",
+  ),
+  "unrelated Boardman cleanup must stay distinct from sewage advisory",
+);
+
 console.log(
-  `dry-run-bay-fresh: ok (edition around=${edition.around.length}, home around=${home.around.length}, thin=${thinEdition.around.length})`,
+  `dry-run-bay-fresh: ok (edition around=${edition.around.length}, home around=${home.around.length}, thin=${thinEdition.around.length}, saturday=${saturdayEdition.around.length})`,
 );

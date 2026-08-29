@@ -24,7 +24,7 @@ GitHub `main` is the only source of truth for live traverse.news. Both this clou
 
 These are live on the Cloudflare Worker (`wrangler.jsonc` crons → `cloudflare-worker.ts` `scheduled`).
 
-- **Weekday 7:30am America/Detroit pull:** cron `30 11 * * 1-5` (EDT) → POST `/api/pull`.
+- **Mon–Sat 7:30am America/Detroit pull:** cron `30 11 * * 1-6` (EDT) → POST `/api/pull`.
 - **Morning letter preview Mon–Sat 8am Detroit:** cron `0 12 * * 1-6` (EDT) → POST `/api/desk/email/send` with `{"preview":true}`. Goes **only** to nickperez@gmail.com (`DESK_LETTER_FALLBACK`), subject prefixed `Preview · `. Idempotent via `morning_letter_preview:YYYY-MM-DD`. Does **not** mark the day as publicly sent. **Live/public send is from Desk** (`/desk/email` → same route without `preview`). Sunday stays off.
 - **Nightly KV backup 2am Detroit:** cron `0 6 * * *` (EDT) → read `TRAVERSE_DATA` key `app_data`, write private R2 `traverse-news-backups` (`TRAVERSE_BACKUPS`) as `kv/YYYY-MM-DD/app_data.json` + `kv/latest.json`. No public HTTP route. Runs on the Worker even when Grok Bot weekly usage is exhausted. Deletes dated `kv/YYYY-MM-DD/` objects older than 30 days when listing is available.
 - **EST:** shift seasonally (pull 12:30 UTC, letter 13:00 UTC, backup 07:00 UTC) — see `wrangler.jsonc` comments.
@@ -36,7 +36,7 @@ These are live on the Cloudflare Worker (`wrangler.jsonc` crons → `cloudflare-
 The Worker owns every job that does not need a signed-in Facebook browser.
 
 **Automatic (crons)**
-- Weekday pull → POST `/api/pull`
+- Mon–Sat pull → POST `/api/pull`
 - Mon–Sat letter preview → POST `/api/desk/email/send` with `{"preview":true}` (that route already calls `snapshotTodaysEmailEdition()`, so `/email/YYYY-MM-DD` is written by the send; no separate archive cron)
 - Nightly KV backup → private R2 `traverse-news-backups`
 

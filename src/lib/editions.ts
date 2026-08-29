@@ -99,9 +99,9 @@ export function buildEditionSnapshot(
 ): EditionSnapshot {
   const clusters = clusterStories(data.stories, data.sources);
   const originals = clusters.filter((c) => c.is_original);
-  // Drop yesterday’s edition bay heads (+ stale multi-day leftovers). Staff
-  // originals only for the lead — never invent a lead or promote wire into it.
-  // Keep today’s original even if the same piece also ran yesterday.
+  // Drop yesterday’s edition bay heads only (not the whole older archive).
+  // Staff originals only for the lead — never invent a lead or promote wire
+  // into it. Keep today’s original even if the same piece also ran yesterday.
   const around = selectFreshAroundTheBay(clusters, data.editions, at);
   const leadCluster = originals[0] ?? null;
 
