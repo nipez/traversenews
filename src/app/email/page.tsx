@@ -15,23 +15,29 @@ export default async function EmailPreviewPage() {
 
   return (
     <PublicShell active="/" header="compact">
-      <div className="mx-auto max-w-2xl">
-        <div className="flex flex-wrap items-baseline justify-end gap-3">
-          <Link
-            href="/email/archive"
-            className="text-sm font-bold text-teal underline-offset-2 hover:underline"
-          >
-            Past mornings
-          </Link>
-        </div>
+      <div className="email-page mx-auto max-w-3xl">
+        <header className="section-type-hero">
+          <p className="section-type-kicker">Monday–Saturday · 8am</p>
+          <h1 className="section-type-hed">Morning email</h1>
+          <p className="section-type-dek">
+            The bay in one letter. News, events, civic, schools, sports.
+          </p>
+        </header>
 
-        <div className="mt-4">
+        <MorningScanSignup variant="page" />
+
+        <p className="email-join-links">
+          <a href="#this-morning">See this morning</a>
+          <span aria-hidden="true"> · </span>
+          <Link href="/email/archive">Past mornings</Link>
+        </p>
+
+        <hr className="email-letter-rule" />
+
+        <section id="this-morning" className="email-this-morning">
+          <p className="email-this-morning-label">This morning</p>
           <MorningLetter letter={letter} mode="preview" />
-        </div>
-
-        <div className="mt-10">
-          <MorningScanSignup variant="box" />
-        </div>
+        </section>
       </div>
     </PublicShell>
   );
