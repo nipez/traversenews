@@ -123,6 +123,12 @@ function normalizeAppData(data: AppData): { data: AppData; scrubbed: boolean } {
   ) {
     data.email_one_off_sends = {};
   }
+  if (!Array.isArray(data.subscribers)) {
+    data.subscribers = [];
+  }
+  if (!Array.isArray(data.unsubscribed)) {
+    data.unsubscribed = [];
+  }
   if (!Array.isArray(data.tips)) {
     data.tips = [];
   }
@@ -498,7 +504,24 @@ export async function addSubscriber(email: string): Promise<Subscriber> {
   const data = await loadStore();
   const normalized = email.trim().toLowerCase();
   const existing = data.subscribers.find((s) => s.email === normalized);
-  if (existing) return existing;
+  if (existing) {
+    // Never leave the same address on both lists.
+    const stillUnsub = (data.unsubscribed ?? []).some(
+      (s) => s.email === normalized,
+    );
+    if (stillUnsub) {
+      data.unsubscribed = (data.unsubscribed ?? []).filter(
+        (s) => s.email !== normalized,
+      );
+      await saveStore(data);
+    }
+    return existing;
+  }
+
+  // Re-subscribe: leave Unsubscribed, join Active with a fresh created_at.
+  data.unsubscribed = (data.unsubscribed ?? []).filter(
+    (s) => s.email !== normalized,
+  );
   const row: Subscriber = {
     email: normalized,
     created_at: new Date().toISOString(),
@@ -508,17 +531,40 @@ export async function addSubscriber(email: string): Promise<Subscriber> {
   return row;
 }
 
-/** Remove an address from the morning-letter list. Idempotent. */
+/**
+ * Move an address from Active (`subscribers`) to `unsubscribed`.
+ * Idempotent if already unsubscribed. Does not invent rows for unknown emails.
+ */
 export async function removeSubscriber(
   email: string,
-): Promise<{ email: string; removed: boolean }> {
+): Promise<{ email: string; moved: boolean; already: boolean }> {
   const data = await loadStore();
   const normalized = email.trim().toLowerCase();
-  const before = data.subscribers.length;
+  const active = data.subscribers.find((s) => s.email === normalized);
+  const alreadyRow = (data.unsubscribed ?? []).find(
+    (s) => s.email === normalized,
+  );
+
+  if (!active) {
+    if (alreadyRow) {
+      return { email: normalized, moved: false, already: true };
+    }
+    return { email: normalized, moved: false, already: false };
+  }
+
   data.subscribers = data.subscribers.filter((s) => s.email !== normalized);
-  const removed = data.subscribers.length < before;
-  if (removed) await saveStore(data);
-  return { email: normalized, removed };
+  if (!alreadyRow) {
+    data.unsubscribed = [
+      ...(data.unsubscribed ?? []),
+      {
+        email: normalized,
+        unsubscribed_at: new Date().toISOString(),
+        created_at: active.created_at,
+      },
+    ];
+  }
+  await saveStore(data);
+  return { email: normalized, moved: true, already: false };
 }
 
 const TIPS_SOFT_CAP = 200;

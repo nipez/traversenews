@@ -248,6 +248,7 @@ const data = {
   athletics: [],
   schools: [],
   subscribers: [],
+  unsubscribed: [],
   tips: [],
   event_tips: [],
   last_pull_at: null,

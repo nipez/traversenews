@@ -160,6 +160,14 @@ export type Subscriber = {
   created_at: string;
 };
 
+/** Opted out of the morning letter. Desk-only history — never mailed. */
+export type UnsubscribedSubscriber = {
+  email: string;
+  unsubscribed_at: string;
+  /** Original signup time when known (preserved on move). */
+  created_at?: string;
+};
+
 /** Reader tip / correction. Desk-only until staff act — never auto-published. */
 export type Tip = {
   id: string;
@@ -347,7 +355,13 @@ export type AppData = {
    * Tonight / What's on / civic.
    */
   shows: ShowListing[];
+  /** Active morning-letter list. resolveLetterRecipients reads only this. */
   subscribers: Subscriber[];
+  /**
+   * Former signups who opted out. Desk history only — never mailed.
+   * Missing on older KV blobs; normalize to [].
+   */
+  unsubscribed: UnsubscribedSubscriber[];
   /** Public tip form submissions. Newest first in Desk. */
   tips: Tip[];
   /** Reader event suggestions. Pending until Desk confirms into `events`. */

@@ -52,7 +52,13 @@ export function DeskSubscribers({
   }
 
   async function onDelete(email: string) {
-    if (!window.confirm(`Remove ${email} from the morning-scan list?`)) return;
+    if (
+      !window.confirm(
+        `Move ${email} to Unsubscribed? They will stop getting the morning letter.`,
+      )
+    ) {
+      return;
+    }
     setBusy(`del:${email}`);
     setError("");
     setFlash("");
@@ -63,11 +69,11 @@ export function DeskSubscribers({
         body: JSON.stringify({ email }),
       });
       const json = (await res.json()) as { error?: string };
-      if (!res.ok) throw new Error(json.error || "Delete failed");
-      setFlash(`Removed ${email}.`);
+      if (!res.ok) throw new Error(json.error || "Remove failed");
+      setFlash(`Moved ${email} to Unsubscribed.`);
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Delete failed");
+      setError(err instanceof Error ? err.message : "Remove failed");
     } finally {
       setBusy(null);
     }
