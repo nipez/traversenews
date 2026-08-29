@@ -4,6 +4,7 @@
 interface __BaseEnv_CloudflareEnv {
 	TRAVERSE_DATA: KVNamespace;
 	TRAVERSE_MEDIA: R2Bucket;
+	TRAVERSE_BACKUPS: R2Bucket;
 	ASSETS: Fetcher;
 	NEXT_PUBLIC_SUPABASE_URL: string;
 	NEXT_PUBLIC_SUPABASE_ANON_KEY: string;

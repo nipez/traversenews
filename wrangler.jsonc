@@ -25,6 +25,12 @@
     {
       "binding": "TRAVERSE_MEDIA",
       "bucket_name": "traverse-news-media"
+    },
+    {
+      // Private backups only. Public r2.dev access stays off.
+      // Do not use traverse-news-media (public photos) for KV snapshots.
+      "binding": "TRAVERSE_BACKUPS",
+      "bucket_name": "traverse-news-backups"
     }
   ],
   "vars": {
@@ -34,7 +40,9 @@
     // Weekday pull 7:30am America/Detroit (EDT = UTC-4 → 11:30 UTC).
     // Morning letter preview (Nick only) Mon-Sat 8:00am America/Detroit
     // (EDT → 12:00 UTC). Live/public send is from Desk, not this cron.
+    // KV app_data → private R2 traverse-news-backups at 2:00am America/Detroit
+    // (EDT → 06:00 UTC). EST should shift to 0 7 * * * (pull 12:30, letter 13:00).
     // Do not change these schedules without Nick's say-so.
-    "crons": ["30 11 * * 1-5", "0 12 * * 1-6"]
+    "crons": ["30 11 * * 1-5", "0 12 * * 1-6", "0 6 * * *"]
   }
 }
