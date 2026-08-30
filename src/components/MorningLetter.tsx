@@ -72,8 +72,8 @@ export function MorningLetter({
 
       <p className="mt-5 font-serif text-[1.05rem] leading-relaxed text-muted-2">
         {letter.lead
-          ? "Good morning. Here's the bay, then what's on tonight."
-          : "Good morning. Here's the rest of the town from other desks, then what's on tonight."}
+          ? "Good morning. Here's the bay, then what's coming up."
+          : "Good morning. Here's the rest of the town from other desks, then what's coming up."}
       </p>
 
       {letter.lead ? (
@@ -156,7 +156,7 @@ export function MorningLetter({
 
       <div className="mt-6 border border-ink bg-peach p-4">
         <p className="text-[0.65rem] font-extrabold tracking-[0.1em] text-ink uppercase">
-          Tonight
+          Coming up
         </p>
         <ul className="mt-2 space-y-2 text-sm">
           {letter.tonight.map((e) => (
@@ -176,7 +176,7 @@ export function MorningLetter({
             </li>
           ))}
           {letter.tonight.length === 0 ? (
-            <li className="text-muted">No night-out listings yet.</li>
+            <li className="text-muted">No concerts or community listings yet.</li>
           ) : null}
         </ul>
       </div>
