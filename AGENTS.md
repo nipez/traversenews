@@ -70,7 +70,7 @@ The Worker owns every job that does not need a signed-in Facebook browser.
 
    (default `source_id`: `src_visit_events`). See README → Browser event import.
 
-4. For movie / theatre pages blocked from the Worker (AMC, Old Town Playhouse, Bay Theatre JS app), land listings with:
+4. For movie / theatre pages blocked from the Worker (AMC, Old Town Playhouse, Bay Theatre JS app, City Opera House), land listings with:
 
    `POST /api/desk/shows/import`
 

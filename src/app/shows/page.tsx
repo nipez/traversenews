@@ -36,6 +36,10 @@ const VENUE_LINKS = [
     name: "Old Town Playhouse",
     href: "https://www.oldtownplayhouse.com/",
   },
+  {
+    name: "City Opera House",
+    href: "https://www.cityoperahouse.org/",
+  },
 ];
 
 export default async function ShowsPage() {

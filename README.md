@@ -229,9 +229,9 @@ curl -X POST https://traverse-news.nickperez.workers.dev/api/desk/events/import 
 - First handoff URL: https://www.traversecity.com/events/
 - Do **not** re-import wrong Sunday rows for Saturday markets (Sara Hardy, Bubbly Brunch, etc.).
 
-### Browser shows import (AMC / Bay / Old Town)
+### Browser shows import (AMC / Bay / Old Town / City Opera)
 
-Movies and live theatre live on `/shows`, never `/whats-on`. Cloudflare / IP blocks mean the Worker cannot pull AMC, Old Town Playhouse, or the Bay Theatre JS app. **Do not invent showtimes.** Group by title — do not dump a 14-screen grid as separate rows.
+Movies and live theatre live on `/shows`, never `/whats-on`. Cloudflare / IP blocks mean the Worker cannot pull AMC, Old Town Playhouse, the Bay Theatre JS app, or City Opera House. **Do not invent showtimes.** Group by title — do not dump a 14-screen grid as separate rows.
 
 ```bash
 curl -X POST https://traverse-news.nickperez.workers.dev/api/desk/shows/import \
@@ -252,8 +252,8 @@ curl -X POST https://traverse-news.nickperez.workers.dev/api/desk/shows/import \
   }'
 ```
 
-- Source ids: `src_state_theatre`, `src_bay_theatre`, `src_elk_cinema`, `src_amc_cherry`, `src_oldtown`.
-- State Theatre + Elk Rapids have Worker HTML pulls; AMC / Bay / OTP are import-only until a browser pull lands.
+- Source ids: `src_state_theatre`, `src_bay_theatre`, `src_elk_cinema`, `src_amc_cherry`, `src_oldtown`, `src_city_opera`.
+- State Theatre + Elk Rapids have Worker HTML pulls; AMC / Bay / OTP / City Opera are import-only until a browser pull lands.
 - Date-only `starts_at` → midnight Detroit + blank clock display (never invent noon).
 
 ### Browser story import (Facebook alerts)
