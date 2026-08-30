@@ -22,8 +22,11 @@ export function TonightBlock({
     <section className={`tonight-well ${className}`.trim()}>
       <div className="tonight-head">
         <div>
-          <p className="tonight-kicker">Night out</p>
-          <h2 className="tonight-hed">Tonight</h2>
+          <p className="tonight-kicker">Local happenings</p>
+          <h2 className="tonight-hed">Coming up</h2>
+          <p className="tonight-dek">
+            Concerts, markets, and things to do around the bay.
+          </p>
         </div>
         {showStamp ? (
           <Image
