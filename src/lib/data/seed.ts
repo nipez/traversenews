@@ -401,6 +401,17 @@ const sources: Source[] = [
       "Shows (/shows), never Events. IP-blocked from datacenter. Traverse News pulls on the box → POST /api/desk/shows/import. Never invent titles or dates.",
   },
   {
+    id: "src_city_opera",
+    name: "City Opera House",
+    homepage: "https://www.cityoperahouse.org/",
+    feed_url: "https://www.cityoperahouse.org/events",
+    pull_method: "html",
+    beat_id: "beat_shows",
+    enabled: true,
+    notes:
+      "Shows (/shows), never Events. If Worker empty, Traverse News → POST /api/desk/shows/import. Never invent titles, dates, or times.",
+  },
+  {
     id: "src_state_theatre",
     name: "State Theatre / Bijou",
     homepage: "https://stateandbijou.org/",
