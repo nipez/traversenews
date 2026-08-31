@@ -22,11 +22,30 @@ export type SiteHero = {
   dek: string;
 };
 
+export type SiteOutboundLink = {
+  name: string;
+  href: string;
+};
+
+export type SiteAlertSource = {
+  id: string;
+  label: string;
+};
+
 export type SitePageCopyDefaults = {
   eventsDek: string;
   aboutTitle: string;
   aboutDek: string;
   aboutBody: string;
+  /** Homepage Coming up dek. */
+  comingUpDek: string;
+  emailPageDek: string;
+  letterGreetingLead: string;
+  letterGreetingNoLead: string;
+  showsDek: string;
+  sportsDek: string;
+  /** Desk home / Alerts hint. */
+  deskAlertHint: string;
 };
 
 export type NetworkCity = {
@@ -77,6 +96,9 @@ export type SiteConfig = {
   /** Places that must keep reserved Around slots (e.g. Dexter). */
   reservedPlaces: string[];
   pageCopy: SitePageCopyDefaults;
+  sportsBeatLinks: SiteOutboundLink[];
+  showsVenueLinks: SiteOutboundLink[];
+  alertSources: SiteAlertSource[];
 };
 
 export type SourceMeta = {

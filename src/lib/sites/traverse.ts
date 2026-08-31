@@ -37,6 +37,17 @@ export const TRAVERSE_SITE: SiteConfig = {
   pageCopy: {
     eventsDek:
       "Concerts, festivals, markets, library programs. Meetings live on [Civic](/civic). Something missing? [Let us know](#event-tip)",
+    comingUpDek: "Concerts, markets, and things to do around the bay.",
+    emailPageDek: "The bay in one letter. News, events, civic, schools, sports.",
+    letterGreetingLead:
+      "Good morning. Here's the bay, then what's coming up.",
+    letterGreetingNoLead:
+      "Good morning. Here's the rest of the town from other desks, then what's coming up.",
+    showsDek: "Movies and live theatre around the bay.",
+    sportsDek:
+      "Headlines from 9&10 Sports, Record-Eagle Sports, and local prep across the greater bay.",
+    deskAlertHint:
+      "Saw a Grand Traverse 911 or Ticker Facebook post? Paste the URL on the Desk — no chat needed.",
     aboutTitle: "About traverse.news",
     aboutDek: "A Traverse City desk. One place to read the bay.",
     aboutBody: `## Why this exists
@@ -73,4 +84,52 @@ We will not dump group-chat accusations onto the homepage. Complaint pile-ons, d
 
 We will not publish a calendar item we cannot point back to.`,
   },
+  sportsBeatLinks: [
+    {
+      name: "9&10 Sports",
+      href: "https://www.9and10news.com/sports/",
+    },
+    {
+      name: "Record-Eagle Sports",
+      href: "https://www.record-eagle.com/sports/",
+    },
+    {
+      name: "Record-Eagle Local Sports",
+      href: "https://www.record-eagle.com/sports/local_sports/",
+    },
+  ],
+  showsVenueLinks: [
+    {
+      name: "State Theatre / Bijou",
+      href: "https://stateandbijou.org/",
+    },
+    {
+      name: "The Bay Theatre",
+      href: "https://thebaytheatre.org/",
+    },
+    {
+      name: "Elk Rapids Cinema",
+      href: "https://www.elkrapidscinema.com/",
+    },
+    {
+      name: "AMC Cherry Blossom 14",
+      href: "https://www.amctheatres.com/movie-theatres/traverse-city-mi/amc-cherry-blossom-14",
+    },
+    {
+      name: "Old Town Playhouse",
+      href: "https://www.oldtownplayhouse.com/",
+    },
+    {
+      name: "City Opera House",
+      href: "https://www.cityoperahouse.org/",
+    },
+    {
+      name: "The Alluvion",
+      href: "https://www.thealluvion.org/",
+    },
+  ],
+  alertSources: [
+    { id: "src_gt911", label: "Grand Traverse 911" },
+    { id: "src_ticker_fb", label: "Ticker Facebook" },
+  ],
 };

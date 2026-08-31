@@ -3,7 +3,11 @@ import {
   isDateOnlyStartsAt,
   parseEventStartsAt,
 } from "@/lib/dates";
-import { SCHOOL_CALENDAR_SOURCE_IDS, shortHash } from "@/lib/events";
+import {
+  isSchoolCalendarSource,
+  SCHOOL_CALENDAR_SOURCE_IDS,
+  shortHash,
+} from "@/lib/events";
 import { getSiteId } from "@/lib/sites";
 import {
   ANN_ARBOR_SCHOOL_DISTRICT_CALENDAR_PDF_URLS,
@@ -12,7 +16,7 @@ import {
   ANN_ARBOR_SCHOOL_DISTRICT_ORDER,
   annArborDistrictFromSourceId,
 } from "@/lib/sites/ann-arbor/schools";
-import type { SchoolCalendarItem, Source } from "@/lib/types";
+import type { EventItem, SchoolCalendarItem, Source } from "@/lib/types";
 
 /** Soft ceiling for district academic calendar rows (not a full season dump). */
 export const MAX_STORED_SCHOOLS = 300;
@@ -288,6 +292,38 @@ export function getSchoolCalendarPdfUrls(): Record<string, string> {
 
 export function stableSchoolId(sourceId: string, uid: string): string {
   return `sch_${shortHash(`${sourceId}:${uid}`)}`;
+}
+
+/**
+ * Turn Worker-pulled ICS rows into /schools items.
+ * Important dates only — never invents half days; drops PTA/sports noise.
+ * School calendars must not stay in `events`.
+ */
+export function schoolItemsFromEvents(
+  events: EventItem[],
+): SchoolCalendarItem[] {
+  const items: SchoolCalendarItem[] = [];
+  for (const event of events) {
+    if (!isSchoolCalendarSource(event.source_id)) continue;
+    if (!isImportantSchoolDate(event.title)) continue;
+    const uid = event.url
+      ? `${event.url}|${event.starts_at}`
+      : `${event.title}|${event.starts_at}`;
+    const timeUnknown =
+      event.time_unknown === true || isDateOnlyStartsAt(event.starts_at);
+    const item: SchoolCalendarItem = {
+      id: stableSchoolId(event.source_id, uid),
+      title: event.title,
+      starts_at: event.starts_at,
+      place: event.place?.trim() || "District",
+      url: event.url,
+      source_id: event.source_id,
+      district: districtFromSourceId(event.source_id),
+    };
+    if (timeUnknown) item.time_unknown = true;
+    items.push(item);
+  }
+  return items;
 }
 
 /**

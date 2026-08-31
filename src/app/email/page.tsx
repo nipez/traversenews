@@ -3,6 +3,7 @@ import { MorningLetter } from "@/components/MorningLetter";
 import { MorningScanSignup } from "@/components/MorningScanSignup";
 import { PublicShell } from "@/components/PublicShell";
 import { getEmailPreviewData } from "@/lib/queries";
+import { getSite } from "@/lib/sites";
 
 export const dynamic = "force-dynamic";
 
@@ -19,9 +20,7 @@ export default async function EmailPreviewPage() {
         <header className="section-type-hero">
           <p className="section-type-kicker">Monday–Saturday · 8am</p>
           <h1 className="section-type-hed">Morning email</h1>
-          <p className="section-type-dek">
-            The bay in one letter. News, events, civic, schools, sports.
-          </p>
+          <p className="section-type-dek">{getSite().pageCopy.emailPageDek}</p>
         </header>
 
         <MorningScanSignup variant="page" />

@@ -263,6 +263,9 @@ const NIGHT_OUT_SOURCES = new Set([
   "src_pride",
   "src_cherry",
   "src_ticker_cal",
+  "src_visit_annarbor",
+  "src_aadl_events",
+  "src_reader_events",
 ]);
 
 export function looksLikeMeeting(title: string): boolean {
@@ -277,6 +280,8 @@ export function looksLikeMeeting(title: string): boolean {
     t.includes("city council") ||
     t.includes("planning commission") ||
     t.includes("tcaps") ||
+    t.includes("aaps") ||
+    t.includes("ann arbor public schools") ||
     /\bagenda\b/.test(t)
   );
 }

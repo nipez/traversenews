@@ -4,27 +4,22 @@ import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import type { Story } from "@/lib/types";
 
-const ALERT_SOURCES = [
-  { id: "src_gt911", label: "Grand Traverse 911" },
-  { id: "src_ticker_fb", label: "Ticker Facebook" },
-] as const;
-
-type AlertSourceId = (typeof ALERT_SOURCES)[number]["id"];
-
 function normalizeUrl(url: string): string {
   return url.trim().replace(/\/+$/, "").toLowerCase();
 }
 
 export function AddAlertForm({
   existingAlerts,
+  sources,
 }: {
   existingAlerts: Pick<Story, "id" | "title" | "url" | "source_id">[];
+  sources: Array<{ id: string; label: string }>;
 }) {
   const router = useRouter();
   const [url, setUrl] = useState("");
   const [title, setTitle] = useState("");
   const [dek, setDek] = useState("");
-  const [sourceId, setSourceId] = useState<AlertSourceId>("src_gt911");
+  const [sourceId, setSourceId] = useState(sources[0]?.id ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -186,10 +181,10 @@ export function AddAlertForm({
           <select
             className="input mt-1 w-full"
             value={sourceId}
-            onChange={(e) => setSourceId(e.target.value as AlertSourceId)}
+            onChange={(e) => setSourceId(e.target.value)}
             disabled={saving}
           >
-            {ALERT_SOURCES.map((s) => (
+            {sources.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.label}
               </option>
@@ -202,9 +197,12 @@ export function AddAlertForm({
             <p className="font-medium">URL already in the Alerts strip</p>
             <p className="mt-1 text-muted">
               “{pendingDuplicate.title}”
-              {pendingDuplicate.source_id === "src_ticker_fb"
-                ? " · Ticker Facebook"
-                : " · Grand Traverse 911"}
+              {(() => {
+                const label = sources.find(
+                  (s) => s.id === pendingDuplicate.source_id,
+                )?.label;
+                return label ? ` · ${label}` : "";
+              })()}
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               <button

@@ -18,21 +18,6 @@ export const metadata = {
   title: "Sports",
 };
 
-const SPORTS_BEAT_LINKS = [
-  {
-    name: "9&10 Sports",
-    href: "https://www.9and10news.com/sports/",
-  },
-  {
-    name: "Record-Eagle Sports",
-    href: "https://www.record-eagle.com/sports/",
-  },
-  {
-    name: "Record-Eagle Local Sports",
-    href: "https://www.record-eagle.com/sports/local_sports/",
-  },
-];
-
 function SportsList({ items }: { items: PublicSportsStoryCard[] }) {
   if (items.length === 0) {
     return (
@@ -83,7 +68,7 @@ export default async function SportsPage() {
         kicker="Scores & prep"
         title="Sports"
         header={headers.headers.sports}
-        dek="Headlines from 9&10 Sports, Record-Eagle Sports, and local prep across the greater bay."
+        dek={getSite().pageCopy.sportsDek}
       />
       <div className="about-layout sports-layout">
         <div className="about-essay sports-main">
@@ -109,7 +94,7 @@ export default async function SportsPage() {
           </p>
         </div>
 
-        <DeskRail active="/sports" sportsBeats={SPORTS_BEAT_LINKS} />
+        <DeskRail active="/sports" sportsBeats={getSite().sportsBeatLinks} />
       </div>
     </PublicShell>
   );

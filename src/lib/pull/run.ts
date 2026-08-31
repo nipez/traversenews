@@ -3,6 +3,7 @@ import {
   loadStore,
   replacePulledEvents,
   replacePulledStories,
+  replaceSchoolCalendarItems,
   replaceShowListings,
   saveStore,
   snapshotTodaysEdition,
@@ -13,7 +14,9 @@ import { pullHtmlEvents } from "@/lib/pull/html-events";
 import { pullHtmlShows } from "@/lib/pull/html-shows";
 import { pullIcsSource } from "@/lib/pull/ics";
 import { pullRssSource } from "@/lib/pull/rss";
-import type { EventItem, ShowListing, Story } from "@/lib/types";
+import { schoolItemsFromEvents } from "@/lib/schools";
+import { isSchoolCalSource } from "@/lib/source-lanes";
+import type { EventItem, SchoolCalendarItem, ShowListing, Story } from "@/lib/types";
 
 export type PullResult = {
   ok: boolean;
@@ -64,6 +67,7 @@ async function runPullInner(): Promise<PullResult> {
   const pulledStories: Story[] = [];
   const pulledEvents: EventItem[] = [];
   const pulledShows: ShowListing[] = [];
+  const pulledSchools: SchoolCalendarItem[] = [];
   const pulledAt = new Date().toISOString();
   const touch = new Map<
     string,
@@ -78,7 +82,11 @@ async function runPullInner(): Promise<PullResult> {
         touch.set(source.id, { ok: true, error: null, attempted: true });
       } else if (source.pull_method === "ics") {
         const items = await pullIcsSource(source);
-        pulledEvents.push(...items);
+        if (isSchoolCalSource(source, source.id)) {
+          pulledSchools.push(...schoolItemsFromEvents(items));
+        } else {
+          pulledEvents.push(...items);
+        }
         touch.set(source.id, { ok: true, error: null, attempted: true });
       } else if (
         source.pull_method === "html" &&
@@ -171,6 +179,12 @@ async function runPullInner(): Promise<PullResult> {
       ...new Set(pulledEvents.map((e) => e.source_id)),
     ];
     await replacePulledEvents(pulledEvents, icsSourceIds);
+  }
+  if (pulledSchools.length > 0) {
+    const schoolSourceIds = [
+      ...new Set(pulledSchools.map((s) => s.source_id)),
+    ];
+    await replaceSchoolCalendarItems(pulledSchools, schoolSourceIds);
   }
   if (pulledShows.length > 0) {
     const showSourceIds = [...new Set(pulledShows.map((s) => s.source_id))];

@@ -2,7 +2,14 @@ import { ANN_ARBOR_SITE } from "@/lib/sites/ann-arbor";
 import { TRAVERSE_SITE } from "@/lib/sites/traverse";
 import type { NetworkCity, SiteConfig, SiteId } from "@/lib/sites/types";
 
-export type { NetworkCity, SiteConfig, SiteId, SourceLane } from "@/lib/sites/types";
+export type {
+  NetworkCity,
+  SiteAlertSource,
+  SiteConfig,
+  SiteId,
+  SiteOutboundLink,
+  SourceLane,
+} from "@/lib/sites/types";
 
 const SITES: Record<SiteId, SiteConfig> = {
   traverse: TRAVERSE_SITE,

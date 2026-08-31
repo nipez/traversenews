@@ -64,7 +64,9 @@ export function MorningLetter({
     <div className="morning-letter border border-ink bg-paper p-5 md:p-8">
       <div className="morning-letter-head flex items-baseline justify-between gap-3 border-b-2 border-ink pb-3">
         <p className="wordmark wordmark-ink text-[1.4rem]">
-          traverse<span className="wordmark-dot">.</span>news
+          {getSite().wordmarkPrimary}
+          <span className="wordmark-dot">.</span>
+          {getSite().wordmarkTld}
         </p>
         <p className="morning-letter-date text-[0.65rem] font-extrabold tracking-[0.08em] text-muted uppercase">
           {emailDateLabel(dateObj)}
@@ -73,8 +75,8 @@ export function MorningLetter({
 
       <p className="mt-5 font-serif text-[1.05rem] leading-relaxed text-muted-2">
         {letter.lead
-          ? "Good morning. Here's the bay, then what's coming up."
-          : "Good morning. Here's the rest of the town from other desks, then what's coming up."}
+          ? getSite().pageCopy.letterGreetingLead
+          : getSite().pageCopy.letterGreetingNoLead}
       </p>
 
       {letter.lead ? (

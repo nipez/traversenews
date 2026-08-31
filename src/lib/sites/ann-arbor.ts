@@ -42,6 +42,18 @@ export const ANN_ARBOR_SITE: SiteConfig = {
   pageCopy: {
     eventsDek:
       "Concerts, festivals, markets, library programs. Meetings live on [Civic](/civic). Something missing? [Let us know](#event-tip)",
+    comingUpDek: "Concerts, markets, and things to do around town.",
+    emailPageDek:
+      "The town in one letter. News, events, civic, schools, sports.",
+    letterGreetingLead:
+      "Good morning. Here's the town, then what's coming up.",
+    letterGreetingNoLead:
+      "Good morning. Here's the rest of the town from other desks, then what's coming up.",
+    showsDek: "Movies and live theatre around town.",
+    sportsDek:
+      "Area high-school games and sports headlines — not University of Michigan varsity.",
+    deskAlertHint:
+      "Saw an official Ann Arbor Police or Washtenaw press post? Paste the URL on the Desk — no chat needed.",
     aboutTitle: "About a2.news",
     aboutDek: "An Ann Arbor / Dexter desk. One place to read the town.",
     aboutBody: `## Why this exists
@@ -80,4 +92,40 @@ We will not publish a calendar item we cannot point back to.
 
 We will not treat U-M varsity as local high-school sports.`,
   },
+  sportsBeatLinks: [
+    {
+      name: "Pioneer HS Athletics",
+      href: "https://pioneerathletics.arbitersports.com/",
+    },
+    {
+      name: "Skyline HS Athletics",
+      href: "https://skylineathletics.arbitersports.com/",
+    },
+    {
+      name: "Huron HS Athletics",
+      href: "https://huronsports.arbitersports.com/",
+    },
+    {
+      name: "Dexter HS Athletics",
+      href: "https://dexterathletics.arbitersports.com/",
+    },
+  ],
+  showsVenueLinks: [
+    {
+      name: "The Ark",
+      href: "https://theark.org/",
+    },
+    {
+      name: "Marquee Arts",
+      href: "https://marquee-arts.org/",
+    },
+    {
+      name: "UMS",
+      href: "https://ums.org/",
+    },
+  ],
+  alertSources: [
+    { id: "src_a2_police_news", label: "Ann Arbor Police" },
+    { id: "src_washtenaw_press", label: "Washtenaw County press" },
+  ],
 };
