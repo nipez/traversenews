@@ -1,10 +1,12 @@
 /**
  * Dry-run: Saturday-style morning letter subject prefers 3 news phrases,
  * maps Stimson reconstruction to "Stimson Street Project", and skips sports.
- * Also refuses the 8/31 truncated failures ("Driver Charged in Center",
- * "Sheriff's office looking").
+ * Also refuses truncated failures — first 8/31 ("Driver Charged in Center",
+ * "Sheriff's office looking") and the second preview ("Teaching Kids in the
+ * Age", sheriff looking, Center stump).
  *
  *   npx tsx scripts/dry-run-letter-subject.ts
+ *   npm run dry-run:letter-subject
  */
 import assert from "node:assert/strict";
 import { buildMorningLetterSubject } from "../src/lib/email-letter";
@@ -194,6 +196,129 @@ assert.ok(
   `broken-only must compress to parseable phrases: ${brokenSubject}`,
 );
 
+// --- Second 8/31 preview: Age stump + sheriff looking + Center ---
+const SECOND_PREVIEW_BROKEN =
+  "🗞️ Leelanau housing survey · Sheriff's office looking · Teaching Kids in the Age";
+
+const secondPreviewSnapshot: EmailEditionSnapshot = {
+  date: "2026-08-31",
+  captured_at: "2026-08-31T12:00:00.000Z",
+  lead: null,
+  around: [
+    {
+      title:
+        "Work in Leelanau Co. but can't afford to live there? Housing advocates want to hear from you",
+      dek: "Housing survey.",
+      url: "https://www.interlochenpublicradio.org/2026-08-24/leelanau-housing",
+      sources: ["IPR News"],
+    },
+    {
+      title:
+        "Sheriff's office looking for witnesses after weekend crash near Acme",
+      dek: "Witnesses sought.",
+      url: "https://www.traverseticker.com/news/sheriff-crash-witnesses/",
+      sources: ["The Ticker"],
+    },
+    {
+      title: "Teaching Kids in the Age of Artificial Intelligence",
+      dek: "Classroom AI.",
+      url: "https://www.traverseticker.com/news/teaching-kids-ai/",
+      sources: ["The Ticker"],
+    },
+  ],
+  alerts: [],
+  tonight: [],
+  civic: [],
+  sports: [],
+};
+
+const secondPreview = buildMorningLetterSubject(secondPreviewSnapshot);
+assert.notEqual(secondPreview, SECOND_PREVIEW_BROKEN);
+assert.doesNotMatch(
+  secondPreview,
+  /Sheriff'?s office looking\b|Teaching Kids in the Age(?! of AI)|Driver Charged in Center(?! Road)/i,
+);
+// Three broken tails must never appear as subject slots.
+assert.ok(
+  !/Sheriff'?s office looking\b/i.test(secondPreview),
+  `must refuse dangling looking: ${secondPreview}`,
+);
+assert.ok(
+  !/Teaching Kids in the Age(?! of AI)/i.test(secondPreview),
+  `must refuse Age stump: ${secondPreview}`,
+);
+assert.ok(
+  !/Driver Charged in Center(?! Road)/i.test(secondPreview),
+  `must refuse Center stump: ${secondPreview}`,
+);
+assert.match(secondPreview, /Leelanau housing survey/);
+assert.match(secondPreview, /Sheriff seeks crash witnesses/);
+assert.ok(
+  /Teaching kids in the age of AI|Teaching kids on AI|TCAPS on classroom AI/i.test(
+    secondPreview,
+  ) || secondPreview.split(" · ").length === 2,
+  `classroom AI must compress or yield 2 complete phrases, got: ${secondPreview}`,
+);
+assert.ok(
+  !/\bSheriff seeks tips\b/.test(secondPreview),
+  `witnesses must not compress to generic tips: ${secondPreview}`,
+);
+const secondLen = secondPreview.replace(/^🗞️\s*/, "").length;
+assert.ok(secondLen <= 84, `second preview phrase length ${secondLen} must be ≤84`);
+assert.ok(
+  secondPreview.split(" · ").length >= 2,
+  `expected ≥2 complete phrases: ${secondPreview}`,
+);
+
+// Force recut path: long complete phrases that exceed soft cap — never Age stump.
+const recutSnapshot: EmailEditionSnapshot = {
+  date: "2026-08-31",
+  captured_at: "2026-08-31T12:00:00.000Z",
+  lead: null,
+  around: [
+    {
+      title:
+        "Work in Leelanau Co. but can't afford to live there? Housing advocates want to hear from you",
+      dek: "",
+      url: "https://ipr.org/leelanau",
+      sources: ["IPR News"],
+    },
+    {
+      title:
+        "Grand Traverse County Sheriff's office looking for witnesses after weekend crash",
+      dek: "",
+      url: "https://ticker.example/sheriff-witnesses",
+      sources: ["The Ticker"],
+    },
+    {
+      title: "TCAPS workshop: Teaching Kids in the Age of Artificial Intelligence",
+      dek: "",
+      url: "https://ticker.example/tcaps-ai",
+      sources: ["The Ticker"],
+    },
+  ],
+  alerts: [],
+  tonight: [],
+  civic: [],
+  sports: [],
+};
+const recutSubject = buildMorningLetterSubject(recutSnapshot);
+assert.notEqual(recutSubject, SECOND_PREVIEW_BROKEN);
+assert.doesNotMatch(
+  recutSubject,
+  /Sheriff'?s office looking\b|Teaching Kids in the Age(?! of AI)|in the Age ·|in the Age$/i,
+);
+assert.match(recutSubject, /Leelanau housing survey/);
+assert.ok(
+  /Sheriff seeks crash witnesses/i.test(recutSubject),
+  `recut from original titles must see witnesses: ${recutSubject}`,
+);
+assert.ok(
+  /TCAPS on classroom AI|Teaching kids in the age of AI/i.test(recutSubject) ||
+    recutSubject.split(" · ").length === 2,
+  `recut must compress AI or drop to 2 complete phrases: ${recutSubject}`,
+);
+
 console.log(
-  `dry-run-letter-subject: ok\n  subject=${subject}\n  phraseLen=${phraseLen}\n  aug31=${aug31}\n  brokenOnly=${brokenSubject}`,
+  `dry-run-letter-subject: ok\n  subject=${subject}\n  phraseLen=${phraseLen}\n  aug31=${aug31}\n  brokenOnly=${brokenSubject}\n  secondPreview=${secondPreview}\n  recut=${recutSubject}`,
 );
