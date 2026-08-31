@@ -149,7 +149,7 @@ We will not treat U-M varsity as local high-school sports.`,
     },
     {
       name: "Washtenaw County calendar",
-      href: "https://www.washtenaw.org/Calendar.aspx",
+      href: "https://washtenawcomi.portal.civicclerk.com",
     },
   ],
   alertSources: [

@@ -107,18 +107,16 @@ npm run deploy:ann-arbor
 
 Desk **Cities** menu links each instance `/desk`. Same staff password for now. A city-only cultivator later: set `STAFF_SITES=ann-arbor` on that Worker.
 
-**Worker already reads** (printed times only): City Legistar (`src_a2_legistar`), City newsroom headlines (`src_a2_news`), The Ark event pages (`src_ark_events`), UMS season dates (`src_ums_events`, `time_unknown`), Marquee live events (`src_marquee_events`) and film clocks (`src_marquee_shows`). AAPS Google ICS → `/schools` (all-day = `time_unknown`, not 8:00 PM).
+**Worker already reads** (printed times only): City Legistar (`src_a2_legistar`), City newsroom headlines (`src_a2_news`), The Ark event pages (`src_ark_events`), UMS season dates (`src_ums_events`, `time_unknown`), Marquee live events (`src_marquee_events`) and film clocks (`src_marquee_shows`), AADL upcoming cards (`src_aadl_events`), Washtenaw CivicClerk OData (`src_washtenaw_calendar`). AAPS Google ICS + Dexter Finalsite ICS → `/schools` (all-day = `time_unknown`, not 8:00 PM).
 
-**Need Traverse News to pull** (datacenter 403 / JS):
+**Need a home-browser scrape** (datacenter 403 / JS / Facebook):
 
-- https://www.annarbor.org/events/
-- https://www.washtenaw.org/Calendar.aspx
-- https://aadl.org/events
-- https://www.dexterschools.org/district/calendar
+- https://www.annarbor.org/events/ (Simpleview — cloud 403)
 - Pioneer / Skyline / Huron / Dexter ArbiterLive fronts
+- Facebook / Overheard (signed-in browser only)
 - Full Marquee / State Theatre grid if the homepage cards miss a printed clock (`michigantheater.org` is hijacked — do not use)
 
-Land those with `POST /api/desk/events/import`, `/civic/import`, `/schools/import`, `/shows/import`, `/athletics/import` against the **AA** Desk token. Never invent times.
+Land those with `POST /api/desk/events/import`, `/civic/import`, `/schools/import`, `/shows/import`, `/athletics/import` against the **AA** Desk token. Never invent times. Do not re-import AADL / Washtenaw / Dexter — the Worker already replaces those source ids.
 
 ## Cloudflare deploy
 

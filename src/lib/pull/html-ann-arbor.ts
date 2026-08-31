@@ -430,8 +430,260 @@ async function pullArkEvents(
   );
 }
 
+const AADL_HORIZON_DAYS = 16;
+const WASHTENAW_CIVICCLERK_API =
+  "https://washtenawcomi.api.civicclerk.com/v1/Events";
+const WASHTENAW_CIVICCLERK_PORTAL =
+  "https://washtenawcomi.portal.civicclerk.com";
+
+const AADL_WHEN =
+  new RegExp(
+    `(?:${WEEKDAYS})\\s+([A-Za-z]+)\\s+(\\d{1,2}),\\s+(\\d{4})` +
+      `(?::\\s*(\\d{1,2}):(\\d{2})\\s*([ap])\\.?m\\.?)?`,
+    "i",
+  );
+
 /**
- * Worker-reachable AA listings: City Legistar, The Ark tribe pages, UMS season.
+ * AADL Drupal upcoming feed cards. Printed weekday + clock + branch only.
+ * Never invent a time — date without a clock → time_unknown.
+ */
+export function extractAadlEvents(
+  html: string,
+  source: Source,
+  now = new Date(),
+): EventItem[] {
+  const blocks = [
+    ...html.matchAll(
+      /<h2 class="no-margin">\s*<a href="(\/node\/\d+)"[^>]*>([\s\S]*?)<\/a>\s*<\/h2>\s*<p>([\s\S]*?)(?:<\/p>|(?=<div class="views-row)|(?=<h2 class="no-margin">))/gi,
+    ),
+  ];
+  if (blocks.length === 0) return [];
+  const out: EventItem[] = [];
+  const seen = new Set<string>();
+
+  for (const block of blocks) {
+    const href = decodeEntities(block[1] ?? "");
+    const title = stripTags(block[2] ?? "");
+    if (!href || !title) continue;
+    const para = block[3] ?? "";
+    const whenText = stripTags(para.split(/<br\s*\/?>/i)[0] ?? para);
+    const when = whenText.match(AADL_WHEN);
+    if (!when) continue;
+    const month = monthNumber(when[1]);
+    if (!month) continue;
+    const year = Number(when[3]);
+    const day = Number(when[2]);
+    let starts: Date;
+    let timeUnknown = false;
+    if (when[4] && when[5] && when[6]) {
+      const clock = parseClock(Number(when[4]), Number(when[5]), when[6]);
+      if (!clock) continue;
+      starts = detroitWallToUtc(year, month, day, clock.hour, clock.minute, 0);
+    } else {
+      starts = detroitWallToUtc(year, month, day, 0, 0, 0);
+      timeUnknown = true;
+    }
+    if (Number.isNaN(starts.getTime())) continue;
+    if (!withinDays(starts, now, AADL_HORIZON_DAYS)) continue;
+
+    const afterBr = para.split(/<br\s*\/?>/i)[1] ?? "";
+    const placeLine = stripTags(afterBr)
+      .replace(/\b(?:Age|Ages|Grade|Grades)\b[\s\S]*$/i, "")
+      .replace(/\s+/g, " ")
+      .trim();
+    const place = placeLine || "Ann Arbor District Library";
+    const url = `https://aadl.org${href}`;
+    if (seen.has(url)) continue;
+    seen.add(url);
+
+    const item: EventItem = {
+      id: stableEventId(source.id, url),
+      title,
+      starts_at: starts.toISOString(),
+      place,
+      url,
+      source_id: source.id,
+    };
+    if (timeUnknown) item.time_unknown = true;
+    out.push(item);
+  }
+
+  return out.sort(
+    (a, b) =>
+      new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime(),
+  );
+}
+
+type CivicClerkMeeting = {
+  id?: number;
+  eventName?: string;
+  startDateTime?: string;
+  eventDate?: string;
+  isDeleted?: boolean;
+  isArchived?: boolean;
+  eventLocation?: { address1?: string | null; city?: string | null } | null;
+};
+
+/**
+ * Washtenaw CivicClerk OData /Events. Printed startDateTime only.
+ * Skip cancelled / deleted rows. Never invent a clock or place street.
+ */
+export function extractCivicClerkMeetings(
+  payload: { value?: CivicClerkMeeting[] } | CivicClerkMeeting[],
+  source: Source,
+  now = new Date(),
+): EventItem[] {
+  const rows = Array.isArray(payload) ? payload : (payload.value ?? []);
+  const out: EventItem[] = [];
+  const seen = new Set<string>();
+  const horizon = now.getTime() + 1000 * 60 * 60 * 24 * 90;
+
+  for (const row of rows) {
+    const id = row.id;
+    const title = String(row.eventName ?? "").trim();
+    if (!id || !title) continue;
+    if (row.isDeleted || row.isArchived) continue;
+    if (/^(cancelled|canceled)\b/i.test(title)) continue;
+    const iso = String(row.startDateTime || row.eventDate || "").trim();
+    const starts = new Date(iso);
+    if (Number.isNaN(starts.getTime())) continue;
+    if (starts.getTime() < now.getTime() - 1000 * 60 * 60 * 12) continue;
+    if (starts.getTime() > horizon) continue;
+    const uid = String(id);
+    if (seen.has(uid)) continue;
+    seen.add(uid);
+    const loc = row.eventLocation;
+    const place =
+      [loc?.address1, loc?.city]
+        .map((p) => (typeof p === "string" ? p.trim() : ""))
+        .filter(Boolean)
+        .join(", ") || "Washtenaw County";
+    out.push({
+      id: stableEventId(source.id, uid),
+      title,
+      starts_at: starts.toISOString(),
+      place,
+      url: `${WASHTENAW_CIVICCLERK_PORTAL}/event/${id}`,
+      source_id: source.id,
+    });
+  }
+
+  return out.sort(
+    (a, b) =>
+      new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime(),
+  );
+}
+
+async function fetchJson(
+  url: string,
+): Promise<{ ok: boolean; status: number; data: unknown; blocked: boolean }> {
+  const res = await fetch(url, {
+    headers: {
+      "User-Agent": `Mozilla/5.0 (compatible; ${getSite().userAgent})`,
+      Accept: "application/json",
+    },
+    redirect: "follow",
+  });
+  const blocked = res.status === 401 || res.status === 403 || res.status === 429;
+  if (!res.ok) {
+    return { ok: false, status: res.status, data: null, blocked };
+  }
+  try {
+    return { ok: true, status: res.status, data: await res.json(), blocked };
+  } catch {
+    return { ok: false, status: res.status, data: null, blocked };
+  }
+}
+
+async function pullWashtenawCivicClerk(
+  source: Source,
+  now: Date,
+): Promise<HtmlEventsPullResult> {
+  const since = new Date(now.getTime() - 1000 * 60 * 60 * 12).toISOString();
+  const first = new URL(WASHTENAW_CIVICCLERK_API);
+  first.searchParams.set("$filter", `startDateTime ge ${since}`);
+  first.searchParams.set("$orderby", "startDateTime");
+  first.searchParams.set("$top", "50");
+  const events: EventItem[] = [];
+  const seen = new Set<string>();
+  let next: string | null = first.toString();
+  let status: number | null = null;
+  for (let page = 0; page < 4 && next; page++) {
+    const res = await fetchJson(next);
+    status = res.status;
+    if (res.blocked) {
+      return { events: [], bot_blocked: true, status: res.status };
+    }
+    if (!res.ok || !res.data || typeof res.data !== "object") {
+      throw new Error(
+        `Washtenaw CivicClerk fetch failed ${res.status} for ${source.name}`,
+      );
+    }
+    const batch = extractCivicClerkMeetings(
+      res.data as { value?: CivicClerkMeeting[] },
+      source,
+      now,
+    );
+    for (const item of batch) {
+      if (seen.has(item.id)) continue;
+      seen.add(item.id);
+      events.push(item);
+    }
+    const nextLink =
+      typeof (res.data as { "@odata.nextLink"?: unknown })["@odata.nextLink"] ===
+      "string"
+        ? (res.data as { "@odata.nextLink": string })["@odata.nextLink"]
+        : null;
+    next = nextLink && batch.length > 0 ? nextLink : null;
+  }
+  events.sort(
+    (a, b) =>
+      new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime(),
+  );
+  return { events, bot_blocked: false, status };
+}
+
+async function pullAadlEvents(
+  source: Source,
+  firstHtml: string,
+  now: Date,
+): Promise<EventItem[]> {
+  const byUrl = new Map<string, EventItem>();
+  for (const item of extractAadlEvents(firstHtml, source, now)) {
+    if (item.url) byUrl.set(item.url, item);
+  }
+  const base = source.feed_url || "https://aadl.org/events-feed/upcoming";
+  for (let page = 1; page <= 4; page++) {
+    const url = `${base}${base.includes("?") ? "&" : "?"}page=${page}`;
+    try {
+      const next = await fetchText(url);
+      if (!next.ok) break;
+      const batch = extractAadlEvents(next.text, source, now);
+      if (batch.length === 0) break;
+      for (const item of batch) {
+        if (item.url) byUrl.set(item.url, item);
+      }
+      const last = batch[batch.length - 1];
+      if (
+        last &&
+        new Date(last.starts_at).getTime() >
+          now.getTime() + 1000 * 60 * 60 * 24 * AADL_HORIZON_DAYS
+      ) {
+        break;
+      }
+    } catch {
+      break;
+    }
+  }
+  return [...byUrl.values()].sort(
+    (a, b) =>
+      new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime(),
+  );
+}
+
+/**
+ * Worker-reachable AA listings: City Legistar, The Ark tribe pages, UMS season,
+ * AADL upcoming feed, Washtenaw CivicClerk OData.
  * Do not invent meetings, showtimes, or clocks.
  */
 export async function pullAnnArborHtml(
@@ -439,6 +691,9 @@ export async function pullAnnArborHtml(
 ): Promise<HtmlEventsPullResult> {
   if (!source.feed_url) {
     return { events: [], bot_blocked: false, status: null };
+  }
+  if (source.id === "src_washtenaw_calendar") {
+    return pullWashtenawCivicClerk(source, new Date());
   }
   const page = await fetchText(source.feed_url);
   if (page.blocked) {
@@ -458,6 +713,8 @@ export async function pullAnnArborHtml(
     events = extractUmsListingEvents(page.text, source, now);
   } else if (source.id === "src_marquee_events") {
     events = extractMarqueeLiveEvents(page.text, source, now);
+  } else if (source.id === "src_aadl_events") {
+    events = await pullAadlEvents(source, page.text, now);
   }
 
   return { events, bot_blocked: false, status: page.status };

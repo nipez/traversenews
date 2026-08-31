@@ -39,12 +39,14 @@ const HTML_EVENT_SOURCE_IDS = new Set([
   "src_visit_events",
 ]);
 
-/** Ann Arbor listings the Worker can read (Legistar / Ark / UMS). */
+/** Ann Arbor listings the Worker can read (Legistar / Ark / UMS / AADL / CivicClerk). */
 const HTML_AA_LISTING_IDS = new Set([
   "src_a2_legistar",
   "src_ark_events",
   "src_ums_events",
   "src_marquee_events",
+  "src_aadl_events",
+  "src_washtenaw_calendar",
 ]);
 
 /** Official HTML newsrooms the Worker can read (headline + link only). */

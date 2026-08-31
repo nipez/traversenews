@@ -118,6 +118,23 @@ assert(
   dexter?.homepage?.includes("dexterschools.org"),
   "Dexter calendar is dexterschools.org, not Utah dcsd.org",
 );
+assert(dexter?.pull_method === "ics", "Dexter calendar is Finalsite ICS");
+assert(
+  dexter?.feed_url?.includes("calendar-manager/events.ics"),
+  "Dexter calendar uses the public Finalsite ICS feed",
+);
+assert(
+  aa.sources.find((s) => s.id === "src_aadl_events")?.feed_url?.includes(
+    "events-feed/upcoming",
+  ),
+  "AADL uses the Drupal upcoming feed",
+);
+assert(
+  aa.sources
+    .find((s) => s.id === "src_washtenaw_calendar")
+    ?.feed_url?.includes("civicclerk.com"),
+  "Washtenaw civic uses CivicClerk OData",
+);
 assert(
   getSite().eventsHandoffs.some((l) => l.href.includes("annarbor.org")),
   "AA events handoffs include Visit AA",

@@ -7,7 +7,9 @@ import { looksLikeUmVarsity } from "../src/lib/around";
 import {
   collectArkEventLinks,
   extractA2GovNews,
+  extractAadlEvents,
   extractArkEventFromPage,
+  extractCivicClerkMeetings,
   extractLegistarMeetings,
   extractMarqueeLiveEvents,
   extractMarqueeShows,
@@ -288,6 +290,79 @@ assert.equal(
   "https://www.a2gov.org/news/posts/carbon-offsets/",
 );
 assert.equal(news[0].published_at, "2026-08-14T04:00:00.000Z");
+
+const aadlSrc: Source = {
+  id: "src_aadl_events",
+  name: "AADL",
+  homepage: "https://aadl.org/",
+  feed_url: "https://aadl.org/events-feed/upcoming",
+  pull_method: "html",
+  beat_id: "beat_events",
+  enabled: true,
+  notes: "",
+  lane: "events",
+};
+const aadl = extractAadlEvents(
+  `<div class="views-row search-result">
+    <h2 class="no-margin"><a href="/node/668597">Joyful Movement: Zumba Party</a></h2>
+    <p>Monday August 31, 2026: 6:00pm to
+              7:00pm
+            <br>
+                      Pittsfield Branch: Program Room                </div>
+    <h2 class="no-margin"><a href="/node/644686">Preschool Storytimes</a></h2>
+    <p>Tuesday September 1, 2026: 11:00am to
+              11:30am
+            <br>
+                      Malletts Creek Branch: Program Room                    <br>
+      Age 2–5 Years</p>`,
+  aadlSrc,
+  now,
+);
+assert.equal(aadl.length, 2);
+assert.equal(aadl[0].title, "Joyful Movement: Zumba Party");
+assert.equal(aadl[0].url, "https://aadl.org/node/668597");
+assert.equal(aadl[0].place, "Pittsfield Branch: Program Room");
+assert.equal(aadl[0].starts_at, "2026-08-31T22:00:00.000Z");
+assert.equal(aadl[1].starts_at, "2026-09-01T15:00:00.000Z");
+
+const civicClerkSrc: Source = {
+  id: "src_washtenaw_calendar",
+  name: "Washtenaw County — Calendar",
+  homepage: "https://www.washtenaw.org/",
+  feed_url: "https://washtenawcomi.api.civicclerk.com/v1/Events",
+  pull_method: "html",
+  beat_id: "beat_government",
+  enabled: true,
+  notes: "",
+  lane: "civic",
+};
+const washtenaw = extractCivicClerkMeetings(
+  {
+    value: [
+      {
+        id: 4079,
+        eventName: "Board of Commissioners Meeting",
+        startDateTime: "2026-09-02T19:00:00Z",
+        eventLocation: { address1: "220 N. Main", city: "Ann Arbor" },
+      },
+      {
+        id: 1,
+        eventName: "CANCELLED - Historic District Commission",
+        startDateTime: "2026-09-03T17:30:00Z",
+        eventLocation: { address1: "415 W Michigan Ave" },
+      },
+    ],
+  },
+  civicClerkSrc,
+  now,
+);
+assert.equal(washtenaw.length, 1, "cancelled CivicClerk rows are skipped");
+assert.equal(washtenaw[0].title, "Board of Commissioners Meeting");
+assert.equal(washtenaw[0].place, "220 N. Main, Ann Arbor");
+assert.equal(
+  washtenaw[0].url,
+  "https://washtenawcomi.portal.civicclerk.com/event/4079",
+);
 
 process.env.SITE_ID = "ann-arbor";
 process.env.NEXT_PUBLIC_SITE_ID = "ann-arbor";
