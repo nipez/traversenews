@@ -13,13 +13,22 @@ type WorkerEnv = {
   TRAVERSE_BACKUPS: R2Bucket;
   DESK_IMPORT_TOKEN?: string;
   DEV_DESK_PASSWORD?: string;
+  NEXT_PUBLIC_SITE_URL?: string;
 };
 
 export default {
   async fetch(request: Request, env: WorkerEnv, ctx: ExecutionContext) {
     const url = new URL(request.url);
-    if (url.hostname === "www.traverse.news") {
-      url.hostname = "traverse.news";
+    const apex = (() => {
+      try {
+        return new URL(env.NEXT_PUBLIC_SITE_URL || "https://traverse.news")
+          .hostname.replace(/^www\./, "");
+      } catch {
+        return "traverse.news";
+      }
+    })();
+    if (url.hostname === `www.${apex}`) {
+      url.hostname = apex;
       url.protocol = "https:";
       url.port = "";
       return Response.redirect(url.toString(), 308);

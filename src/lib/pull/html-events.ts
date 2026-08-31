@@ -1,5 +1,6 @@
 import { detroitWallToUtc } from "@/lib/dates";
 import { looksLikeLowValueListing, stableEventId } from "@/lib/events";
+import { getSite } from "@/lib/sites";
 import type { EventItem, Source } from "@/lib/types";
 
 const MONTHS: Record<string, number> = {
@@ -251,7 +252,7 @@ async function parseTadl(
       const res = await fetch(listing.url, {
         headers: {
           "User-Agent":
-            "Mozilla/5.0 (compatible; traverse.news-puller/1.0; +https://traverse.news)",
+            `Mozilla/5.0 (compatible; ${getSite().userAgent})`,
           Accept: "text/html,application/xhtml+xml",
         },
         redirect: "follow",
@@ -332,7 +333,7 @@ export async function pullHtmlEvents(
   const res = await fetch(source.feed_url, {
     headers: {
       "User-Agent":
-        "Mozilla/5.0 (compatible; traverse.news-puller/1.0; +https://traverse.news)",
+        `Mozilla/5.0 (compatible; ${getSite().userAgent})`,
       Accept: "text/html,application/xhtml+xml",
     },
     redirect: "follow",

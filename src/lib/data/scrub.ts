@@ -4,6 +4,7 @@ import { sanitizeStoredSchools } from "@/lib/schools";
 import { sanitizeStoredShows } from "@/lib/shows";
 import { sanitizeStoredEvents } from "@/lib/events";
 import {
+  getPublicOriginalByline,
   PUBLIC_ORIGINAL_BYLINE,
 } from "@/lib/originals";
 
@@ -139,9 +140,10 @@ export function scrubAppData(data: AppData): { data: AppData; changed: boolean }
   // Public originals never carry a staff name (Nick Perez, etc.).
   data.stories = data.stories.map((s) => {
     if (!s.is_original) return s;
-    if (s.byline === PUBLIC_ORIGINAL_BYLINE) return s;
+    const byline = getPublicOriginalByline();
+    if (s.byline === byline || s.byline === PUBLIC_ORIGINAL_BYLINE) return s;
     changed = true;
-    return { ...s, byline: PUBLIC_ORIGINAL_BYLINE };
+    return { ...s, byline };
   });
 
   const filtered = data.events.filter((e) => !BANNED_EVENT_IDS.has(e.id));
@@ -245,8 +247,12 @@ function scrubEdition(edition: EditionSnapshot): {
   if (hadInventedLead) {
     lead = null;
     changed = true;
-  } else if (lead?.is_original && lead.byline !== PUBLIC_ORIGINAL_BYLINE) {
-    lead = { ...lead, byline: PUBLIC_ORIGINAL_BYLINE };
+  } else if (
+    lead?.is_original &&
+    lead.byline !== getPublicOriginalByline() &&
+    lead.byline !== PUBLIC_ORIGINAL_BYLINE
+  ) {
+    lead = { ...lead, byline: getPublicOriginalByline() };
     changed = true;
   }
 

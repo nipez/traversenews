@@ -19,6 +19,7 @@ import {
   resolvePreviewLetterRecipients,
 } from "@/lib/email-letter";
 import { runPull } from "@/lib/pull/run";
+import { getSite } from "@/lib/sites";
 
 export const dynamic = "force-dynamic";
 
@@ -70,10 +71,11 @@ async function sendLetterToOneRecipient(args: {
   // Attachments are forbidden on the morning letter. Keep this object literal
   // limited to from/to/reply_to/subject/html/text - never add attachments,
   // cc, or bcc.
+  const site = getSite();
   const resendPayload = {
-    from: "Traverse News <info@traverse.news>",
+    from: `${site.emailFromName} <${site.emailFromAddress}>`,
     to: [args.email],
-    reply_to: "info@traverse.news",
+    reply_to: site.emailFromAddress,
     subject: args.subject,
     html: args.html,
     text: args.text,
@@ -147,6 +149,17 @@ export async function POST(request: Request) {
   const force = body.force === true;
   const preview = body.preview === true;
   const rebuild = body.rebuild === true;
+
+  if (!preview && getSite().letterPreviewOnly) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error:
+          "This city is preview-only until a cultivator is live. Send { preview: true }.",
+      },
+      { status: 403 },
+    );
+  }
 
   if (isDetroitSunday()) {
     return NextResponse.json({ ok: true, skipped: "sunday" });

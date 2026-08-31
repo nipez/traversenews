@@ -1,14 +1,19 @@
 import { shortHash } from "@/lib/events";
+import { isAlertSource, sourceById } from "@/lib/source-lanes";
 import type { Source, Story } from "@/lib/types";
 
 /**
  * Homepage Alerts strip sources (Facebook tip wires).
  * Public safety / breaking only — never Overheard memes or Around the bay RSS.
+ * Traverse IDs remain as fallback; `lane: "alert"` wins for new cities.
  */
 export const ALERT_SOURCE_IDS = new Set(["src_gt911", "src_ticker_fb"]);
 
-export function isAlertSourceId(sourceId: string): boolean {
-  return ALERT_SOURCE_IDS.has(sourceId);
+export function isAlertSourceId(
+  sourceId: string,
+  sources?: Source[],
+): boolean {
+  return isAlertSource(sourceById(sources, sourceId), sourceId);
 }
 
 export type AlertItem = Story & { source_name: string };
@@ -26,7 +31,7 @@ export function selectAlerts(
   const nameById = new Map(sources.map((s) => [s.id, s.name]));
 
   return stories
-    .filter((s) => !s.is_original && isAlertSourceId(s.source_id))
+    .filter((s) => !s.is_original && isAlertSourceId(s.source_id, sources))
     .filter((s) => s.title.trim().length > 0 && s.url.trim().length > 0)
     .sort(
       (a, b) =>

@@ -2,8 +2,14 @@
  * Seed = real Desk catalog only (beats + sources with feed URLs).
  * NEVER invent Story bodies, bylines, quotes, crashes, or events here.
  * See README → Editorial.
+ *
+ * Traverse catalog lives here. Ann Arbor / Dexter: sites/ann-arbor/seed.ts.
+ * createSeedData() picks by SITE_ID.
  */
 import { withSectionHeaderSeeds } from "@/lib/section-headers";
+import { getSiteId } from "@/lib/sites";
+import { createAnnArborSeedData } from "@/lib/sites/ann-arbor/seed";
+import { applySourceMeta } from "@/lib/sites/traverse/source-meta";
 import type { AppData, Beat, EventItem, Source, Story } from "@/lib/types";
 
 const beats: Beat[] = [
@@ -795,10 +801,10 @@ const stories: Story[] = [];
 // Events come from ICS pull only. Do not invent meetings to fill the layout.
 const events: EventItem[] = [];
 
-export function createSeedData(): AppData {
+export function createTraverseSeedData(): AppData {
   return {
     beats,
-    sources,
+    sources: sources.map((s) => applySourceMeta(s)),
     stories,
     events,
     athletics: [],
@@ -815,6 +821,11 @@ export function createSeedData(): AppData {
     section_headers: withSectionHeaderSeeds(null),
     page_copy: undefined,
   };
+}
+
+export function createSeedData(): AppData {
+  if (getSiteId() === "ann-arbor") return createAnnArborSeedData();
+  return createTraverseSeedData();
 }
 
 export function beatSourceCounts(data: AppData): Record<string, number> {

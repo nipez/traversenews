@@ -1,4 +1,5 @@
 import { getDevDeskEmail } from "@/lib/auth";
+import { getSite, siteWordmark } from "@/lib/sites";
 
 type Props = { searchParams: Promise<{ error?: string }> };
 
@@ -16,7 +17,7 @@ export default async function DeskLoginPage({ searchParams }: Props) {
     <div className="flex min-h-screen items-center justify-center bg-white px-4">
       <div className="w-full max-w-sm">
         <div className="flex items-baseline gap-3">
-          <h1 className="font-serif text-2xl text-ink">traverse.news</h1>
+          <h1 className="font-serif text-2xl text-ink">{siteWordmark()}</h1>
           <span className="text-xs font-semibold tracking-[0.12em] text-muted-2 uppercase">
             The Desk
           </span>
@@ -61,7 +62,7 @@ export default async function DeskLoginPage({ searchParams }: Props) {
         </form>
 
         <div className="mt-4 flex items-center justify-between text-sm text-muted">
-          <a className="underline" href="mailto:tips@traverse.news">
+          <a className="underline" href={`mailto:${getSite().tipsEmail}`}>
             Forgot password
           </a>
           <span>Staff access only</span>

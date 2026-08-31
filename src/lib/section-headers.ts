@@ -8,6 +8,7 @@
  * stays static `/art/bay-hero.jpg` and is intentionally not in this map.
  */
 
+import { getSite, getSiteId } from "@/lib/sites";
 import type {
   SectionHeaderId,
   SectionHeaderMeta,
@@ -25,7 +26,7 @@ export const SECTION_HEADER_IDS: readonly SectionHeaderId[] = [
   "local",
 ] as const;
 
-export const SECTION_HEADER_LABELS: Record<
+const SECTION_HEADER_LABELS_BASE: Record<
   SectionHeaderId,
   { title: string; path: string; kicker: string }
 > = {
@@ -36,6 +37,22 @@ export const SECTION_HEADER_LABELS: Record<
   schools: { title: "Schools", path: "/schools", kicker: "Parents" },
   local: { title: "Useful local", path: "/local", kicker: "Bay side" },
 };
+
+export function getSectionHeaderLabels(): Record<
+  SectionHeaderId,
+  { title: string; path: string; kicker: string }
+> {
+  return {
+    ...SECTION_HEADER_LABELS_BASE,
+    local: {
+      ...SECTION_HEADER_LABELS_BASE.local,
+      kicker: getSite().localKicker,
+    },
+  };
+}
+
+/** Traverse labels (kicker may be stale if SITE_ID is not traverse). Prefer getSectionHeaderLabels(). */
+export const SECTION_HEADER_LABELS = SECTION_HEADER_LABELS_BASE;
 
 /** Shipped seed art — Desk can replace without a code deploy once live. */
 export const SECTION_HEADER_SEEDS: Partial<
@@ -74,9 +91,11 @@ export function withSectionHeaderSeeds(
   const base = current
     ? { ...emptySectionHeaders(), ...current }
     : emptySectionHeaders();
+  // Bay photos stay on Traverse only.
+  const seeds = getSiteId() === "ann-arbor" ? {} : SECTION_HEADER_SEEDS;
   for (const id of SECTION_HEADER_IDS) {
     if (base[id]) continue;
-    const seed = SECTION_HEADER_SEEDS[id];
+    const seed = seeds[id];
     if (!seed) continue;
     base[id] = { ...seed, updated_at: at };
   }

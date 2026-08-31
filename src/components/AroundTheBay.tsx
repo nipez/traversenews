@@ -1,5 +1,6 @@
 import { formatBayDay } from "@/lib/dates";
 import { isRecordEagleCluster } from "@/lib/paywall";
+import { getSite } from "@/lib/sites";
 import type { ClusteredStory } from "@/lib/types";
 
 type BayItem = Pick<
@@ -14,7 +15,7 @@ export function AroundTheBay({ items }: { items: BayItem[] }) {
   return (
     <section className="bay-section">
       <div className="bay-head">
-        <h2 className="bay-hed">Around the bay</h2>
+        <h2 className="bay-hed">{getSite().aroundLabel}</h2>
       </div>
       {shown.length === 0 ? (
         <p className="bay-empty">

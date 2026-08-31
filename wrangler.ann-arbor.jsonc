@@ -1,0 +1,49 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "ann-arbor-news",
+  "main": "cloudflare-worker.ts",
+  "compatibility_date": "2026-08-04",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "services": [
+    {
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "ann-arbor-news"
+    }
+  ],
+  "kv_namespaces": [
+    {
+      // Own namespace — never the Traverse TRAVERSE_DATA id.
+      // Create: wrangler kv namespace create ANN_ARBOR_DATA
+      // then paste the id here before first deploy.
+      "binding": "TRAVERSE_DATA",
+      "id": "REPLACE_WITH_ANN_ARBOR_KV_ID"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "TRAVERSE_MEDIA",
+      "bucket_name": "ann-arbor-news-media"
+    },
+    {
+      "binding": "TRAVERSE_BACKUPS",
+      "bucket_name": "ann-arbor-news-backups"
+    }
+  ],
+  "vars": {
+    "SITE_ID": "ann-arbor",
+    "NEXT_PUBLIC_SITE_ID": "ann-arbor",
+    "NEXT_PUBLIC_SITE_URL": "https://ann-arbor-news.nickperez.workers.dev",
+    "NEXT_PUBLIC_TRAVERSE_ORIGIN": "https://traverse.news",
+    "NEXT_PUBLIC_ANN_ARBOR_ORIGIN": "https://ann-arbor-news.nickperez.workers.dev",
+    "STAFF_SITES": "traverse,ann-arbor"
+  },
+  "triggers": {
+    // Same Detroit wall times as Traverse. Letter cron is preview-only
+    // (SiteConfig.letterPreviewOnly) until a cultivator is live.
+    "crons": ["30 11 * * 1-6", "0 12 * * 1-6", "0 6 * * *"]
+  }
+}

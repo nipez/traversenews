@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import {
   SECTION_HEADER_IDS,
-  SECTION_HEADER_LABELS,
+  getSectionHeaderLabels,
   type SectionHeaderId,
   type SectionHeaderMeta,
   type SectionHeadersMap,
@@ -127,7 +127,7 @@ export function SectionHeadersEditor({
       ) : null}
 
       {SECTION_HEADER_IDS.map((id) => {
-        const label = SECTION_HEADER_LABELS[id];
+        const label = getSectionHeaderLabels()[id];
         const meta = headers[id];
         return (
           <section

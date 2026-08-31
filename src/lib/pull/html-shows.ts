@@ -1,4 +1,5 @@
 import { detroitWallToUtc } from "@/lib/dates";
+import { getSite } from "@/lib/sites";
 import {
   stableShowId,
   venueNameForSource,
@@ -518,7 +519,7 @@ export async function pullHtmlShows(
     const res = await fetch(url, {
       headers: {
         "User-Agent":
-          "Mozilla/5.0 (compatible; TraverseNews/1.0; +https://traverse.news)",
+          `Mozilla/5.0 (compatible; ${getSite().userAgent})`,
         Accept: "text/html,application/xhtml+xml",
       },
       redirect: "follow",

@@ -10,6 +10,7 @@ import {
   getSportsSnapshot,
   type PublicSportsStoryCard,
 } from "@/lib/public-snapshots";
+import { getSite } from "@/lib/sites";
 
 export const dynamic = "force-dynamic";
 
@@ -104,7 +105,7 @@ export default async function SportsPage() {
           )}
 
           <p className="sports-foot">
-            Also on <Link href="/">Today</Link> in Around the bay.
+            Also on <Link href="/">Today</Link> in {getSite().aroundLabel}.
           </p>
         </div>
 

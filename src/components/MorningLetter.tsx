@@ -2,6 +2,7 @@ import Link from "next/link";
 import { formatCivicDate, formatEventWhenParts, emailDateLabel } from "@/lib/dates";
 import type { EmailEditionSnapshot } from "@/lib/types";
 import { canonicalPublicUrl } from "@/lib/email-letter";
+import { getSite, siteWordmark } from "@/lib/sites";
 
 function civicLabel(startsAt: string): string {
   const d = formatCivicDate(startsAt);
@@ -96,7 +97,7 @@ export function MorningLetter({
           ) : null}
           {letter.lead.desk_original ? (
             <div className="mt-3">
-              <span className="source-box">traverse.news</span>
+              <span className="source-box">{siteWordmark()}</span>
             </div>
           ) : null}
         </div>
@@ -231,11 +232,11 @@ export function MorningLetter({
         <p>
           Send us a tip:{" "}
           <Link href="/tips" className="font-bold text-teal">
-            traverse.news/tips
+            {siteWordmark()}/tips
           </Link>
         </p>
         <p className="mt-2 text-xs">
-          Traverse City, Michigan ·{" "}
+          {getSite().place}, {getSite().placeState} ·{" "}
           <Link href="/unsubscribe" className="font-bold text-teal">
             Unsubscribe
           </Link>{" "}

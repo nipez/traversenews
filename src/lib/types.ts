@@ -1,3 +1,7 @@
+import type { SourceLane } from "@/lib/sites/types";
+
+export type { SourceLane };
+
 export type PullMethod =
   | "rss"
   | "ics"
@@ -30,6 +34,20 @@ export type Source = {
   last_pulled_at?: string | null;
   /** Last pull error message, if any. Cleared on success. */
   last_pull_error?: string | null;
+  /**
+   * Editorial lane. Routing prefers this; Traverse source-id sets are fallback
+   * when older KV rows omit it.
+   */
+  lane?: SourceLane;
+  /** Place chip / reserved Around slots (e.g. Dexter). */
+  place?: string;
+  /** Higher = prefer on Around / sports ranking. */
+  weight?: number;
+  paywalled?: boolean;
+  /** Volume-cap family key (e.g. eyes-only, official, upnorth). */
+  family?: string;
+  /** High-volume wire — cap like 9&10 / MLive. */
+  heavy?: boolean;
 };
 
 export type Story = {

@@ -1,12 +1,13 @@
 import ical from "node-ical";
 import { stableEventId } from "@/lib/events";
+import { getSite } from "@/lib/sites";
 import type { EventItem, Source } from "@/lib/types";
 
 export async function pullIcsSource(source: Source): Promise<EventItem[]> {
   if (!source.feed_url) return [];
   const res = await fetch(source.feed_url, {
     headers: {
-      "User-Agent": "traverse.news-puller/1.0 (+https://traverse.news)",
+      "User-Agent": getSite().userAgent,
     },
   });
   if (!res.ok) {

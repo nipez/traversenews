@@ -1,13 +1,16 @@
 import Parser from "rss-parser";
 import { newId } from "@/lib/ids";
+import { getSite } from "@/lib/sites";
 import type { Source, Story } from "@/lib/types";
 
-const parser = new Parser({
-  timeout: 15000,
-  headers: {
-    "User-Agent": "traverse.news-puller/1.0 (+https://traverse.news)",
-  },
-});
+function rssParser(): Parser {
+  return new Parser({
+    timeout: 15000,
+    headers: {
+      "User-Agent": getSite().userAgent,
+    },
+  });
+}
 
 function stripHtml(input: string): string {
   return input
@@ -23,7 +26,7 @@ function truncate(input: string, max = 220): string {
 
 export async function pullRssSource(source: Source): Promise<Story[]> {
   if (!source.feed_url) return [];
-  const feed = await parser.parseURL(source.feed_url);
+  const feed = await rssParser().parseURL(source.feed_url);
   const items = feed.items.slice(0, 25);
   const stories: Story[] = [];
   for (const item of items) {

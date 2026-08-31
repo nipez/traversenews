@@ -35,6 +35,11 @@ export async function PUT(request: Request, ctx: Ctx) {
     beat_id: body.beat_id || existing.beat_id,
     enabled: body.enabled ?? existing.enabled,
     notes: body.notes ?? existing.notes,
+    lane: body.lane !== undefined ? body.lane : existing.lane,
+    place:
+      body.place !== undefined
+        ? body.place.trim() || undefined
+        : existing.place,
     last_pulled_at: existing.last_pulled_at ?? null,
     last_pull_error: existing.last_pull_error ?? null,
   };

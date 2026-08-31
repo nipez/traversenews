@@ -4,6 +4,7 @@
  * Links use markdown: [Civic](/civic). Headings: ## Why this exists
  */
 
+import { getSite } from "@/lib/sites";
 import type { PageCopy } from "@/lib/types";
 
 export type { PageCopy };
@@ -61,11 +62,12 @@ export function emptyPageCopy(): PageCopy {
 }
 
 export function defaultPageCopy(): PageCopy {
+  const copy = getSite().pageCopy;
   return {
-    events_dek: DEFAULT_EVENTS_DEK,
-    about_title: DEFAULT_ABOUT_TITLE,
-    about_dek: DEFAULT_ABOUT_DEK,
-    about_body: DEFAULT_ABOUT_BODY,
+    events_dek: copy.eventsDek,
+    about_title: copy.aboutTitle,
+    about_dek: copy.aboutDek,
+    about_body: copy.aboutBody,
     updated_at: null,
   };
 }

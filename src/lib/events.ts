@@ -1,4 +1,11 @@
 import { detroitDayKey } from "@/lib/dates";
+import { getSite } from "@/lib/sites";
+import {
+  isAthleticsSource,
+  isCivicSourceLane,
+  isSchoolCalSource,
+  isShowSourceLane,
+} from "@/lib/source-lanes";
 import type { EventItem } from "@/lib/types";
 
 const DETROIT = "America/Detroit";
@@ -108,13 +115,20 @@ export function dedupeEvents(events: EventItem[]): EventItem[] {
 const CIVIC_BEATS = new Set(["beat_government", "beat_schools"]);
 
 /** Explicit civic desks (even if beat was mis-tagged historically). */
-const CIVIC_SOURCE_IDS = new Set(["src_gt_cal", "src_civicweb", "src_leelanau_co"]);
+const CIVIC_SOURCE_IDS = new Set([
+  "src_gt_cal",
+  "src_civicweb",
+  "src_leelanau_co",
+  "src_a2_legistar",
+  "src_washtenaw_calendar",
+]);
 
 /** True when this source belongs on /civic, not /whats-on. */
 export function isCivicSource(
-  source: { id: string; beat_id: string } | undefined,
+  source: { id: string; beat_id: string; lane?: string } | undefined,
 ): boolean {
   if (!source) return false;
+  if (isCivicSourceLane(source)) return true;
   return CIVIC_BEATS.has(source.beat_id) || CIVIC_SOURCE_IDS.has(source.id);
 }
 
@@ -140,6 +154,10 @@ export const HS_ATHLETICS_EVENT_SOURCE_IDS = new Set([
   "src_buckley_ath",
   "src_northport_ath",
   "src_centrallake_ath",
+  "src_pioneer_ath",
+  "src_skyline_ath",
+  "src_huron_ath",
+  "src_dexter_ath",
 ]);
 
 /**
@@ -155,14 +173,16 @@ export const SCHOOL_CALENDAR_SOURCE_IDS = new Set([
   "src_glenlake_cal",
   "src_kingsley_cal",
   "src_tcch_cal",
+  "src_aaps_cal",
+  "src_dexter_cal",
 ]);
 
 export function isHsAthleticsEventSource(sourceId: string): boolean {
-  return HS_ATHLETICS_EVENT_SOURCE_IDS.has(sourceId);
+  return isAthleticsSource(undefined, sourceId);
 }
 
 export function isSchoolCalendarSource(sourceId: string): boolean {
-  return SCHOOL_CALENDAR_SOURCE_IDS.has(sourceId);
+  return isSchoolCalSource(undefined, sourceId);
 }
 
 /** Movies + live theatre belong on /shows, never What's on / Tonight. */
@@ -174,10 +194,11 @@ export const SHOW_EVENT_SOURCE_IDS = new Set([
   "src_oldtown",
   "src_city_opera",
   "src_alluvion",
+  "src_theark",
 ]);
 
 export function isShowEventSource(sourceId: string): boolean {
-  return SHOW_EVENT_SOURCE_IDS.has(sourceId);
+  return isShowSourceLane(undefined, sourceId);
 }
 
 /** Soft ceiling so a fat import cannot take down public pages. */
@@ -361,5 +382,5 @@ export function selectTonightEvents(
 /** Short venue label for Events meta (drop street / city noise). */
 export function venueKicker(place: string): string {
   const first = place.split(",")[0]?.trim() || place.trim();
-  return first || "Traverse City";
+  return first || getSite().fallbackPlace;
 }

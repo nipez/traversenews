@@ -20,7 +20,7 @@ export default async function DeskOriginalsPage() {
           <div>
             <h1 className="font-serif text-3xl">Originals</h1>
             <p className="mt-2 max-w-xl text-[#444]">
-              Staff drafts become traverse.news reporting only after you publish.
+              Staff drafts become desk reporting only after you publish.
               Unpublished drafts never hit the public site. Do not invent quotes
               or facts.
             </p>

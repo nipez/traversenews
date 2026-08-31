@@ -29,12 +29,12 @@ import {
   looksLikeLowValueListing,
   selectTonightEvents,
 } from "@/lib/events";
-import { PUBLIC_ORIGINAL_BYLINE } from "@/lib/originals";
+import { getPublicOriginalByline } from "@/lib/originals";
 import { clusterStories } from "@/lib/pull/cluster";
 import {
   groupSchoolDaysByDistrict,
-  SCHOOL_DISTRICT_CALENDAR_PDF_URLS,
-  SCHOOL_DISTRICT_CALENDAR_URLS,
+  getSchoolCalendarPdfUrls,
+  getSchoolCalendarUrls,
   selectUpcomingSchoolDays,
   sourceIdForDistrict,
 } from "@/lib/schools";
@@ -281,7 +281,7 @@ function toLead(lead: ClusteredStory | Story): PublicLeadCard {
     url: lead.url,
     published_at: lead.published_at,
     is_original: true,
-    byline: lead.is_original ? PUBLIC_ORIGINAL_BYLINE : lead.byline,
+    byline: lead.is_original ? getPublicOriginalByline() : lead.byline,
     slug: lead.slug,
     image_url: lead.image_url,
     image_credit:
@@ -385,11 +385,11 @@ export function buildSchoolsSnapshot(
       district: block.district,
       calendarUrl:
         source?.calendar_url ||
-        SCHOOL_DISTRICT_CALENDAR_URLS[block.district] ||
+        getSchoolCalendarUrls()[block.district] ||
         null,
       calendarPdfUrl:
         source?.calendar_pdf_url ||
-        SCHOOL_DISTRICT_CALENDAR_PDF_URLS[block.district] ||
+        getSchoolCalendarPdfUrls()[block.district] ||
         null,
       months: block.months,
     };
@@ -549,7 +549,7 @@ export function buildOriginalsSnapshot(
       body: story.body,
       url: story.url,
       published_at: story.published_at,
-      byline: PUBLIC_ORIGINAL_BYLINE,
+      byline: getPublicOriginalByline(),
       image_url: story.image_url,
       image_credit: story.image_credit ?? null,
       image_caption: story.image_caption ?? null,

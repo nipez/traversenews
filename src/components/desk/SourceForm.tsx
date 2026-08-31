@@ -3,7 +3,19 @@
 import { useRouter } from "next/navigation";
 import { useMemo, useState, type FormEvent } from "react";
 import { SourcePullStatus } from "@/components/desk/SourcePullStatus";
-import type { Beat, PullMethod, Source, Story } from "@/lib/types";
+import type { Beat, PullMethod, Source, SourceLane, Story } from "@/lib/types";
+
+const LANES: Array<SourceLane | ""> = [
+  "",
+  "wire",
+  "alert",
+  "civic",
+  "events",
+  "school_cal",
+  "athletics",
+  "shows",
+  "original",
+];
 
 const METHODS: PullMethod[] = ["rss", "ics", "html", "facebook", "original"];
 
@@ -36,6 +48,8 @@ export function SourceForm({
   );
   const [enabled, setEnabled] = useState(initial?.enabled ?? true);
   const [notes, setNotes] = useState(initial?.notes ?? "");
+  const [lane, setLane] = useState<SourceLane | "">(initial?.lane ?? "");
+  const [place, setPlace] = useState(initial?.place ?? "");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -51,6 +65,8 @@ export function SourceForm({
       pull_method: pullMethod,
       enabled,
       notes,
+      lane: lane || undefined,
+      place: place.trim() || undefined,
     };
     try {
       const res = await fetch(
@@ -168,6 +184,36 @@ export function SourceForm({
               }`}
             />
           </button>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <label className="block">
+            <span className="text-[0.68rem] font-bold tracking-[0.08em] text-muted-2 uppercase">
+              Lane
+            </span>
+            <select
+              className="input mt-1"
+              value={lane}
+              onChange={(e) => setLane(e.target.value as SourceLane | "")}
+            >
+              {LANES.map((l) => (
+                <option key={l || "auto"} value={l}>
+                  {l || "Auto / fallback"}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="block">
+            <span className="text-[0.68rem] font-bold tracking-[0.08em] text-muted-2 uppercase">
+              Place
+            </span>
+            <input
+              className="input mt-1"
+              value={place}
+              onChange={(e) => setPlace(e.target.value)}
+              placeholder="Ann Arbor, Dexter, …"
+            />
+          </label>
         </div>
 
         <label className="block">

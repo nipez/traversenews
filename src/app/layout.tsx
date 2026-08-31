@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 import { Archivo, Source_Serif_4 } from "next/font/google";
+import { getSite, siteWordmark } from "@/lib/sites";
 import "./globals.css";
-
-/** Exact GA4 Measurement ID — do not invent a second ID. */
-const GA_MEASUREMENT_ID = "G-H554KXZD5B";
 
 const archivo = Archivo({
   subsets: ["latin"],
@@ -20,17 +18,20 @@ const sourceSerif = Source_Serif_4({
   weight: ["400", "500", "600", "700"],
 });
 
-export const metadata: Metadata = {
-  title: {
-    default: "traverse.news",
-    template: "%s · traverse.news",
-  },
-  description:
-    "Traverse City local news: original reporting plus headlines from other desks, events, and civic listings.",
-  other: {
-    "color-scheme": "light only",
-  },
-};
+export function generateMetadata(): Metadata {
+  const site = getSite();
+  const mark = siteWordmark();
+  return {
+    title: {
+      default: mark,
+      template: `%s · ${mark}`,
+    },
+    description: site.description,
+    other: {
+      "color-scheme": "light only",
+    },
+  };
+}
 
 export default function RootLayout({
   children,
@@ -44,13 +45,17 @@ export default function RootLayout({
       </head>
       <body className={`${archivo.variable} ${sourceSerif.variable} antialiased`}>
         {children}
-        <Script
-          src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
-          strategy="afterInteractive"
-        />
-        <Script id="ga4-gtag" strategy="afterInteractive">
-          {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_MEASUREMENT_ID}');`}
-        </Script>
+        {getSite().gaId ? (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${getSite().gaId}`}
+              strategy="afterInteractive"
+            />
+            <Script id="ga4-gtag" strategy="afterInteractive">
+              {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${getSite().gaId}');`}
+            </Script>
+          </>
+        ) : null}
       </body>
     </html>
   );

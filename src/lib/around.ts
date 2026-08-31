@@ -204,13 +204,22 @@ const PREFERRED_NEWS_SOURCE_IDS = new Set([
   "src_benzie_rp",
   "src_betsie",
   "src_antrim_review",
+  "src_michigandaily",
+  "src_michigandaily_news",
+  "src_aaobserver",
+  "src_wemu",
+  "src_suntimes",
+  "src_concentrate",
 ]);
 
 /**
  * High-volume free TV wire. Cap separately so 9&10 does not eat the bay.
  * Ticker is capped with Eyes Only Media (below), not here.
  */
-const HEAVY_FREE_WIRE_SOURCE_IDS = new Set(["src_910"]);
+const HEAVY_FREE_WIRE_SOURCE_IDS = new Set([
+  "src_910",
+  "src_michigan_public",
+]);
 
 /**
  * Eyes Only Media family — The Ticker, Northern Express, TC Business News.

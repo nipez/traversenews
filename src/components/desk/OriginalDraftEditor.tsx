@@ -96,7 +96,7 @@ export function OriginalDraftEditor({ draft }: { draft: OriginalDraft }) {
         setStatus(json.draft.status);
         setSlug(json.draft.slug);
       }
-      setNotice("Published on the public site as traverse.news reporting.");
+      setNotice("Published on the public site as desk reporting.");
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Publish failed");

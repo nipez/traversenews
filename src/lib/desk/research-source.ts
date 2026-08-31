@@ -1,3 +1,4 @@
+import { getSite } from "@/lib/sites";
 import type { Beat, PullMethod, Source } from "@/lib/types";
 
 export type SourceResearchResult = {
@@ -273,7 +274,7 @@ async function probeUrl(
   const res = await fetch(url, {
     headers: {
       "User-Agent":
-        "Mozilla/5.0 (compatible; traverse.news-desk/1.0; +https://traverse.news)",
+        `Mozilla/5.0 (compatible; ${getSite().userAgent})`,
       Accept: "application/rss+xml, application/atom+xml, application/xml, text/xml, text/calendar, text/html;q=0.9, */*;q=0.8",
     },
     redirect: "follow",

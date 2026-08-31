@@ -75,7 +75,49 @@ Without Supabase vars the app seeds **beats and sources** only (empty stories/ev
 3. Create a staff Auth user.
 4. Set the env vars and redeploy.
 
-Source catalog lives in `src/lib/data/seed.ts` (feeds and beats only). Do not paste invented journalism into seed — write real pieces in Desk when ready.
+Source catalog lives in `src/lib/data/seed.ts` (Traverse) and `src/lib/sites/ann-arbor/seed.ts` (Ann Arbor / Dexter). Feeds and beats only. Do not paste invented journalism into seed — write real pieces in Desk when ready.
+
+## Second city (Ann Arbor / Dexter)
+
+Same repo, **separate Worker + KV + Desk catalog**. Never write AA rows into Traverse `TRAVERSE_DATA`.
+
+| | Traverse | Ann Arbor / Dexter |
+| --- | --- | --- |
+| `SITE_ID` | `traverse` (default) | `ann-arbor` |
+| Wrangler | `wrangler.jsonc` | `wrangler.ann-arbor.jsonc` |
+| Seed | `src/lib/data/seed.ts` | `src/lib/sites/ann-arbor/seed.ts` |
+| Wordmark | traverse.news | a2.news (placeholder until a domain is bought) |
+| Letter | live from Desk | preview-only (`letterPreviewOnly`) |
+
+```bash
+# Local AA preview (empty catalog + researched feeds)
+npm run dev:ann-arbor
+
+# Isolation / branding checks
+npm run test:site-config
+```
+
+Create AA KV + R2 **once**, paste the KV id into `wrangler.ann-arbor.jsonc` (do not reuse Traverse ids), then:
+
+```bash
+npx wrangler kv namespace create ann-arbor-news-data
+npx wrangler r2 bucket create ann-arbor-news-media
+npx wrangler r2 bucket create ann-arbor-news-backups
+npm run deploy:ann-arbor
+```
+
+Desk **Cities** menu links each instance `/desk`. Same staff password for now. A city-only cultivator later: set `STAFF_SITES=ann-arbor` on that Worker.
+
+**Need Traverse News to pull** (datacenter 403 / JS):
+
+- https://www.annarbor.org/events/
+- https://a2gov.legistar.com/Calendar.aspx
+- https://www.washtenaw.org/Calendar.aspx
+- https://aadl.org/events
+- https://www.dcsd.org/calendar
+- Pioneer / Skyline / Huron / Dexter ArbiterLive fronts
+
+Land listings with `POST /api/desk/events/import`, `/civic/import`, `/schools/import`, `/shows/import`, `/athletics/import` against the **AA** Desk token. Never invent times.
 
 ## Cloudflare deploy
 

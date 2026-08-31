@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { SignOutButton } from "@/components/desk/SignOutButton";
+import { CitiesSwitcher } from "@/components/desk/CitiesSwitcher";
 import { getDevDeskEmail, isDeskAuthed } from "@/lib/auth";
 import { getAppData } from "@/lib/data/store";
+import { siteWordmark } from "@/lib/sites";
 
 export async function DeskChrome({
   children,
@@ -68,12 +70,13 @@ export async function DeskChrome({
         <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3 md:px-6">
           <div className="flex items-center gap-2">
             <Link href="/" className="font-serif text-lg text-white" prefetch={false}>
-              traverse.news
+              {siteWordmark()}
             </Link>
             <span className="text-white/40">|</span>
             <span className="text-xs font-semibold tracking-[0.12em] text-white/80 uppercase">
               The Desk
             </span>
+            <CitiesSwitcher />
           </div>
 
           {backHref ? (

@@ -4,6 +4,9 @@ import {
   parseEventStartsAt,
 } from "@/lib/dates";
 import { shortHash } from "@/lib/events";
+import { getSiteId } from "@/lib/sites";
+import { ANN_ARBOR_SHOW_VENUES } from "@/lib/sites/ann-arbor/shows";
+import { isShowSourceLane } from "@/lib/source-lanes";
 import type { ShowListing, Source } from "@/lib/types";
 
 /** Soft ceiling — grouped titles, not a 14-screen grid dump. */
@@ -21,10 +24,11 @@ export const SHOW_SOURCE_IDS = new Set([
   "src_oldtown",
   "src_city_opera",
   "src_alluvion",
+  "src_theark",
 ]);
 
 export function isShowSource(sourceId: string): boolean {
-  return SHOW_SOURCE_IDS.has(sourceId);
+  return isShowSourceLane(undefined, sourceId);
 }
 
 export type ShowVenueSlot = {
@@ -73,9 +77,13 @@ export const SHOW_VENUES: readonly ShowVenueSlot[] = [
   },
 ] as const;
 
+export function getShowVenues(): readonly ShowVenueSlot[] {
+  return getSiteId() === "ann-arbor" ? ANN_ARBOR_SHOW_VENUES : SHOW_VENUES;
+}
+
 export function venueNameForSource(sourceId: string): string {
   return (
-    SHOW_VENUES.find((v) => v.source_id === sourceId)?.name ?? "Local venue"
+    getShowVenues().find((v) => v.source_id === sourceId)?.name ?? "Local venue"
   );
 }
 
@@ -91,7 +99,7 @@ export function venuesPresentInListings(listings: ShowListing[]): string[] {
     if (name) present.add(name);
   }
   const ordered: string[] = [];
-  for (const slot of SHOW_VENUES) {
+  for (const slot of getShowVenues()) {
     if (present.has(slot.name)) {
       ordered.push(slot.name);
       present.delete(slot.name);
@@ -396,7 +404,7 @@ export function groupShowsByVenue(
   at = new Date(),
 ): PublicShowVenueGroup[] {
   const upcoming = selectUpcomingShows(listings, at);
-  return SHOW_VENUES.map((venue) => ({
+  return getShowVenues().map((venue) => ({
     ...venue,
     listings: upcoming.filter((s) => s.source_id === venue.source_id),
   }));

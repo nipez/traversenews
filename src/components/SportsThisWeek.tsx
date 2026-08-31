@@ -2,8 +2,8 @@
 
 import { useMemo, useState } from "react";
 import {
-  ATHLETICS_CORE_SCHOOLS,
   ATHLETICS_SURROUNDING_SCHOOLS,
+  getAthleticsCoreSchools,
   displayAthleticsSchool,
   filterAthleticsSlate,
   gameMatchesSchoolFilter,
@@ -135,14 +135,16 @@ export function SportsThisWeek({
       ? "1 more school"
       : `${surroundingCount} more schools`;
 
-  const coreChips = ATHLETICS_CORE_SCHOOLS;
+  const coreChips = getAthleticsCoreSchools();
+  const dek =
+    coreChips.includes("Pioneer")
+      ? "Ann Arbor / Dexter prep — Pioneer, Skyline, Huron, Dexter."
+      : "Traverse City prep — Central, West, TC St. Francis, TC Christian.";
 
   return (
     <section className="sports-week" aria-label="Prep calendar">
       <h2 className="sports-week-hed">This week</h2>
-      <p className="sports-week-dek">
-        Traverse City prep — Central, West, TC St. Francis, TC Christian.
-      </p>
+      <p className="sports-week-dek">{dek}</p>
 
       <div
         className="sports-week-filters"
