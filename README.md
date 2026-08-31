@@ -107,7 +107,7 @@ npm run deploy:ann-arbor
 
 Desk **Cities** menu links each instance `/desk`. Same staff password for now. A city-only cultivator later: set `STAFF_SITES=ann-arbor` on that Worker.
 
-**Worker already reads** (printed times only): City Legistar (`src_a2_legistar`), The Ark event pages (`src_ark_events`), UMS season dates (`src_ums_events`, `time_unknown`), Marquee live events (`src_marquee_events`) and film clocks (`src_marquee_shows`). AAPS Google ICS → `/schools` (all-day = `time_unknown`, not 8:00 PM).
+**Worker already reads** (printed times only): City Legistar (`src_a2_legistar`), City newsroom headlines (`src_a2_news`), The Ark event pages (`src_ark_events`), UMS season dates (`src_ums_events`, `time_unknown`), Marquee live events (`src_marquee_events`) and film clocks (`src_marquee_shows`). AAPS Google ICS → `/schools` (all-day = `time_unknown`, not 8:00 PM).
 
 **Need Traverse News to pull** (datacenter 403 / JS):
 
