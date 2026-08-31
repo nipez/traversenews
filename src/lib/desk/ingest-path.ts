@@ -56,6 +56,7 @@ export function ingestPathForSource(source: Source): {
     const workerHtml = new Set([
       "src_state_theatre",
       "src_elk_cinema",
+      "src_alluvion",
     ]).has(source.id);
     return {
       workerPulls: workerHtml,

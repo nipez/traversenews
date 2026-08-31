@@ -412,6 +412,17 @@ const sources: Source[] = [
       "Shows (/shows), never Events. If Worker empty, Traverse News → POST /api/desk/shows/import. Never invent titles, dates, or times.",
   },
   {
+    id: "src_alluvion",
+    name: "The Alluvion",
+    homepage: "https://www.thealluvion.org/",
+    feed_url: "https://www.thealluvion.org/tickets",
+    pull_method: "html",
+    beat_id: "beat_shows",
+    enabled: true,
+    notes:
+      "Shows (/shows), never Events. Worker tries Squarespace /tickets HTML. Never invent titles, dates, or times. If Worker HTML is empty, Traverse News → POST /api/desk/shows/import.",
+  },
+  {
     id: "src_state_theatre",
     name: "State Theatre / Bijou",
     homepage: "https://stateandbijou.org/",

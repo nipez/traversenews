@@ -422,6 +422,81 @@ export function parseElkRapidsCinemaHtml(
   return out;
 }
 
+/**
+ * The Alluvion Squarespace /tickets list — eventlist-event articles with
+ * datetime + title + optional start clock in static HTML (verified live).
+ * One row per dated listing; never invent clocks; skip past dates.
+ */
+export function parseAlluvionHtml(
+  html: string,
+  source: Source,
+  now = new Date(),
+): ShowListing[] {
+  const chunks = html.split(/(?=<article\b[^>]*\beventlist-event\b)/i);
+  const out: ShowListing[] = [];
+  const seen = new Set<string>();
+  const origin = "https://www.thealluvion.org";
+
+  for (const chunk of chunks) {
+    if (!/<article\b[^>]*\beventlist-event\b/i.test(chunk.slice(0, 200))) {
+      continue;
+    }
+    // Prefer the article body only (stop before the next article if present).
+    const end = chunk.search(/<\/article>/i);
+    const block = end >= 0 ? chunk.slice(0, end) : chunk.slice(0, 12_000);
+    if (/\beventlist-event--past\b/i.test(block.slice(0, 280))) continue;
+
+    const titleM = block.match(
+      /class="[^"]*eventlist-title-link[^"]*"[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/i,
+    ) || block.match(
+      /href="([^"]+)"[^>]*class="[^"]*eventlist-title-link[^"]*"[^>]*>([\s\S]*?)<\/a>/i,
+    );
+    if (!titleM) continue;
+    const title = stripTags(titleM[2]);
+    if (!title || title.length > 200) continue;
+
+    const dateM = block.match(
+      /<time\b[^>]*class="[^"]*\bevent-date\b[^"]*"[^>]*datetime="(\d{4}-\d{2}-\d{2})"/i,
+    ) || block.match(
+      /<time\b[^>]*datetime="(\d{4}-\d{2}-\d{2})"[^>]*class="[^"]*\bevent-date\b[^"]*"/i,
+    );
+    if (!dateM) continue;
+    const [y, mo, d] = dateM[1].split("-").map(Number);
+    if (!y || !mo || !d) continue;
+    const startsIso = dayToMidnightIso({ year: y, month: mo - 1, day: d });
+    if (!withinHorizon(startsIso, now)) continue;
+
+    // Start clock only — never invent; end times stay out of times[].
+    const startClockHtml =
+      block.match(
+        /<time\b[^>]*class="[^"]*event-time-localized-start[^"]*"[^>]*>([\s\S]*?)<\/time>/i,
+      )?.[1] ?? "";
+    const times = parseStatedClocks(stripTags(startClockHtml));
+
+    let href = decodeEntities(titleM[1].trim());
+    if (href.startsWith("/")) href = `${origin}${href}`;
+    else if (!/^https?:\/\//i.test(href)) href = `${origin}/${href}`;
+    // Drop calendar export query junk.
+    href = href.replace(/\?format=ical.*$/i, "").replace(/#.*$/, "");
+
+    const key = `${title.toLowerCase()}|${dateM[1]}|${times[0] ?? ""}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+
+    out.push(
+      listingFromParts({
+        source,
+        title,
+        startsIso,
+        times,
+        url: href || source.homepage,
+      }),
+    );
+  }
+
+  return out;
+}
+
 export type HtmlShowsPullResult = {
   shows: ShowListing[];
   bot_blocked: boolean;
@@ -485,6 +560,8 @@ export async function pullHtmlShows(
       shows = parseStateTheatreHtml(html, source);
     } else if (source.id === "src_elk_cinema") {
       shows = parseElkRapidsCinemaHtml(html, source);
+    } else if (source.id === "src_alluvion") {
+      shows = parseAlluvionHtml(html, source);
     } else {
       return {
         shows: [],

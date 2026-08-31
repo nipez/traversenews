@@ -173,6 +173,7 @@ export const SHOW_EVENT_SOURCE_IDS = new Set([
   "src_amc_cherry",
   "src_oldtown",
   "src_city_opera",
+  "src_alluvion",
 ]);
 
 export function isShowEventSource(sourceId: string): boolean {

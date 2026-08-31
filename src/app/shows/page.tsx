@@ -40,6 +40,10 @@ const VENUE_LINKS = [
     name: "City Opera House",
     href: "https://www.cityoperahouse.org/",
   },
+  {
+    name: "The Alluvion",
+    href: "https://www.thealluvion.org/",
+  },
 ];
 
 export default async function ShowsPage() {
