@@ -360,6 +360,11 @@ assert.equal(washtenaw.length, 1, "cancelled CivicClerk rows are skipped");
 assert.equal(washtenaw[0].title, "Board of Commissioners Meeting");
 assert.equal(washtenaw[0].place, "220 N. Main, Ann Arbor");
 assert.equal(
+  washtenaw[0].starts_at,
+  "2026-09-02T23:00:00.000Z",
+  "CivicClerk 19:00Z is 7:00 PM Detroit, not 3:00 PM",
+);
+assert.equal(
   washtenaw[0].url,
   "https://washtenawcomi.portal.civicclerk.com/event/4079",
 );

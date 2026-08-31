@@ -525,6 +525,26 @@ type CivicClerkMeeting = {
 };
 
 /**
+ * CivicClerk writes America/Detroit wall clocks with a false Z suffix
+ * (portal "7:00 PM EDT" arrives as 2026-09-02T19:00:00Z). Treat the
+ * Y-M-D H:M as Detroit, never as UTC.
+ */
+function civicClerkWallToUtc(iso: string): Date | null {
+  const m = iso
+    .trim()
+    .match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?/);
+  if (!m) return null;
+  return detroitWallToUtc(
+    Number(m[1]),
+    Number(m[2]),
+    Number(m[3]),
+    Number(m[4]),
+    Number(m[5]),
+    Number(m[6] ?? 0),
+  );
+}
+
+/**
  * Washtenaw CivicClerk OData /Events. Printed startDateTime only.
  * Skip cancelled / deleted rows. Never invent a clock or place street.
  */
@@ -545,8 +565,8 @@ export function extractCivicClerkMeetings(
     if (row.isDeleted || row.isArchived) continue;
     if (/^(cancelled|canceled)\b/i.test(title)) continue;
     const iso = String(row.startDateTime || row.eventDate || "").trim();
-    const starts = new Date(iso);
-    if (Number.isNaN(starts.getTime())) continue;
+    const starts = civicClerkWallToUtc(iso);
+    if (!starts || Number.isNaN(starts.getTime())) continue;
     if (starts.getTime() < now.getTime() - 1000 * 60 * 60 * 12) continue;
     if (starts.getTime() > horizon) continue;
     const uid = String(id);
@@ -599,7 +619,9 @@ async function pullWashtenawCivicClerk(
   source: Source,
   now: Date,
 ): Promise<HtmlEventsPullResult> {
-  const since = new Date(now.getTime() - 1000 * 60 * 60 * 12).toISOString();
+  // API compares this string to Eastern-as-Z values — use Detroit midnight,
+  // not a real UTC offset, or morning meetings drop off.
+  const since = `${detroitDayKey(now)}T00:00:00Z`;
   const first = new URL(WASHTENAW_CIVICCLERK_API);
   first.searchParams.set("$filter", `startDateTime ge ${since}`);
   first.searchParams.set("$orderby", "startDateTime");
