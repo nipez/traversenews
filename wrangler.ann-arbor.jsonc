@@ -16,11 +16,10 @@
   ],
   "kv_namespaces": [
     {
-      // Own namespace — never the Traverse TRAVERSE_DATA id.
-      // Create: wrangler kv namespace create ANN_ARBOR_DATA
-      // then paste the id here before first deploy.
+      // Own namespace (ann-arbor-news-data). Never the Traverse
+      // TRAVERSE_DATA id 665b4f9653594140826d5789bd4ac8f3.
       "binding": "TRAVERSE_DATA",
-      "id": "REPLACE_WITH_ANN_ARBOR_KV_ID"
+      "id": "e0901286e33743c08638345e46080014"
     }
   ],
   "r2_buckets": [

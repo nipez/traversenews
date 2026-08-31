@@ -97,12 +97,11 @@ npm run dev:ann-arbor
 npm run test:site-config
 ```
 
-Create AA KV + R2 **once**, paste the KV id into `wrangler.ann-arbor.jsonc` (do not reuse Traverse ids), then:
+**Preview:** [https://ann-arbor-news.nickperez.workers.dev](https://ann-arbor-news.nickperez.workers.dev)
+
+AA KV (`ann-arbor-news-data` / `e0901286e33743c08638345e46080014`) and R2 (`ann-arbor-news-media`, `ann-arbor-news-backups`) already exist. Never reuse Traverse ids. Redeploy:
 
 ```bash
-npx wrangler kv namespace create ann-arbor-news-data
-npx wrangler r2 bucket create ann-arbor-news-media
-npx wrangler r2 bucket create ann-arbor-news-backups
 npm run deploy:ann-arbor
 ```
 
