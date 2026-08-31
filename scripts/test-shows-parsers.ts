@@ -1,11 +1,12 @@
 /**
- * Parser checks for Shows HTML pull (State Theatre + Elk Rapids).
+ * Parser checks for Shows HTML pull (State Theatre + Elk Rapids + Alluvion).
  * Run: npx tsx scripts/test-shows-parsers.ts
  */
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
+  parseAlluvionHtml,
   parseElkRapidsCinemaHtml,
   parseStateTheatreHtml,
   parseStatedClocks,
@@ -31,6 +32,17 @@ const elkSrc: Source = {
   name: "Elk Rapids Cinema",
   homepage: "https://www.elkrapidscinema.com/",
   feed_url: "https://www.elkrapidscinema.com/",
+  pull_method: "html",
+  beat_id: "beat_shows",
+  enabled: true,
+  notes: "",
+};
+
+const alluvionSrc: Source = {
+  id: "src_alluvion",
+  name: "The Alluvion",
+  homepage: "https://www.thealluvion.org/",
+  feed_url: "https://www.thealluvion.org/tickets",
   pull_method: "html",
   beat_id: "beat_shows",
   enabled: true,
@@ -73,7 +85,38 @@ assert.deepEqual(coyote!.times, ["1:00 PM", "4:00 PM", "7:00 PM"]);
 const coyoteCount = elk.filter((s) => /Coyote vs\. Acme/i.test(s.title)).length;
 assert.equal(coyoteCount, 1);
 
+const alluvionHtml = readFileSync(
+  join(fixtures, "alluvion-tickets.html"),
+  "utf8",
+);
+const alluvion = parseAlluvionHtml(alluvionHtml, alluvionSrc, now);
+assert.ok(alluvion.length >= 5, "Alluvion should find upcoming dated shows");
+const funky = alluvion.find(
+  (s) =>
+    /Funky Uncle/i.test(s.title) && s.starts_at.startsWith("2026-08-31"),
+);
+assert.ok(funky, "Funky Fun Mondays on 2026-08-31 from live fixture");
+assert.deepEqual(funky!.times, ["7:00 PM"]);
+assert.equal(funky!.venue, "The Alluvion");
+assert.ok(
+  funky!.url?.includes("/tickets/funky-fun-mondays/8-31-26"),
+  "prefer event permalink",
+);
+
+const ravi7 = alluvion.find(
+  (s) => /Ravi Coltrane/i.test(s.title) && /7PM/i.test(s.title),
+);
+const ravi9 = alluvion.find(
+  (s) => /Ravi Coltrane/i.test(s.title) && /9PM/i.test(s.title),
+);
+assert.ok(ravi7 && ravi9, "separate 7PM / 9PM dated rows");
+assert.deepEqual(ravi7!.times, ["7:00 PM"]);
+assert.deepEqual(ravi9!.times, ["9:00 PM"]);
+
+const pastJune = alluvion.filter((s) => s.starts_at.startsWith("2026-06-"));
+assert.equal(pastJune.length, 0, "skip past dates from fixture");
+
 console.log("ok — shows parsers");
 console.log(
-  `  state: ${state.length} listing(s); elk: ${elk.length} listing(s)`,
+  `  state: ${state.length} listing(s); elk: ${elk.length} listing(s); alluvion: ${alluvion.length} listing(s)`,
 );

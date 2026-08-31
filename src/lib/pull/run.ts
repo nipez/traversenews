@@ -39,6 +39,7 @@ const HTML_EVENT_SOURCE_IDS = new Set([
 const HTML_SHOW_SOURCE_IDS = new Set([
   "src_state_theatre",
   "src_elk_cinema",
+  "src_alluvion",
 ]);
 
 export async function runPull(): Promise<PullResult> {

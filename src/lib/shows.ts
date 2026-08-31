@@ -20,6 +20,7 @@ export const SHOW_SOURCE_IDS = new Set([
   "src_amc_cherry",
   "src_oldtown",
   "src_city_opera",
+  "src_alluvion",
 ]);
 
 export function isShowSource(sourceId: string): boolean {
@@ -64,6 +65,11 @@ export const SHOW_VENUES: readonly ShowVenueSlot[] = [
     source_id: "src_city_opera",
     name: "City Opera House",
     homepage: "https://www.cityoperahouse.org/",
+  },
+  {
+    source_id: "src_alluvion",
+    name: "The Alluvion",
+    homepage: "https://www.thealluvion.org/",
   },
 ] as const;
 

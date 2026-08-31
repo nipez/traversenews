@@ -252,8 +252,9 @@ curl -X POST https://traverse-news.nickperez.workers.dev/api/desk/shows/import \
   }'
 ```
 
-- Source ids: `src_state_theatre`, `src_bay_theatre`, `src_elk_cinema`, `src_amc_cherry`, `src_oldtown`, `src_city_opera`.
-- State Theatre + Elk Rapids have Worker HTML pulls; AMC / Bay / OTP / City Opera are import-only until a browser pull lands.
+- Source ids: `src_state_theatre`, `src_bay_theatre`, `src_elk_cinema`, `src_amc_cherry`, `src_oldtown`, `src_city_opera`, `src_alluvion`.
+- State Theatre + Elk Rapids + The Alluvion have Worker HTML pulls; AMC / Bay / OTP / City Opera are import-only until a browser pull lands.
+- The Alluvion (`src_alluvion`) — Worker reads Squarespace https://www.thealluvion.org/tickets. If empty, Desk import with that `source_id`.
 - Date-only `starts_at` → midnight Detroit + blank clock display (never invent noon).
 
 ### Browser story import (Facebook alerts)
