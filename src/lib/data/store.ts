@@ -1,6 +1,10 @@
 import { createSeedData } from "@/lib/data/seed";
 import { getTraverseDataKv, STORE_KEY } from "@/lib/data/kv";
-import { isBannedOriginalSlug, scrubAppData } from "@/lib/data/scrub";
+import {
+  isBannedOriginalSlug,
+  isKilledOriginalSlug,
+  scrubAppData,
+} from "@/lib/data/scrub";
 import { STAFF_PUBLISHED_ORIGINALS, STAFF_UNPUBLISHED_DRAFTS } from "@/lib/data/staff-drafts";
 import { buildEditionSnapshot, upsertEdition } from "@/lib/editions";
 import {
@@ -364,7 +368,7 @@ export async function listStories(): Promise<Story[]> {
 }
 
 export async function getOriginalBySlug(slug: string): Promise<Story | undefined> {
-  if (isBannedOriginalSlug(slug)) return undefined;
+  if (isBannedOriginalSlug(slug) || isKilledOriginalSlug(slug)) return undefined;
   await repairPublishedOriginalStories();
   const data = await loadStore();
   return data.stories.find((s) => s.is_original && s.slug === slug);
@@ -988,47 +992,35 @@ export async function ensureStaffUnpublishedDrafts(): Promise<void> {
 }
 
 /**
- * Nick already hit Publish on these — keep status=published and the matching
- * is_original Story in the same store publishDraft uses.
+ * Staff originals Nick already published. Never call publishDraft to upgrade a
+ * draft/unpublished row — Desk unpublish must stick (DeskChrome prefetches
+ * /desk/originals → listDrafts → ensure, which used to republish within ~60s).
+ * Only repair a missing is_original Story when status is already published.
  */
 export async function ensurePublishedStaffOriginals(): Promise<void> {
   for (const staff of STAFF_PUBLISHED_ORIGINALS) {
     const data = await loadStore();
     const existing = data.drafts.find((d) => d.id === staff.id);
     const slug = staff.slug?.trim();
-    if (!slug || isBannedOriginalSlug(slug)) continue;
+    if (!slug || isBannedOriginalSlug(slug) || isKilledOriginalSlug(slug)) {
+      continue;
+    }
+
+    // Missing or unpublished — leave alone. Never re-seed / auto-publish.
+    if (!existing || existing.status !== "published") continue;
 
     const hasStory = data.stories.some(
-      (s) => s.is_original && (s.slug === slug || s.id === staff.published_story_id),
+      (s) =>
+        s.is_original &&
+        (s.slug === slug ||
+          s.id === staff.published_story_id ||
+          (existing.published_story_id != null &&
+            s.id === existing.published_story_id)),
     );
+    if (hasStory) continue;
 
-    if (existing?.status === "published" && hasStory) continue;
-
-    // Upsert full copy first (may still be draft if a prior ensure clobbered it).
-    await upsertDraft({
-      ...staff,
-      ...existing,
-      id: staff.id,
-      title: existing?.title?.trim() || staff.title,
-      dek: existing?.dek?.trim() || staff.dek,
-      body: existing?.body?.trim() ? existing.body : staff.body,
-      section: existing?.section?.trim() || staff.section,
-      byline: existing?.byline?.trim() || staff.byline,
-      slug,
-      image_url: existing?.image_url ?? staff.image_url ?? null,
-      image_credit: existing?.image_credit ?? staff.image_credit ?? null,
-      image_caption: existing?.image_caption ?? staff.image_caption ?? null,
-      source_urls:
-        existing?.source_urls?.length ? existing.source_urls : staff.source_urls,
-      status: existing?.status === "published" ? "published" : "draft",
-      published_story_id: existing?.published_story_id ?? null,
-      published_at: existing?.published_at ?? null,
-      created_at: existing?.created_at ?? staff.created_at,
-    });
-
-    if (existing?.status !== "published" || !hasStory) {
-      await publishDraft(staff.id);
-    }
+    // Draft is already published but Story row is missing — repair only.
+    await publishDraft(staff.id);
   }
 }
 
@@ -1041,7 +1033,9 @@ export async function repairPublishedOriginalStories(): Promise<void> {
     const draft = data.drafts[i];
     if (draft.status !== "published") continue;
     const slug = draft.slug?.trim();
-    if (!slug || isBannedOriginalSlug(slug)) continue;
+    if (!slug || isBannedOriginalSlug(slug) || isKilledOriginalSlug(slug)) {
+      continue;
+    }
 
     const hasStory = data.stories.some(
       (s) =>
