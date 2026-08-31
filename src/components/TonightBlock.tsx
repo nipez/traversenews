@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { OfficialCalendars } from "@/components/OfficialCalendars";
 import { formatEventWhenParts } from "@/lib/dates";
 import { getSite } from "@/lib/sites";
 import type { EventItem } from "@/lib/types";
@@ -86,6 +87,9 @@ export function TonightBlock({
           </li>
         ) : null}
       </ul>
+      {shown.length === 0 ? (
+        <OfficialCalendars links={getSite().eventsHandoffs} />
+      ) : null}
 
       <Link href="/events" className="tonight-more">
         All Events →

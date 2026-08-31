@@ -10,6 +10,7 @@ import {
   withSkippedPublicSnapshots,
 } from "@/lib/data/store";
 import { isInventedStory, keepRealOriginals } from "@/lib/data/scrub";
+import { pullAnnArborHtml } from "@/lib/pull/html-ann-arbor";
 import { pullHtmlEvents } from "@/lib/pull/html-events";
 import { pullHtmlShows } from "@/lib/pull/html-shows";
 import { pullIcsSource } from "@/lib/pull/ics";
@@ -36,6 +37,13 @@ const HTML_EVENT_SOURCE_IDS = new Set([
   "src_interlochen",
   "src_tadl",
   "src_visit_events",
+]);
+
+/** Ann Arbor listings the Worker can read (Legistar / Ark / UMS). */
+const HTML_AA_LISTING_IDS = new Set([
+  "src_a2_legistar",
+  "src_ark_events",
+  "src_ums_events",
 ]);
 
 /** Shows venues with static HTML showtimes the Worker can read. */
@@ -108,6 +116,22 @@ async function runPullInner(): Promise<PullResult> {
             error: htmlResult.error,
             attempted: true,
           });
+        } else {
+          touch.set(source.id, { ok: true, error: null, attempted: true });
+        }
+      } else if (
+        source.pull_method === "html" &&
+        HTML_AA_LISTING_IDS.has(source.id)
+      ) {
+        const htmlResult = await pullAnnArborHtml(source);
+        pulledEvents.push(...htmlResult.events);
+        if (htmlResult.bot_blocked) {
+          const msg =
+            `Bot-blocked or empty listing (${htmlResult.status ?? "n/a"}). ` +
+            "Do not invent events. Need Traverse News to pull this URL on the live computer " +
+            "and POST the list to the matching /api/desk/*/import route.";
+          errors.push({ source: source.name, error: msg });
+          touch.set(source.id, { ok: false, error: msg, attempted: true });
         } else {
           touch.set(source.id, { ok: true, error: null, attempted: true });
         }

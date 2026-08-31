@@ -1,0 +1,460 @@
+import { detroitWallToUtc } from "@/lib/dates";
+import { looksLikeLowValueListing, stableEventId } from "@/lib/events";
+import { getSite } from "@/lib/sites";
+import type { EventItem, Source } from "@/lib/types";
+import type { HtmlEventsPullResult } from "@/lib/pull/html-events";
+
+const MONTHS: Record<string, number> = {
+  january: 1,
+  february: 2,
+  march: 3,
+  april: 4,
+  may: 5,
+  june: 6,
+  july: 7,
+  august: 8,
+  september: 9,
+  october: 10,
+  november: 11,
+  december: 12,
+  jan: 1,
+  feb: 2,
+  mar: 3,
+  apr: 4,
+  jun: 6,
+  jul: 7,
+  aug: 8,
+  sep: 9,
+  sept: 9,
+  oct: 10,
+  nov: 11,
+  dec: 12,
+};
+
+const WEEKDAYS =
+  "Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday";
+
+const UMS_VENUE_HINT =
+  /freighthouse|hill auditorium|power center|rackham|michigan theater|lydia|pease|stamps/i;
+
+function decodeEntities(s: string): string {
+  return s
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#039;/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&#8211;/g, "–")
+    .replace(/&#8212;/g, "—")
+    .replace(/&#8216;/g, "'")
+    .replace(/&#8217;/g, "'")
+    .replace(/&#8220;/g, '"')
+    .replace(/&#8221;/g, '"')
+    .replace(/&ndash;/g, "–")
+    .replace(/&mdash;/g, "—")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
+    .trim();
+}
+
+function stripTags(s: string): string {
+  return decodeEntities(
+    s.replace(/<br\s*\/?>/gi, " ").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim(),
+  );
+}
+
+function monthNumber(name: string): number | null {
+  const n = MONTHS[name.toLowerCase()];
+  return n ?? null;
+}
+
+function parseClock(
+  hour12: number,
+  minute: number,
+  ap: string,
+): { hour: number; minute: number } | null {
+  if (!Number.isFinite(hour12) || hour12 < 1 || hour12 > 12) return null;
+  if (!Number.isFinite(minute) || minute < 0 || minute > 59) return null;
+  const mer = ap.toLowerCase();
+  let hour = hour12 % 12;
+  if (mer === "p") hour += 12;
+  return { hour, minute };
+}
+
+function withinDays(d: Date, now: Date, days: number): boolean {
+  const t = d.getTime();
+  return (
+    t >= now.getTime() - 1000 * 60 * 60 * 12 &&
+    t <= now.getTime() + 1000 * 60 * 60 * 24 * days
+  );
+}
+
+function fetchHeaders(): HeadersInit {
+  return {
+    "User-Agent": `Mozilla/5.0 (compatible; ${getSite().userAgent})`,
+    Accept: "text/html,application/xhtml+xml,application/rss+xml",
+  };
+}
+
+/**
+ * Granicus Legistar Calendar.aspx rows: name, MM/DD/YYYY, iCal, printed clock, place.
+ * Never invent a clock — missing/placeholder time → time_unknown at midnight Detroit.
+ */
+export function extractLegistarMeetings(
+  html: string,
+  source: Source,
+  now = new Date(),
+): EventItem[] {
+  const rows = html.match(
+    /<tr class="rg(?:Row|AltRow)"[\s\S]*?<\/tr>/gi,
+  );
+  if (!rows) return [];
+  const out: EventItem[] = [];
+  const seen = new Set<string>();
+
+  for (const row of rows) {
+    const tds = [...row.matchAll(/<td\b[^>]*>([\s\S]*?)<\/td>/gi)].map(
+      (m) => m[1],
+    );
+    if (tds.length < 4) continue;
+    const title = stripTags(tds[0] ?? "");
+    if (!title) continue;
+    const dateText = stripTags(tds[1] ?? "");
+    const dateM = dateText.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (!dateM) continue;
+    const month = Number(dateM[1]);
+    const day = Number(dateM[2]);
+    const year = Number(dateM[3]);
+    const timeText = stripTags(tds[3] ?? "");
+    const timeM = timeText.match(/^(\d{1,2}):(\d{2})\s*([ap])\.?m\.?$/i);
+    let starts: Date;
+    let timeUnknown = false;
+    if (timeM) {
+      const clock = parseClock(Number(timeM[1]), Number(timeM[2]), timeM[3]);
+      if (!clock) continue;
+      starts = detroitWallToUtc(year, month, day, clock.hour, clock.minute, 0);
+    } else {
+      starts = detroitWallToUtc(year, month, day, 0, 0, 0);
+      timeUnknown = true;
+    }
+    if (Number.isNaN(starts.getTime())) continue;
+    if (starts.getTime() < now.getTime() - 1000 * 60 * 60 * 12) continue;
+
+    const locRaw = tds[4] ?? "";
+    const locFirst = locRaw.split(/<br\s*\/?>|<em\b/i)[0] ?? "";
+    const place = stripTags(locFirst) || "Ann Arbor";
+
+    const detailHref = decodeEntities(
+      row.match(
+        /hypMeetingDetail[^>]*href="([^"]+)"/i,
+      )?.[1] ?? "",
+    );
+    const url = detailHref
+      ? new URL(detailHref, "https://a2gov.legistar.com/").href
+      : source.feed_url;
+    const meetingId = detailHref.match(/[?&]ID=(\d+)/i)?.[1];
+    const uid = meetingId || `${title}|${starts.toISOString()}`;
+    if (seen.has(uid)) continue;
+    seen.add(uid);
+
+    const item: EventItem = {
+      id: stableEventId(source.id, uid),
+      title,
+      starts_at: starts.toISOString(),
+      place,
+      url,
+      source_id: source.id,
+    };
+    if (timeUnknown) item.time_unknown = true;
+    out.push(item);
+  }
+
+  return out.sort(
+    (a, b) =>
+      new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime(),
+  );
+}
+
+export function collectArkEventLinks(html: string): string[] {
+  const found = new Set<string>();
+  const re = /https:\/\/theark\.org\/event\/[a-z0-9-]+\/?/gi;
+  for (const m of html.matchAll(re)) {
+    const url = m[0].replace(/\/?$/, "/");
+    if (!/\/event\//.test(url)) continue;
+    found.add(url);
+  }
+  return [...found];
+}
+
+export function collectArkListPages(html: string): string[] {
+  const found = new Set<string>();
+  for (const m of html.matchAll(
+    /https:\/\/theark\.org\/events\/list\/page\/(\d+)\/?/gi,
+  )) {
+    found.add(`https://theark.org/events/list/page/${m[1]}/`);
+  }
+  return [...found].sort();
+}
+
+/**
+ * Tribe event page. Clock from the first tribe-event-date-start (or Show Starts)
+ * plus dtstart year. Never use RSS pubDate (midnight UTC).
+ */
+export function extractArkEventFromPage(
+  html: string,
+  pageUrl: string,
+  source: Source,
+  now = new Date(),
+): EventItem | null {
+  const dateStart = stripTags(
+    html.match(/tribe-event-date-start[^>]*>([\s\S]*?)<\/span>/i)?.[1] ?? "",
+  );
+  const dt = html.match(
+    /dtstart"[^>]*title="(\d{4})-(\d{2})-(\d{2})"/i,
+  );
+  const withTime = dateStart.match(
+    /([A-Za-z]+)\s+(\d{1,2})(?:\s*,?\s*(\d{4}))?\s*@\s*(\d{1,2}):(\d{2})\s*([ap])\.?m/i,
+  );
+  const dateOnly = dateStart.match(
+    /([A-Za-z]+)\s+(\d{1,2})(?:\s*,?\s*(\d{4}))?/i,
+  );
+  const showStarts = stripTags(
+    html.match(
+      /Show Starts:[\s\S]{0,240}?(\d{1,2}:\d{2}\s*[ap]\.?m\.?)/i,
+    )?.[1] ?? "",
+  );
+
+  let year: number | null = dt ? Number(dt[1]) : null;
+  let month: number | null = dt ? Number(dt[2]) : null;
+  let day: number | null = dt ? Number(dt[3]) : null;
+  let hour = 0;
+  let minute = 0;
+  let timeUnknown = true;
+
+  const datePart = withTime ?? dateOnly;
+  if (datePart) {
+    const m = monthNumber(datePart[1]);
+    if (m) month = m;
+    day = Number(datePart[2]);
+    if (datePart[3]) year = Number(datePart[3]);
+  }
+  if (year == null || month == null || day == null) return null;
+
+  if (withTime) {
+    const clock = parseClock(Number(withTime[4]), Number(withTime[5]), withTime[6]);
+    if (clock) {
+      hour = clock.hour;
+      minute = clock.minute;
+      timeUnknown = false;
+    }
+  } else if (showStarts) {
+    const sm = showStarts.match(/^(\d{1,2}):(\d{2})\s*([ap])\.?m/i);
+    if (sm) {
+      const clock = parseClock(Number(sm[1]), Number(sm[2]), sm[3]);
+      if (clock) {
+        hour = clock.hour;
+        minute = clock.minute;
+        timeUnknown = false;
+      }
+    }
+  }
+
+  const starts = detroitWallToUtc(
+    year,
+    month,
+    day,
+    timeUnknown ? 0 : hour,
+    timeUnknown ? 0 : minute,
+    0,
+  );
+  if (Number.isNaN(starts.getTime())) return null;
+  if (!withinDays(starts, now, 180)) return null;
+
+  const h1 = stripTags(html.match(/<h1\b[^>]*>([\s\S]*?)<\/h1>/i)?.[1] ?? "");
+  const og = decodeEntities(
+    html.match(
+      /<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']/i,
+    )?.[1] ?? "",
+  );
+  let title = h1 || og.replace(/\s+[–-]\s+The Ark\s*$/i, "").trim();
+  if (!title) return null;
+  if (looksLikeLowValueListing(title)) return null;
+
+  const venue = stripTags(
+    html.match(/tribe-venue[^>]*>([\s\S]*?)<\//i)?.[1] ?? "",
+  );
+  const place = venue || "The Ark";
+  const url = pageUrl.replace(/\/?$/, "/");
+
+  const item: EventItem = {
+    id: stableEventId(source.id, url),
+    title,
+    starts_at: starts.toISOString(),
+    place,
+    url,
+    source_id: source.id,
+  };
+  if (timeUnknown) item.time_unknown = true;
+  return item;
+}
+
+/**
+ * UMS /season/ listing. Printed weekday + date only — no invented clock.
+ */
+export function extractUmsListingEvents(
+  html: string,
+  source: Source,
+  now = new Date(),
+): EventItem[] {
+  const blocks = html.split(/class="event_block\b/i).slice(1);
+  const out: EventItem[] = [];
+  const seen = new Set<string>();
+  const dateRe = new RegExp(
+    `(?:${WEEKDAYS}),\\s+([A-Za-z]+)\\s+(\\d{1,2}),\\s+(\\d{4})`,
+    "i",
+  );
+
+  for (const block of blocks) {
+    const href =
+      block.match(/href="(https:\/\/ums\.org\/performance\/[^"]+)"/i)?.[1] ??
+      "";
+    if (!href) continue;
+    const title = stripTags(
+      block.match(/<h3\b[^>]*>([\s\S]*?)<\/h3>/i)?.[1] ?? "",
+    );
+    if (!title) continue;
+    const dateM = block.match(dateRe);
+    if (!dateM) continue;
+    const month = monthNumber(dateM[1]);
+    if (!month) continue;
+    const day = Number(dateM[2]);
+    const year = Number(dateM[3]);
+    const starts = detroitWallToUtc(year, month, day, 0, 0, 0);
+    if (Number.isNaN(starts.getTime())) continue;
+    if (!withinDays(starts, now, 200)) continue;
+    if (looksLikeLowValueListing(title)) continue;
+
+    const pills = [...block.matchAll(/class="pill_cat"[^>]*>([\s\S]*?)<\//gi)]
+      .map((m) => stripTags(m[1]))
+      .filter(Boolean);
+    const venuePill = pills.find((p) => UMS_VENUE_HINT.test(p));
+    const place = venuePill || "UMS";
+    const url = href.replace(/\/?$/, "/");
+    const uid = `${url}|${starts.toISOString().slice(0, 10)}`;
+    if (seen.has(uid)) continue;
+    seen.add(uid);
+
+    out.push({
+      id: stableEventId(source.id, uid),
+      title,
+      starts_at: starts.toISOString(),
+      place,
+      url,
+      source_id: source.id,
+      time_unknown: true,
+    });
+  }
+
+  return out.sort(
+    (a, b) =>
+      new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime(),
+  );
+}
+
+async function fetchText(
+  url: string,
+): Promise<{ ok: boolean; status: number; text: string; blocked: boolean }> {
+  const res = await fetch(url, {
+    headers: fetchHeaders(),
+    redirect: "follow",
+  });
+  const text = await res.text();
+  const blocked =
+    res.status === 401 ||
+    res.status === 403 ||
+    res.status === 429 ||
+    /access denied|akamai|forbidden/i.test(text.slice(0, 500));
+  return { ok: res.ok, status: res.status, text, blocked };
+}
+
+async function pullArkEvents(
+  source: Source,
+  listHtml: string,
+  now: Date,
+): Promise<EventItem[]> {
+  const links = new Set(collectArkEventLinks(listHtml));
+  const pages = collectArkListPages(listHtml).slice(0, 3);
+  for (const pageUrl of pages) {
+    try {
+      const page = await fetchText(pageUrl);
+      if (page.ok) {
+        for (const link of collectArkEventLinks(page.text)) links.add(link);
+      }
+    } catch {
+      // listing page 2/3 is optional
+    }
+  }
+  try {
+    const rss = await fetchText("https://theark.org/events/feed/");
+    if (rss.ok) {
+      for (const link of collectArkEventLinks(rss.text)) links.add(link);
+    }
+  } catch {
+    // RSS is extra links only — listing is enough
+  }
+
+  const urls = [...links].slice(0, 40);
+  const out: EventItem[] = [];
+  const chunkSize = 5;
+  for (let i = 0; i < urls.length; i += chunkSize) {
+    const chunk = urls.slice(i, i + chunkSize);
+    const settled = await Promise.all(
+      chunk.map(async (url) => {
+        try {
+          const page = await fetchText(url);
+          if (!page.ok) return null;
+          return extractArkEventFromPage(page.text, url, source, now);
+        } catch {
+          return null;
+        }
+      }),
+    );
+    for (const item of settled) {
+      if (item) out.push(item);
+    }
+  }
+  return out.sort(
+    (a, b) =>
+      new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime(),
+  );
+}
+
+/**
+ * Worker-reachable AA listings: City Legistar, The Ark tribe pages, UMS season.
+ * Do not invent meetings, showtimes, or clocks.
+ */
+export async function pullAnnArborHtml(
+  source: Source,
+): Promise<HtmlEventsPullResult> {
+  if (!source.feed_url) {
+    return { events: [], bot_blocked: false, status: null };
+  }
+  const page = await fetchText(source.feed_url);
+  if (page.blocked) {
+    return { events: [], bot_blocked: true, status: page.status };
+  }
+  if (!page.ok) {
+    throw new Error(`AA listing fetch failed ${page.status} for ${source.name}`);
+  }
+
+  const now = new Date();
+  let events: EventItem[] = [];
+  if (source.id === "src_a2_legistar") {
+    events = extractLegistarMeetings(page.text, source, now);
+  } else if (source.id === "src_ark_events") {
+    events = await pullArkEvents(source, page.text, now);
+  } else if (source.id === "src_ums_events") {
+    events = extractUmsListingEvents(page.text, source, now);
+  }
+
+  return { events, bot_blocked: false, status: page.status };
+}

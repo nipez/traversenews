@@ -35,6 +35,7 @@ export function outletNameFromUrl(rawUrl: string): string {
     "aadl.org": "AADL",
     "a2schools.org": "AAPS",
     "dcsd.org": "Dexter Community Schools",
+    "dexterschools.org": "Dexter Community Schools",
     "theark.org": "The Ark",
     "marquee-arts.org": "Marquee Arts",
     "ums.org": "UMS",

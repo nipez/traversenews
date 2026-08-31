@@ -1,6 +1,7 @@
 import type { ClusteredStory } from "@/lib/types";
 import { isAlertSourceId } from "@/lib/alerts";
 import { isRecordEagleCluster } from "@/lib/paywall";
+import { getSiteId } from "@/lib/sites";
 
 const JUNK_TITLE_MARKERS = [
   "blood drive",
@@ -267,6 +268,47 @@ export function isOfficialNewsCluster(cluster: ClusteredStory): boolean {
 }
 
 /** Columns, briefs, calendars, books, wire fillers — not homepage news. */
+/**
+ * U-M varsity recaps — not Ann Arbor / Dexter town news.
+ * Keep "Michigan Democrats" / legislature; drop SportsMonday and Daily /sports/.
+ */
+export function looksLikeUmVarsity(input: {
+  title: string;
+  dek?: string;
+  url: string;
+}): boolean {
+  const blob = `${input.title} ${input.dek ?? ""}`.toLowerCase();
+  try {
+    const u = new URL(input.url);
+    const host = u.hostname.replace(/^www\./, "").toLowerCase();
+    const path = u.pathname.toLowerCase();
+    if (host.includes("michigandaily.com") && path.includes("/sports/")) {
+      return true;
+    }
+  } catch {
+    // ignore bad urls
+  }
+  if (/\bsports\s*monday\b/i.test(blob)) return true;
+  if (
+    /\b(u-?m|university of michigan|wolverines?)\b/i.test(blob) &&
+    /\b(football|basketball|hockey|baseball|softball|soccer|volleyball|ncaa|big ten|big-ten)\b/i.test(
+      blob,
+    )
+  ) {
+    return true;
+  }
+  if (
+    /\bmichigan\b/i.test(blob) &&
+    /\b(football|wolverines?)\b/i.test(blob) &&
+    !/\b(democrat|republican|legislat|house|senate|governor|primary|election)\b/i.test(
+      blob,
+    )
+  ) {
+    return true;
+  }
+  return false;
+}
+
 export function isLifestyleJunk(input: {
   title: string;
   dek?: string;
@@ -553,6 +595,7 @@ export function selectAroundTheBay(
     .filter((c) => !isOutletHomepageUrl(c.url))
     .filter((c) => !isLifestyleJunk(c))
     .filter((c) => !looksLikeCivicListing(c))
+    .filter((c) => getSiteId() !== "ann-arbor" || !looksLikeUmVarsity(c))
     .filter((c) => withinBayMaxAge(c, now))
     .sort((a, b) => {
       const diff = clusterScore(b) - clusterScore(a);

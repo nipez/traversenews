@@ -4,7 +4,7 @@ export const ANN_ARBOR_SCHOOL_DISTRICT_CORE = ["AAPS", "Dexter"] as const;
 
 export const ANN_ARBOR_SCHOOL_DISTRICT_CALENDAR_URLS: Record<string, string> = {
   AAPS: "https://www.a2schools.org/about-aaps/calendars",
-  Dexter: "https://www.dcsd.org/calendar",
+  Dexter: "https://www.dexterschools.org/district/calendar",
 };
 
 export const ANN_ARBOR_SCHOOL_DISTRICT_CALENDAR_PDF_URLS: Record<string, string> =

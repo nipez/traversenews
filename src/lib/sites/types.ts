@@ -98,6 +98,10 @@ export type SiteConfig = {
   pageCopy: SitePageCopyDefaults;
   sportsBeatLinks: SiteOutboundLink[];
   showsVenueLinks: SiteOutboundLink[];
+  /** Official event calendars (Visit / library / venues). */
+  eventsHandoffs: SiteOutboundLink[];
+  /** Official civic calendars (city / county / agenda portals). */
+  civicHandoffs: SiteOutboundLink[];
   alertSources: SiteAlertSource[];
 };
 

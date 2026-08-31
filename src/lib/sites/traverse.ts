@@ -128,6 +128,26 @@ We will not publish a calendar item we cannot point back to.`,
       href: "https://www.thealluvion.org/",
     },
   ],
+  eventsHandoffs: [
+    {
+      name: "Visit TC events",
+      href: "https://www.traversecity.com/events/",
+    },
+    {
+      name: "TADL upcoming",
+      href: "https://www.tadl.org/events/upcoming",
+    },
+  ],
+  civicHandoffs: [
+    {
+      name: "City CivicWeb",
+      href: "https://traversecitymi.civicweb.net/Portal/",
+    },
+    {
+      name: "Grand Traverse County",
+      href: "https://www.gtcountymi.gov",
+    },
+  ],
   alertSources: [
     { id: "src_gt911", label: "Grand Traverse 911" },
     { id: "src_ticker_fb", label: "Ticker Facebook" },

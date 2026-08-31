@@ -1,6 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
+import { OfficialCalendars } from "@/components/OfficialCalendars";
 import { formatCivicDate } from "@/lib/dates";
+import { getSite } from "@/lib/sites";
 import type { EventItem } from "@/lib/types";
 
 function isCancelled(title: string) {
@@ -58,7 +60,19 @@ export function CivicList({
                 <div className="civic-datebox-month">{d.monthAbbr}</div>
               </div>
               <div className="civic-copy">
-                <p className="civic-title">{event.title}</p>
+                <p className="civic-title">
+                  {event.url ? (
+                    <a
+                      href={event.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {event.title}
+                    </a>
+                  ) : (
+                    event.title
+                  )}
+                </p>
                 <p className="civic-place">{event.place}</p>
               </div>
             </li>
@@ -68,6 +82,9 @@ export function CivicList({
           <li className="civic-empty">No upcoming meetings yet.</li>
         ) : null}
       </ul>
+      {shown.length === 0 ? (
+        <OfficialCalendars links={getSite().civicHandoffs} />
+      ) : null}
 
       <Link href="/civic" className="civic-more">
         {linkLabel} →

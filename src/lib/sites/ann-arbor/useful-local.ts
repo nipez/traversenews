@@ -47,7 +47,7 @@ export const ANN_ARBOR_LOCAL_GROUPS: readonly LocalGroup[] = [
         dek: "Ann Arbor Public Schools",
       },
       {
-        href: "https://www.dcsd.org/",
+        href: "https://www.dexterschools.org/",
         label: "Dexter Schools",
         dek: "Dexter Community Schools",
       },

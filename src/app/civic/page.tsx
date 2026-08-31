@@ -1,7 +1,9 @@
 import { DeskRail } from "@/components/DeskRail";
+import { OfficialCalendars } from "@/components/OfficialCalendars";
 import { PublicShell } from "@/components/PublicShell";
 import { SectionHero } from "@/components/SectionHero";
 import { formatCivicDate, formatEventWhenParts } from "@/lib/dates";
+import { getSite } from "@/lib/sites";
 import {
   getCivicSnapshot,
   getSectionHeadersSnapshot,
@@ -84,7 +86,19 @@ export default async function CivicPage() {
                   <div className="civic-datebox-month">{d.monthAbbr}</div>
                 </div>
                 <div className="civic-agenda-copy">
-                  <p className="civic-agenda-title">{event.title}</p>
+                  <p className="civic-agenda-title">
+                    {event.url ? (
+                      <a
+                        href={event.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {event.title}
+                      </a>
+                    ) : (
+                      event.title
+                    )}
+                  </p>
                   <p className="civic-agenda-place">{event.place}</p>
                 </div>
                 <p className="civic-agenda-time">{civicTime(event)}</p>
@@ -95,9 +109,14 @@ export default async function CivicPage() {
             <li className="civic-empty">No upcoming meetings yet.</li>
           ) : null}
         </ul>
+        <OfficialCalendars links={getSite().civicHandoffs} />
 
         </div>
-        <DeskRail active="/civic" />
+        <DeskRail
+          active="/civic"
+          outboundLinks={getSite().civicHandoffs}
+          outboundKicker="Official calendars"
+        />
       </div>
     </PublicShell>
   );

@@ -151,7 +151,7 @@ const sources: Source[] = [
     beat_id: "beat_government",
     enabled: true,
     notes:
-      "Granicus Legistar HTML. No public ICS. Need Traverse News to pull https://a2gov.legistar.com/Calendar.aspx on the live computer → POST /api/desk/civic/import.",
+      "Granicus Legistar HTML. Worker reads printed meeting name, date, clock, and place. Never invent a time. Empty/bot-blocked → Need Traverse News to pull https://a2gov.legistar.com/Calendar.aspx on the live computer → POST /api/desk/civic/import.",
     lane: "civic",
     place: "Ann Arbor",
   },
@@ -266,14 +266,14 @@ const sources: Source[] = [
   {
     id: "src_dexter_cal",
     name: "Dexter Community Schools — Calendar",
-    homepage: "https://www.dcsd.org/",
-    feed_url: "https://www.dcsd.org/calendar",
+    homepage: "https://www.dexterschools.org/",
+    feed_url: "https://www.dexterschools.org/district/calendar",
     pull_method: "html",
     beat_id: "beat_schools",
     enabled: true,
-    calendar_url: "https://www.dcsd.org/calendar",
+    calendar_url: "https://www.dexterschools.org/district/calendar",
     notes:
-      "Bot-challenge from datacenter. Need Traverse News to pull https://www.dcsd.org/calendar on the live computer → POST /api/desk/schools/import. Never invent dates.",
+      "Finalsite JS — dcsd.org is the Utah district, do not use it. Need Traverse News to pull https://www.dexterschools.org/district/calendar on the live computer → POST /api/desk/schools/import. Never invent dates.",
     lane: "school_cal",
     place: "Dexter",
   },
@@ -338,8 +338,21 @@ const sources: Source[] = [
     beat_id: "beat_shows",
     enabled: true,
     notes:
-      "Events RSS exists but would land as stories, not /shows. Need Traverse News to pull https://theark.org/ on the live computer → POST /api/desk/shows/import. Never invent showtimes.",
+      "Shows lane only. Do not pull this id as events (FALLBACK_SHOWS). Showtimes via POST /api/desk/shows/import — never invent clocks. Coming-up listings use src_ark_events.",
     lane: "shows",
+    place: "Ann Arbor",
+  },
+  {
+    id: "src_ark_events",
+    name: "The Ark — Events",
+    homepage: "https://theark.org/",
+    feed_url: "https://theark.org/events/",
+    pull_method: "html",
+    beat_id: "beat_events",
+    enabled: true,
+    notes:
+      "Worker reads tribe event pages for printed date + Show Starts clock. Never use RSS pubDate (midnight UTC). Empty/bot-blocked → Need Traverse News to pull https://theark.org/events/ on the live computer → POST /api/desk/events/import.",
+    lane: "events",
     place: "Ann Arbor",
   },
   {
@@ -368,6 +381,19 @@ const sources: Source[] = [
     lane: "wire",
     place: "Ann Arbor",
     weight: 1,
+  },
+  {
+    id: "src_ums_events",
+    name: "UMS — Season",
+    homepage: "https://ums.org/",
+    feed_url: "https://ums.org/season/",
+    pull_method: "html",
+    beat_id: "beat_events",
+    enabled: true,
+    notes:
+      "Worker reads /season/ listing dates only (no printed clock → time_unknown). Never invent showtimes. Empty/bot-blocked → Need Traverse News to pull https://ums.org/season/ on the live computer → POST /api/desk/events/import.",
+    lane: "events",
+    place: "Ann Arbor",
   },
   {
     id: "src_tn",

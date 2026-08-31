@@ -124,6 +124,34 @@ We will not treat U-M varsity as local high-school sports.`,
       href: "https://ums.org/",
     },
   ],
+  eventsHandoffs: [
+    {
+      name: "Visit Ann Arbor",
+      href: "https://www.annarbor.org/events/",
+    },
+    {
+      name: "AADL events",
+      href: "https://aadl.org/events",
+    },
+    {
+      name: "The Ark",
+      href: "https://theark.org/events/",
+    },
+    {
+      name: "UMS season",
+      href: "https://ums.org/season/",
+    },
+  ],
+  civicHandoffs: [
+    {
+      name: "City of Ann Arbor — Legistar",
+      href: "https://a2gov.legistar.com/Calendar.aspx",
+    },
+    {
+      name: "Washtenaw County calendar",
+      href: "https://www.washtenaw.org/Calendar.aspx",
+    },
+  ],
   alertSources: [
     { id: "src_a2_police_news", label: "Ann Arbor Police" },
     { id: "src_washtenaw_press", label: "Washtenaw County press" },

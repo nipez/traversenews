@@ -94,6 +94,27 @@ assert(
   "AA seed has Dexter Sun Times",
 );
 assert(
+  aa.sources.some((s) => s.id === "src_ark_events" && s.lane === "events"),
+  "AA seed has Ark events (not shows id)",
+);
+assert(
+  aa.sources.some((s) => s.id === "src_ums_events" && s.lane === "events"),
+  "AA seed has UMS season listing",
+);
+const dexter = aa.sources.find((s) => s.id === "src_dexter_cal");
+assert(
+  dexter?.homepage?.includes("dexterschools.org"),
+  "Dexter calendar is dexterschools.org, not Utah dcsd.org",
+);
+assert(
+  getSite().eventsHandoffs.some((l) => l.href.includes("annarbor.org")),
+  "AA events handoffs include Visit AA",
+);
+assert(
+  getSite().civicHandoffs.some((l) => l.href.includes("legistar")),
+  "AA civic handoffs include Legistar",
+);
+assert(
   !aa.sources.some((s) => s.id === "src_ticker"),
   "AA seed must not include Traverse Ticker",
 );

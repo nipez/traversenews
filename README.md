@@ -107,16 +107,18 @@ npm run deploy:ann-arbor
 
 Desk **Cities** menu links each instance `/desk`. Same staff password for now. A city-only cultivator later: set `STAFF_SITES=ann-arbor` on that Worker.
 
+**Worker already reads** (printed times only): City Legistar (`src_a2_legistar`), The Ark event pages (`src_ark_events`), UMS season dates (`src_ums_events`, `time_unknown`). AAPS Google ICS → `/schools`.
+
 **Need Traverse News to pull** (datacenter 403 / JS):
 
 - https://www.annarbor.org/events/
-- https://a2gov.legistar.com/Calendar.aspx
 - https://www.washtenaw.org/Calendar.aspx
 - https://aadl.org/events
-- https://www.dcsd.org/calendar
+- https://www.dexterschools.org/district/calendar
 - Pioneer / Skyline / Huron / Dexter ArbiterLive fronts
+- Marquee Arts / Michigan Theater showtimes (`michigantheater.org` is hijacked — do not use)
 
-Land listings with `POST /api/desk/events/import`, `/civic/import`, `/schools/import`, `/shows/import`, `/athletics/import` against the **AA** Desk token. Never invent times.
+Land those with `POST /api/desk/events/import`, `/civic/import`, `/schools/import`, `/shows/import`, `/athletics/import` against the **AA** Desk token. Never invent times.
 
 ## Cloudflare deploy
 

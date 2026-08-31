@@ -266,6 +266,8 @@ const NIGHT_OUT_SOURCES = new Set([
   "src_visit_annarbor",
   "src_aadl_events",
   "src_reader_events",
+  "src_ark_events",
+  "src_ums_events",
 ]);
 
 export function looksLikeMeeting(title: string): boolean {
