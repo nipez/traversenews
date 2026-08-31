@@ -467,6 +467,7 @@ export function selectFreshAroundTheBay(
     maxSports: 4,
     maxRecordEagle: 2,
     maxHeavyWire: 2,
+    maxEyesOnly: 2,
     maxUpNorth: options.maxUpNorth ?? 3,
     now: at,
   });
@@ -527,6 +528,7 @@ export function buildEmailEditionSnapshot(
     maxSports: 0,
     maxRecordEagle: 2,
     maxHeavyWire: 2,
+    maxEyesOnly: 2,
     preferHardNews: true,
     now: at,
   });

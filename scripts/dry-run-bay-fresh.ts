@@ -401,6 +401,27 @@ assert.ok(
   "Record-Eagle homepage bay cap stays 2",
 );
 
+function countEyesOnly(
+  around: Array<{ sources: Array<string | { name: string }> }>,
+): number {
+  return around.filter((c) =>
+    c.sources.some((s) => {
+      const name = typeof s === "string" ? s : s.name;
+      return /^(The Ticker|Northern Express|Traverse City Business News)$/i.test(
+        name,
+      );
+    }),
+  ).length;
+}
+assert.ok(
+  countEyesOnly(edition.around) <= 2,
+  `Eyes Only Media edition bay family cap stays 2, got ${countEyesOnly(edition.around)}`,
+);
+assert.ok(
+  countEyesOnly(home.around) <= 2,
+  `Eyes Only Media homepage bay family cap stays 2, got ${countEyesOnly(home.around)}`,
+);
+
 // Thin pool: only two fresh wire items → shorter bay, never pad with yesterday.
 const thinData = {
   ...data,

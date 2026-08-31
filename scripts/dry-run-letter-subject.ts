@@ -1,6 +1,8 @@
 /**
  * Dry-run: Saturday-style morning letter subject prefers 3 news phrases,
  * maps Stimson reconstruction to "Stimson Street Project", and skips sports.
+ * Also refuses the 8/31 truncated failures ("Driver Charged in Center",
+ * "Sheriff's office looking").
  *
  *   npx tsx scripts/dry-run-letter-subject.ts
  */
@@ -92,6 +94,106 @@ assert.ok(
   "prefer three news phrases when they parse",
 );
 
+// --- 8/31 failure cases: truncated verb / "in Center" must never ship ---
+const aug31Snapshot: EmailEditionSnapshot = {
+  date: "2026-08-31",
+  captured_at: "2026-08-31T12:00:00.000Z",
+  lead: null,
+  around: [
+    {
+      title:
+        "Work in Leelanau Co. but can't afford to live there? Housing advocates want to hear from you",
+      dek: "Housing survey.",
+      url: "https://www.interlochenpublicradio.org/2026-08-24/leelanau-housing",
+      sources: ["IPR News"],
+    },
+    {
+      title: "Driver Charged in Center Road Crash That Killed Teenager, Bond Set",
+      dek: "Acme crash charges.",
+      url: "https://www.oldmission.net/2026/08/driver-charged-center-road/",
+      sources: ["Old Mission Gazette"],
+    },
+    {
+      title:
+        "Sheriff's office looking for information on weekend burglary in Garfield Township",
+      dek: "Tips sought.",
+      url: "https://www.traverseticker.com/news/sheriff-looking-burglary/",
+      sources: ["The Ticker"],
+    },
+  ],
+  alerts: [],
+  tonight: [],
+  civic: [],
+  sports: [],
+};
+
+const aug31 = buildMorningLetterSubject(aug31Snapshot);
+assert.match(aug31, /^🗞️ /);
+assert.match(aug31, /Leelanau housing survey/);
+assert.doesNotMatch(
+  aug31,
+  /Driver Charged in Center(?! Road)|Sheriff'?s office looking\b/i,
+);
+assert.doesNotMatch(aug31, /\bin Center ·|· Driver Charged in Center$/i);
+// Broken phrases must not appear as subject slots.
+assert.ok(
+  !aug31.includes("Driver Charged in Center ·") &&
+    !aug31.endsWith("Driver Charged in Center") &&
+    !/Driver Charged in Center(?! Road)/.test(aug31),
+  `must refuse truncated Center Road cut: ${aug31}`,
+);
+assert.ok(
+  !/Sheriff'?s office looking\b/i.test(aug31),
+  `must refuse dangling looking: ${aug31}`,
+);
+// Stranger-parseable replacements (or skip) — never the broken 8/31 subject.
+assert.notEqual(
+  aug31,
+  "🗞️ Leelanau housing survey · Driver Charged in Center · Sheriff's office looking",
+);
+assert.ok(
+  /Center Road crash|Sheriff seeks/i.test(aug31),
+  `expected complete crash/sheriff phrases, got: ${aug31}`,
+);
+const aug31Len = aug31.replace(/^🗞️\s*/, "").length;
+assert.ok(aug31Len <= 84, `aug31 phrase length ${aug31Len} must be ≤84`);
+
+// Direct refusal of the exact broken phrases as sole candidates.
+const brokenOnly: EmailEditionSnapshot = {
+  date: "2026-08-31",
+  captured_at: "2026-08-31T12:00:00.000Z",
+  lead: null,
+  around: [
+    {
+      title: "Driver Charged in Center Road Crash Near Acme",
+      dek: "",
+      url: "https://example.com/center-road",
+      sources: ["The Ticker"],
+    },
+    {
+      title: "Sheriff's office looking for information on weekend burglary",
+      dek: "",
+      url: "https://example.com/sheriff-looking",
+      sources: ["The Ticker"],
+    },
+  ],
+  alerts: [],
+  tonight: [],
+  civic: [],
+  sports: [],
+};
+const brokenSubject = buildMorningLetterSubject(brokenOnly);
+assert.doesNotMatch(
+  brokenSubject,
+  /Driver Charged in Center(?! Road)|Sheriff'?s office looking\b/i,
+);
+assert.ok(
+  /Center Road crash|Sheriff seeks|Driver charged in Center Road crash/i.test(
+    brokenSubject,
+  ),
+  `broken-only must compress to parseable phrases: ${brokenSubject}`,
+);
+
 console.log(
-  `dry-run-letter-subject: ok\n  subject=${subject}\n  phraseLen=${phraseLen}`,
+  `dry-run-letter-subject: ok\n  subject=${subject}\n  phraseLen=${phraseLen}\n  aug31=${aug31}\n  brokenOnly=${brokenSubject}`,
 );
