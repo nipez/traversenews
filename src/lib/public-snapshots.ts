@@ -13,7 +13,10 @@ import {
   selectThisWeekAthletics,
 } from "@/lib/athletics";
 import { getTraverseDataKv } from "@/lib/data/kv";
-import { isBannedOriginalSlug } from "@/lib/data/scrub";
+import {
+  isBannedOriginalSlug,
+  isKilledOriginalSlug,
+} from "@/lib/data/scrub";
 import {
   buildEmailEditionSnapshot,
   selectFreshAroundTheBay,
@@ -328,7 +331,14 @@ function toAlert(a: {
 
 export function buildHomeSnapshot(data: AppData, at = new Date()): PublicHomeSnapshot {
   const clusters = clusterStories(data.stories, data.sources);
-  const originals = clusters.filter((c) => c.is_original);
+  const originals = clusters.filter((c) => {
+    if (!c.is_original) return false;
+    const slug = c.slug?.trim();
+    // Nick unpublished; never homepage-lead killed slugs (even if Story flaps back).
+    if (slug && isKilledOriginalSlug(slug)) return false;
+    if (slug && isBannedOriginalSlug(slug)) return false;
+    return true;
+  });
   // Drop yesterday’s edition bay heads only (not the whole older archive).
   // Staff original lead stays even if it also ran yesterday — never invent a lead.
   const around = selectFreshAroundTheBay(clusters, data.editions, at, {
@@ -528,7 +538,9 @@ export function buildOriginalsSnapshot(
   for (const story of data.stories) {
     if (!story.is_original) continue;
     const slug = story.slug?.trim();
-    if (!slug || isBannedOriginalSlug(slug)) continue;
+    if (!slug || isBannedOriginalSlug(slug) || isKilledOriginalSlug(slug)) {
+      continue;
+    }
     bySlug[slug] = {
       id: story.id,
       slug,

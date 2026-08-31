@@ -15,6 +15,15 @@ export const BANNED_ORIGINAL_SLUGS = new Set([
   "bata-alert-cutover",
 ]);
 
+/**
+ * Real reporting Nick unpublished — never auto-publish, never homepage-lead,
+ * never list on /story. Separate from BANNED_ORIGINAL_SLUGS (invented seeds).
+ * Stale-isolate saveStore write-back can still flap KV; this set is the durable kill.
+ */
+export const KILLED_ORIGINAL_SLUGS = new Set([
+  "center-road-seeburger",
+]);
+
 export const BANNED_STORY_IDS = new Set([
   "story_center_road",
   "story_boardman",
@@ -270,6 +279,11 @@ function scrubEdition(edition: EditionSnapshot): {
 
 export function isBannedOriginalSlug(slug: string | null | undefined): boolean {
   return Boolean(slug && BANNED_ORIGINAL_SLUGS.has(slug));
+}
+
+/** Nick unpublished; do not auto-publish or homepage-lead this slug. */
+export function isKilledOriginalSlug(slug: string | null | undefined): boolean {
+  return Boolean(slug && KILLED_ORIGINAL_SLUGS.has(slug));
 }
 
 export function keepRealOriginals(stories: Story[]): Story[] {

@@ -1,5 +1,8 @@
 import { getTraverseDataKv, STORE_KEY } from "@/lib/data/kv";
-import { isBannedOriginalSlug } from "@/lib/data/scrub";
+import {
+  isBannedOriginalSlug,
+  isKilledOriginalSlug,
+} from "@/lib/data/scrub";
 
 /** Canonical public host — never workers.dev in sitemap locs. */
 const SITE = "https://traverse.news";
@@ -64,7 +67,14 @@ export function buildSitemapXml(slice: SitemapSlice): string {
   for (const story of slice.stories ?? []) {
     if (!story.is_original) continue;
     const slug = story.slug?.trim();
-    if (!slug || isBannedOriginalSlug(slug) || seenSlugs.has(slug)) continue;
+    if (
+      !slug ||
+      isBannedOriginalSlug(slug) ||
+      isKilledOriginalSlug(slug) ||
+      seenSlugs.has(slug)
+    ) {
+      continue;
+    }
     seenSlugs.add(slug);
     urls.push(
       `<url><loc>${xmlEscape(`${SITE}/story/${slug}`)}</loc>${lastmodAttr(story.published_at)}</url>`,
