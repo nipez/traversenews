@@ -196,6 +196,8 @@ export function canonicalPublicUrl(value: string | null | undefined): string | n
   }
 }
 
+const TRAIL_STOP = /\s+(on|at|for|of|in|with|and|the|a|an|as|vs|versus)$/i;
+
 function isInsiderShorthand(phrase: string): boolean {
   const t = phrase.trim();
   if (!t) return true;
@@ -216,8 +218,39 @@ function isGenericPlace(phrase: string): boolean {
   );
 }
 
+/**
+ * Truncated / dangling phrases a stranger cannot parse — "Sheriff's office
+ * looking", "Driver Charged in Center" (Center Road cut short).
+ */
+function isIncompleteSubjectPhrase(phrase: string): boolean {
+  const t = phrase.replace(/\s+/g, " ").trim();
+  if (!t) return true;
+  // Trailing preposition / article left after a bad cut.
+  if (TRAIL_STOP.test(t)) return true;
+  // Dangling verb / participle with no object ("looking", "seeking", …).
+  if (
+    /\b(looking|seeking|searching|investigating|asking|calling|urging|hoping|planning|working|trying|charged|arrested)$/i.test(
+      t,
+    )
+  ) {
+    return true;
+  }
+  // Truncated road / street name: "… in Center" / "… on Main" without Road/St.
+  if (
+    /\b(in|on|at|near|along)\s+(Center|Main|Front|State|Union|Division|Eighth|Fourteenth|Peninsula|Airport|Boardman)$/i.test(
+      t,
+    )
+  ) {
+    return true;
+  }
+  // "in Center" shorthand for Center Road — never ship that alone mid-phrase.
+  if (/\bin Center$/i.test(t) && !/\bCenter Road\b/i.test(t)) return true;
+  return false;
+}
+
 function usableSubjectPhrase(phrase: string): boolean {
   if (!phrase || isInsiderShorthand(phrase) || isGenericPlace(phrase)) return false;
+  if (isIncompleteSubjectPhrase(phrase)) return false;
   // "Grand Traverse Area Genealogical" is still just a place + one leftover word.
   const n = phrase
     .toLowerCase()
@@ -245,8 +278,6 @@ function usableSubjectPhrase(phrase: string): boolean {
   return true;
 }
 
-const TRAIL_STOP = /\s+(on|at|for|of|in|with|and|the|a|an|as|vs|versus)$/i;
-
 function stripTrailingStops(s: string): string {
   let out = s.trim();
   for (let i = 0; i < 6; i += 1) {
@@ -257,6 +288,10 @@ function stripTrailingStops(s: string): string {
   return out;
 }
 
+/**
+ * Prefer a complete sense unit under budget. Never return a dangling verb
+ * phrase or a truncated "in Center" (Center Road) cut.
+ */
 function phraseFromTitle(title: string, budget = 40): string {
   let t = title.replace(/\s+/g, " ").trim().replace(/[?]+$/, "");
   t = t.replace(/\s+except\s+near\s+.+$/i, "").trim();
@@ -291,25 +326,87 @@ function phraseFromTitle(title: string, budget = 40): string {
   if (/parking rates?/i.test(t) && /decrease|labor day|coming/i.test(t)) {
     return "Decrease in Parking Rates";
   }
-  if (t.length <= budget) return stripTrailingStops(t);
+  // Center Road crash — never stop at "in Center".
+  if (/driver charged/i.test(t) && /center road/i.test(t)) {
+    const phrase = "Driver charged in Center Road crash";
+    if (phrase.length <= Math.max(budget, 40)) return phrase;
+    return "Center Road crash";
+  }
+  if (/center road/i.test(t) && /crash|collision|killed|charged/i.test(t)) {
+    return "Center Road crash";
+  }
+  // Sheriff looking / seeking — keep a stranger-parseable tip ask.
+  if (/sheriff/i.test(t) && /\b(looking|seeking|searching)\b/i.test(t)) {
+    if (/burglar|break[- ]?in|theft|stolen/i.test(t)) {
+      return "Sheriff seeks burglary tips";
+    }
+    if (/information|tips?|public'?s help|witness/i.test(t)) {
+      return "Sheriff seeks tips";
+    }
+  }
+
+  const finalize = (raw: string): string | null => {
+    const cleaned = stripTrailingStops(raw);
+    return usableSubjectPhrase(cleaned) ? cleaned : null;
+  };
+
+  if (t.length <= budget) {
+    return finalize(t) ?? t.slice(0, budget).trim();
+  }
   for (const sep of [": ", " — ", " – ", " - ", "; ", ", "]) {
     const i = t.indexOf(sep);
-    if (i >= 12 && i <= budget) return stripTrailingStops(t.slice(0, i));
+    if (i >= 12 && i <= budget) {
+      const cut = finalize(t.slice(0, i));
+      if (cut) return cut;
+    }
   }
+
+  // Word-budget cut: refuse incomplete endings; try keeping one more word when
+  // it completes a road name ("Center" → "Center Road") or crash noun.
   const words = t.split(" ");
   let out = "";
-  for (const w of words) {
-    const next = out ? `${out} ${w}` : w;
+  for (let i = 0; i < words.length; i += 1) {
+    const next = out ? `${out} ${words[i]}` : words[i];
     if (next.length > budget) {
-      const rest = t.slice(out.length).trim();
-      const closer = rest.match(/^(for a year|for a month|for a week|for a day)\b/i);
+      // Prefer completing "Center Road" / "… Road crash" just over budget.
+      const peek1 = words[i];
+      const peek2 = words[i + 1];
+      if (peek1 && /^(Road|Street|Ave|Avenue|Drive|Hwy|Highway)$/i.test(peek1)) {
+        const withRoad = `${out} ${peek1}`;
+        if (withRoad.length <= budget + 8) {
+          const withCrash =
+            peek2 && /^(crash|collision)$/i.test(peek2)
+              ? `${withRoad} ${peek2}`
+              : withRoad;
+          const done = finalize(
+            withCrash.length <= budget + 14 ? withCrash : withRoad,
+          );
+          if (done) return done;
+        }
+      }
+      const closer = t.slice(out.length).trim().match(
+        /^(for a year|for a month|for a week|for a day)\b/i,
+      );
       if (closer && `${out} ${closer[1]}`.length <= budget + 10) {
-        out = `${out} ${closer[1]}`;
+        const done = finalize(`${out} ${closer[1]}`);
+        if (done) return done;
       }
       break;
     }
     out = next;
   }
+
+  const cut = finalize(out);
+  if (cut) return cut;
+
+  // Last resort: try shorter complete prefixes from the full title.
+  for (let n = words.length; n >= 3; n -= 1) {
+    const candidate = finalize(words.slice(0, n).join(" "));
+    if (candidate && candidate.length <= Math.max(budget + 10, 48)) {
+      return candidate;
+    }
+  }
+  // Unusable under budget — caller skips via usableSubjectPhrase.
   return stripTrailingStops(out) || t.slice(0, budget).trim();
 }
 
@@ -439,8 +536,12 @@ export function buildMorningLetterSubject(snapshot: EmailEditionSnapshot): strin
       "$1 crash near $2",
     );
     text = stripTrailingStops(text);
+    // Never keep a post-compress incomplete phrase ("looking", "in Center").
     return { ...p, text: usableSubjectPhrase(text) ? text : p.text };
-  });
+  }).filter((p) => usableSubjectPhrase(p.text));
+  if (chosen.length === 0) {
+    return `🗞️ traverse.news · ${emailDetroitDateKey()}`;
+  }
   const phraseLen = (s: string) => s.replace(/^🗞️\s*/, "").length;
   let subject = render(chosen);
 

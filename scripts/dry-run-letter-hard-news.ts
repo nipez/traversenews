@@ -5,13 +5,18 @@
  *   npx tsx scripts/dry-run-letter-hard-news.ts
  */
 import assert from "node:assert/strict";
-import { isLifestyleJunk, looksLikeHardNews } from "../src/lib/around";
+import {
+  isEyesOnlyCluster,
+  isLifestyleJunk,
+  looksLikeHardNews,
+  selectAroundTheBay,
+} from "../src/lib/around";
 import {
   buildEmailEditionSnapshot,
   LETTER_AROUND_MAX,
 } from "../src/lib/email-editions";
 import { buildMorningLetterSubject } from "../src/lib/email-letter";
-import type { AppData, Source, Story } from "../src/lib/types";
+import type { AppData, ClusteredStory, Source, Story } from "../src/lib/types";
 
 const saturday = new Date("2026-08-29T15:00:00.000Z");
 
@@ -229,6 +234,43 @@ const stories: Story[] = [
     source_id: "src_omp_gazette",
     published_at: "2026-08-28T18:30:00.000Z",
   }),
+  // Eyes Only Media flood — would dominate a Monday letter without the family cap.
+  story({
+    id: "ticker_crash",
+    title: "Driver Charged in Center Road Crash Near Acme After Weekend Collision",
+    url: "https://www.traverseticker.com/news/driver-charged-center-road/",
+    source_id: "src_ticker",
+    published_at: "2026-08-28T20:00:00.000Z",
+  }),
+  story({
+    id: "ticker_sheriff",
+    title:
+      "Sheriff's office looking for information on weekend burglary in Garfield Township",
+    url: "https://www.traverseticker.com/news/sheriff-looking-burglary/",
+    source_id: "src_ticker",
+    published_at: "2026-08-28T19:30:00.000Z",
+  }),
+  story({
+    id: "ticker_zoning",
+    title: "City zoning board weighs housing ordinance changes Monday",
+    url: "https://www.traverseticker.com/news/zoning-housing-ordinance/",
+    source_id: "src_ticker",
+    published_at: "2026-08-28T18:00:00.000Z",
+  }),
+  story({
+    id: "nx_budget",
+    title: "County budget talks reopen after midyear shortfall",
+    url: "https://northernexpress.com/news/county-budget-shortfall/",
+    source_id: "src_northern",
+    published_at: "2026-08-28T17:30:00.000Z",
+  }),
+  story({
+    id: "nx_arrest",
+    title: "Arrests follow downtown assault investigation",
+    url: "https://northernexpress.com/news/downtown-assault-arrests/",
+    source_id: "src_northern",
+    published_at: "2026-08-28T16:30:00.000Z",
+  }),
 ];
 
 const data = {
@@ -299,6 +341,20 @@ const reCount = letter.around.filter((c) =>
 assert.ok(reCount <= 2, "RE cap stays ≤2");
 assert.ok(reCount >= 1, "RE treasurer should rank");
 
+const eyesOnlyCount = letter.around.filter((c) =>
+  (c.sources ?? []).some((s) =>
+    /^(The Ticker|Northern Express|Traverse City Business News)$/i.test(s),
+  ),
+).length;
+assert.ok(
+  eyesOnlyCount <= 2,
+  `Eyes Only Media family (Ticker/NE/TCBN) cap stays ≤2, got ${eyesOnlyCount}: ${titles.join(" | ")}`,
+);
+assert.ok(
+  eyesOnlyCount < letter.around.length / 2 || letter.around.length < 4,
+  `Monday-like mix must not be majority Eyes Only (${eyesOnlyCount}/${letter.around.length})`,
+);
+
 for (const bad of [
   /Library News/i,
   /Ski Hall of Fame/i,
@@ -328,7 +384,7 @@ assert.match(subject, /Leelanau housing survey/);
 assert.match(subject, /FEMA deadline Monday/);
 assert.doesNotMatch(
   subject,
-  /Library News|Ski Hall|Ready,? Set|Polka|Glen Eyrie/i,
+  /Library News|Ski Hall|Ready,? Set|Polka|Glen Eyrie|Driver Charged in Center(?! Road)|Sheriff'?s office looking/i,
 );
 assert.ok(
   phrasePart.length <= 84,
@@ -336,6 +392,73 @@ assert.ok(
 );
 assert.equal(subject.split(" · ").length, 3);
 
+// Scarce non-Eyes-Only desks: family still hard-caps at 2 (not a majority).
+function clusterStub(
+  id: string,
+  title: string,
+  sourceId: string,
+  name: string,
+  hoursAgo: number,
+): ClusteredStory {
+  return {
+    id,
+    title,
+    dek: "hard news housing crash",
+    url: `https://example.com/${id}`,
+    published_at: new Date(saturday.getTime() - hoursAgo * 3600_000).toISOString(),
+    is_original: false,
+    image_url: null,
+    byline: null,
+    slug: null,
+    body: null,
+    sources: [{ id: sourceId, name }],
+    paywalled: false,
+  } as ClusteredStory;
+}
+const scarce = [
+  ...[1, 2, 3, 4, 5, 6].map((i) =>
+    clusterStub(
+      `t${i}`,
+      `Ticker housing crash charges ${i}`,
+      "src_ticker",
+      "The Ticker",
+      i,
+    ),
+  ),
+  ...[1, 2, 3, 4, 5].map((i) =>
+    clusterStub(
+      `n${i}`,
+      `Northern Express budget arrest ${i}`,
+      "src_northern",
+      "Northern Express",
+      i,
+    ),
+  ),
+  clusterStub(
+    "ipr1",
+    "IPR only one housing survey",
+    "src_ipr",
+    "IPR News",
+    10,
+  ),
+];
+const scarcePicked = selectAroundTheBay(scarce, {
+  limit: 6,
+  maxSports: 0,
+  maxRecordEagle: 2,
+  maxHeavyWire: 2,
+  maxEyesOnly: 2,
+  preferHardNews: true,
+  maxPerSource: 3,
+  now: saturday,
+});
+const scarceEyes = scarcePicked.filter(isEyesOnlyCluster).length;
+assert.equal(scarceEyes, 2, `scarce-desk Eyes Only must hit family cap 2, got ${scarceEyes}`);
+assert.ok(
+  scarceEyes < scarcePicked.length / 2 || scarcePicked.length < 4,
+  `scarce mix must not be majority Eyes Only (${scarceEyes}/${scarcePicked.length})`,
+);
+
 console.log(
-  `dry-run-letter-hard-news: ok\n  around=${titles.join(" · ")}\n  subject=${subject}\n  phraseLen=${phrasePart.length}`,
+  `dry-run-letter-hard-news: ok\n  around=${titles.join(" · ")}\n  subject=${subject}\n  phraseLen=${phrasePart.length}\n  scarceEyes=${scarceEyes}/${scarcePicked.length}`,
 );

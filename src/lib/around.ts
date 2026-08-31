@@ -207,10 +207,21 @@ const PREFERRED_NEWS_SOURCE_IDS = new Set([
 ]);
 
 /**
- * High-volume free desks that can crowd out IPR / TCBN / Northern / Betsie.
- * Cap separately so a Saturday bay is not Ticker + 9&10 only.
+ * High-volume free TV wire. Cap separately so 9&10 does not eat the bay.
+ * Ticker is capped with Eyes Only Media (below), not here.
  */
-const HEAVY_FREE_WIRE_SOURCE_IDS = new Set(["src_ticker", "src_910"]);
+const HEAVY_FREE_WIRE_SOURCE_IDS = new Set(["src_910"]);
+
+/**
+ * Eyes Only Media family — The Ticker, Northern Express, TC Business News.
+ * One owner; hard-cap the family like Record-Eagle so a Monday letter is not
+ * majority Ticker + Northern Express.
+ */
+export const EYES_ONLY_SOURCE_IDS = new Set([
+  "src_ticker",
+  "src_northern",
+  "src_tcbn",
+]);
 
 /** Official desks — keep a few on the bay even when older than the wire. */
 const OFFICIAL_NEWS_SOURCE_IDS = new Set([
@@ -228,6 +239,14 @@ export function isUpNorthSourceId(id: string): boolean {
 
 export function isUpNorthCluster(cluster: ClusteredStory): boolean {
   return cluster.sources.some((s) => isUpNorthSourceId(s.id));
+}
+
+export function isEyesOnlySourceId(id: string): boolean {
+  return EYES_ONLY_SOURCE_IDS.has(id);
+}
+
+export function isEyesOnlyCluster(cluster: ClusteredStory): boolean {
+  return cluster.sources.some((s) => isEyesOnlySourceId(s.id));
 }
 
 export function isOfficialNewsSourceId(id: string): boolean {
@@ -353,7 +372,10 @@ function clusterScore(cluster: ClusteredStory): number {
   if (isRecordEagleCluster(cluster)) score -= 3_000;
   // UpNorthLive is free but heavy — soft-penalize so it does not dominate.
   if (isUpNorthCluster(cluster)) score -= 2_000;
-  // Heavy free wire (Ticker / 9&10) — soft-penalize vs IPR / TCBN / Betsie.
+  // Eyes Only family (Ticker / NE / TCBN) — cancel preferred boost so IPR /
+  // 9&10 / Glen Arbor / government win unused slots over freshness alone.
+  if (isEyesOnlyCluster(cluster)) score -= 2_000;
+  // Heavy free TV wire (9&10) — soft-penalize vs smaller preferred desks.
   if (HEAVY_FREE_WIRE_SOURCE_IDS.has(sid)) score -= 800;
   // Recency (ms since epoch, scaled) as tiebreaker within the same tier.
   score += new Date(cluster.published_at).getTime() / 1e12;
@@ -374,10 +396,15 @@ export type AroundSelectOptions = {
   /** Cap for UpNorthLive so the TV wire does not eat the bay. Default 3. */
   maxUpNorth?: number;
   /**
-   * Cap for high-volume free desks (Ticker + 9&10 News) so smaller preferred
-   * desks still get bay slots. Default 2 each.
+   * Cap for high-volume free TV (9&10 News) so smaller preferred desks still
+   * get bay slots. Default 2.
    */
   maxHeavyWire?: number;
+  /**
+   * Cap for Eyes Only Media (Ticker + Northern Express + TCBN) as one owner
+   * family. Default 2 — same hard ceiling as Record-Eagle.
+   */
+  maxEyesOnly?: number;
   /** Reserved slots for official city/county/tribal headlines. Default 2. */
   maxOfficial?: number;
   /**
@@ -408,9 +435,11 @@ function takeFromPool(
     maxRecordEagle: number;
     maxUpNorth: number;
     maxHeavyWire: number;
+    maxEyesOnly: number;
     sportsCount: { n: number };
     reCount: { n: number };
     upNorthCount: { n: number };
+    eyesOnlyCount: { n: number };
   },
 ) {
   const queues = new Map<string, ClusteredStory[]>();
@@ -422,13 +451,15 @@ function takeFromPool(
     queues.set(key, q);
   }
 
-  // Smaller preferred desks first, then Ticker/9&10, then everyone else.
+  // Smaller preferred desks first, then Eyes Only / 9&10, then everyone else.
   const preferredKeys = [...queues.keys()]
     .filter((k) => PREFERRED_NEWS_SOURCE_IDS.has(k) || k === "src_910_sports")
     .sort((a, b) => {
-      const ha = HEAVY_FREE_WIRE_SOURCE_IDS.has(a) ? 1 : 0;
-      const hb = HEAVY_FREE_WIRE_SOURCE_IDS.has(b) ? 1 : 0;
-      return ha - hb;
+      const heavyA =
+        HEAVY_FREE_WIRE_SOURCE_IDS.has(a) || EYES_ONLY_SOURCE_IDS.has(a) ? 1 : 0;
+      const heavyB =
+        HEAVY_FREE_WIRE_SOURCE_IDS.has(b) || EYES_ONLY_SOURCE_IDS.has(b) ? 1 : 0;
+      return heavyA - heavyB;
     });
   const otherKeys = [...queues.keys()].filter(
     (k) => !PREFERRED_NEWS_SOURCE_IDS.has(k) && k !== "src_910_sports",
@@ -447,6 +478,12 @@ function takeFromPool(
       ) {
         continue;
       }
+      if (
+        EYES_ONLY_SOURCE_IDS.has(key) &&
+        options.eyesOnlyCount.n >= options.maxEyesOnly
+      ) {
+        continue;
+      }
       const queue = queues.get(key);
       if (!queue || queue.length === 0) continue;
       while (queue.length > 0) {
@@ -458,11 +495,14 @@ function takeFromPool(
         if (re && options.reCount.n >= options.maxRecordEagle) continue;
         const up = isUpNorthCluster(next);
         if (up && options.upNorthCount.n >= options.maxUpNorth) continue;
+        const eyes = isEyesOnlyCluster(next);
+        if (eyes && options.eyesOnlyCount.n >= options.maxEyesOnly) continue;
         used.add(next.id);
         counts.set(key, (counts.get(key) ?? 0) + 1);
         if (sports) options.sportsCount.n += 1;
         if (re) options.reCount.n += 1;
         if (up) options.upNorthCount.n += 1;
+        if (eyes) options.eyesOnlyCount.n += 1;
         picked.push(next);
         progress = true;
         break;
@@ -476,10 +516,12 @@ function takeFromPool(
  * drop lifestyle junk, require real permalinks, prefer multi-source local,
  * interleave desks so one outlet cannot fill the rail.
  * Sports/HS is capped — full sports list lives on /sports.
- * Ticker + 9&10 News are capped so smaller preferred desks (IPR, TCBN,
- * Northern, Betsie, …) still get slots. UpNorthLive and Record-Eagle stay
- * capped. Official city/county/tribal headlines get a few reserved slots.
- * preferHardNews (letter): hard free + RE before soft lifestyle fillers.
+ * 9&10 News is capped as heavy TV wire. Eyes Only Media (Ticker + Northern
+ * Express + TCBN) shares one owner-family cap of 2 like Record-Eagle.
+ * UpNorthLive and Record-Eagle stay capped. Official city/county/tribal
+ * headlines get a few reserved slots.
+ * preferHardNews (letter): hard free + RE before soft lifestyle fillers;
+ * Eyes Only hard news is deferred so IPR / Glen Arbor / government win first.
  */
 export function selectAroundTheBay(
   clusters: ClusteredStory[],
@@ -491,6 +533,7 @@ export function selectAroundTheBay(
   const maxRecordEagle = options.maxRecordEagle ?? 2;
   const maxUpNorth = options.maxUpNorth ?? 3;
   const maxHeavyWire = options.maxHeavyWire ?? 2;
+  const maxEyesOnly = options.maxEyesOnly ?? 2;
   const maxOfficial = options.maxOfficial ?? 2;
   const preferHardNews = options.preferHardNews ?? false;
   const now = options.now ?? new Date();
@@ -535,10 +578,13 @@ export function selectAroundTheBay(
   const sportsCount = { n: 0 };
   const reCount = { n: 0 };
   const upNorthCount = { n: 0 };
+  const eyesOnlyCount = { n: 0 };
 
   const underHeavy = (key: string) =>
     !HEAVY_FREE_WIRE_SOURCE_IDS.has(key) ||
     (counts.get(key) ?? 0) < maxHeavyWire;
+
+  const underEyesOnly = () => eyesOnlyCount.n < maxEyesOnly;
 
   // Majority free desks: leave room for sports + RE + UpNorth + official.
   const freeTarget = Math.max(
@@ -556,8 +602,10 @@ export function selectAroundTheBay(
     const key = primarySourceKey(c);
     if ((counts.get(key) ?? 0) >= maxPerSource) continue;
     if (!underHeavy(key)) continue;
+    if (isEyesOnlyCluster(c) && !underEyesOnly()) continue;
     used.add(c.id);
     counts.set(key, (counts.get(key) ?? 0) + 1);
+    if (isEyesOnlyCluster(c)) eyesOnlyCount.n += 1;
     picked.push(c);
   }
 
@@ -569,8 +617,10 @@ export function selectAroundTheBay(
     const key = primarySourceKey(c);
     if ((counts.get(key) ?? 0) >= maxPerSource) continue;
     if (!underHeavy(key)) continue;
+    if (isEyesOnlyCluster(c) && !underEyesOnly()) continue;
     used.add(c.id);
     counts.set(key, (counts.get(key) ?? 0) + 1);
+    if (isEyesOnlyCluster(c)) eyesOnlyCount.n += 1;
     picked.push(c);
   }
 
@@ -580,18 +630,23 @@ export function selectAroundTheBay(
     maxRecordEagle,
     maxUpNorth,
     maxHeavyWire,
+    maxEyesOnly,
     sportsCount,
     reCount,
     upNorthCount,
+    eyesOnlyCount,
   };
 
   if (preferHardNews) {
-    // Letter: smaller preferred desks' hard news first (IPR can take up to
-    // maxPerSource) before Ticker/9&10 crashes flood the top-6 slice. Then
-    // hard RE, one soft local filler (festivals), then heavy-wire hard news.
+    // Letter: smaller preferred desks' hard news first (IPR / Glen Arbor /
+    // government) before Eyes Only or 9&10 flood the top-6 slice. Then hard
+    // RE, one soft local filler, then Eyes Only hard, then heavy TV hard.
     const smallHard = hardFree.filter(
-      (c) => !HEAVY_FREE_WIRE_SOURCE_IDS.has(primarySourceKey(c)),
+      (c) =>
+        !HEAVY_FREE_WIRE_SOURCE_IDS.has(primarySourceKey(c)) &&
+        !isEyesOnlyCluster(c),
     );
+    const eyesHard = hardFree.filter(isEyesOnlyCluster);
     const heavyHard = hardFree.filter((c) =>
       HEAVY_FREE_WIRE_SOURCE_IDS.has(primarySourceKey(c)),
     );
@@ -606,6 +661,10 @@ export function selectAroundTheBay(
       ...poolOpts,
       limit: softTarget,
     });
+    takeFromPool(eyesHard, picked, used, counts, {
+      ...poolOpts,
+      limit: freeTarget,
+    });
     takeFromPool(heavyHard, picked, used, counts, {
       ...poolOpts,
       limit: freeTarget,
@@ -619,7 +678,7 @@ export function selectAroundTheBay(
       limit: freeTarget,
     });
   } else {
-    // 2) Preferred free desks (smaller desks before Ticker/9&10), then others.
+    // 2) Preferred free desks (smaller desks before Eyes Only / 9&10), then others.
     takeFromPool(freeNews, picked, used, counts, {
       ...poolOpts,
       limit: freeTarget,
@@ -635,10 +694,19 @@ export function selectAroundTheBay(
     takeFromPool(upNorthNews, picked, used, counts, { ...poolOpts, limit });
   }
 
-  // Soft fill under caps — still respect heavy-wire limits.
+  // Soft fill under caps — still respect heavy-wire + Eyes Only limits.
   if (picked.length < limit) {
     const fillOrder = preferHardNews
-      ? [...hardFree, ...hardRe, ...softFree, ...sports, ...softRe, ...upNorthNews]
+      ? [
+          ...hardFree.filter((c) => !isEyesOnlyCluster(c)),
+          ...hardRe,
+          ...softFree.filter((c) => !isEyesOnlyCluster(c)),
+          ...hardFree.filter(isEyesOnlyCluster),
+          ...softFree.filter(isEyesOnlyCluster),
+          ...sports,
+          ...softRe,
+          ...upNorthNews,
+        ]
       : [...freeNews, ...sports, ...reNews, ...upNorthNews];
     for (const c of fillOrder) {
       if (picked.length >= limit) break;
@@ -657,11 +725,14 @@ export function selectAroundTheBay(
       if (reItem && reCount.n >= maxRecordEagle) continue;
       const upItem = isUpNorthCluster(c);
       if (upItem && upNorthCount.n >= maxUpNorth) continue;
+      const eyesItem = isEyesOnlyCluster(c);
+      if (eyesItem && eyesOnlyCount.n >= maxEyesOnly) continue;
       used.add(c.id);
       counts.set(key, (counts.get(key) ?? 0) + 1);
       if (sportsItem) sportsCount.n += 1;
       if (reItem) reCount.n += 1;
       if (upItem) upNorthCount.n += 1;
+      if (eyesItem) eyesOnlyCount.n += 1;
       picked.push(c);
     }
   }
