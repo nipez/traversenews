@@ -6,6 +6,7 @@ import assert from "node:assert/strict";
 import { looksLikeUmVarsity } from "../src/lib/around";
 import {
   collectArkEventLinks,
+  extractA2GovNews,
   extractArkEventFromPage,
   extractLegistarMeetings,
   extractMarqueeLiveEvents,
@@ -257,6 +258,36 @@ const ics = eventsFromIcsText(
 assert.equal(ics.length, 1);
 assert.equal(ics[0].time_unknown, true, "all-day ICS is not 8:00 PM");
 assert.equal(ics[0].starts_at, "2026-09-07T04:00:00.000Z");
+
+const newsSrc: Source = {
+  id: "src_a2_news",
+  name: "City of Ann Arbor — News",
+  homepage: "https://www.a2gov.org/",
+  feed_url: "https://www.a2gov.org/news/",
+  pull_method: "html",
+  beat_id: "beat_government",
+  enabled: true,
+  notes: "",
+  lane: "wire",
+  family: "official",
+};
+const news = extractA2GovNews(
+  `<ul>
+  <li class="gs-feed-list-item items-1">
+    <a href="/news/posts/carbon-offsets/" class="gs-feed-list-title">Carbon offsets survey</a>
+    <span class="gs-feed-list-date">Aug 14, 2026</span>
+  </li>
+  </ul>`,
+  newsSrc,
+);
+assert.equal(news.length, 1);
+assert.equal(news[0].title, "Carbon offsets survey");
+assert.equal(news[0].dek, "", "headline and link only");
+assert.equal(
+  news[0].url,
+  "https://www.a2gov.org/news/posts/carbon-offsets/",
+);
+assert.equal(news[0].published_at, "2026-08-14T04:00:00.000Z");
 
 process.env.SITE_ID = "ann-arbor";
 process.env.NEXT_PUBLIC_SITE_ID = "ann-arbor";

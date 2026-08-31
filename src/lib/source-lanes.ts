@@ -81,6 +81,7 @@ const FALLBACK_OFFICIAL = new Set([
   "src_city_news",
   "src_leelanau_co",
   "src_gtb",
+  "src_a2_news",
 ]);
 const FALLBACK_UPNORTH = new Set(["src_upnorth"]);
 const FALLBACK_PREFERRED_SPORTS = new Set(["src_910_sports"]);

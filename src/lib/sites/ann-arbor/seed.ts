@@ -164,7 +164,7 @@ const sources: Source[] = [
     beat_id: "beat_government",
     enabled: true,
     notes:
-      "HTML newsroom, no RSS. Need Traverse News to pull https://www.a2gov.org/news/ on the live computer → POST /api/desk/stories/import. Headline and link only.",
+      "Worker reads newsroom cards (headline, permalink, printed date). No invented dek. Empty/bot-blocked → Need Traverse News to pull https://www.a2gov.org/news/ on the live computer → POST /api/desk/stories/import.",
     lane: "wire",
     place: "Ann Arbor",
     family: "official",

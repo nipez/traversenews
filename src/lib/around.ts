@@ -238,6 +238,7 @@ const OFFICIAL_NEWS_SOURCE_IDS = new Set([
   "src_city_news",
   "src_leelanau_co",
   "src_gtb",
+  "src_a2_news",
 ]);
 
 /** Heavy TV wire — cap like Record-Eagle so it does not eat the bay. */
@@ -435,6 +436,8 @@ function clusterScore(cluster: ClusteredStory): number {
 
 /** Drop bay copy older than this many Detroit calendar days. */
 export const BAY_MAX_AGE_DAYS = 14;
+/** Official city/county desks may sit a bit longer on reserved slots. */
+export const OFFICIAL_MAX_AGE_DAYS = 45;
 
 export type AroundSelectOptions = {
   limit?: number;
@@ -470,7 +473,10 @@ export type AroundSelectOptions = {
 function withinBayMaxAge(cluster: ClusteredStory, now: Date): boolean {
   const published = new Date(cluster.published_at).getTime();
   if (!Number.isFinite(published)) return false;
-  const maxAgeMs = BAY_MAX_AGE_DAYS * 24 * 60 * 60 * 1000;
+  const days = isOfficialNewsCluster(cluster)
+    ? OFFICIAL_MAX_AGE_DAYS
+    : BAY_MAX_AGE_DAYS;
+  const maxAgeMs = days * 24 * 60 * 60 * 1000;
   return published >= now.getTime() - maxAgeMs;
 }
 

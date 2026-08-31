@@ -1,8 +1,9 @@
 import { detroitDayKey, detroitWallToUtc } from "@/lib/dates";
 import { looksLikeLowValueListing, stableEventId } from "@/lib/events";
+import { newId } from "@/lib/ids";
 import { getSite } from "@/lib/sites";
 import { stableShowId } from "@/lib/shows";
-import type { EventItem, ShowListing, Source } from "@/lib/types";
+import type { EventItem, ShowListing, Source, Story } from "@/lib/types";
 import type { HtmlEventsPullResult } from "@/lib/pull/html-events";
 
 const MONTHS: Record<string, number> = {
@@ -716,4 +717,98 @@ export function extractMarqueeShows(
       (a, b) =>
         new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime(),
     );
+}
+
+const SHORT_MONTHS: Record<string, number> = {
+  jan: 1,
+  feb: 2,
+  mar: 3,
+  apr: 4,
+  may: 5,
+  jun: 6,
+  jul: 7,
+  aug: 8,
+  sep: 9,
+  oct: 10,
+  nov: 11,
+  dec: 12,
+};
+
+/**
+ * City of Ann Arbor newsroom cards. Headline + permalink + printed date only.
+ * Never invent a dek or body.
+ */
+export function extractA2GovNews(html: string, source: Source): Story[] {
+  const blocks = html.match(
+    /<li class="gs-feed-list-item[\s\S]*?<\/li>/gi,
+  );
+  if (!blocks) return [];
+  const out: Story[] = [];
+  const seen = new Set<string>();
+  for (const block of blocks) {
+    const href = decodeEntities(
+      block.match(/href="(\/news\/posts\/[^"]+)"/i)?.[1] ?? "",
+    );
+    const title = stripTags(
+      block.match(/gs-feed-list-title[^>]*>([\s\S]*?)<\/a>/i)?.[1] ?? "",
+    );
+    const dateText = stripTags(
+      block.match(/gs-feed-list-date[^>]*>([\s\S]*?)<\//i)?.[1] ?? "",
+    );
+    if (!href || !title) continue;
+    const dm = dateText.match(/^([A-Za-z]{3,9})\s+(\d{1,2}),\s+(\d{4})$/);
+    if (!dm) continue;
+    const month =
+      monthNumber(dm[1]) ?? SHORT_MONTHS[dm[1].slice(0, 3).toLowerCase()];
+    if (!month) continue;
+    const published = detroitWallToUtc(
+      Number(dm[3]),
+      month,
+      Number(dm[2]),
+      0,
+      0,
+      0,
+    );
+    if (Number.isNaN(published.getTime())) continue;
+    const url = `https://www.a2gov.org${href}`;
+    if (seen.has(url)) continue;
+    seen.add(url);
+    out.push({
+      id: newId("story"),
+      source_id: source.id,
+      title,
+      dek: "",
+      url,
+      published_at: published.toISOString(),
+      is_original: false,
+      body: null,
+      image_url: null,
+      byline: null,
+      slug: null,
+    });
+  }
+  return out.sort(
+    (a, b) =>
+      new Date(b.published_at).getTime() - new Date(a.published_at).getTime(),
+  );
+}
+
+export async function pullAnnArborNews(
+  source: Source,
+): Promise<{ stories: Story[]; bot_blocked: boolean; status: number | null }> {
+  if (!source.feed_url) {
+    return { stories: [], bot_blocked: false, status: null };
+  }
+  const page = await fetchText(source.feed_url);
+  if (page.blocked) {
+    return { stories: [], bot_blocked: true, status: page.status };
+  }
+  if (!page.ok) {
+    throw new Error(`AA news fetch failed ${page.status} for ${source.name}`);
+  }
+  return {
+    stories: extractA2GovNews(page.text, source),
+    bot_blocked: false,
+    status: page.status,
+  };
 }

@@ -10,7 +10,7 @@ import {
   withSkippedPublicSnapshots,
 } from "@/lib/data/store";
 import { isInventedStory, keepRealOriginals } from "@/lib/data/scrub";
-import { pullAnnArborHtml } from "@/lib/pull/html-ann-arbor";
+import { pullAnnArborHtml, pullAnnArborNews } from "@/lib/pull/html-ann-arbor";
 import { pullHtmlEvents } from "@/lib/pull/html-events";
 import { pullHtmlShows } from "@/lib/pull/html-shows";
 import { pullIcsSource } from "@/lib/pull/ics";
@@ -46,6 +46,9 @@ const HTML_AA_LISTING_IDS = new Set([
   "src_ums_events",
   "src_marquee_events",
 ]);
+
+/** Official HTML newsrooms the Worker can read (headline + link only). */
+const HTML_AA_NEWS_IDS = new Set(["src_a2_news"]);
 
 /** Shows venues with static HTML showtimes the Worker can read. */
 const HTML_SHOW_SOURCE_IDS = new Set([
@@ -118,6 +121,22 @@ async function runPullInner(): Promise<PullResult> {
             error: htmlResult.error,
             attempted: true,
           });
+        } else {
+          touch.set(source.id, { ok: true, error: null, attempted: true });
+        }
+      } else if (
+        source.pull_method === "html" &&
+        HTML_AA_NEWS_IDS.has(source.id)
+      ) {
+        const htmlResult = await pullAnnArborNews(source);
+        pulledStories.push(...htmlResult.stories);
+        if (htmlResult.bot_blocked) {
+          const msg =
+            `Bot-blocked or empty newsroom (${htmlResult.status ?? "n/a"}). ` +
+            "Do not invent headlines. Need Traverse News to pull this URL on the live computer " +
+            "and POST /api/desk/stories/import.";
+          errors.push({ source: source.name, error: msg });
+          touch.set(source.id, { ok: false, error: msg, attempted: true });
         } else {
           touch.set(source.id, { ok: true, error: null, attempted: true });
         }

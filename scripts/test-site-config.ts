@@ -109,6 +109,10 @@ assert(
   aa.sources.some((s) => s.id === "src_marquee_events" && s.lane === "events"),
   "AA seed has Marquee live events",
 );
+assert(
+  aa.sources.some((s) => s.id === "src_a2_news" && s.family === "official"),
+  "AA city news is official family",
+);
 const dexter = aa.sources.find((s) => s.id === "src_dexter_cal");
 assert(
   dexter?.homepage?.includes("dexterschools.org"),
