@@ -7,7 +7,7 @@ export const ANN_ARBOR_SHOW_VENUES: readonly ShowVenueSlot[] = [
     homepage: "https://theark.org/",
   },
   {
-    source_id: "src_marquee_arts",
+    source_id: "src_marquee_shows",
     name: "Michigan Theater / State Theatre",
     homepage: "https://marquee-arts.org/",
   },

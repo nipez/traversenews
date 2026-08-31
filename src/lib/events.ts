@@ -195,6 +195,7 @@ export const SHOW_EVENT_SOURCE_IDS = new Set([
   "src_city_opera",
   "src_alluvion",
   "src_theark",
+  "src_marquee_shows",
 ]);
 
 export function isShowEventSource(sourceId: string): boolean {
@@ -268,6 +269,7 @@ const NIGHT_OUT_SOURCES = new Set([
   "src_reader_events",
   "src_ark_events",
   "src_ums_events",
+  "src_marquee_events",
 ]);
 
 export function looksLikeMeeting(title: string): boolean {

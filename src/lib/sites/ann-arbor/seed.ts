@@ -364,10 +364,36 @@ const sources: Source[] = [
     beat_id: "beat_arts",
     enabled: true,
     notes:
-      "Verified RSS of announcements (not a showtime grid). michigantheater.org is hijacked — do not use. Showtimes via POST /api/desk/shows/import only.",
+      "Verified RSS of announcements (not a showtime grid). michigantheater.org is hijacked — do not use. Printed film clocks use src_marquee_shows.",
     lane: "wire",
     place: "Ann Arbor",
     weight: 1,
+  },
+  {
+    id: "src_marquee_shows",
+    name: "Marquee Arts — Films",
+    homepage: "https://marquee-arts.org/",
+    feed_url: "https://marquee-arts.org/",
+    pull_method: "html",
+    beat_id: "beat_shows",
+    enabled: true,
+    notes:
+      "Worker reads homepage film cards with a printed clock (Tuesday, September 1 at 7:00 PM). Now Playing / Opens without a time is skipped — never invent showtimes.",
+    lane: "shows",
+    place: "Ann Arbor",
+  },
+  {
+    id: "src_marquee_events",
+    name: "Marquee Arts — Live",
+    homepage: "https://marquee-arts.org/",
+    feed_url: "https://marquee-arts.org/",
+    pull_method: "html",
+    beat_id: "beat_events",
+    enabled: true,
+    notes:
+      "Worker reads homepage live events with printed date + clock (Beth Hart, Swan Lake). Films stay on /shows. Empty/bot-blocked → Need Traverse News to pull https://marquee-arts.org/ on the live computer → POST /api/desk/events/import.",
+    lane: "events",
+    place: "Ann Arbor",
   },
   {
     id: "src_ums",

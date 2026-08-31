@@ -1,7 +1,8 @@
-import { detroitWallToUtc } from "@/lib/dates";
+import { detroitDayKey, detroitWallToUtc } from "@/lib/dates";
 import { looksLikeLowValueListing, stableEventId } from "@/lib/events";
 import { getSite } from "@/lib/sites";
-import type { EventItem, Source } from "@/lib/types";
+import { stableShowId } from "@/lib/shows";
+import type { EventItem, ShowListing, Source } from "@/lib/types";
 import type { HtmlEventsPullResult } from "@/lib/pull/html-events";
 
 const MONTHS: Record<string, number> = {
@@ -454,7 +455,265 @@ export async function pullAnnArborHtml(
     events = await pullArkEvents(source, page.text, now);
   } else if (source.id === "src_ums_events") {
     events = extractUmsListingEvents(page.text, source, now);
+  } else if (source.id === "src_marquee_events") {
+    events = extractMarqueeLiveEvents(page.text, source, now);
   }
 
   return { events, bot_blocked: false, status: page.status };
+}
+
+export type MarqueeSlide = {
+  title: string;
+  desc: string;
+  url: string;
+};
+
+export function extractMarqueeSlides(html: string): MarqueeSlide[] {
+  const blocks = html.match(
+    /<li class="splide__slide now-showing-item">([\s\S]*?)<\/li>/gi,
+  );
+  if (!blocks) return [];
+  const out: MarqueeSlide[] = [];
+  const seen = new Set<string>();
+  for (const block of blocks) {
+    const title = stripTags(
+      block.match(/<h3\b[^>]*>([\s\S]*?)<\/h3>/i)?.[1] ?? "",
+    );
+    if (!title) continue;
+    const desc = stripTags(
+      (block.match(/event-archive-desc[^>]*>([\s\S]*?)<\/div>/i)?.[1] ?? "")
+        .replace(/<br\s*\/?>/gi, " | "),
+    );
+    const href = decodeEntities(
+      block.match(/href="([^"]+)"/i)?.[1] ?? "",
+    );
+    const url = href
+      ? href.startsWith("http")
+        ? href
+        : `https://marquee-arts.org${href}`
+      : "https://marquee-arts.org/";
+    const key = `${title}|${desc}|${url}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push({ title, desc, url });
+  }
+  return out;
+}
+
+type MarqueeWhen = {
+  year: number;
+  month: number;
+  day: number;
+  hour: number;
+  minute: number;
+  weekday: string | null;
+};
+
+function detroitYear(now: Date): number {
+  return Number(detroitDayKey(now).slice(0, 4));
+}
+
+function inferYear(month: number, day: number, explicit: number | null, now: Date): number {
+  if (explicit && explicit >= 2020 && explicit <= 2035) return explicit;
+  const y = detroitYear(now);
+  const candidate = detroitWallToUtc(y, month, day, 12, 0, 0);
+  if (candidate.getTime() < now.getTime() - 1000 * 60 * 60 * 24 * 2) {
+    return y + 1;
+  }
+  return y;
+}
+
+function parseMarqueeWhens(desc: string, now: Date): MarqueeWhen[] {
+  const out: MarqueeWhen[] = [];
+  const single = new RegExp(
+    `(?:(${WEEKDAYS}),\\s+)?([A-Za-z]+)\\s+(\\d{1,2})(?:st|nd|rd|th)?(?:,\\s*(\\d{4}))?\\s+at\\s+(\\d{1,2})(?::(\\d{2}))?\\s*([ap])\\.?m`,
+    "gi",
+  );
+  for (const m of desc.matchAll(single)) {
+    const month = monthNumber(m[2]);
+    if (!month) continue;
+    const day = Number(m[3]);
+    const clock = parseClock(Number(m[5]), m[6] ? Number(m[6]) : 0, m[7]);
+    if (!clock) continue;
+    out.push({
+      year: inferYear(month, day, m[4] ? Number(m[4]) : null, now),
+      month,
+      day,
+      hour: clock.hour,
+      minute: clock.minute,
+      weekday: m[1] || null,
+    });
+  }
+  if (out.length > 0) return out;
+
+  const pair = desc.match(
+    /([A-Za-z]+)\s+(\d{1,2})\s*&\s*(\d{1,2})(?:st|nd|rd|th)?\s+at\s+(\d{1,2})(?::(\d{2}))?\s*([ap])\.?m/i,
+  );
+  if (pair) {
+    const month = monthNumber(pair[1]);
+    const clock = parseClock(Number(pair[4]), pair[5] ? Number(pair[5]) : 0, pair[6]);
+    if (month && clock) {
+      for (const day of [Number(pair[2]), Number(pair[3])]) {
+        out.push({
+          year: inferYear(month, day, null, now),
+          month,
+          day,
+          hour: clock.hour,
+          minute: clock.minute,
+          weekday: null,
+        });
+      }
+    }
+  }
+  return out;
+}
+
+function marqueeHall(desc: string): string {
+  if (/\bscreening room\b/i.test(desc)) return "Michigan Theater Screening Room";
+  if (/\bstate\b/i.test(desc) && !/\bunited states\b/i.test(desc)) {
+    return "State Theatre";
+  }
+  if (/\bmain auditorium\b/i.test(desc) || /\bmichigan theater\b/i.test(desc)) {
+    return "Michigan Theater";
+  }
+  if (/\bmichigan\b/i.test(desc)) return "Michigan Theater";
+  return "Marquee Arts";
+}
+
+function formatMarqueeClock(hour: number, minute: number): string {
+  const suffix = hour >= 12 ? "PM" : "AM";
+  const h12 = hour % 12 || 12;
+  return `${h12}:${String(minute).padStart(2, "0")} ${suffix}`;
+}
+
+function isMarqueeFilm(desc: string): boolean {
+  return /\|\s*Film\s*\|/i.test(desc) || /\bFilm\s*\|/i.test(desc);
+}
+
+/**
+ * Marquee homepage live events (concerts, ballet, comedy, lectures).
+ * Printed date + clock only. Films stay on /shows.
+ */
+export function extractMarqueeLiveEvents(
+  html: string,
+  source: Source,
+  now = new Date(),
+): EventItem[] {
+  const out: EventItem[] = [];
+  const seen = new Set<string>();
+  for (const slide of extractMarqueeSlides(html)) {
+    if (isMarqueeFilm(slide.desc)) continue;
+    if (/blood drive/i.test(slide.title) || looksLikeLowValueListing(slide.title)) {
+      continue;
+    }
+    if (/^now playing\b/i.test(slide.desc) || /^opens\b/i.test(slide.desc)) {
+      continue;
+    }
+    const whens = parseMarqueeWhens(slide.desc, now);
+    if (whens.length === 0) continue;
+    const place = marqueeHall(slide.desc);
+    for (const when of whens) {
+      const starts = detroitWallToUtc(
+        when.year,
+        when.month,
+        when.day,
+        when.hour,
+        when.minute,
+        0,
+      );
+      if (Number.isNaN(starts.getTime()) || !withinDays(starts, now, 180)) {
+        continue;
+      }
+      const uid = `${slide.url}|${starts.toISOString()}`;
+      if (seen.has(uid)) continue;
+      seen.add(uid);
+      out.push({
+        id: stableEventId(source.id, uid),
+        title: slide.title,
+        starts_at: starts.toISOString(),
+        place,
+        url: slide.url,
+        source_id: source.id,
+      });
+    }
+  }
+  return out.sort(
+    (a, b) =>
+      new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime(),
+  );
+}
+
+/**
+ * Marquee film cards with a printed clock. "Now Playing" / "Opens Friday"
+ * without a time is skipped — never invent a showtime.
+ */
+export function extractMarqueeShows(
+  html: string,
+  source: Source,
+  now = new Date(),
+): ShowListing[] {
+  const byTitle = new Map<
+    string,
+    { starts: Date; ends: Date; times: string[]; url: string; venue: string }
+  >();
+  for (const slide of extractMarqueeSlides(html)) {
+    if (!isMarqueeFilm(slide.desc)) continue;
+    if (looksLikeLowValueListing(slide.title)) continue;
+    const whens = parseMarqueeWhens(slide.desc, now);
+    if (whens.length === 0) continue;
+    const venue = marqueeHall(slide.desc);
+    for (const when of whens) {
+      const starts = detroitWallToUtc(
+        when.year,
+        when.month,
+        when.day,
+        when.hour,
+        when.minute,
+        0,
+      );
+      if (Number.isNaN(starts.getTime()) || !withinDays(starts, now, 180)) {
+        continue;
+      }
+      const clock = formatMarqueeClock(when.hour, when.minute);
+      const label = when.weekday
+        ? `${when.weekday.slice(0, 3)} ${clock}`
+        : clock;
+      const existing = byTitle.get(slide.title);
+      if (!existing) {
+        byTitle.set(slide.title, {
+          starts,
+          ends: starts,
+          times: [label],
+          url: slide.url,
+          venue,
+        });
+        continue;
+      }
+      if (starts < existing.starts) existing.starts = starts;
+      if (starts > existing.ends) existing.ends = starts;
+      if (!existing.times.includes(label)) existing.times.push(label);
+    }
+  }
+
+  return [...byTitle.entries()]
+    .map(([title, row]) => {
+      const listing: ShowListing = {
+        id: stableShowId(source.id, `${title}|${row.starts.toISOString().slice(0, 10)}`),
+        title,
+        venue: row.venue,
+        starts_at: row.starts.toISOString(),
+        ends_at:
+          row.ends.getTime() === row.starts.getTime()
+            ? null
+            : row.ends.toISOString(),
+        times: row.times,
+        url: row.url,
+        source_id: source.id,
+      };
+      return listing;
+    })
+    .sort(
+      (a, b) =>
+        new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime(),
+    );
 }

@@ -44,6 +44,7 @@ const HTML_AA_LISTING_IDS = new Set([
   "src_a2_legistar",
   "src_ark_events",
   "src_ums_events",
+  "src_marquee_events",
 ]);
 
 /** Shows venues with static HTML showtimes the Worker can read. */
@@ -51,6 +52,7 @@ const HTML_SHOW_SOURCE_IDS = new Set([
   "src_state_theatre",
   "src_elk_cinema",
   "src_alluvion",
+  "src_marquee_shows",
 ]);
 
 export async function runPull(): Promise<PullResult> {

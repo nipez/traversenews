@@ -107,7 +107,7 @@ npm run deploy:ann-arbor
 
 Desk **Cities** menu links each instance `/desk`. Same staff password for now. A city-only cultivator later: set `STAFF_SITES=ann-arbor` on that Worker.
 
-**Worker already reads** (printed times only): City Legistar (`src_a2_legistar`), The Ark event pages (`src_ark_events`), UMS season dates (`src_ums_events`, `time_unknown`). AAPS Google ICS → `/schools`.
+**Worker already reads** (printed times only): City Legistar (`src_a2_legistar`), The Ark event pages (`src_ark_events`), UMS season dates (`src_ums_events`, `time_unknown`), Marquee live events (`src_marquee_events`) and film clocks (`src_marquee_shows`). AAPS Google ICS → `/schools` (all-day = `time_unknown`, not 8:00 PM).
 
 **Need Traverse News to pull** (datacenter 403 / JS):
 
@@ -116,7 +116,7 @@ Desk **Cities** menu links each instance `/desk`. Same staff password for now. A
 - https://aadl.org/events
 - https://www.dexterschools.org/district/calendar
 - Pioneer / Skyline / Huron / Dexter ArbiterLive fronts
-- Marquee Arts / Michigan Theater showtimes (`michigantheater.org` is hijacked — do not use)
+- Full Marquee / State Theatre grid if the homepage cards miss a printed clock (`michigantheater.org` is hijacked — do not use)
 
 Land those with `POST /api/desk/events/import`, `/civic/import`, `/schools/import`, `/shows/import`, `/athletics/import` against the **AA** Desk token. Never invent times.
 

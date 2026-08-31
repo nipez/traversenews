@@ -101,6 +101,14 @@ assert(
   aa.sources.some((s) => s.id === "src_ums_events" && s.lane === "events"),
   "AA seed has UMS season listing",
 );
+assert(
+  aa.sources.some((s) => s.id === "src_marquee_shows" && s.lane === "shows"),
+  "AA seed has Marquee film showtimes",
+);
+assert(
+  aa.sources.some((s) => s.id === "src_marquee_events" && s.lane === "events"),
+  "AA seed has Marquee live events",
+);
 const dexter = aa.sources.find((s) => s.id === "src_dexter_cal");
 assert(
   dexter?.homepage?.includes("dexterschools.org"),

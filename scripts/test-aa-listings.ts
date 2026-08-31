@@ -8,8 +8,11 @@ import {
   collectArkEventLinks,
   extractArkEventFromPage,
   extractLegistarMeetings,
+  extractMarqueeLiveEvents,
+  extractMarqueeShows,
   extractUmsListingEvents,
 } from "../src/lib/pull/html-ann-arbor";
+import { eventsFromIcsText } from "../src/lib/pull/ics";
 import { resetSiteCache } from "../src/lib/sites";
 import type { Source } from "../src/lib/types";
 
@@ -178,6 +181,82 @@ assert.equal(
   }),
   false,
 );
+
+const marqueeSrc: Source = {
+  id: "src_marquee_events",
+  name: "Marquee Arts — Live",
+  homepage: "https://marquee-arts.org/",
+  feed_url: "https://marquee-arts.org/",
+  pull_method: "html",
+  beat_id: "beat_events",
+  enabled: true,
+  notes: "",
+  lane: "events",
+};
+const marqueeShowsSrc: Source = {
+  ...marqueeSrc,
+  id: "src_marquee_shows",
+  name: "Marquee Arts — Films",
+  beat_id: "beat_shows",
+  lane: "shows",
+};
+const marqueeHtml = `
+<ul>
+<li class="splide__slide now-showing-item"><div>
+<h3 class="h4-size">Beth Hart</h3>
+<div class="event-archive-desc">Tuesday, September 15 at 8:00 PM | Main Auditorium<br>$57</div>
+<a href="https://www.ticketmaster.com/event/080064950D7A502C">See Details</a>
+</div></li>
+<li class="splide__slide now-showing-item"><div>
+<h3 class="h4-size">The Piano</h3>
+<div class="event-archive-desc">Tuesday, September 1 at 7:00 PM | Michigan<br><br>Film | Romance/Drama | R</div>
+<a href="/event-page/?showingId=1025799&eventId=160470">See Details</a>
+</div></li>
+<li class="splide__slide now-showing-item"><div>
+<h3 class="h4-size">The Big Cheese</h3>
+<div class="event-archive-desc">Now Playing | Michigan<br><br>Film | Documentary</div>
+<a href="/event-page/?showingId=1&eventId=1">See Details</a>
+</div></li>
+</ul>
+`;
+const live = extractMarqueeLiveEvents(marqueeHtml, marqueeSrc, now);
+assert.equal(live.length, 1, "films stay off live events");
+assert.equal(live[0].title, "Beth Hart");
+assert.equal(live[0].starts_at, "2026-09-16T00:00:00.000Z");
+assert.equal(live[0].place, "Michigan Theater");
+const films = extractMarqueeShows(marqueeHtml, marqueeShowsSrc, now);
+assert.equal(films.length, 1, "Now Playing without a clock is skipped");
+assert.equal(films[0].title, "The Piano");
+assert.ok(films[0].times.some((t) => /7:00 PM/.test(t)));
+assert.equal(films[0].venue, "Michigan Theater");
+
+const icsSrc: Source = {
+  id: "src_aaps_cal",
+  name: "AAPS",
+  homepage: "https://www.a2schools.org/",
+  feed_url: "https://example.com/cal.ics",
+  pull_method: "ics",
+  beat_id: "beat_schools",
+  enabled: true,
+  notes: "",
+  lane: "school_cal",
+};
+const ics = eventsFromIcsText(
+  [
+    "BEGIN:VCALENDAR",
+    "BEGIN:VEVENT",
+    "DTSTART;VALUE=DATE:20260907",
+    "SUMMARY:Labor Day — No School",
+    "UID:labor-2026",
+    "END:VEVENT",
+    "END:VCALENDAR",
+  ].join("\r\n"),
+  icsSrc,
+  now,
+);
+assert.equal(ics.length, 1);
+assert.equal(ics[0].time_unknown, true, "all-day ICS is not 8:00 PM");
+assert.equal(ics[0].starts_at, "2026-09-07T04:00:00.000Z");
 
 process.env.SITE_ID = "ann-arbor";
 process.env.NEXT_PUBLIC_SITE_ID = "ann-arbor";

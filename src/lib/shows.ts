@@ -25,6 +25,7 @@ export const SHOW_SOURCE_IDS = new Set([
   "src_city_opera",
   "src_alluvion",
   "src_theark",
+  "src_marquee_shows",
 ]);
 
 export function isShowSource(sourceId: string): boolean {

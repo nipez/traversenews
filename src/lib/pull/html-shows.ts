@@ -1,4 +1,5 @@
 import { detroitWallToUtc } from "@/lib/dates";
+import { extractMarqueeShows } from "@/lib/pull/html-ann-arbor";
 import { getSite } from "@/lib/sites";
 import {
   stableShowId,
@@ -563,6 +564,8 @@ export async function pullHtmlShows(
       shows = parseElkRapidsCinemaHtml(html, source);
     } else if (source.id === "src_alluvion") {
       shows = parseAlluvionHtml(html, source);
+    } else if (source.id === "src_marquee_shows") {
+      shows = extractMarqueeShows(html, source);
     } else {
       return {
         shows: [],

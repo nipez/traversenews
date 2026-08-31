@@ -16,6 +16,7 @@ const FALLBACK_SHOWS = new Set([
   "src_oldtown",
   "src_city_opera",
   "src_theark",
+  "src_marquee_shows",
 ]);
 const FALLBACK_SCHOOL_CAL = new Set([
   "src_tcaps_cal",
