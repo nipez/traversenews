@@ -693,15 +693,28 @@ export function buildMorningLetterSubject(snapshot: EmailEditionSnapshot): strin
   return subject;
 }
 
-function renderStory(
-  story: EmailStoryCard,
-  sourceOverride?: string,
-): RenderedItem {
+/**
+ * Outlet credit for a letter card. Never print our own masthead as the
+ * reporting source — staff originals that synthesize other desks should
+ * credit those desks (e.g. "9&10 News · Record-Eagle · UpNorthLive").
+ * Returns "" when nothing remains after filtering (omit the source line).
+ */
+export function letterSourceCredit(sources: string[] | undefined): string {
+  return (sources ?? [])
+    .map((s) => s.trim())
+    .filter((s) => {
+      if (!s) return false;
+      const lower = s.toLowerCase();
+      return lower !== "traverse.news" && lower !== "traverse news";
+    })
+    .join(" · ");
+}
+
+function renderStory(story: EmailStoryCard): RenderedItem {
   const url = canonicalPublicUrl(story.url);
   const title = escapeHtml(story.title);
   const dek = story.dek?.trim() ? escapeHtml(story.dek.trim()) : "";
-  const source =
-    sourceOverride || (story.sources?.length ? story.sources.join(" · ") : "");
+  const source = letterSourceCredit(story.sources);
 
   return {
     html: `<p style="margin:0;font-family:${LETTER_FONT};font-size:16px;line-height:1.35;">${
@@ -848,10 +861,9 @@ export function buildMorningLetter(
   if (letter.lead) {
     html.push(sectionHeading("📰", "The one to read"));
     text.push(textSectionHeading("📰", "The one to read"));
-    const rendered = renderStory(
-      letter.lead,
-      letter.lead.desk_original ? "traverse.news" : undefined,
-    );
+    // Desk originals synthesize local desks — credit those outlets from
+    // story.sources, never override to "traverse.news" as the reporting line.
+    const rendered = renderStory(letter.lead);
     html.push(rendered.html);
     text.push(rendered.text, "");
   }
