@@ -339,6 +339,61 @@ export function findPriorDetroitDaySnapshot<T extends { date: string }>(
 }
 
 /**
+ * How many Detroit calendar days of prior morning letters to exclude when
+ * assembling today’s letter. Tuesday mailing must still see Saturday’s heads
+ * (Sat–Mon), not only Monday.
+ */
+export const RECENT_LETTER_LOOKBACK_DAYS = 4;
+
+/** Prefer at least this many prior editions when the calendar window is thin. */
+export const RECENT_LETTER_MIN_EDITIONS = 3;
+
+/**
+ * Prior morning letters whose heads must not repeat today. Looks back
+ * RECENT_LETTER_LOOKBACK_DAYS Detroit days, and fills to at least
+ * RECENT_LETTER_MIN_EDITIONS older editions when available (weekends empty).
+ */
+export function findRecentEmailEditions(
+  editions: EmailEditionSnapshot[] | null | undefined,
+  at: Date,
+  options: { lookbackDays?: number; minEditions?: number } = {},
+): EmailEditionSnapshot[] {
+  const lookbackDays = options.lookbackDays ?? RECENT_LETTER_LOOKBACK_DAYS;
+  const minEditions = options.minEditions ?? RECENT_LETTER_MIN_EDITIONS;
+  const today = emailDetroitDateKey(at);
+  const oldest = addDetroitCalendarDays(today, -lookbackDays);
+  const prior = [...(editions ?? [])]
+    .filter((e) => e.date < today)
+    .sort((a, b) => b.date.localeCompare(a.date));
+  const inWindow = prior.filter((e) => e.date >= oldest);
+  if (inWindow.length >= minEditions) return inWindow;
+  return prior.slice(0, Math.max(inWindow.length, Math.min(minEditions, prior.length)));
+}
+
+/**
+ * Merge URL / headline identities (and bay titles for rewrite matching) from
+ * every recent morning letter so Saturday’s Garfield ban cannot return Tuesday.
+ */
+export function collectRecentLetterIdentities(
+  editions: EmailEditionSnapshot[] | null | undefined,
+  at: Date,
+): { identities: Set<string>; titles: string[]; letters: EmailEditionSnapshot[] } {
+  const letters = findRecentEmailEditions(editions, at);
+  const identities = new Set<string>();
+  const titles: string[] = [];
+  for (const letter of letters) {
+    for (const id of collectPriorLetterIdentities(letter)) {
+      identities.add(id);
+    }
+    if (letter.lead?.title) titles.push(letter.lead.title);
+    for (const card of letter.around ?? []) {
+      if (card.title) titles.push(card.title);
+    }
+  }
+  return { identities, titles, letters };
+}
+
+/**
  * Bay/lead identities that sat on the homepage for multiple Detroit days
  * (appeared on 2+ dated editions older than yesterday). One-shot cards from
  * older days stay eligible so a full yesterday does not empty today’s bay.
@@ -479,8 +534,8 @@ export function selectFreshAroundTheBay(
  * Assemble the morning letter from the same live mix rules as /email preview.
  *
  * Uniqueness:
- * - Yesterday’s published letter only (not the full yesterday edition) for
- *   all sections.
+ * - Recent published letters (last several Detroit days / editions), not only
+ *   yesterday — Saturday’s heads must not return Tuesday.
  * - Soft/recap cards that sat on the homepage for 2+ older edition days stay
  *   out (weekly leftovers). Hard news that never mailed stays eligible even
  *   if it lingered on the bay.
@@ -493,15 +548,28 @@ export function buildEmailEditionSnapshot(
   data: AppData,
   at = new Date(),
 ): EmailEditionSnapshot {
-  const priorLetter = findPriorDetroitDaySnapshot(data.email_editions, at);
-  const prior = collectPriorLetterIdentities(priorLetter);
+  const {
+    identities: prior,
+    titles: priorTitles,
+    letters: recentLetters,
+  } = collectRecentLetterIdentities(data.email_editions, at);
   const staleBay = collectStaleEditionBayIdentities(data.editions, at);
 
   const clusters = clusterStories(data.stories, data.sources);
+  // Flatten recent lead+around into one PriorBayCards shape for rewrite expand.
+  const recentBayCards: PriorBayCards = {
+    lead: null,
+    around: recentLetters.flatMap((letter) => {
+      const cards: Array<{ title: string; url?: string | null }> = [];
+      if (letter.lead) cards.push(letter.lead);
+      for (const card of letter.around ?? []) cards.push(card);
+      return cards;
+    }),
+  };
   const priorExpanded = expandExcludedWithClusterMembers(
     prior,
     clusters,
-    priorLetter,
+    recentBayCards,
   );
   const staleExpanded = expandExcludedWithClusterMembers(
     staleBay,
@@ -509,12 +577,11 @@ export function buildEmailEditionSnapshot(
     // Stale set is edition identities, not a prior letter snapshot.
     null,
   );
-  const priorTitles = priorBayTitles(priorLetter);
 
   const originals = clusters.filter((c) => c.is_original);
   const leadCluster = originals[0] ?? null;
 
-  // Prior letter blocks everyone. Stale homepage aging only blocks soft
+  // Prior letters block everyone. Stale homepage aging only blocks soft
   // leftovers — unused hard news may still take a letter slot.
   const unused = clusters.filter((c) => {
     if (c.is_original) return false;
@@ -532,7 +599,7 @@ export function buildEmailEditionSnapshot(
     preferHardNews: true,
     now: at,
   });
-  // Freshness vs yesterday's letter only (hard news may be bay-stale).
+  // Freshness vs recent letters (hard news may be bay-stale).
   const around = pickFreshAroundForLetter(
     aroundClusters.map(toAroundCard),
     priorExpanded,

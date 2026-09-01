@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { isDeskRequestAuthed } from "@/lib/auth";
 import {
   getAppData,
+  getEmailEdition,
   getEmailLetterPreview,
   getEmailLetterSend,
   markEmailLetterPreviewed,
@@ -115,10 +116,12 @@ async function sendLetterToOneRecipient(args: {
  * Send today's morning letter via Resend (Worker cron preview + Desk live).
  *
  * Body:
- * - `{ preview: true }` — Nick-only preview (`Preview · ` subject). Own
- *   idempotency key; does NOT mark the day as publicly sent.
+ * - `{ preview: true }` — Nick-only preview (`Preview · ` subject on Worker
+ *   cron). Uses today’s stored `email_editions` row when present.
  * - `{}` or `{ force: true }` — live send to resolveLetterRecipients; marks
  *   morning_letter_sent.
+ * - `{ rebuild: true }` — pull + recapture today’s letter before mailing
+ *   (clobbers a restage). Default is to mail the stored snapshot.
  *
  * Auth: Desk cookie OR Authorization: Bearer <DESK_IMPORT_TOKEN|DEV_DESK_PASSWORD>
  *
@@ -139,9 +142,11 @@ export async function POST(request: Request) {
   const body = (await request.json().catch(() => ({}))) as {
     force?: unknown;
     preview?: unknown;
+    rebuild?: unknown;
   };
   const force = body.force === true;
   const preview = body.preview === true;
+  const rebuild = body.rebuild === true;
 
   if (isDetroitSunday()) {
     return NextResponse.json({ ok: true, skipped: "sunday" });
@@ -162,9 +167,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, already_sent: true, date: today });
   }
 
-  await runPull();
+  // Prefer today’s stored / restaged letter. runPull also snapshots and would
+  // clobber a Desk restage — only pull+recapture when missing or rebuild.
+  const stored = await getEmailEdition(today);
+  let edition = stored && !rebuild ? stored : null;
+  if (!edition) {
+    await runPull();
+    edition =
+      (await getEmailEdition(today)) ?? (await snapshotTodaysEmailEdition());
+  }
 
-  const edition = await snapshotTodaysEmailEdition();
   const data = await getAppData();
   const school = pickLetterSchoolDate(data.schools ?? []);
   const recipients = preview
@@ -279,6 +291,7 @@ export async function POST(request: Request) {
     resend_id: firstResendId,
     archive_url: `/email/${edition.date}`,
     preview,
+    used_stored: Boolean(stored && !rebuild),
   });
 }
 
