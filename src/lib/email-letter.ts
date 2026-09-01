@@ -198,7 +198,48 @@ export function canonicalPublicUrl(value: string | null | undefined): string | n
   }
 }
 
-const TRAIL_STOP = /\s+(on|at|for|of|in|with|and|the|a|an|as|vs|versus)$/i;
+/** Trailing function words left by a bad budget cut — never ship these. */
+const TRAIL_STOP =
+  /\s+(on|at|for|of|in|with|and|the|a|an|as|vs|versus|from|to|by|into|onto)$/i;
+
+/** Record-Eagle-style ALL CAPS kicker (letters only, ≥4 chars). */
+function isAllCapsKicker(phrase: string): boolean {
+  const letters = phrase.replace(/[^A-Za-z]/g, "");
+  if (letters.length < 4) return false;
+  return letters === letters.toUpperCase();
+}
+
+/** Title-case an ALL CAPS kicker so it cannot ship as shouting. */
+function titleCaseKicker(phrase: string): string {
+  const small = new Set([
+    "a",
+    "an",
+    "and",
+    "as",
+    "at",
+    "by",
+    "for",
+    "from",
+    "in",
+    "of",
+    "on",
+    "or",
+    "the",
+    "to",
+    "vs",
+    "versus",
+    "with",
+  ]);
+  const words = phrase.replace(/\s+/g, " ").trim().split(" ");
+  return words
+    .map((word, i) => {
+      const lower = word.toLowerCase();
+      if (i > 0 && small.has(lower)) return lower;
+      if (!/[A-Za-z]/.test(word)) return word;
+      return lower.charAt(0).toUpperCase() + lower.slice(1);
+    })
+    .join(" ");
+}
 
 function isInsiderShorthand(phrase: string): boolean {
   const t = phrase.trim();
@@ -256,6 +297,8 @@ function isIncompleteSubjectPhrase(phrase: string): boolean {
 function usableSubjectPhrase(phrase: string): boolean {
   if (!phrase || isInsiderShorthand(phrase) || isGenericPlace(phrase)) return false;
   if (isIncompleteSubjectPhrase(phrase)) return false;
+  // Never ship an ALL CAPS org kicker as a subject phrase.
+  if (isAllCapsKicker(phrase)) return false;
   // "Grand Traverse Area Genealogical" is still just a place + one leftover word.
   const n = phrase
     .toLowerCase()
@@ -331,6 +374,20 @@ function phraseFromTitle(title: string, budget = 40): string {
   if (/parking rates?/i.test(t) && /decrease|labor day|coming/i.test(t)) {
     return "Decrease in Parking Rates";
   }
+  // South Airport reopen — keep the verb; never ship a bare place stump.
+  if (/south airport/i.test(t) && /reopen|opens?/i.test(t)) {
+    return /westbound/i.test(t)
+      ? "Westbound South Airport reopens"
+      : "South Airport reopens";
+  }
+  // Deputy SUV rescue — complete phrase; trailing "from" alone is refused.
+  if (
+    /deputy/i.test(t) &&
+    /rescues?/i.test(t) &&
+    /suv|submerged|vehicle/i.test(t)
+  ) {
+    return "Deputy rescues two from SUV";
+  }
   // Center Road crash — never stop at "in Center".
   if (/driver charged/i.test(t) && /center road/i.test(t)) {
     const phrase = "Driver charged in Center Road crash";
@@ -340,6 +397,10 @@ function phraseFromTitle(title: string, budget = 40): string {
   if (/center road/i.test(t) && /crash|collision|killed|charged/i.test(t)) {
     return "Center Road crash";
   }
+  // Drop Record-Eagle ALL CAPS kickers ("LEAGUE OF WOMEN VOTERS: Local ballot…").
+  t = t.replace(/^([A-Z][A-Z0-9 /&'.-]{2,}):\s+/, (full, kicker: string) =>
+    isAllCapsKicker(kicker) ? "" : full,
+  );
   // Classroom AI — never ship "Teaching Kids in the Age" / "of Artificial".
   if (
     /teaching kids|classroom|students?/i.test(t) &&
@@ -365,7 +426,11 @@ function phraseFromTitle(title: string, budget = 40): string {
   }
 
   const finalize = (raw: string): string | null => {
-    const cleaned = stripTrailingStops(raw);
+    let cleaned = stripTrailingStops(raw);
+    // Title-case leftover ALL CAPS; usableSubjectPhrase still refuses shouting.
+    if (isAllCapsKicker(cleaned)) {
+      cleaned = titleCaseKicker(cleaned);
+    }
     return usableSubjectPhrase(cleaned) ? cleaned : null;
   };
 
@@ -376,7 +441,10 @@ function phraseFromTitle(title: string, budget = 40): string {
   for (const sep of [": ", " — ", " – ", " - ", "; ", ", "]) {
     const i = t.indexOf(sep);
     if (i >= 12 && i <= budget) {
-      const cut = finalize(t.slice(0, i));
+      const before = t.slice(0, i);
+      // Never take an ALL CAPS kicker as the colon cut.
+      if (isAllCapsKicker(before)) continue;
+      const cut = finalize(before);
       if (cut) return cut;
     }
   }

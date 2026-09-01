@@ -299,6 +299,112 @@ assert.ok(
   "identical alert from yesterday is skipped",
 );
 
+// --- Saturday head must not return Tuesday (look back past yesterday only) ---
+const GARFIELD_TITLE =
+  "Garfield Township puts a 1-year ban on data centers, cryptocurrency mining";
+const GARFIELD_URL =
+  "https://www.record-eagle.com/news/local_news/garfield-township";
+const tuesdayFreshUrl = "https://www.9and10news.com/2026/09/01/harbor-fees/";
+const tuesdayFreshTitle = "Harbor Commission sets September dock fees";
+
+const saturdayGarfieldLetter: EmailEditionSnapshot = {
+  date: "2026-08-29",
+  captured_at: "2026-08-29T12:00:00.000Z",
+  lead: null,
+  around: [
+    {
+      title: GARFIELD_TITLE,
+      dek: "One-year pause.",
+      url: GARFIELD_URL,
+      sources: ["Record-Eagle"],
+      paywalled: true,
+    },
+  ],
+  alerts: [],
+  tonight: [],
+  civic: [],
+  sports: [],
+};
+
+const mondayThinLetter: EmailEditionSnapshot = {
+  date: "2026-08-31",
+  captured_at: "2026-08-31T12:00:00.000Z",
+  lead: null,
+  around: [
+    {
+      title: "Decrease in Parking Rates Coming After Labor Day",
+      dek: "Rates.",
+      url: "https://www.traverseticker.com/news/parking-rates/",
+      sources: ["The Ticker"],
+    },
+  ],
+  alerts: [],
+  tonight: [],
+  civic: [],
+  sports: [],
+};
+
+const tuesdayData = {
+  beats: [],
+  sources: [sourceTicker, source910, sourceNx],
+  stories: [
+    story({
+      id: "garfield_sat",
+      title: GARFIELD_TITLE,
+      url: GARFIELD_URL,
+      source_id: "src_910",
+      dek: "Still on the homepage after Saturday letter.",
+      published_at: "2026-08-29T10:00:00.000Z",
+    }),
+    story({
+      id: "tue_fresh",
+      title: tuesdayFreshTitle,
+      url: tuesdayFreshUrl,
+      source_id: "src_910",
+      dek: "New dock fee schedule.",
+      published_at: "2026-09-01T09:00:00.000Z",
+    }),
+    story({
+      id: "tue_fresh_2",
+      title: "County budget talks reopen after midyear shortfall",
+      url: "https://northernexpress.com/news/county-budget-shortfall/",
+      source_id: "src_northern",
+      dek: "Budget.",
+      published_at: "2026-09-01T08:00:00.000Z",
+    }),
+  ],
+  events: [],
+  athletics: [],
+  schools: [],
+  subscribers: [],
+  unsubscribed: [],
+  tips: [],
+  event_tips: [],
+  last_pull_at: null,
+  editions: [],
+  email_editions: [saturdayGarfieldLetter, mondayThinLetter],
+  drafts: [],
+} as unknown as AppData;
+
+const tuesday = new Date("2026-09-01T16:00:00.000Z");
+const tuesdayLetter = buildEmailEditionSnapshot(tuesdayData, tuesday);
+assert.equal(tuesdayLetter.date, "2026-09-01");
+assert.ok(
+  tuesdayLetter.around.every(
+    (c) => c.url !== GARFIELD_URL && !/garfield|data[- ]?center/i.test(c.title),
+  ),
+  "Saturday Garfield letter head must not return Tuesday",
+);
+assert.ok(
+  tuesdayLetter.around.some((c) => c.url === tuesdayFreshUrl),
+  "fresh Tuesday bay card should ship",
+);
+assert.ok(
+  tuesdayLetter.around.length < 4 ||
+    tuesdayLetter.around.every((c) => c.url !== GARFIELD_URL),
+  "shorter letter is fine — never pad with Saturday’s head",
+);
+
 console.log(
-  `dry-run-letter-fresh: ok (around=${letter.around.length}, skipped stale + rewrite bay heads)`,
+  `dry-run-letter-fresh: ok (around=${letter.around.length}, tueAround=${tuesdayLetter.around.length}, skipped stale + rewrite + recent-letter heads)`,
 );

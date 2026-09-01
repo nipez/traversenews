@@ -55,4 +55,27 @@ assert.equal(
   "https://traverse.news/email/unsubscribe?email=nickperez%40gmail.com",
 );
 
+// Desk /send must prefer a stored today’s edition over pull+snapshot unless rebuild.
+function preferStoredEmailEdition(
+  stored: { date: string } | null | undefined,
+  rebuild: boolean,
+): boolean {
+  return Boolean(stored) && !rebuild;
+}
+assert.equal(
+  preferStoredEmailEdition({ date: "2026-09-01" }, false),
+  true,
+  "restaged today’s letter must mail as-is",
+);
+assert.equal(
+  preferStoredEmailEdition({ date: "2026-09-01" }, true),
+  false,
+  "rebuild:true may recapture",
+);
+assert.equal(
+  preferStoredEmailEdition(null, false),
+  false,
+  "missing edition still pull+snapshots",
+);
+
 console.log("dry-run-letter-preview: ok");

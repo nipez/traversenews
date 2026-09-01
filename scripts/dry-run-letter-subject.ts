@@ -319,6 +319,105 @@ assert.ok(
   `recut must compress AI or drop to 2 complete phrases: ${recutSubject}`,
 );
 
+// --- 2026-09-01: trailing "from" stump + South Airport / deputy recuts ---
+const DEPUTY_SUV_TITLE =
+  "Grand Traverse County deputy rescues two people from submerged SUV";
+const SOUTH_AIRPORT_TITLE =
+  "Westbound South Airport Road reopen after overnight crash near terminal";
+
+const sept1Snapshot: EmailEditionSnapshot = {
+  date: "2026-09-01",
+  captured_at: "2026-09-01T12:00:00.000Z",
+  lead: {
+    title: SOUTH_AIRPORT_TITLE,
+    dek: "Lanes reopen after overnight crash.",
+    url: "https://traverse.news/2026/09/01/south-airport-reopen",
+    sources: [],
+    desk_original: true,
+  },
+  around: [
+    {
+      title: DEPUTY_SUV_TITLE,
+      dek: "Two pulled from water.",
+      url: "https://www.9and10news.com/2026/09/01/deputy-suv-rescue/",
+      sources: ["9&10 News"],
+    },
+  ],
+  alerts: [],
+  tonight: [],
+  civic: [],
+  sports: [],
+};
+
+const sept1 = buildMorningLetterSubject(sept1Snapshot);
+assert.match(sept1, /^🗞️ /);
+assert.match(sept1, /Westbound South Airport reopens/);
+assert.match(sept1, /Deputy rescues two from SUV/);
+assert.doesNotMatch(sept1, /\bfrom ·|\bfrom$/i);
+assert.doesNotMatch(
+  sept1,
+  /rescues two people from(?!\s+SUV)|Grand Traverse deputy rescues two people from$/i,
+);
+assert.equal(
+  sept1,
+  "🗞️ Westbound South Airport reopens · Deputy rescues two from SUV",
+);
+
+// Deputy title alone must never emit a phrase ending in "from".
+const deputyOnly: EmailEditionSnapshot = {
+  date: "2026-09-01",
+  captured_at: "2026-09-01T12:00:00.000Z",
+  lead: null,
+  around: [
+    {
+      title: DEPUTY_SUV_TITLE,
+      dek: "",
+      url: "https://www.9and10news.com/2026/09/01/deputy-suv-rescue/",
+      sources: ["9&10 News"],
+    },
+  ],
+  alerts: [],
+  tonight: [],
+  civic: [],
+  sports: [],
+};
+const deputySubject = buildMorningLetterSubject(deputyOnly);
+assert.match(deputySubject, /Deputy rescues two from SUV/);
+assert.doesNotMatch(deputySubject, /\bfrom ·|\bfrom$/i);
+assert.notEqual(
+  deputySubject,
+  "🗞️ Grand Traverse deputy rescues two people from",
+);
+
+// ALL CAPS kicker alone must not appear as shouting.
+const allCapsOnly: EmailEditionSnapshot = {
+  date: "2026-09-01",
+  captured_at: "2026-09-01T12:00:00.000Z",
+  lead: null,
+  around: [
+    {
+      title: "LEAGUE OF WOMEN VOTERS: Local ballot questions explained for fall",
+      dek: "",
+      url: "https://www.record-eagle.com/league-ballot",
+      sources: ["Record-Eagle"],
+      paywalled: true,
+    },
+    {
+      title: "Decrease in Parking Rates Coming After Labor Day",
+      dek: "",
+      url: "https://www.traverseticker.com/news/parking-rates/",
+      sources: ["The Ticker"],
+    },
+  ],
+  alerts: [],
+  tonight: [],
+  civic: [],
+  sports: [],
+};
+const allCapsSubject = buildMorningLetterSubject(allCapsOnly);
+assert.doesNotMatch(allCapsSubject, /LEAGUE OF WOMEN VOTERS/);
+assert.match(allCapsSubject, /Decrease in Parking Rates/);
+
 console.log(
-  `dry-run-letter-subject: ok\n  subject=${subject}\n  phraseLen=${phraseLen}\n  aug31=${aug31}\n  brokenOnly=${brokenSubject}\n  secondPreview=${secondPreview}\n  recut=${recutSubject}`,
+  `dry-run-letter-subject: ok\n  subject=${subject}\n  phraseLen=${phraseLen}\n  aug31=${aug31}\n  brokenOnly=${brokenSubject}\n  secondPreview=${secondPreview}\n  recut=${recutSubject}\n  sept1=${sept1}\n  deputyOnly=${deputySubject}\n  allCaps=${allCapsSubject}`,
 );
