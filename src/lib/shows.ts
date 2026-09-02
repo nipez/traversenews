@@ -214,7 +214,17 @@ export function sanitizeStoredShows(listings: ShowListing[]): {
   shows: ShowListing[];
   changed: boolean;
 } {
-  const allowed = listings.filter((s) => SHOW_SOURCE_IDS.has(s.source_id));
+  const allowed = listings.filter((s) => {
+    if (!SHOW_SOURCE_IDS.has(s.source_id)) return false;
+    // UMS sometimes lists Royal Oak — outside the Washtenaw Shows rail.
+    if (
+      getSiteId() === "ann-arbor" &&
+      /\broyal oak\b/i.test(s.venue)
+    ) {
+      return false;
+    }
+    return true;
+  });
   const cleaned = allowed.map((s) => ({
     ...s,
     title: s.title.trim(),
