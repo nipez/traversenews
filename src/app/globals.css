@@ -232,6 +232,26 @@ a:hover {
   color: #f4edde;
 }
 
+/* Date + weather stay one meta block (not a stacked hero paragraph). */
+.hero-meta-date {
+  text-align: right;
+  max-width: 58%;
+  line-height: 1.35;
+}
+
+.hero-weather {
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  opacity: 0.92;
+}
+
+@media (max-width: 379px) {
+  .hero-meta-date {
+    max-width: 100%;
+    text-align: left;
+  }
+}
+
 .hero-bottom {
   /* no max-width — full width of the 40px-padded frame, matching home-desktop.html */
   max-width: none;

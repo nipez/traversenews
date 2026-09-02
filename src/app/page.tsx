@@ -9,11 +9,11 @@ import { getHomepageData } from "@/lib/queries";
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const { lead, around, weekendEvents, civic, alerts } =
+  const { lead, around, weekendEvents, civic, alerts, weatherLine } =
     await getHomepageData();
 
   return (
-    <PublicShell active="/" header="hero">
+    <PublicShell active="/" header="hero" weatherLine={weatherLine}>
       <div className="home-grid">
         <div className="home-main">
           {lead ? <LeadStory lead={lead} /> : null}

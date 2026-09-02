@@ -70,6 +70,7 @@ export function MorningLetter({
         </p>
         <p className="morning-letter-date text-[0.65rem] font-extrabold tracking-[0.08em] text-muted uppercase">
           {emailDateLabel(dateObj)}
+          {letter.weather_line ? ` · ${letter.weather_line}` : ""}
         </p>
       </div>
 

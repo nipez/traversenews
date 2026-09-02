@@ -547,6 +547,7 @@ export function selectFreshAroundTheBay(
 export function buildEmailEditionSnapshot(
   data: AppData,
   at = new Date(),
+  options: { weather_line?: string | null } = {},
 ): EmailEditionSnapshot {
   const {
     identities: prior,
@@ -678,5 +679,6 @@ export function buildEmailEditionSnapshot(
     tonight,
     civic,
     sports,
+    weather_line: options.weather_line ?? null,
   };
 }

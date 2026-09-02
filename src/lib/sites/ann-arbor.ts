@@ -23,6 +23,13 @@ export const ANN_ARBOR_SITE: SiteConfig = {
     dek: "One tab for Ann Arbor, Ypsilanti, Saline, Chelsea, and Dexter.",
   },
   timezone: "America/Detroit",
+  weather: {
+    lat: 42.2808,
+    lon: -83.743,
+    gridId: "DTX",
+    gridX: 42,
+    gridY: 30,
+  },
   cookieDomain: undefined,
   emailFromName: "A2 News",
   // Temporary verified sender until an AA domain exists. Preview only.

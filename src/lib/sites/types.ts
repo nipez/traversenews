@@ -48,6 +48,15 @@ export type SitePageCopyDefaults = {
   deskAlertHint: string;
 };
 
+/** NWS gridpoint for the city’s one-glance weather snapshot. */
+export type SiteWeatherPoint = {
+  lat: number;
+  lon: number;
+  gridId: string;
+  gridX: number;
+  gridY: number;
+};
+
 export type NetworkCity = {
   id: SiteId;
   label: string;
@@ -103,6 +112,11 @@ export type SiteConfig = {
   /** Official civic calendars (city / county / agenda portals). */
   civicHandoffs: SiteOutboundLink[];
   alertSources: SiteAlertSource[];
+  /**
+   * City weather point (NWS). Null = omit weather line on that site.
+   * One city snapshot — not a county map.
+   */
+  weather: SiteWeatherPoint | null;
 };
 
 export type SourceMeta = {
