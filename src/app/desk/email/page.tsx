@@ -55,7 +55,11 @@ export default async function DeskEmailPage() {
   const liveSentAt = sent?.sent_at ? new Date(sent.sent_at).getTime() : null;
 
   return (
-    <DeskChrome active="email">
+    <DeskChrome
+      active="email"
+      lastPullAt={data.last_pull_at}
+      pulledItemCount={data.stories.filter((s) => !s.is_original).length}
+    >
       <div className="mx-auto max-w-3xl px-4 py-10 md:px-6">
         <h1 className="font-serif text-3xl">Email</h1>
         <p className="mt-2 text-[#444]">

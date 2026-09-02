@@ -19,7 +19,11 @@ export default async function DeskAlertsPage() {
     data.sources.find((s) => s.id === id)?.name ?? id;
 
   return (
-    <DeskChrome active="alerts">
+    <DeskChrome
+      active="alerts"
+      lastPullAt={data.last_pull_at}
+      pulledItemCount={data.stories.filter((s) => !s.is_original).length}
+    >
       <div className="mx-auto max-w-6xl px-4 py-6 md:px-6">
         <h1 className="font-serif text-3xl text-ink">Alerts</h1>
         <p className="mt-1 max-w-2xl text-sm text-muted">

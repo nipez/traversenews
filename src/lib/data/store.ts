@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createSeedData } from "@/lib/data/seed";
 import { getTraverseDataKv, STORE_KEY } from "@/lib/data/kv";
 import {
@@ -55,7 +56,17 @@ import { stableEventId } from "@/lib/events";
 const globalStore = globalThis as typeof globalThis & {
   __traverseStore?: AppData;
   __traverseSkipPublicSnapshots?: number;
+  /** Bumped by resetMemoryStore so React.cache does not keep a stale seed. */
+  __traverseStoreEpoch?: number;
 };
+
+function storeEpoch(): number {
+  return globalStore.__traverseStoreEpoch ?? 0;
+}
+
+function bumpStoreEpoch(): void {
+  globalStore.__traverseStoreEpoch = storeEpoch() + 1;
+}
 
 /**
  * Batch desk/cron writes without rebuilding public snapshots on every
@@ -230,6 +241,7 @@ export function getMemoryStore(): AppData {
 }
 
 export function resetMemoryStore(data?: AppData): AppData {
+  bumpStoreEpoch();
   if (data) {
     globalStore.__traverseStore = normalizeAppData(structuredClone(data)).data;
   } else {
@@ -290,8 +302,9 @@ async function writeKvStore(data: AppData): Promise<boolean> {
 /**
  * Load order: Cloudflare KV (Workers) → local `.data/store.json` → in-memory seed.
  * Invented seed journalism is stripped on load; if anything was removed, we persist.
+ * Request-memoized via React.cache so Desk pages + chrome share one KV read.
  */
-export async function loadStore(): Promise<AppData> {
+async function loadStoreUncached(): Promise<AppData> {
   const fromKv = await readKvStore();
   if (fromKv) {
     const { data, scrubbed } = normalizeAppData(fromKv);
@@ -309,6 +322,15 @@ export async function loadStore(): Promise<AppData> {
   }
 
   return getMemoryStore();
+}
+
+const loadStoreCached = cache(async (epoch: number): Promise<AppData> => {
+  void epoch;
+  return loadStoreUncached();
+});
+
+export async function loadStore(): Promise<AppData> {
+  return loadStoreCached(storeEpoch());
 }
 
 /**

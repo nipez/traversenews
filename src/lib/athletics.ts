@@ -290,11 +290,18 @@ export function sanitizeStoredAthletics(games: AthleticsGame[]): {
           Math.abs(new Date(b.starts_at).getTime() - now),
       );
     const room = Math.max(0, MAX_STORED_ATHLETICS - near.length);
-    next = [...near, ...rest.slice(0, room)].sort(
+    const capped = [...near, ...rest.slice(0, room)].sort(
       (a, b) =>
         new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime(),
     );
-    changed = true;
+    // Overflow of near-window-only rows must not flag dirty — nothing was dropped.
+    if (
+      capped.length !== next.length ||
+      capped.map((g) => g.id).join(",") !== next.map((g) => g.id).join(",")
+    ) {
+      next = capped;
+      changed = true;
+    }
   }
 
   return { games: next, changed };

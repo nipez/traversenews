@@ -215,8 +215,15 @@ export function sanitizeStoredEvents(events: EventItem[]): {
           new Date(b.starts_at).getTime() - new Date(a.starts_at).getTime(),
       );
     const room = Math.max(0, MAX_STORED_EVENTS - upcoming.length);
-    next = dedupeEvents([...upcoming, ...past.slice(0, room)]);
-    changed = true;
+    const capped = dedupeEvents([...upcoming, ...past.slice(0, room)]);
+    // Overflow of upcoming-only rows must not flag dirty — nothing was dropped.
+    if (
+      capped.length !== next.length ||
+      capped.map((e) => e.id).join(",") !== next.map((e) => e.id).join(",")
+    ) {
+      next = capped;
+      changed = true;
+    }
   }
 
   return { events: next, changed };
