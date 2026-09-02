@@ -13,14 +13,14 @@ export const ANN_ARBOR_SITE: SiteConfig = {
   name: "A2 News",
   place: "Ann Arbor",
   placeState: "Michigan",
-  regionPhrase: "Ann Arbor and Dexter",
+  regionPhrase: "Ann Arbor and Washtenaw County",
   aroundLabel: "Around town",
   aroundEmoji: "🌳",
   hero: {
     src: "",
     alt: "",
-    dateline: "Ann Arbor / Dexter, Michigan",
-    dek: "One tab for Ann Arbor and Dexter: news, nights out, civic, and schools.",
+    dateline: "Ann Arbor / Washtenaw, Michigan",
+    dek: "One tab for Ann Arbor, Ypsilanti, Saline, Chelsea, and Dexter.",
   },
   timezone: "America/Detroit",
   cookieDomain: undefined,
@@ -34,11 +34,11 @@ export const ANN_ARBOR_SITE: SiteConfig = {
   gaId: null,
   letterPreviewOnly: true,
   description:
-    "Ann Arbor and Dexter local news: original reporting plus headlines from other desks, events, and civic listings.",
+    "Ann Arbor and Washtenaw County local news: original reporting plus headlines from other desks, events, and civic listings.",
   localKicker: "Town",
   staffEmail: "nick@traverse.news",
   tipsEmail: "tips@traverse.news",
-  reservedPlaces: ["Dexter"],
+  reservedPlaces: ["Ypsilanti", "Saline", "Chelsea", "Dexter"],
   pageCopy: {
     eventsDek:
       "Concerts, festivals, markets, library programs. Meetings live on [Civic](/civic). Something missing? [Let us know](#event-tip)",
@@ -51,20 +51,20 @@ export const ANN_ARBOR_SITE: SiteConfig = {
       "Good morning. Here's the rest of the town from other desks, then what's coming up.",
     showsDek: "Movies and live theatre around town.",
     sportsDek:
-      "Area high-school games and sports headlines — not University of Michigan varsity.",
+      "Washtenaw high-school games and sports headlines — not University of Michigan varsity.",
     deskAlertHint:
       "Saw an official Ann Arbor Police or Washtenaw press post? Paste the URL on the Desk — no chat needed.",
     aboutTitle: "About a2.news",
-    aboutDek: "An Ann Arbor / Dexter desk. One place to read the town.",
+    aboutDek: "An Ann Arbor / Washtenaw desk. One place to read the towns.",
     aboutBody: `## Why this exists
 
-Ann Arbor and Dexter do not have a shortage of information. They have a shortage of one place to put it.
+Ann Arbor and Washtenaw County do not have a shortage of information. They have a shortage of one place to put it.
 
 If you want to know what happened, what's tonight, and who is meeting on Tuesday, you still have to open MLive, the Michigan Daily, the Observer, WEMU, The Sun Times News, city calendars, AAPS, and a stack of venue pages. Most people do not.
 
 a2.news exists so you do not have to do that circuit. One site. The original story when we have one. Everyone else's headline when they have one. The night out. The civic calendar. The alert when the road is closed.
 
-That is the whole vision: be the one tab that covers Ann Arbor, Dexter, and the towns around them.
+That is the whole vision: be the one tab that covers Ann Arbor and the Washtenaw towns that read as its suburbs — Ypsilanti, Saline, Chelsea, and Dexter.
 
 ## What you will find
 
@@ -109,6 +109,18 @@ We will not treat U-M varsity as local high-school sports.`,
       name: "Dexter HS Athletics",
       href: "https://dexterathletics.arbitersports.com/",
     },
+    {
+      name: "Ypsilanti HS Athletics",
+      href: "https://www.ypsigrizzlies.com/",
+    },
+    {
+      name: "Saline HS Athletics",
+      href: "https://salinehighschool.bigteams.com/main/calendar",
+    },
+    {
+      name: "Chelsea HS Athletics",
+      href: "https://chelseabulldogs.org/",
+    },
   ],
   showsVenueLinks: [
     {
@@ -150,6 +162,18 @@ We will not treat U-M varsity as local high-school sports.`,
     {
       name: "Washtenaw County calendar",
       href: "https://washtenawcomi.portal.civicclerk.com",
+    },
+    {
+      name: "City of Ypsilanti — Calendar",
+      href: "https://www.cityofypsilanti.com/Calendar.aspx",
+    },
+    {
+      name: "City of Saline — Calendar",
+      href: "https://www.salinemi.gov/calendar.php",
+    },
+    {
+      name: "City of Chelsea — Council",
+      href: "https://www.city-chelsea.org/government/city_council/index.php",
     },
   ],
   alertSources: [

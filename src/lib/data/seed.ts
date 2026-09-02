@@ -3,7 +3,7 @@
  * NEVER invent Story bodies, bylines, quotes, crashes, or events here.
  * See README → Editorial.
  *
- * Traverse catalog lives here. Ann Arbor / Dexter: sites/ann-arbor/seed.ts.
+ * Traverse catalog lives here. Ann Arbor / Washtenaw: sites/ann-arbor/seed.ts.
  * createSeedData() picks by SITE_ID.
  */
 import { withSectionHeaderSeeds } from "@/lib/section-headers";

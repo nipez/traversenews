@@ -18,7 +18,7 @@ GitHub `main` is the only source of truth for live traverse.news. Both this clou
 - Never deploy a Worker from a checkout that is behind `main`.
 - Do not merge stale draft PRs from before the 2026-08-28 live-sync. Rebase unique work onto current `main` first.
 - KV / AppData (subscribers, editions, sources, Desk content) is not in git. A code deploy does not wipe it.
-- Ann Arbor / Dexter is a **second Worker + KV** (`SITE_ID=ann-arbor`, `wrangler.ann-arbor.jsonc`). Never bind that Worker to the live Traverse KV namespace. Never add AA sources to Traverse Desk.
+- Ann Arbor / Washtenaw is a **second Worker + KV** (`SITE_ID=ann-arbor`, `wrangler.ann-arbor.jsonc`). Coverage is Ann Arbor plus Ypsilanti, Saline, Chelsea, and Dexter. Never bind that Worker to the live Traverse KV namespace. Never add AA sources to Traverse Desk.
 
 
 ## Jobs that already run on the Worker

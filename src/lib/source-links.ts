@@ -41,6 +41,17 @@ export function outletNameFromUrl(rawUrl: string): string {
     "ums.org": "UMS",
     "annarbor.org": "Visit Ann Arbor",
     "visitannarbor.org": "Visit Ann Arbor",
+    "cityofypsilanti.com": "City of Ypsilanti",
+    "salinemi.gov": "City of Saline",
+    "city-chelsea.org": "City of Chelsea",
+    "salinesummit.substack.com": "Saline Summit News",
+    "washtenawvoice.com": "Washtenaw Voice",
+    "ycschools.us": "Ypsilanti Community Schools",
+    "salineschools.org": "Saline Area Schools",
+    "chelseaschools.org": "Chelsea School District",
+    "ypsilibrary.org": "YDL",
+    "ypsigrizzlies.com": "Ypsilanti Athletics",
+    "chelseabulldogs.org": "Chelsea Athletics",
   };
 
   if (known[host]) return known[host];

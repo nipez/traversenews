@@ -105,7 +105,7 @@ export function networkCities(): NetworkCity[] {
     TRAVERSE_SITE.defaultOrigin;
   return [
     { id: "traverse", label: "Traverse City", origin: traverseOrigin },
-    { id: "ann-arbor", label: "Ann Arbor / Dexter", origin: aaOrigin },
+    { id: "ann-arbor", label: "Ann Arbor / Washtenaw", origin: aaOrigin },
   ];
 }
 

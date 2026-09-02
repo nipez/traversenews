@@ -3,7 +3,7 @@
  * Run: npm run test:aa-listings
  */
 import assert from "node:assert/strict";
-import { looksLikeUmVarsity } from "../src/lib/around";
+import { looksLikeUmVarsity, reservedPlaceForCluster } from "../src/lib/around";
 import {
   collectArkEventLinks,
   extractA2GovNews,
@@ -372,6 +372,34 @@ assert.equal(
 process.env.SITE_ID = "ann-arbor";
 process.env.NEXT_PUBLIC_SITE_ID = "ann-arbor";
 resetSiteCache();
+
+assert.equal(
+  reservedPlaceForCluster({
+    title: "City Council sets hearing",
+    dek: "",
+    url: "https://cityofypsilanti.com/CivicAlerts.aspx?aid=2749",
+    sources: [{ id: "src_ypsi_news", name: "City of Ypsilanti — News" }],
+  }),
+  "Ypsilanti",
+);
+assert.equal(
+  reservedPlaceForCluster({
+    title: "DTE gas main work downtown",
+    dek: "",
+    url: "https://www.city-chelsea.org/news_detail_T2_R191.php",
+    sources: [{ id: "src_chelsea_news", name: "City of Chelsea — News" }],
+  }),
+  "Chelsea",
+);
+assert.equal(
+  reservedPlaceForCluster({
+    title: "Chelsea millage vote set for November",
+    dek: "",
+    url: "https://thesuntimesnews.com/chelsea-millage/",
+    sources: [{ id: "src_suntimes", name: "The Sun Times News" }],
+  }),
+  "Chelsea",
+);
 
 console.log("test-aa-listings: ok");
 console.log(

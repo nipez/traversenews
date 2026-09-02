@@ -69,7 +69,7 @@ export type SiteConfig = {
   name: string;
   place: string;
   placeState: string;
-  /** Phrase in dek copy: "the bay" / "Ann Arbor and Dexter". */
+  /** Phrase in dek copy: "the bay" / "Ann Arbor and Washtenaw County". */
   regionPhrase: string;
   aroundLabel: string;
   aroundEmoji: string;

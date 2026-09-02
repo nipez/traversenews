@@ -158,6 +158,9 @@ export const HS_ATHLETICS_EVENT_SOURCE_IDS = new Set([
   "src_skyline_ath",
   "src_huron_ath",
   "src_dexter_ath",
+  "src_ypsi_ath",
+  "src_saline_ath",
+  "src_chelsea_ath",
 ]);
 
 /**
@@ -175,6 +178,9 @@ export const SCHOOL_CALENDAR_SOURCE_IDS = new Set([
   "src_tcch_cal",
   "src_aaps_cal",
   "src_dexter_cal",
+  "src_ycs_cal",
+  "src_saline_cal",
+  "src_chelsea_cal",
 ]);
 
 export function isHsAthleticsEventSource(sourceId: string): boolean {

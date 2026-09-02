@@ -75,13 +75,15 @@ Without Supabase vars the app seeds **beats and sources** only (empty stories/ev
 3. Create a staff Auth user.
 4. Set the env vars and redeploy.
 
-Source catalog lives in `src/lib/data/seed.ts` (Traverse) and `src/lib/sites/ann-arbor/seed.ts` (Ann Arbor / Dexter). Feeds and beats only. Do not paste invented journalism into seed — write real pieces in Desk when ready.
+Source catalog lives in `src/lib/data/seed.ts` (Traverse) and `src/lib/sites/ann-arbor/seed.ts` (Ann Arbor / Washtenaw). Feeds and beats only. Do not paste invented journalism into seed — write real pieces in Desk when ready.
 
-## Second city (Ann Arbor / Dexter)
+## Second city (Ann Arbor / Washtenaw)
 
 Same repo, **separate Worker + KV + Desk catalog**. Never write AA rows into Traverse `TRAVERSE_DATA`.
 
-| | Traverse | Ann Arbor / Dexter |
+Coverage is Ann Arbor plus the Washtenaw towns that read as its suburbs: **Ypsilanti, Saline, Chelsea, and Dexter**.
+
+| | Traverse | Ann Arbor / Washtenaw |
 | --- | --- | --- |
 | `SITE_ID` | `traverse` (default) | `ann-arbor` |
 | Wrangler | `wrangler.jsonc` | `wrangler.ann-arbor.jsonc` |
@@ -107,16 +109,18 @@ npm run deploy:ann-arbor
 
 Desk **Cities** menu links each instance `/desk`. Same staff password for now. A city-only cultivator later: set `STAFF_SITES=ann-arbor` on that Worker.
 
-**Worker already reads** (printed times only): City Legistar (`src_a2_legistar`), City newsroom headlines (`src_a2_news`), The Ark event pages (`src_ark_events`), UMS season dates (`src_ums_events`, `time_unknown`), Marquee live events (`src_marquee_events`) and film clocks (`src_marquee_shows`), AADL upcoming cards (`src_aadl_events`), Washtenaw CivicClerk OData (`src_washtenaw_calendar`). AAPS Google ICS + Dexter Finalsite ICS → `/schools` (all-day = `time_unknown`, not 8:00 PM).
+**Worker already reads** (printed times only): City Legistar (`src_a2_legistar`), City newsroom headlines (`src_a2_news`), City of Ypsilanti / Saline / Chelsea official RSS, Saline Summit, Washtenaw Voice, The Ark event pages (`src_ark_events`), UMS season dates (`src_ums_events`, `time_unknown`), Marquee live events (`src_marquee_events`) and film clocks (`src_marquee_shows`), AADL upcoming cards (`src_aadl_events`), Washtenaw CivicClerk OData (`src_washtenaw_calendar`). AAPS Google ICS + Dexter Finalsite ICS → `/schools` (all-day = `time_unknown`, not 8:00 PM).
 
 **Need a home-browser scrape** (datacenter 403 / JS / Facebook):
 
 - https://www.annarbor.org/events/ (Simpleview — cloud 403)
 - Pioneer / Skyline / Huron / Dexter ArbiterLive fronts
+- Ypsilanti / Saline / Chelsea athletics fronts (`ypsigrizzlies.com`, Saline BigTeams, `chelseabulldogs.org`)
+- YCS / Saline / Chelsea school calendars (no Worker ICS)
 - Facebook / Overheard (signed-in browser only)
 - Full Marquee / State Theatre grid if the homepage cards miss a printed clock (`michigantheater.org` is hijacked — do not use)
 
-Land those with `POST /api/desk/events/import`, `/civic/import`, `/schools/import`, `/shows/import`, `/athletics/import` against the **AA** Desk token. Never invent times. Do not re-import AADL / Washtenaw / Dexter — the Worker already replaces those source ids.
+Land those with `POST /api/desk/events/import`, `/civic/import`, `/schools/import`, `/shows/import`, `/athletics/import` against the **AA** Desk token. Never invent times. Do not re-import AADL / Washtenaw CivicClerk / Dexter schools / city official RSS — the Worker already replaces those source ids.
 
 ## Cloudflare deploy
 

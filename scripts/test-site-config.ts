@@ -84,6 +84,13 @@ assert(
 );
 assert(getSite().letterPreviewOnly === true, "AA letter is preview-only");
 assert(getSite().reservedPlaces.includes("Dexter"), "Dexter reserved");
+assert(getSite().reservedPlaces.includes("Ypsilanti"), "Ypsilanti reserved");
+assert(getSite().reservedPlaces.includes("Saline"), "Saline reserved");
+assert(getSite().reservedPlaces.includes("Chelsea"), "Chelsea reserved");
+assert(
+  getSite().regionPhrase.includes("Washtenaw"),
+  "AA region is Washtenaw County",
+);
 const aa = createSeedData();
 assert(
   aa.sources.some((s) => s.id === "src_michigandaily"),
@@ -93,6 +100,29 @@ assert(
   aa.sources.some((s) => s.id === "src_suntimes" && s.place === "Dexter"),
   "AA seed has Dexter Sun Times",
 );
+assert(
+  aa.sources.some((s) => s.id === "src_saline_summit" && s.place === "Saline"),
+  "AA seed has Saline Summit",
+);
+assert(
+  aa.sources.some((s) => s.id === "src_ypsi_news" && s.family === "official"),
+  "AA seed has City of Ypsilanti official news",
+);
+assert(
+  aa.sources.some((s) => s.id === "src_saline_news" && s.family === "official"),
+  "AA seed has City of Saline official news",
+);
+assert(
+  aa.sources.some((s) => s.id === "src_chelsea_news" && s.family === "official"),
+  "AA seed has City of Chelsea official news",
+);
+assert(
+  aa.sources.some((s) => s.id === "src_ycs_cal" && s.lane === "school_cal"),
+  "AA seed has YCS calendar",
+);
+assert(isSchoolCalSource(undefined, "src_ycs_cal"), "YCS calendar lane");
+assert(isSchoolCalSource(undefined, "src_saline_cal"), "Saline calendar lane");
+assert(isSchoolCalSource(undefined, "src_chelsea_cal"), "Chelsea calendar lane");
 assert(
   aa.sources.some((s) => s.id === "src_ark_events" && s.lane === "events"),
   "AA seed has Ark events (not shows id)",

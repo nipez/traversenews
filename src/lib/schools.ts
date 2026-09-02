@@ -271,6 +271,12 @@ export function sourceIdForDistrict(district: string): string | null {
       return "src_tcch_cal";
     case "AAPS":
       return "src_aaps_cal";
+    case "Ypsilanti":
+      return "src_ycs_cal";
+    case "Saline":
+      return "src_saline_cal";
+    case "Chelsea":
+      return "src_chelsea_cal";
     case "Dexter":
       return "src_dexter_cal";
     default:

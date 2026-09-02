@@ -3,6 +3,9 @@ export const ANN_ARBOR_ATHLETICS_CORE_SOURCE_IDS = [
   "src_skyline_ath",
   "src_huron_ath",
   "src_dexter_ath",
+  "src_ypsi_ath",
+  "src_saline_ath",
+  "src_chelsea_ath",
 ] as const;
 
 export const ANN_ARBOR_ATHLETICS_CORE_SCHOOLS = [
@@ -10,6 +13,9 @@ export const ANN_ARBOR_ATHLETICS_CORE_SCHOOLS = [
   "Skyline",
   "Huron",
   "Dexter",
+  "Ypsilanti",
+  "Saline",
+  "Chelsea",
 ] as const;
 
 export const ANN_ARBOR_ATHLETICS_CORE_CHIPS = [
@@ -32,5 +38,20 @@ export const ANN_ARBOR_ATHLETICS_CORE_CHIPS = [
     label: "Dexter" as const,
     sourceId: "src_dexter_ath",
     aliases: ["dexter", "dexter high"],
+  },
+  {
+    label: "Ypsilanti" as const,
+    sourceId: "src_ypsi_ath",
+    aliases: ["ypsilanti", "ypsi", "grizzlies"],
+  },
+  {
+    label: "Saline" as const,
+    sourceId: "src_saline_ath",
+    aliases: ["saline", "hornets"],
+  },
+  {
+    label: "Chelsea" as const,
+    sourceId: "src_chelsea_ath",
+    aliases: ["chelsea", "bulldogs"],
   },
 ];

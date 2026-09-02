@@ -138,7 +138,7 @@ export function SportsThisWeek({
   const coreChips = getAthleticsCoreSchools();
   const dek =
     coreChips.includes("Pioneer")
-      ? "Ann Arbor / Dexter prep — Pioneer, Skyline, Huron, Dexter."
+      ? "Washtenaw prep — Pioneer, Skyline, Huron, Dexter, Ypsilanti, Saline, Chelsea."
       : "Traverse City prep — Central, West, TC St. Francis, TC Christian.";
 
   return (

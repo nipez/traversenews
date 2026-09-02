@@ -249,6 +249,20 @@ export function schoolFromSourceId(sourceId: string): string {
       return "Northport";
     case "src_centrallake_ath":
       return "Central Lake";
+    case "src_pioneer_ath":
+      return "Pioneer";
+    case "src_skyline_ath":
+      return "Skyline";
+    case "src_huron_ath":
+      return "Huron";
+    case "src_dexter_ath":
+      return "Dexter";
+    case "src_ypsi_ath":
+      return "Ypsilanti";
+    case "src_saline_ath":
+      return "Saline";
+    case "src_chelsea_ath":
+      return "Chelsea";
     default:
       return "Prep";
   }

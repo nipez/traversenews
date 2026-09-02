@@ -30,6 +30,9 @@ const FALLBACK_SCHOOL_CAL = new Set([
   "src_tcch_cal",
   "src_aaps_cal",
   "src_dexter_cal",
+  "src_ycs_cal",
+  "src_saline_cal",
+  "src_chelsea_cal",
 ]);
 const FALLBACK_ATHLETICS = new Set([
   "src_tcc_ath",
@@ -53,6 +56,9 @@ const FALLBACK_ATHLETICS = new Set([
   "src_skyline_ath",
   "src_huron_ath",
   "src_dexter_ath",
+  "src_ypsi_ath",
+  "src_saline_ath",
+  "src_chelsea_ath",
 ]);
 const FALLBACK_CIVIC_IDS = new Set([
   "src_gt_cal",
@@ -82,6 +88,9 @@ const FALLBACK_OFFICIAL = new Set([
   "src_leelanau_co",
   "src_gtb",
   "src_a2_news",
+  "src_ypsi_news",
+  "src_saline_news",
+  "src_chelsea_news",
 ]);
 const FALLBACK_UPNORTH = new Set(["src_upnorth"]);
 const FALLBACK_PREFERRED_SPORTS = new Set(["src_910_sports"]);

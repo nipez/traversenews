@@ -211,7 +211,7 @@ export function SourceForm({
               className="input mt-1"
               value={place}
               onChange={(e) => setPlace(e.target.value)}
-              placeholder="Ann Arbor, Dexter, …"
+              placeholder="Ann Arbor, Ypsilanti, Saline, …"
             />
           </label>
         </div>

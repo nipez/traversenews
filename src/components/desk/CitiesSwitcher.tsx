@@ -11,7 +11,7 @@ export function CitiesSwitcher() {
   if (cities.length < 2) {
     return (
       <span className="text-[0.65rem] font-semibold tracking-[0.1em] text-white/55 uppercase">
-        {current.id === "ann-arbor" ? "Ann Arbor / Dexter" : "Traverse City"}
+        {current.id === "ann-arbor" ? "Ann Arbor / Washtenaw" : "Traverse City"}
       </span>
     );
   }
