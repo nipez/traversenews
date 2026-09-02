@@ -19,6 +19,14 @@ export const TRAVERSE_SITE: SiteConfig = {
     dek: "One tab for the bay: news, nights out, civic, and schools.",
   },
   timezone: "America/Detroit",
+  // Downtown / bay — NWS APX grid (Cherry Capital area). Not KTTC observations.
+  weather: {
+    lat: 44.7631,
+    lon: -85.6206,
+    gridId: "APX",
+    gridX: 29,
+    gridY: 46,
+  },
   cookieDomain: ".traverse.news",
   emailFromName: "Traverse News",
   emailFromAddress: "info@traverse.news",

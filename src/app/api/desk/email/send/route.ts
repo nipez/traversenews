@@ -5,6 +5,7 @@ import {
   getEmailEdition,
   getEmailLetterPreview,
   getEmailLetterSend,
+  ensureEmailEditionWeatherLine,
   markEmailLetterPreviewed,
   markEmailLetterSent,
   snapshotTodaysEmailEdition,
@@ -189,6 +190,7 @@ export async function POST(request: Request) {
     edition =
       (await getEmailEdition(today)) ?? (await snapshotTodaysEmailEdition());
   }
+  edition = await ensureEmailEditionWeatherLine(edition);
 
   const data = await getAppData();
   const school = pickLetterSchoolDate(data.schools ?? []);

@@ -37,6 +37,8 @@ assert(
   "TC letter greeting keeps the bay",
 );
 assert(getSite().letterPreviewOnly === false, "TC letter is not preview-only");
+assert(getSite().weather?.gridId === "APX", "TC weather is NWS APX");
+assert(getSite().weather?.gridX === 29 && getSite().weather?.gridY === 46, "TC grid 29,46");
 const tc = createSeedData();
 assert(
   tc.sources.some((s) => s.id === "src_ticker"),

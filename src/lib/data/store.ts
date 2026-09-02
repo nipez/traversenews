@@ -827,17 +827,54 @@ export async function getEmailEdition(
 
 /**
  * Capture / replace today's morning-email letter from the live mix.
- * Does not send mail.
+ * Does not send mail. Freezes today’s weather line when the cache is warm
+ * (or after a best-effort NWS refresh).
  */
 export async function snapshotTodaysEmailEdition(
   at = new Date(),
 ): Promise<EmailEditionSnapshot> {
   const data = await loadStore();
   if (!Array.isArray(data.email_editions)) data.email_editions = [];
-  const snapshot = buildEmailEditionSnapshot(data, at);
+  let weather_line: string | null = null;
+  try {
+    const { getOrRefreshWeatherSnapshot } = await import("@/lib/weather");
+    const weather = await getOrRefreshWeatherSnapshot(at);
+    weather_line = weather?.line ?? null;
+  } catch {
+    weather_line = null;
+  }
+  const snapshot = buildEmailEditionSnapshot(data, at, { weather_line });
   data.email_editions = upsertEmailEdition(data.email_editions, snapshot);
   await saveStore(data);
   return snapshot;
+}
+
+/**
+ * Freeze today’s weather onto an already-captured letter if missing.
+ * Used at send time so the archive matches what went out. Does not rebuild
+ * story selection.
+ */
+export async function ensureEmailEditionWeatherLine(
+  edition: EmailEditionSnapshot,
+  at = new Date(),
+): Promise<EmailEditionSnapshot> {
+  if (edition.weather_line) return edition;
+  let weather_line: string | null = null;
+  try {
+    const { getOrRefreshWeatherSnapshot } = await import("@/lib/weather");
+    const weather = await getOrRefreshWeatherSnapshot(at);
+    weather_line = weather?.line ?? null;
+  } catch {
+    return edition;
+  }
+  if (!weather_line) return edition;
+
+  const next: EmailEditionSnapshot = { ...edition, weather_line };
+  const data = await loadStore();
+  if (!Array.isArray(data.email_editions)) data.email_editions = [];
+  data.email_editions = upsertEmailEdition(data.email_editions, next);
+  await saveStore(data);
+  return next;
 }
 
 /** Cheap read: dedicated KV key first, then app_data.email_letter_sends. */

@@ -331,6 +331,11 @@ export type EmailEditionSnapshot = {
   civic: EmailEventCard[];
   /** Optional varsity slate for This week (2–4). */
   sports: EmailSportsCard[];
+  /**
+   * Frozen weather one-liner at letter build/send time
+   * (e.g. "72° / 55° · rain likely"). Archive must not change later.
+   */
+  weather_line?: string | null;
 };
 
 /** Thin pointer for a section page photo header (bytes live in R2 or /art). */

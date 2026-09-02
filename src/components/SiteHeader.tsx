@@ -47,9 +47,12 @@ function NavInkBar({ active }: { active: string }) {
 export function SiteHeader({
   active = "/",
   variant = "compact",
+  weatherLine = null,
 }: {
   active?: string;
   variant?: "hero" | "compact";
+  /** One-glance weather beside the paper date (hero only). */
+  weatherLine?: string | null;
 }) {
   const site = getSite();
   if (variant === "hero") {
@@ -79,7 +82,15 @@ export function SiteHeader({
           <div className="hero-photo-frame">
             <div className="hero-top">
               <p className="hero-meta">{site.hero.dateline}</p>
-              <p className="hero-meta">{formatHeaderDate()}</p>
+              <p className="hero-meta hero-meta-date">
+                <span>{formatHeaderDate()}</span>
+                {weatherLine ? (
+                  <span className="hero-weather">
+                    {" · "}
+                    {weatherLine}
+                  </span>
+                ) : null}
+              </p>
             </div>
             <div className="hero-bottom">
               <Link href="/" className="hero-wordmark" aria-label={siteWordmark()}>

@@ -5,6 +5,7 @@ import {
   getEmailEdition,
   getEmailLetterSend,
   getEmailOneOffSends,
+  ensureEmailEditionWeatherLine,
   markEmailOneOffSent,
 } from "@/lib/data/store";
 import { emailDetroitDateKey } from "@/lib/email-editions";
@@ -106,13 +107,14 @@ export async function POST(request: Request) {
     );
   }
 
-  const snapshot = await getEmailEdition(date);
-  if (!snapshot) {
+  const snapshotRaw = await getEmailEdition(date);
+  if (!snapshotRaw) {
     return NextResponse.json(
       { error: "No letter captured for today yet." },
       { status: 400 },
     );
   }
+  const snapshot = await ensureEmailEditionWeatherLine(snapshotRaw);
 
   const letter = buildMorningLetter(snapshot, {
     school: pickLetterSchoolDate(data.schools ?? []),

@@ -250,6 +250,15 @@ async function runPullInner(): Promise<PullResult> {
   }
   await saveStore(store);
 
+  // Best-effort weather refresh so homepage / letter have a warm cache.
+  // Never fail the pull over NWS.
+  try {
+    const { refreshWeatherSnapshot } = await import("@/lib/weather");
+    await refreshWeatherSnapshot(new Date());
+  } catch {
+    // omit
+  }
+
   const edition = await snapshotTodaysEdition(new Date());
   let email_date: string | null = null;
   try {
