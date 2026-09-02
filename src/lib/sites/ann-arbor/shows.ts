@@ -12,8 +12,13 @@ export const ANN_ARBOR_SHOW_VENUES: readonly ShowVenueSlot[] = [
     homepage: "https://marquee-arts.org/",
   },
   {
-    source_id: "src_ums",
+    source_id: "src_ums_shows",
     name: "UMS",
     homepage: "https://ums.org/",
+  },
+  {
+    source_id: "src_encore_shows",
+    name: "The Encore Theatre",
+    homepage: "https://theencoretheatre.org/",
   },
 ];

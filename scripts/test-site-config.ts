@@ -137,6 +137,18 @@ assert(
   "AA seed has Marquee film showtimes",
 );
 assert(
+  aa.sources.some((s) => s.id === "src_wemu_sports" && s.beat_id === "beat_sports"),
+  "AA seed has WEMU sports headlines",
+);
+assert(
+  aa.sources.some((s) => s.id === "src_encore_shows" && s.place === "Dexter"),
+  "AA seed has Encore Theatre in Dexter",
+);
+assert(
+  getSite().showsVenueLinks.some((l) => l.href.includes("theencoretheatre.org")),
+  "AA shows rail includes Encore",
+);
+assert(
   aa.sources.some((s) => s.id === "src_marquee_events" && s.lane === "events"),
   "AA seed has Marquee live events",
 );

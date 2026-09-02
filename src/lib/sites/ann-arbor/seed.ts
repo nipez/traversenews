@@ -77,6 +77,20 @@ const sources: Source[] = [
     weight: 2,
   },
   {
+    id: "src_wemu_sports",
+    name: "WEMU 89.1 — Sports",
+    homepage: "https://www.wemu.org/sports",
+    feed_url: "https://www.wemu.org/sports.rss",
+    pull_method: "rss",
+    beat_id: "beat_sports",
+    enabled: true,
+    notes:
+      "Verified sports.rss. EMU / Washtenaw rec / prep — drop U-M varsity in selectSportsStories. Not a game schedule.",
+    lane: "wire",
+    place: "Washtenaw",
+    weight: 2,
+  },
+  {
     id: "src_suntimes",
     name: "The Sun Times News",
     homepage: "https://thesuntimesnews.com/",
@@ -398,7 +412,7 @@ const sources: Source[] = [
     beat_id: "beat_hs_sports",
     enabled: true,
     notes:
-      "ArbiterLive JS. Need Traverse News to pull https://pioneerathletics.arbitersports.com/front on the live computer → POST /api/desk/athletics/import. Never invent scores.",
+      "ArbiterLive /front is InvalidSite from the Worker (2026-09). Need Traverse News to find the current Pioneer athletics page on the live computer → POST /api/desk/athletics/import. Never invent scores.",
     lane: "athletics",
     place: "Ann Arbor",
   },
@@ -411,7 +425,7 @@ const sources: Source[] = [
     beat_id: "beat_hs_sports",
     enabled: true,
     notes:
-      "ArbiterLive JS. Need Traverse News to pull https://skylineathletics.arbitersports.com/front on the live computer → POST /api/desk/athletics/import.",
+      "ArbiterLive /front is InvalidSite from the Worker (2026-09). Need Traverse News to find the current Skyline athletics page → POST /api/desk/athletics/import.",
     lane: "athletics",
     place: "Ann Arbor",
   },
@@ -424,7 +438,7 @@ const sources: Source[] = [
     beat_id: "beat_hs_sports",
     enabled: true,
     notes:
-      "ArbiterLive JS. Need Traverse News to pull https://huronsports.arbitersports.com/front on the live computer → POST /api/desk/athletics/import.",
+      "ArbiterLive /front is InvalidSite from the Worker (2026-09). Need Traverse News to find the current Huron athletics page → POST /api/desk/athletics/import.",
     lane: "athletics",
     place: "Ann Arbor",
   },
@@ -437,7 +451,7 @@ const sources: Source[] = [
     beat_id: "beat_hs_sports",
     enabled: true,
     notes:
-      "ArbiterLive JS. Need Traverse News to pull https://dexterathletics.arbitersports.com/front on the live computer → POST /api/desk/athletics/import.",
+      "ArbiterLive /front is InvalidSite from the Worker (2026-09). Need Traverse News to find the current Dexter athletics page → POST /api/desk/athletics/import.",
     lane: "athletics",
     place: "Dexter",
   },
@@ -558,6 +572,32 @@ const sources: Source[] = [
     lane: "wire",
     place: "Ann Arbor",
     weight: 1,
+  },
+  {
+    id: "src_ums_shows",
+    name: "UMS — Shows",
+    homepage: "https://ums.org/",
+    feed_url: "https://ums.org/season/",
+    pull_method: "html",
+    beat_id: "beat_shows",
+    enabled: true,
+    notes:
+      "Filled from src_ums_events listing dates (time_unknown). Never invent a curtain. Browser clocks → POST /api/desk/shows/import.",
+    lane: "shows",
+    place: "Ann Arbor",
+  },
+  {
+    id: "src_encore_shows",
+    name: "The Encore Theatre — Shows",
+    homepage: "https://theencoretheatre.org/",
+    feed_url: "https://theencoretheatre.org/wp-json/tribe/events/v1/events?per_page=50",
+    pull_method: "html",
+    beat_id: "beat_shows",
+    enabled: true,
+    notes:
+      "Verified Tribe REST. Production run windows only (12:01 AM is not a curtain). time_unknown. Printed clocks → POST /api/desk/shows/import. Dexter.",
+    lane: "shows",
+    place: "Dexter",
   },
   {
     id: "src_ums_events",

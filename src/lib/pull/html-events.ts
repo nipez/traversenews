@@ -1,7 +1,7 @@
 import { detroitWallToUtc } from "@/lib/dates";
 import { looksLikeLowValueListing, stableEventId } from "@/lib/events";
 import { getSite } from "@/lib/sites";
-import type { EventItem, Source } from "@/lib/types";
+import type { EventItem, ShowListing, Source } from "@/lib/types";
 
 const MONTHS: Record<string, number> = {
   january: 0,
@@ -320,6 +320,8 @@ async function parseTadl(
  */
 export type HtmlEventsPullResult = {
   events: EventItem[];
+  /** Optional Shows rows (Ark / Encore) — never invents clocks. */
+  shows?: ShowListing[];
   bot_blocked: boolean;
   status: number | null;
 };
