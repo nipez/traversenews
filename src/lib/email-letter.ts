@@ -864,16 +864,18 @@ export function buildMorningLetter(
 <div style="max-width:560px;margin:0 auto;padding:28px 20px 40px;">
 <p style="margin:0;text-align:center;font-family:${LETTER_FONT};font-size:24px;font-weight:800;letter-spacing:-0.02em;"><a href="${letterOrigin()}" style="color:#111111;text-decoration:none;">${letterWordmark()}</a></p>
 <p style="margin:10px 0 0;text-align:center;font-family:${LETTER_FONT};font-size:15px;font-weight:600;color:#111111;">${escapeHtml(editionLabel)}</p>
-<p style="margin:4px 0 8px;text-align:center;font-family:${LETTER_FONT};font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#888888;">${escapeHtml(dateLabel)}${
+<p style="margin:4px 0 8px;text-align:center;font-family:${LETTER_FONT};font-size:13px;letter-spacing:0.04em;color:#333333;">${
     letter.weather_line
-      ? ` · ${escapeHtml(letter.weather_line)}`
-      : ""
+      ? `<span style="letter-spacing:0.08em;text-transform:uppercase;color:#666666;">${escapeHtml(dateLabel)}</span> · <span style="font-weight:700;color:#111111;">${escapeHtml(letter.weather_line)}</span>`
+      : `<span style="letter-spacing:0.08em;text-transform:uppercase;color:#888888;">${escapeHtml(dateLabel)}</span>`
   }</p>`);
   text.push(letterWordmark());
   text.push(editionLabel);
-  if (letter.weather_line) {
-    text.push(`${dateLabel} · ${letter.weather_line}`);
-  }
+  text.push(
+    letter.weather_line
+      ? `${dateLabel} · ${letter.weather_line}`
+      : dateLabel,
+  );
   text.push("");
 
   if (letter.lead) {

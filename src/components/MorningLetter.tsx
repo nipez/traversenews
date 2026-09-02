@@ -68,9 +68,16 @@ export function MorningLetter({
           <span className="wordmark-dot">.</span>
           {getSite().wordmarkTld}
         </p>
-        <p className="morning-letter-date text-[0.65rem] font-extrabold tracking-[0.08em] text-muted uppercase">
-          {emailDateLabel(dateObj)}
-          {letter.weather_line ? ` · ${letter.weather_line}` : ""}
+        <p className="morning-letter-date text-[0.72rem] font-extrabold tracking-[0.06em] text-ink">
+          <span className="uppercase tracking-[0.08em] text-muted">
+            {emailDateLabel(dateObj)}
+          </span>
+          {letter.weather_line ? (
+            <span className="font-bold text-ink">
+              {" · "}
+              {letter.weather_line}
+            </span>
+          ) : null}
         </p>
       </div>
 

@@ -16,7 +16,7 @@ export const TRAVERSE_SITE: SiteConfig = {
     src: "/art/bay-hero.jpg",
     alt: "Grand Traverse Bay at sunset",
     dateline: "Traverse City, Michigan",
-    dek: "One tab for the bay: news, nights out, civic, and schools.",
+    dek: "One tab for the bay: news, nights out, civic, sports, and schools.",
   },
   timezone: "America/Detroit",
   // Downtown / bay — NWS APX grid (Cherry Capital area). Not KTTC observations.

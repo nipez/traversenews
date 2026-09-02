@@ -39,6 +39,11 @@ assert(
 assert(getSite().letterPreviewOnly === false, "TC letter is not preview-only");
 assert(getSite().weather?.gridId === "APX", "TC weather is NWS APX");
 assert(getSite().weather?.gridX === 29 && getSite().weather?.gridY === 46, "TC grid 29,46");
+assert(
+  getSite().hero.dek ===
+    "One tab for the bay: news, nights out, civic, sports, and schools.",
+  "TC hero dek is Nick's One-tab line",
+);
 const tc = createSeedData();
 assert(
   tc.sources.some((s) => s.id === "src_ticker"),
