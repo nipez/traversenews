@@ -877,7 +877,9 @@ export async function pullAnnArborHtml(
     shows = events.map((e) => showListingFromEvent(e, "src_theark", "The Ark"));
   } else if (source.id === "src_ums_events") {
     events = extractUmsListingEvents(page.text, source, now);
-    shows = events.map((e) => showListingFromEvent(e, "src_ums_shows", "UMS"));
+    shows = events
+      .filter((e) => !/\broyal oak\b/i.test(e.place ?? ""))
+      .map((e) => showListingFromEvent(e, "src_ums_shows", "UMS"));
   } else if (source.id === "src_marquee_events") {
     events = extractMarqueeLiveEvents(page.text, source, now);
   } else if (source.id === "src_aadl_events") {

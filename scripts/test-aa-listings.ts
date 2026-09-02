@@ -531,6 +531,13 @@ assert.equal(
   }),
   false,
 );
+assert.equal(
+  looksLikeWashtenawPrep({
+    title: "Ypsi resident develops app to help delivery drivers share info",
+    url: "https://concentratemedia.com/ypsi-app/",
+  }),
+  false,
+);
 
 const arkShow = showListingFromEvent(
   {
