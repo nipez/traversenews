@@ -726,22 +726,9 @@ export function selectAroundTheBay(
       maxUpNorth,
   );
 
-  // 0) Reserve a few official city/county/tribal headlines (may be older).
-  for (const c of officialNews) {
-    if (picked.length >= maxOfficial) break;
-    if (used.has(c.id)) continue;
-    const key = primarySourceKey(c);
-    if ((counts.get(key) ?? 0) >= maxPerSource) continue;
-    if (!underHeavy(key)) continue;
-    if (isEyesOnlyCluster(c) && !underEyesOnly()) continue;
-    used.add(c.id);
-    counts.set(key, (counts.get(key) ?? 0) + 1);
-    if (isEyesOnlyCluster(c)) eyesOnlyCount.n += 1;
-    picked.push(c);
-  }
-
-  // 0b) One slot per reserved suburb (Ypsilanti / Saline / Chelsea / Dexter)
-  // so Daily / Observer volume cannot zero those towns.
+  // 0) One slot per reserved suburb (Ypsilanti / Saline / Chelsea / Dexter)
+  // before official city RSS, so one town hall cannot take the first two
+  // slots and Daily / Observer volume cannot zero those towns.
   for (const place of getSite().reservedPlaces) {
     if (picked.length >= limit) break;
     const match = freeNews.find((c) => {
@@ -757,6 +744,22 @@ export function selectAroundTheBay(
     counts.set(key, (counts.get(key) ?? 0) + 1);
     if (isEyesOnlyCluster(match)) eyesOnlyCount.n += 1;
     picked.push(match);
+  }
+
+  // 0b) Then a few official city/county/tribal headlines (may be older).
+  for (const c of officialNews) {
+    if (picked.length >= limit) break;
+    const officialAlready = picked.filter(isOfficialNewsCluster).length;
+    if (officialAlready >= maxOfficial) break;
+    if (used.has(c.id)) continue;
+    const key = primarySourceKey(c);
+    if ((counts.get(key) ?? 0) >= maxPerSource) continue;
+    if (!underHeavy(key)) continue;
+    if (isEyesOnlyCluster(c) && !underEyesOnly()) continue;
+    used.add(c.id);
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+    if (isEyesOnlyCluster(c)) eyesOnlyCount.n += 1;
+    picked.push(c);
   }
 
   // 1) Multi-source free-news clusters first.

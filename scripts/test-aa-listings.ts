@@ -3,7 +3,11 @@
  * Run: npm run test:aa-listings
  */
 import assert from "node:assert/strict";
-import { looksLikeUmVarsity, reservedPlaceForCluster } from "../src/lib/around";
+import {
+  looksLikeUmVarsity,
+  reservedPlaceForCluster,
+  selectAroundTheBay,
+} from "../src/lib/around";
 import {
   collectArkEventLinks,
   extractA2GovNews,
@@ -17,7 +21,7 @@ import {
 } from "../src/lib/pull/html-ann-arbor";
 import { eventsFromIcsText } from "../src/lib/pull/ics";
 import { resetSiteCache } from "../src/lib/sites";
-import type { Source } from "../src/lib/types";
+import type { ClusteredStory, Source } from "../src/lib/types";
 
 const now = new Date("2026-08-31T16:00:00.000Z");
 
@@ -399,6 +403,108 @@ assert.equal(
     sources: [{ id: "src_suntimes", name: "The Sun Times News" }],
   }),
   "Chelsea",
+);
+
+function aroundStory(
+  partial: Pick<ClusteredStory, "id" | "title" | "url" | "sources"> & {
+    published_at?: string;
+  },
+): ClusteredStory {
+  return {
+    dek: "",
+    published_at: partial.published_at ?? "2026-09-01T15:00:00.000Z",
+    is_original: false,
+    byline: null,
+    slug: null,
+    image_url: null,
+    body: null,
+    ...partial,
+  };
+}
+
+const aroundNow = new Date("2026-09-02T16:00:00.000Z");
+const aroundMix = selectAroundTheBay(
+  [
+    aroundStory({
+      id: "c_daily_1",
+      title: "Ann Arbor housing survey results",
+      url: "https://www.michigandaily.com/news/housing-survey/",
+      sources: [{ id: "src_michigandaily", name: "The Michigan Daily" }],
+      published_at: "2026-09-02T14:00:00.000Z",
+    }),
+    aroundStory({
+      id: "c_daily_2",
+      title: "Ann Arbor zoning rewrite heads to council",
+      url: "https://www.michigandaily.com/news/zoning-rewrite/",
+      sources: [{ id: "src_michigandaily", name: "The Michigan Daily" }],
+      published_at: "2026-09-02T13:30:00.000Z",
+    }),
+    aroundStory({
+      id: "c_daily_3",
+      title: "Campus budget hearing set",
+      url: "https://www.michigandaily.com/news/budget-hearing/",
+      sources: [{ id: "src_michigandaily", name: "The Michigan Daily" }],
+      published_at: "2026-09-02T13:00:00.000Z",
+    }),
+    aroundStory({
+      id: "c_saline_1",
+      title: "Saline River Dam update",
+      url: "https://www.salinemi.gov/news_detail_T2_R1.php",
+      sources: [{ id: "src_saline_news", name: "City of Saline — News" }],
+      published_at: "2026-09-02T12:00:00.000Z",
+    }),
+    aroundStory({
+      id: "c_saline_2",
+      title: "Saline ROMP festival parking",
+      url: "https://www.salinemi.gov/news_detail_T2_R2.php",
+      sources: [{ id: "src_saline_news", name: "City of Saline — News" }],
+      published_at: "2026-09-02T11:30:00.000Z",
+    }),
+    aroundStory({
+      id: "c_saline_3",
+      title: "Saline council packets posted",
+      url: "https://www.salinemi.gov/news_detail_T2_R3.php",
+      sources: [{ id: "src_saline_news", name: "City of Saline — News" }],
+      published_at: "2026-09-02T11:00:00.000Z",
+    }),
+    aroundStory({
+      id: "c_ypsi",
+      title: "Ypsilanti data-center moratorium",
+      url: "https://www.cityofypsilanti.com/CivicAlerts.aspx?aid=1",
+      sources: [{ id: "src_ypsi_news", name: "City of Ypsilanti — News" }],
+      published_at: "2026-09-01T18:00:00.000Z",
+    }),
+    aroundStory({
+      id: "c_chelsea",
+      title: "Chelsea DTE gas main work",
+      url: "https://www.city-chelsea.org/news_detail_T2_R191.php",
+      sources: [{ id: "src_chelsea_news", name: "City of Chelsea — News" }],
+      published_at: "2026-09-01T17:00:00.000Z",
+    }),
+    aroundStory({
+      id: "c_dexter",
+      title: "Dexter July police report",
+      url: "https://thesuntimesnews.com/dexter-july-police-report/",
+      sources: [{ id: "src_suntimes", name: "The Sun Times News" }],
+      published_at: "2026-08-20T12:00:00.000Z",
+    }),
+  ],
+  { limit: 6, maxOfficial: 2, now: aroundNow },
+);
+const aroundPlaces = aroundMix.map((c) => reservedPlaceForCluster(c));
+assert.ok(aroundPlaces.includes("Ypsilanti"), "Around reserves Ypsilanti");
+assert.ok(aroundPlaces.includes("Saline"), "Around reserves Saline");
+assert.ok(aroundPlaces.includes("Chelsea"), "Around reserves Chelsea");
+assert.ok(aroundPlaces.includes("Dexter"), "Around reserves Dexter");
+assert.equal(
+  aroundMix.slice(0, 4).map((c) => reservedPlaceForCluster(c)).join(","),
+  "Ypsilanti,Saline,Chelsea,Dexter",
+  "Suburb slots come before extra city-hall RSS",
+);
+assert.equal(
+  aroundMix.filter((c) => c.sources[0]?.id === "src_saline_news").length,
+  1,
+  "Saline city RSS does not take three of the first six slots",
 );
 
 console.log("test-aa-listings: ok");

@@ -31,13 +31,24 @@ function itemCount(block: SchoolsDistrictBlock): number {
 }
 
 function pickDefaultDistrict(tabs: SchoolsDistrictBlock[]): string {
-  return tabs.find((d) => d.district === "TCAPS")?.district ?? tabs[0]?.district ?? "";
+  return (
+    tabs.find((d) => d.district === "TCAPS")?.district ??
+    tabs.find((d) => d.district === "AAPS")?.district ??
+    tabs[0]?.district ??
+    ""
+  );
+}
+
+function keepDistrictTab(block: SchoolsDistrictBlock): boolean {
+  return itemCount(block) > 0 || Boolean(block.calendarUrl);
 }
 
 /**
- * District tabs for /schools. Only districts with imported Important dates.
- * TC core chips always visible; map-ring districts behind Surrounding.
- * TCAPS is first when present; empty districts stay hidden until data exists.
+ * District tabs for /schools.
+ * Traverse: chips for imported Important dates; TC core first; map-ring
+ * behind Surrounding.
+ * Ann Arbor: every seeded district stays visible so Full calendar outbound
+ * works before Desk import (Ypsilanti / Saline / Chelsea have no Worker ICS).
  */
 export function SchoolsDistrictToggle({
   districts,
@@ -45,7 +56,7 @@ export function SchoolsDistrictToggle({
   districts: SchoolsDistrictBlock[];
 }) {
   const tabs = useMemo(
-    () => districts.filter((block) => itemCount(block) > 0),
+    () => districts.filter(keepDistrictTab),
     [districts],
   );
 
@@ -207,47 +218,54 @@ export function SchoolsDistrictToggle({
             ) : null}
           </header>
 
-          {selected.months.map((month) => (
-            <div key={month.key} className="schools-month">
-              <h3 className="schools-month-hed">{month.name}</h3>
-              <ul className="schools-list">
-                {month.items.map((item) => {
-                  const d = formatCivicDate(item.starts_at);
-                  const clock = schoolClock(item);
-                  return (
-                    <li key={item.id} className="schools-row">
-                      <div className="schools-datebox">
-                        <div className="schools-datebox-dow">{d.day}</div>
-                        <div className="schools-datebox-day">{d.label}</div>
-                        <div className="schools-datebox-month">
-                          {d.monthAbbr}
+          {count === 0 ? (
+            <p className="schools-district-empty">
+              No imported important dates yet. Full calendar is the official
+              list — we do not invent half days or no-school dates.
+            </p>
+          ) : (
+            selected.months.map((month) => (
+              <div key={month.key} className="schools-month">
+                <h3 className="schools-month-hed">{month.name}</h3>
+                <ul className="schools-list">
+                  {month.items.map((item) => {
+                    const d = formatCivicDate(item.starts_at);
+                    const clock = schoolClock(item);
+                    return (
+                      <li key={item.id} className="schools-row">
+                        <div className="schools-datebox">
+                          <div className="schools-datebox-dow">{d.day}</div>
+                          <div className="schools-datebox-day">{d.label}</div>
+                          <div className="schools-datebox-month">
+                            {d.monthAbbr}
+                          </div>
                         </div>
-                      </div>
-                      <div className="schools-copy">
-                        {item.url ? (
-                          <p className="schools-title">
-                            <a
-                              href={item.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              {item.title}
-                            </a>
-                          </p>
-                        ) : (
-                          <p className="schools-title">{item.title}</p>
-                        )}
-                        {item.place && item.place !== "District" ? (
-                          <p className="schools-place">{item.place}</p>
-                        ) : null}
-                      </div>
-                      <p className="schools-time">{clock}</p>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          ))}
+                        <div className="schools-copy">
+                          {item.url ? (
+                            <p className="schools-title">
+                              <a
+                                href={item.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                {item.title}
+                              </a>
+                            </p>
+                          ) : (
+                            <p className="schools-title">{item.title}</p>
+                          )}
+                          {item.place && item.place !== "District" ? (
+                            <p className="schools-place">{item.place}</p>
+                          ) : null}
+                        </div>
+                        <p className="schools-time">{clock}</p>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))
+          )}
         </section>
       ) : null}
     </div>

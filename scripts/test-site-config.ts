@@ -4,6 +4,7 @@
  */
 import { createSeedData } from "../src/lib/data/seed";
 import { resetSeedCatalog } from "../src/lib/data/store";
+import { buildSchoolsSnapshot } from "../src/lib/public-snapshots";
 import {
   getSite,
   resetSiteCache,
@@ -208,6 +209,37 @@ const schoolFromIcs = schoolItemsFromEvents([
 assert(
   schoolFromIcs.length === 1 && schoolFromIcs[0].district === "AAPS",
   "AAPS ICS important dates land on /schools",
+);
+
+const emptySchools = buildSchoolsSnapshot(aa);
+const emptyNames = emptySchools.districts.map((d) => d.district);
+assert(
+  ["AAPS", "Ypsilanti", "Saline", "Chelsea", "Dexter"].every((name) =>
+    emptyNames.includes(name),
+  ),
+  "AA /schools lists every Washtenaw district before dates are imported",
+);
+assert(
+  emptySchools.districts.find((d) => d.district === "Ypsilanti")
+    ?.calendarUrl?.includes("ycschools.us"),
+  "Ypsilanti empty tab still links Full calendar",
+);
+assert(
+  emptySchools.districts.find((d) => d.district === "Saline")
+    ?.calendarUrl?.includes("salineschools.org"),
+  "Saline empty tab still links Full calendar",
+);
+assert(
+  emptySchools.districts.find((d) => d.district === "Chelsea")
+    ?.calendarUrl?.includes("chelseaschools.org"),
+  "Chelsea empty tab still links Full calendar",
+);
+
+setSite("traverse");
+const tcSchools = buildSchoolsSnapshot(tc);
+assert(
+  tcSchools.districts.length === 0,
+  "Traverse /schools still hides empty districts",
 );
 
 console.log("test-site-config: ok");

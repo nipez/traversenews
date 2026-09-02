@@ -51,6 +51,7 @@ import {
   type SectionHeadersMap,
 } from "@/lib/section-headers";
 import { resolvePageCopy } from "@/lib/page-copy";
+import { getSiteId } from "@/lib/sites";
 import type {
   AppData,
   AthleticsGame,
@@ -375,7 +376,12 @@ export function buildSchoolsSnapshot(
   at = new Date(),
 ): PublicSchoolsSnapshot {
   const upcoming = selectUpcomingSchoolDays(data.schools ?? [], at);
-  const grouped = groupSchoolDaysByDistrict(upcoming, { includeEmpty: false });
+  // AA: always show Ypsilanti / Saline / Chelsea / Dexter / AAPS chips so
+  // Full calendar outbound is visible before Desk import. Traverse still
+  // hides empty districts until dates exist.
+  const grouped = groupSchoolDaysByDistrict(upcoming, {
+    includeEmpty: getSiteId() === "ann-arbor",
+  });
   const districts = grouped.map((block) => {
     const sourceId = sourceIdForDistrict(block.district);
     const source = sourceId
