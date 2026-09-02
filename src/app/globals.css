@@ -284,12 +284,19 @@ a:hover {
   margin: 10px 0 0;
   max-width: none;
   font-family: var(--font-source-serif), Georgia, serif;
-  /* Scale down on narrow phones so the full dek stays one line (no orphan). */
-  font-size: clamp(10.5px, 3.55vw, 17px);
+  /* Fit the full One-tab string on one mobile line (no orphan, no clip). */
+  font-size: clamp(9.5px, calc((100vw - 32px) / 31.3), 17px);
   line-height: 1.35;
   color: #f4edde;
   white-space: nowrap;
   text-wrap: nowrap;
+}
+
+@media (min-width: 768px) {
+  .hero-dek {
+    /* Desktop frame uses 40px side padding — lock to the paper size. */
+    font-size: 17px;
+  }
 }
 
 @media (max-width: 379px) {
