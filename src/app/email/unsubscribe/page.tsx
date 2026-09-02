@@ -50,7 +50,7 @@ export default async function UnsubscribePage({ searchParams }: Props) {
             </p>
             <p className="mt-4 text-sm text-muted">
               Changed your mind?{" "}
-              <Link href="/email#signup" className="font-bold text-teal">
+              <Link href="/email" className="font-bold text-teal">
                 Sign up again
               </Link>
               .
