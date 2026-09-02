@@ -31,7 +31,7 @@ export function DeskRail({
       <div className="about-rail-card about-rail-email">
         <MorningScanSignup variant="teal" />
         <p className="about-rail-more">
-          <Link href="/email#signup">Morning email page →</Link>
+          <Link href="/email">Morning email page →</Link>
         </p>
       </div>
 
