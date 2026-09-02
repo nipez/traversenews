@@ -90,6 +90,148 @@ function withinDays(d: Date, now: Date, days: number): boolean {
   );
 }
 
+function detroitClockLabel(iso: string): string {
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Detroit",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  })
+    .format(new Date(iso))
+    .toUpperCase();
+}
+
+/** Map a Worker event with a printed clock onto /shows. Never invents a time. */
+export function showListingFromEvent(
+  event: EventItem,
+  sourceId: string,
+  venue: string,
+): ShowListing {
+  const unknown = event.time_unknown === true;
+  const row: ShowListing = {
+    id: stableShowId(
+      sourceId,
+      `${event.url ?? event.id}|${event.starts_at.slice(0, 10)}`,
+    ),
+    title: event.title,
+    venue: event.place?.trim() ? event.place.trim() : venue,
+    starts_at: event.starts_at,
+    times: unknown ? [] : [detroitClockLabel(event.starts_at)],
+    url: event.url,
+    source_id: sourceId,
+  };
+  if (unknown) row.time_unknown = true;
+  return row;
+}
+
+function parseTribeLocal(raw: string): {
+  year: number;
+  month: number;
+  day: number;
+  hour: number;
+  minute: number;
+  placeholder: boolean;
+} | null {
+  const m = raw
+    .trim()
+    .match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?/);
+  if (!m) return null;
+  const year = Number(m[1]);
+  const month = Number(m[2]);
+  const day = Number(m[3]);
+  const hour = Number(m[4]);
+  const minute = Number(m[5]);
+  if (![year, month, day, hour, minute].every(Number.isFinite)) return null;
+  // Tribe run windows use 12:01 / 1:00 AM stand-ins — date only, never a clock.
+  const placeholder =
+    (hour === 0 && minute <= 5) || (hour === 1 && minute === 0);
+  return { year, month, day, hour, minute, placeholder };
+}
+
+/**
+ * The Encore Theatre (Dexter) Tribe REST. Run windows only — 12:01 AM is not
+ * a showtime. List the production with time_unknown.
+ */
+export function extractEncoreShowsFromTribe(
+  json: string,
+  source: Source,
+  now = new Date(),
+): ShowListing[] {
+  let parsed: { events?: Array<Record<string, unknown>> };
+  try {
+    parsed = JSON.parse(json) as { events?: Array<Record<string, unknown>> };
+  } catch {
+    return [];
+  }
+  const events = Array.isArray(parsed.events) ? parsed.events : [];
+  const out: ShowListing[] = [];
+  const seen = new Set<string>();
+  for (const ev of events) {
+    const title = decodeEntities(
+      stripTags(String(ev.title ?? "")),
+    ).trim();
+    const url = String(ev.url ?? "").trim();
+    const startRaw = String(ev.start_date ?? "");
+    if (!title || !url || !startRaw) continue;
+    if (looksLikeLowValueListing(title)) continue;
+    const start = parseTribeLocal(startRaw);
+    if (!start) continue;
+    const starts = detroitWallToUtc(
+      start.year,
+      start.month,
+      start.day,
+      start.placeholder ? 0 : start.hour,
+      start.placeholder ? 0 : start.minute,
+      0,
+    );
+    if (Number.isNaN(starts.getTime()) || !withinDays(starts, now, 400)) {
+      continue;
+    }
+    let endsAt: string | null = null;
+    const end = parseTribeLocal(String(ev.end_date ?? ""));
+    if (end) {
+      const ends = detroitWallToUtc(
+        end.year,
+        end.month,
+        end.day,
+        end.placeholder ? 0 : end.hour,
+        end.placeholder ? 0 : end.minute,
+        0,
+      );
+      if (!Number.isNaN(ends.getTime()) && ends.getTime() > starts.getTime()) {
+        endsAt = ends.toISOString();
+      }
+    }
+    const venueObj = ev.venue;
+    const venueName =
+      venueObj && typeof venueObj === "object"
+        ? stripTags(String((venueObj as { venue?: string }).venue ?? ""))
+        : "";
+    const uid = `${url}|${starts.toISOString().slice(0, 10)}`;
+    if (seen.has(uid)) continue;
+    seen.add(uid);
+    const unknown = start.placeholder;
+    const listing: ShowListing = {
+      id: stableShowId(source.id, uid),
+      title,
+      venue: venueName || "The Encore Theatre",
+      starts_at: starts.toISOString(),
+      ends_at: endsAt,
+      times: unknown
+        ? []
+        : [detroitClockLabel(starts.toISOString())],
+      url,
+      source_id: source.id,
+    };
+    if (unknown) listing.time_unknown = true;
+    out.push(listing);
+  }
+  return out.sort(
+    (a, b) =>
+      new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime(),
+  );
+}
+
 function fetchHeaders(): HeadersInit {
   return {
     "User-Agent": `Mozilla/5.0 (compatible; ${getSite().userAgent})`,
@@ -727,19 +869,24 @@ export async function pullAnnArborHtml(
 
   const now = new Date();
   let events: EventItem[] = [];
+  let shows: ShowListing[] = [];
   if (source.id === "src_a2_legistar") {
     events = extractLegistarMeetings(page.text, source, now);
   } else if (source.id === "src_ark_events") {
     events = await pullArkEvents(source, page.text, now);
+    shows = events.map((e) => showListingFromEvent(e, "src_theark", "The Ark"));
   } else if (source.id === "src_ums_events") {
     events = extractUmsListingEvents(page.text, source, now);
+    shows = events.map((e) => showListingFromEvent(e, "src_ums_shows", "UMS"));
   } else if (source.id === "src_marquee_events") {
     events = extractMarqueeLiveEvents(page.text, source, now);
   } else if (source.id === "src_aadl_events") {
     events = await pullAadlEvents(source, page.text, now);
+  } else if (source.id === "src_encore_shows") {
+    shows = extractEncoreShowsFromTribe(page.text, source, now);
   }
 
-  return { events, bot_blocked: false, status: page.status };
+  return { events, shows, bot_blocked: false, status: page.status };
 }
 
 export type MarqueeSlide = {
