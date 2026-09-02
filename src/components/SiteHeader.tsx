@@ -51,7 +51,7 @@ export function SiteHeader({
 }: {
   active?: string;
   variant?: "hero" | "compact";
-  /** One-glance weather beside the paper date (hero only). */
+  /** One-glance weather under the hero dek (hero only). */
   weatherLine?: string | null;
 }) {
   const site = getSite();
@@ -82,21 +82,16 @@ export function SiteHeader({
           <div className="hero-photo-frame">
             <div className="hero-top">
               <p className="hero-meta">{site.hero.dateline}</p>
-              <p className="hero-meta hero-meta-date">
-                <span>{formatHeaderDate()}</span>
-                {weatherLine ? (
-                  <span className="hero-weather">
-                    {" · "}
-                    {weatherLine}
-                  </span>
-                ) : null}
-              </p>
+              <p className="hero-meta hero-meta-date">{formatHeaderDate()}</p>
             </div>
             <div className="hero-bottom">
               <Link href="/" className="hero-wordmark" aria-label={siteWordmark()}>
                 <Wordmark tone="cream" />
               </Link>
               <p className="hero-dek">{site.hero.dek}</p>
+              {weatherLine ? (
+                <p className="hero-weather">{weatherLine}</p>
+              ) : null}
             </div>
           </div>
         </div>
