@@ -1,7 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { NavSearch } from "@/components/NavSearch";
+import { Wordmark } from "@/components/Wordmark";
 import { formatHeaderDate } from "@/lib/dates";
+import { getSite, siteWordmark } from "@/lib/sites";
 
 const NAV = [
   { href: "/", label: "Today" },
@@ -11,21 +13,6 @@ const NAV = [
   { href: "/sports", label: "Sports" },
   { href: "/shows", label: "Shows" },
 ] as const;
-
-function Wordmark({
-  className = "",
-  tone = "ink",
-}: {
-  className?: string;
-  tone?: "ink" | "cream";
-}) {
-  const cls = tone === "cream" ? "wordmark-cream" : "wordmark-ink";
-  return (
-    <span className={`wordmark ${cls} ${className}`.trim()}>
-      traverse<span className="wordmark-dot">.</span>news
-    </span>
-  );
-}
 
 function NavInkBar({ active }: { active: string }) {
   return (
@@ -47,7 +34,7 @@ function NavInkBar({ active }: { active: string }) {
           ))}
         </nav>
         <div className="nav-ink-actions">
-          <NavSearch />
+          <NavSearch siteName={siteWordmark()} />
           <Link href="/email" className="btn-email">
             Morning email
           </Link>
@@ -64,31 +51,41 @@ export function SiteHeader({
   active?: string;
   variant?: "hero" | "compact";
 }) {
+  const site = getSite();
   if (variant === "hero") {
     return (
       <header className="site-header-hero">
         <div className="hero-photo">
-          <Image
-            src="/art/bay-hero.jpg"
-            alt="Grand Traverse Bay at sunset"
-            fill
-            priority
-            className="hero-photo-img"
-            sizes="100vw"
-          />
+          {site.hero.src ? (
+            <Image
+              src={site.hero.src}
+              alt={site.hero.alt}
+              fill
+              priority
+              className="hero-photo-img"
+              sizes="100vw"
+            />
+          ) : (
+            <div
+              className="hero-photo-img"
+              style={{
+                background:
+                  "linear-gradient(160deg, #1c3d38 0%, #3d5c4a 45%, #8a9a6a 100%)",
+              }}
+              aria-hidden
+            />
+          )}
           <div className="hero-photo-scrim" aria-hidden />
           <div className="hero-photo-frame">
             <div className="hero-top">
-              <p className="hero-meta">Traverse City, Michigan</p>
+              <p className="hero-meta">{site.hero.dateline}</p>
               <p className="hero-meta">{formatHeaderDate()}</p>
             </div>
             <div className="hero-bottom">
-              <Link href="/" className="hero-wordmark">
+              <Link href="/" className="hero-wordmark" aria-label={siteWordmark()}>
                 <Wordmark tone="cream" />
               </Link>
-              <p className="hero-dek">
-                One tab for the bay: news, nights out, civic, and schools.
-              </p>
+              <p className="hero-dek">{site.hero.dek}</p>
             </div>
           </div>
         </div>

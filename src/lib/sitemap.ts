@@ -4,8 +4,12 @@ import {
   isKilledOriginalSlug,
 } from "@/lib/data/scrub";
 
-/** Canonical public host — never workers.dev in sitemap locs. */
-const SITE = "https://traverse.news";
+import { siteOrigin } from "@/lib/sites";
+
+/** Canonical public host — never workers.dev in sitemap locs when a real domain is set. */
+function sitemapOrigin(): string {
+  return siteOrigin();
+}
 
 const SITEMAP_CACHE_KEY = "cache:sitemap.xml:v1";
 /** Minutes — keep crawler hits off the full store path. */
@@ -59,7 +63,7 @@ export function buildSitemapXml(slice: SitemapSlice): string {
   const urls: string[] = [];
 
   for (const path of STATIC_PATHS) {
-    const loc = path === "/" ? SITE : `${SITE}${path}`;
+    const loc = path === "/" ? sitemapOrigin() : `${sitemapOrigin()}${path}`;
     urls.push(`<url><loc>${xmlEscape(loc)}</loc></url>`);
   }
 
@@ -77,7 +81,7 @@ export function buildSitemapXml(slice: SitemapSlice): string {
     }
     seenSlugs.add(slug);
     urls.push(
-      `<url><loc>${xmlEscape(`${SITE}/story/${slug}`)}</loc>${lastmodAttr(story.published_at)}</url>`,
+      `<url><loc>${xmlEscape(`${sitemapOrigin()}/story/${slug}`)}</loc>${lastmodAttr(story.published_at)}</url>`,
     );
   }
 
@@ -85,7 +89,7 @@ export function buildSitemapXml(slice: SitemapSlice): string {
     const date = edition.date?.trim();
     if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
     urls.push(
-      `<url><loc>${xmlEscape(`${SITE}/editions/${date}`)}</loc>${lastmodAttr(edition.captured_at)}</url>`,
+      `<url><loc>${xmlEscape(`${sitemapOrigin()}/editions/${date}`)}</loc>${lastmodAttr(edition.captured_at)}</url>`,
     );
   }
 
@@ -93,7 +97,7 @@ export function buildSitemapXml(slice: SitemapSlice): string {
     const date = letter.date?.trim();
     if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
     urls.push(
-      `<url><loc>${xmlEscape(`${SITE}/email/${date}`)}</loc>${lastmodAttr(letter.captured_at)}</url>`,
+      `<url><loc>${xmlEscape(`${sitemapOrigin()}/email/${date}`)}</loc>${lastmodAttr(letter.captured_at)}</url>`,
     );
   }
 

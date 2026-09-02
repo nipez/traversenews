@@ -1,8 +1,8 @@
 import type { MetadataRoute } from "next";
+import { siteOrigin } from "@/lib/sites";
 
 /**
  * Public crawlers: allow the site, keep Desk/API out of the crawl budget.
- * Sitemap always points at the canonical traverse.news host.
  */
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -13,6 +13,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/desk", "/desk/", "/api/", "/api"],
       },
     ],
-    sitemap: "https://traverse.news/sitemap.xml",
+    sitemap: `${siteOrigin()}/sitemap.xml`,
   };
 }

@@ -1,4 +1,5 @@
-import type { ClusteredStory } from "@/lib/types";
+import { isPaywalledSource } from "@/lib/source-lanes";
+import type { ClusteredStory, Source } from "@/lib/types";
 
 /** Record-Eagle paywall sources (metered CNHI). Headlines + RSS dek + link only. */
 export const RECORD_EAGLE_SOURCE_IDS = new Set([
@@ -7,7 +8,8 @@ export const RECORD_EAGLE_SOURCE_IDS = new Set([
   "src_re_prep",
 ]);
 
-export function isRecordEagleSourceId(id: string): boolean {
+export function isRecordEagleSourceId(id: string, source?: Source): boolean {
+  if (isPaywalledSource(source, id)) return true;
   return RECORD_EAGLE_SOURCE_IDS.has(id);
 }
 

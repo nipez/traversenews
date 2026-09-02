@@ -2,6 +2,7 @@ import { DeskChrome } from "@/components/desk/DeskChrome";
 import { AddAlertForm } from "@/components/desk/AddAlertForm";
 import { isAlertSourceId, selectAlerts } from "@/lib/alerts";
 import { getAppData } from "@/lib/data/store";
+import { getSite } from "@/lib/sites";
 
 export const dynamic = "force-dynamic";
 
@@ -27,13 +28,13 @@ export default async function DeskAlertsPage() {
       <div className="mx-auto max-w-6xl px-4 py-6 md:px-6">
         <h1 className="font-serif text-3xl text-ink">Alerts</h1>
         <p className="mt-1 max-w-2xl text-sm text-muted">
-          Hand-add a Facebook or Grand Traverse 911 post when you see one.
-          Uses the same stories import as browser pull (`src_gt911` /
-          `src_ticker_fb`). Never invents posts. Does not write to Events.
+          {getSite().pageCopy.deskAlertHint} Never invents posts. Does not
+          write to Events.
         </p>
 
         <div className="mt-6">
           <AddAlertForm
+            sources={getSite().alertSources}
             existingAlerts={allAlertStories.map((s) => ({
               id: s.id,
               title: s.title,

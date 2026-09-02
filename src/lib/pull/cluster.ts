@@ -1,3 +1,4 @@
+import { siteWordmark } from "@/lib/sites";
 import type { ClusteredStory, Source, Story } from "@/lib/types";
 
 function tokenize(title: string): Set<string> {
@@ -43,7 +44,7 @@ export function clusterStories(
     dek: s.dek,
     url: s.url,
     published_at: s.published_at,
-    sources: [{ id: s.source_id, name: sourceById.get(s.source_id)?.name ?? "traverse.news" }],
+    sources: [{ id: s.source_id, name: sourceById.get(s.source_id)?.name ?? siteWordmark() }],
     is_original: true,
     byline: s.byline,
     slug: s.slug,

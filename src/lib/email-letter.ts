@@ -17,8 +17,17 @@ import type {
   Subscriber,
 } from "@/lib/types";
 
-const SITE_ORIGIN = "https://traverse.news";
+import { getSite, siteOrigin, siteWordmark } from "@/lib/sites";
+
 const DETROIT_TIME_ZONE = "America/Detroit";
+
+function letterOrigin(): string {
+  return siteOrigin();
+}
+
+function letterWordmark(): string {
+  return siteWordmark();
+}
 
 /** Fallback when the signup list is empty or still has fake/example/verify addresses. */
 export const DESK_LETTER_FALLBACK = "nickperez@gmail.com";
@@ -166,7 +175,7 @@ export function canonicalPublicUrl(value: string | null | undefined): string | n
 
   const trimmed = value.trim();
   if (!trimmed) return null;
-  if (trimmed.startsWith("/")) return `${SITE_ORIGIN}${trimmed}`;
+  if (trimmed.startsWith("/")) return `${letterOrigin()}${trimmed}`;
 
   try {
     const url = new URL(trimmed);
@@ -184,12 +193,14 @@ export function canonicalPublicUrl(value: string | null | undefined): string | n
       return null;
     }
 
+    const site = getSite();
+    const siteHost = site.hostname.replace(/^www\./, "");
     if (
-      host === "traverse.news" ||
-      host === "www.traverse.news" ||
-      host === "traverse-news.nickperez.workers.dev"
+      host === siteHost ||
+      host === `www.${siteHost}` ||
+      host.endsWith(".workers.dev")
     ) {
-      return `${SITE_ORIGIN}${url.pathname}${url.search}`;
+      return `${letterOrigin()}${url.pathname}${url.search}`;
     }
 
     return trimmed;
@@ -606,7 +617,7 @@ export function buildMorningLetterSubject(snapshot: EmailEditionSnapshot): strin
 
   let chosen = parts.slice(0, 3);
   if (chosen.length === 0) {
-    return `🗞️ traverse.news · ${emailDetroitDateKey()}`;
+    return `🗞️ ${letterWordmark()} · ${emailDetroitDateKey()}`;
   }
 
   const render = (items: SubjectItem[]): string => {
@@ -634,7 +645,7 @@ export function buildMorningLetterSubject(snapshot: EmailEditionSnapshot): strin
     })
     .filter((p) => usableSubjectPhrase(p.text));
   if (chosen.length === 0) {
-    return `🗞️ traverse.news · ${emailDetroitDateKey()}`;
+    return `🗞️ ${letterWordmark()} · ${emailDetroitDateKey()}`;
   }
   const phraseLen = (s: string) => s.replace(/^🗞️\s*/, "").length;
   let subject = render(chosen);
@@ -665,7 +676,7 @@ export function buildMorningLetterSubject(snapshot: EmailEditionSnapshot): strin
       chosen = originals.slice(0, 1);
     }
     if (chosen.length === 0) {
-      return `🗞️ traverse.news · ${emailDetroitDateKey()}`;
+      return `🗞️ ${letterWordmark()} · ${emailDetroitDateKey()}`;
     }
     subject = render(chosen);
   }
@@ -687,7 +698,7 @@ export function buildMorningLetterSubject(snapshot: EmailEditionSnapshot): strin
     if (usableSubjectPhrase(body)) {
       subject = `🗞️ ${body}`;
     } else {
-      return `🗞️ traverse.news · ${emailDetroitDateKey()}`;
+      return `🗞️ ${letterWordmark()} · ${emailDetroitDateKey()}`;
     }
   }
   return subject;
@@ -812,7 +823,7 @@ function textSectionHeading(emoji: string, label: string): string {
 
 /** Absolute unsubscribe URL for the morning letter footer. */
 export function unsubscribeUrl(email?: string | null): string {
-  const base = `${SITE_ORIGIN}/email/unsubscribe`;
+  const base = `${letterOrigin()}/email/unsubscribe`;
   const normalized = email?.trim().toLowerCase() ?? "";
   if (!normalized || !normalized.includes("@")) return base;
   return `${base}?email=${encodeURIComponent(normalized)}`;
@@ -851,10 +862,10 @@ export function buildMorningLetter(
 </head>
 <body style="margin:0;padding:0;background:#ffffff;color:#111111;font-family:${LETTER_FONT};">
 <div style="max-width:560px;margin:0 auto;padding:28px 20px 40px;">
-<p style="margin:0;text-align:center;font-family:${LETTER_FONT};font-size:24px;font-weight:800;letter-spacing:-0.02em;"><a href="${SITE_ORIGIN}" style="color:#111111;text-decoration:none;">traverse.news</a></p>
+<p style="margin:0;text-align:center;font-family:${LETTER_FONT};font-size:24px;font-weight:800;letter-spacing:-0.02em;"><a href="${letterOrigin()}" style="color:#111111;text-decoration:none;">${letterWordmark()}</a></p>
 <p style="margin:10px 0 0;text-align:center;font-family:${LETTER_FONT};font-size:15px;font-weight:600;color:#111111;">${escapeHtml(editionLabel)}</p>
 <p style="margin:4px 0 8px;text-align:center;font-family:${LETTER_FONT};font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#888888;">${escapeHtml(dateLabel)}</p>`);
-  text.push("traverse.news");
+  text.push(letterWordmark());
   text.push(editionLabel);
   text.push("");
 
@@ -869,8 +880,10 @@ export function buildMorningLetter(
   }
 
   if (letter.around.length > 0) {
-    html.push(sectionHeading("🌊", "Around the bay", SITE_ORIGIN));
-    text.push(textSectionHeading("🌊", "Around the bay"));
+    html.push(
+      sectionHeading(getSite().aroundEmoji, getSite().aroundLabel, letterOrigin()),
+    );
+    text.push(textSectionHeading(getSite().aroundEmoji, getSite().aroundLabel));
     for (const story of letter.around) {
       const rendered = renderStory(story);
       html.push(rendered.html);
@@ -889,7 +902,7 @@ export function buildMorningLetter(
   }
 
   if (letter.tonight.length > 0) {
-    html.push(sectionHeading("🌙", "What's on", `${SITE_ORIGIN}/events`));
+    html.push(sectionHeading("🌙", "What's on", `${letterOrigin()}/events`));
     text.push(textSectionHeading("🌙", "What's on"));
     for (const event of letter.tonight) {
       const rendered = renderEvent(event);
@@ -899,7 +912,7 @@ export function buildMorningLetter(
   }
 
   if (letter.civic.length > 0) {
-    html.push(sectionHeading("🏛", "Civic", `${SITE_ORIGIN}/civic`));
+    html.push(sectionHeading("🏛", "Civic", `${letterOrigin()}/civic`));
     text.push(textSectionHeading("🏛", "Civic"));
     for (const event of letter.civic) {
       const rendered = renderEvent(event);
@@ -909,7 +922,7 @@ export function buildMorningLetter(
   }
 
   if (letter.sports.length > 0) {
-    html.push(sectionHeading("🏈", "Sports", `${SITE_ORIGIN}/sports`));
+    html.push(sectionHeading("🏈", "Sports", `${letterOrigin()}/sports`));
     text.push(textSectionHeading("🏈", "Sports"));
     for (const event of letter.sports) {
       const school = "school" in event ? event.school : "";
@@ -921,14 +934,14 @@ export function buildMorningLetter(
 
   const school = options.school ?? null;
   if (school) {
-    html.push(sectionHeading("🎒", "Schools", `${SITE_ORIGIN}/schools`));
+    html.push(sectionHeading("🎒", "Schools", `${letterOrigin()}/schools`));
     text.push(textSectionHeading("🎒", "Schools"));
     const rendered = renderEvent(
       {
         title: school.title,
         starts_at: school.starts_at,
         place: school.place || school.district,
-        url: school.url || `${SITE_ORIGIN}/schools`,
+        url: school.url || `${letterOrigin()}/schools`,
         time_unknown: school.time_unknown ?? true,
       },
       school.district,
@@ -938,15 +951,15 @@ export function buildMorningLetter(
   }
 
   html.push(`<p style="margin:32px 0 0;padding-top:16px;border-top:1px solid #eeeeee;font-family:${LETTER_FONT};font-size:12px;line-height:1.5;color:#888888;text-align:center;">
-traverse.news · Traverse City, Michigan<br>
-<a href="${SITE_ORIGIN}/tips" style="color:#555555;">Send a tip</a> · <a href="${SITE_ORIGIN}/email/${escapeHtml(letter.date)}" style="color:#555555;">Archive</a> · <a href="${escapeHtml(unsubscribeHref)}" style="color:#555555;">Unsubscribe</a>
+${letterWordmark()} · ${getSite().place}, ${getSite().placeState}<br>
+<a href="${letterOrigin()}/tips" style="color:#555555;">Send a tip</a> · <a href="${letterOrigin()}/email/${escapeHtml(letter.date)}" style="color:#555555;">Archive</a> · <a href="${escapeHtml(unsubscribeHref)}" style="color:#555555;">Unsubscribe</a>
 </p>
 </div>
 </body>
 </html>`);
-  text.push("traverse.news · Traverse City, Michigan");
-  text.push(`Send a tip: ${SITE_ORIGIN}/tips`);
-  text.push(`Archive: ${SITE_ORIGIN}/email/${letter.date}`);
+  text.push(`${letterWordmark()} · ${getSite().place}, ${getSite().placeState}`);
+  text.push(`Send a tip: ${letterOrigin()}/tips`);
+  text.push(`Archive: ${letterOrigin()}/email/${letter.date}`);
   text.push(`Unsubscribe: ${unsubscribeHref}`);
 
   return {

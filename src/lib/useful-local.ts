@@ -1,7 +1,11 @@
 /**
  * Outbound Useful local / Going out — link only, never clone directories.
- * Nick locked this list; do not invent hours or listings.
+ * Traverse list is Nick-locked; Ann Arbor list is official directories only.
+ * Do not invent hours or listings.
  */
+import { getSiteId } from "@/lib/sites";
+import { ANN_ARBOR_GOING_OUT, ANN_ARBOR_LOCAL_GROUPS } from "@/lib/sites/ann-arbor/useful-local";
+
 export type UsefulLocalLink = {
   href: string;
   label: string;
@@ -15,7 +19,7 @@ export type LocalGroup = {
   links: readonly UsefulLocalLink[];
 };
 
-export const LOCAL_GROUPS: readonly LocalGroup[] = [
+const TRAVERSE_LOCAL_GROUPS: readonly LocalGroup[] = [
   {
     id: "going-out",
     title: "Going out",
@@ -86,5 +90,21 @@ export const LOCAL_GROUPS: readonly LocalGroup[] = [
  * Editorial sentence under the Events dek, not a promo chip strip.
  * Do not put builders, Sleeping Bear, TART, lighthouse, or Dennos here.
  */
-export const GOING_OUT: readonly UsefulLocalLink[] =
-  LOCAL_GROUPS[0].links;
+const TRAVERSE_GOING_OUT: readonly UsefulLocalLink[] =
+  TRAVERSE_LOCAL_GROUPS[0].links;
+
+export function getLocalGroups(): readonly LocalGroup[] {
+  return getSiteId() === "ann-arbor"
+    ? ANN_ARBOR_LOCAL_GROUPS
+    : TRAVERSE_LOCAL_GROUPS;
+}
+
+export function getGoingOut(): readonly UsefulLocalLink[] {
+  return getSiteId() === "ann-arbor" ? ANN_ARBOR_GOING_OUT : TRAVERSE_GOING_OUT;
+}
+
+/** @deprecated use getLocalGroups() — Traverse default for existing imports. */
+export const LOCAL_GROUPS = TRAVERSE_LOCAL_GROUPS;
+
+/** @deprecated use getGoingOut() */
+export const GOING_OUT = TRAVERSE_GOING_OUT;

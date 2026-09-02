@@ -13,6 +13,7 @@ import {
   isDetroitSunday,
   pickLetterSchoolDate,
 } from "@/lib/email-letter";
+import { getSite } from "@/lib/sites";
 
 export const dynamic = "force-dynamic";
 
@@ -133,9 +134,9 @@ export async function POST(request: Request) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      from: "Traverse News <info@traverse.news>",
+      from: `${getSite().emailFromName} <${getSite().emailFromAddress}>`,
       to: [email],
-      reply_to: "info@traverse.news",
+      reply_to: getSite().emailFromAddress,
       subject: letter.subject,
       html: letter.html,
       text: letter.text,

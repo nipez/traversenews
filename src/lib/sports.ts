@@ -1,4 +1,5 @@
 import { isRecordEagleStory } from "@/lib/paywall";
+import { isPreferredSportsSource } from "@/lib/source-lanes";
 import type { Source, Story } from "@/lib/types";
 
 const SPORTS_BEATS = new Set(["beat_sports", "beat_hs_sports"]);
@@ -11,7 +12,8 @@ export type SportsStory = Story & {
   beat_id: string;
 };
 
-function sportsRank(story: Story): number {
+function sportsRank(story: Story, source?: Source): number {
+  if (isPreferredSportsSource(source, story.source_id)) return 2;
   if (PREFERRED_SPORTS_SOURCE_IDS.has(story.source_id)) return 2;
   if (isRecordEagleStory(story)) return 0;
   return 1;
@@ -37,7 +39,9 @@ export function selectSportsStories(
     })
     .filter((s) => s.title.trim() && s.url.trim())
     .sort((a, b) => {
-      const rankDiff = sportsRank(b) - sportsRank(a);
+      const rankDiff =
+        sportsRank(b, byId.get(b.source_id)) -
+        sportsRank(a, byId.get(a.source_id));
       if (rankDiff !== 0) return rankDiff;
       return (
         new Date(b.published_at).getTime() - new Date(a.published_at).getTime()

@@ -2,12 +2,13 @@ import { DeskRail } from "@/components/DeskRail";
 import { PublicShell } from "@/components/PublicShell";
 import { getPageCopySnapshot } from "@/lib/public-snapshots";
 import { SafeEssayBody, SafeInlineCopy } from "@/lib/safe-copy";
+import { siteWordmark } from "@/lib/sites";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "About traverse.news",
-};
+export function generateMetadata() {
+  return { title: `About ${siteWordmark()}` };
+}
 
 export default async function AboutPage() {
   const { copy } = await getPageCopySnapshot();

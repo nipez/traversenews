@@ -1,13 +1,17 @@
 import Parser from "rss-parser";
 import { newId } from "@/lib/ids";
+import { getSite } from "@/lib/sites";
 import type { Source, Story } from "@/lib/types";
 
-const parser = new Parser({
-  timeout: 15000,
-  headers: {
-    "User-Agent": "traverse.news-puller/1.0 (+https://traverse.news)",
-  },
-});
+function rssParser(): Parser {
+  return new Parser({
+    timeout: 15000,
+    headers: {
+      "User-Agent": getSite().userAgent,
+      Accept: "application/rss+xml, application/xml, text/xml, */*",
+    },
+  });
+}
 
 function stripHtml(input: string): string {
   return input
@@ -21,15 +25,25 @@ function truncate(input: string, max = 220): string {
   return `${input.slice(0, max - 1).trim()}…`;
 }
 
+function resolveItemUrl(raw: string, source: Source): string {
+  const trimmed = raw.trim();
+  if (!trimmed) return "";
+  try {
+    return new URL(trimmed, source.homepage || source.feed_url || undefined).href;
+  } catch {
+    return trimmed;
+  }
+}
+
 export async function pullRssSource(source: Source): Promise<Story[]> {
   if (!source.feed_url) return [];
-  const feed = await parser.parseURL(source.feed_url);
+  const feed = await rssParser().parseURL(source.feed_url);
   const items = feed.items.slice(0, 25);
   const stories: Story[] = [];
   for (const item of items) {
     const title = (item.title ?? "").trim();
-    const url = (item.link ?? item.guid ?? "").trim();
-    if (!title || !url) continue;
+    const url = resolveItemUrl(item.link ?? item.guid ?? "", source);
+    if (!title || !url || !/^https?:\/\//i.test(url)) continue;
     const rawDek =
       item.contentSnippet ||
       item.summary ||

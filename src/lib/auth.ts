@@ -1,9 +1,11 @@
 import { cookies } from "next/headers";
+import { getSite } from "@/lib/sites";
 
 const COOKIE = "tn_desk_session";
-/** Shared across apex + www so a phone that still hits www keeps the session. */
-const COOKIE_DOMAIN =
-  process.env.NODE_ENV === "production" ? ".traverse.news" : undefined;
+
+function cookieDomain(): string | undefined {
+  return getSite().cookieDomain;
+}
 
 function sessionCookieOptions(maxAge: number) {
   return {
@@ -12,7 +14,7 @@ function sessionCookieOptions(maxAge: number) {
     path: "/",
     secure: process.env.NODE_ENV === "production",
     maxAge,
-    ...(COOKIE_DOMAIN ? { domain: COOKIE_DOMAIN } : {}),
+    ...(cookieDomain() ? { domain: cookieDomain() } : {}),
   };
 }
 
@@ -21,7 +23,7 @@ export function getDevDeskPassword(): string {
 }
 
 export function getDevDeskEmail(): string {
-  return process.env.DEV_DESK_EMAIL || "nick@traverse.news";
+  return process.env.DEV_DESK_EMAIL || getSite().staffEmail;
 }
 
 /** Optional shared secret for Traverse News / browser imports (falls back to desk password). */
@@ -42,7 +44,7 @@ export async function clearDeskSession(): Promise<void> {
   const jar = await cookies();
   // Expire domain-scoped cookie (production) and any leftover host-only cookie.
   jar.set(COOKIE, "", sessionCookieOptions(0));
-  if (COOKIE_DOMAIN) {
+  if (cookieDomain()) {
     jar.set(COOKIE, "", {
       httpOnly: true,
       sameSite: "lax",

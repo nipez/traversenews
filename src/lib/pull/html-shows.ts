@@ -1,4 +1,6 @@
 import { detroitWallToUtc } from "@/lib/dates";
+import { extractMarqueeShows } from "@/lib/pull/html-ann-arbor";
+import { getSite } from "@/lib/sites";
 import {
   stableShowId,
   venueNameForSource,
@@ -518,7 +520,7 @@ export async function pullHtmlShows(
     const res = await fetch(url, {
       headers: {
         "User-Agent":
-          "Mozilla/5.0 (compatible; TraverseNews/1.0; +https://traverse.news)",
+          `Mozilla/5.0 (compatible; ${getSite().userAgent})`,
         Accept: "text/html,application/xhtml+xml",
       },
       redirect: "follow",
@@ -562,6 +564,8 @@ export async function pullHtmlShows(
       shows = parseElkRapidsCinemaHtml(html, source);
     } else if (source.id === "src_alluvion") {
       shows = parseAlluvionHtml(html, source);
+    } else if (source.id === "src_marquee_shows") {
+      shows = extractMarqueeShows(html, source);
     } else {
       return {
         shows: [],

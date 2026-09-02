@@ -30,6 +30,12 @@ export async function POST(request: Request) {
     beat_id: body.beat_id || "beat_general",
     enabled: body.enabled ?? true,
     notes: body.notes ?? "",
+    lane: body.lane,
+    place: body.place?.trim() || undefined,
+    weight: body.weight,
+    paywalled: body.paywalled,
+    family: body.family,
+    heavy: body.heavy,
   };
   await upsertSource(source);
   return NextResponse.json({ source });

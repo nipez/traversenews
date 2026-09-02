@@ -1,7 +1,9 @@
 import { DeskRail } from "@/components/DeskRail";
 import { EventTipsForm } from "@/components/EventTipsForm";
+import { OfficialCalendars } from "@/components/OfficialCalendars";
 import { PublicShell } from "@/components/PublicShell";
 import { SectionHero } from "@/components/SectionHero";
+import { getSite } from "@/lib/sites";
 import { formatCivicDate, formatEventWhenParts } from "@/lib/dates";
 import { venueKicker } from "@/lib/events";
 import {
@@ -114,10 +116,15 @@ export default async function EventsPage() {
               <li className="civic-empty">No community listings yet.</li>
             ) : null}
           </ul>
+          <OfficialCalendars links={getSite().eventsHandoffs} />
 
           <EventTipsForm />
         </div>
-        <DeskRail active="/events" />
+        <DeskRail
+          active="/events"
+          outboundLinks={getSite().eventsHandoffs}
+          outboundKicker="Official calendars"
+        />
       </div>
     </PublicShell>
   );

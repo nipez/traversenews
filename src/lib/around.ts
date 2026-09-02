@@ -1,6 +1,7 @@
 import type { ClusteredStory } from "@/lib/types";
 import { isAlertSourceId } from "@/lib/alerts";
 import { isRecordEagleCluster } from "@/lib/paywall";
+import { getSite, getSiteId } from "@/lib/sites";
 
 const JUNK_TITLE_MARKERS = [
   "blood drive",
@@ -125,7 +126,7 @@ function looksLikeCivicListing(input: {
   return false;
 }
 
-const LOCAL_PLACE_MARKERS = [
+const TRAVERSE_PLACE_MARKERS = [
   "traverse city",
   "grand traverse",
   "leelanau",
@@ -146,6 +147,69 @@ const LOCAL_PLACE_MARKERS = [
   "petoskey",
   "charlevoix",
 ];
+
+const WASHTENAW_PLACE_MARKERS = [
+  "ann arbor",
+  "ypsilanti",
+  "ypsi",
+  "saline",
+  "chelsea",
+  "dexter",
+  "washtenaw",
+  "pittsfield",
+  "scio township",
+  "superior township",
+];
+
+const WASHTENAW_RESERVED_MARKERS: Record<string, string[]> = {
+  Ypsilanti: ["ypsilanti", "ypsi"],
+  Saline: ["saline"],
+  Chelsea: ["chelsea"],
+  Dexter: ["dexter"],
+};
+
+function localPlaceMarkers(): string[] {
+  return getSiteId() === "ann-arbor"
+    ? WASHTENAW_PLACE_MARKERS
+    : TRAVERSE_PLACE_MARKERS;
+}
+
+/**
+ * Which reserved suburb a cluster is about (Ypsilanti / Saline / Chelsea / Dexter).
+ * Host + printed place names only — never invents a town.
+ */
+export function reservedPlaceForCluster(cluster: {
+  title: string;
+  dek?: string;
+  url: string;
+  sources: Array<{ id: string; name: string }>;
+}): string | null {
+  const reserved = getSite().reservedPlaces;
+  if (reserved.length === 0) return null;
+  let host = "";
+  try {
+    host = new URL(cluster.url).hostname.replace(/^www\./, "").toLowerCase();
+  } catch {
+    host = "";
+  }
+  const hostPlace =
+    host.includes("cityofypsilanti.com") || host.includes("washtenawvoice.com")
+      ? "Ypsilanti"
+      : host.includes("salinemi.gov") || host.includes("salinesummit")
+        ? "Saline"
+        : host.includes("city-chelsea.org")
+          ? "Chelsea"
+          : null;
+  if (hostPlace && reserved.includes(hostPlace)) return hostPlace;
+
+  const blob =
+    `${cluster.title} ${cluster.dek ?? ""} ${cluster.sources.map((s) => s.name).join(" ")}`.toLowerCase();
+  for (const place of reserved) {
+    const markers = WASHTENAW_RESERVED_MARKERS[place] ?? [place.toLowerCase()];
+    if (markers.some((m) => blob.includes(m))) return place;
+  }
+  return null;
+}
 
 function normalizeUrl(url: string): string {
   return url.trim().replace(/\/$/, "");
@@ -204,13 +268,24 @@ const PREFERRED_NEWS_SOURCE_IDS = new Set([
   "src_benzie_rp",
   "src_betsie",
   "src_antrim_review",
+  "src_michigandaily",
+  "src_michigandaily_news",
+  "src_aaobserver",
+  "src_wemu",
+  "src_suntimes",
+  "src_concentrate",
+  "src_saline_summit",
+  "src_washtenaw_voice",
 ]);
 
 /**
  * High-volume free TV wire. Cap separately so 9&10 does not eat the bay.
  * Ticker is capped with Eyes Only Media (below), not here.
  */
-const HEAVY_FREE_WIRE_SOURCE_IDS = new Set(["src_910"]);
+const HEAVY_FREE_WIRE_SOURCE_IDS = new Set([
+  "src_910",
+  "src_michigan_public",
+]);
 
 /**
  * Eyes Only Media family — The Ticker, Northern Express, TC Business News.
@@ -228,6 +303,10 @@ const OFFICIAL_NEWS_SOURCE_IDS = new Set([
   "src_city_news",
   "src_leelanau_co",
   "src_gtb",
+  "src_a2_news",
+  "src_ypsi_news",
+  "src_saline_news",
+  "src_chelsea_news",
 ]);
 
 /** Heavy TV wire — cap like Record-Eagle so it does not eat the bay. */
@@ -258,6 +337,47 @@ export function isOfficialNewsCluster(cluster: ClusteredStory): boolean {
 }
 
 /** Columns, briefs, calendars, books, wire fillers — not homepage news. */
+/**
+ * U-M varsity recaps — not Ann Arbor / Washtenaw town news.
+ * Keep "Michigan Democrats" / legislature; drop SportsMonday and Daily /sports/.
+ */
+export function looksLikeUmVarsity(input: {
+  title: string;
+  dek?: string;
+  url: string;
+}): boolean {
+  const blob = `${input.title} ${input.dek ?? ""}`.toLowerCase();
+  try {
+    const u = new URL(input.url);
+    const host = u.hostname.replace(/^www\./, "").toLowerCase();
+    const path = u.pathname.toLowerCase();
+    if (host.includes("michigandaily.com") && path.includes("/sports/")) {
+      return true;
+    }
+  } catch {
+    // ignore bad urls
+  }
+  if (/\bsports\s*monday\b/i.test(blob)) return true;
+  if (
+    /\b(u-?m|university of michigan|wolverines?)\b/i.test(blob) &&
+    /\b(football|basketball|hockey|baseball|softball|soccer|volleyball|ncaa|big ten|big-ten)\b/i.test(
+      blob,
+    )
+  ) {
+    return true;
+  }
+  if (
+    /\bmichigan\b/i.test(blob) &&
+    /\b(football|wolverines?)\b/i.test(blob) &&
+    !/\b(democrat|republican|legislat|house|senate|governor|primary|election)\b/i.test(
+      blob,
+    )
+  ) {
+    return true;
+  }
+  return false;
+}
+
 export function isLifestyleJunk(input: {
   title: string;
   dek?: string;
@@ -317,7 +437,7 @@ export function looksLikeLocalNews(input: {
   url: string;
 }): boolean {
   const blob = `${input.title} ${input.dek ?? ""}`.toLowerCase();
-  if (LOCAL_PLACE_MARKERS.some((m) => blob.includes(m))) return true;
+  if (localPlaceMarkers().some((m) => blob.includes(m))) return true;
   try {
     const path = new URL(input.url).pathname.toLowerCase();
     if (
@@ -333,7 +453,12 @@ export function looksLikeLocalNews(input: {
     if (
       host.includes("traversecitymi.gov") ||
       host.includes("leelanau.gov") ||
-      host.includes("gtbindians.org")
+      host.includes("gtbindians.org") ||
+      host.includes("a2gov.org") ||
+      host.includes("washtenaw.org") ||
+      host.includes("cityofypsilanti.com") ||
+      host.includes("salinemi.gov") ||
+      host.includes("city-chelsea.org")
     ) {
       return true;
     }
@@ -384,6 +509,8 @@ function clusterScore(cluster: ClusteredStory): number {
 
 /** Drop bay copy older than this many Detroit calendar days. */
 export const BAY_MAX_AGE_DAYS = 14;
+/** Official city/county desks may sit a bit longer on reserved slots. */
+export const OFFICIAL_MAX_AGE_DAYS = 45;
 
 export type AroundSelectOptions = {
   limit?: number;
@@ -419,7 +546,10 @@ export type AroundSelectOptions = {
 function withinBayMaxAge(cluster: ClusteredStory, now: Date): boolean {
   const published = new Date(cluster.published_at).getTime();
   if (!Number.isFinite(published)) return false;
-  const maxAgeMs = BAY_MAX_AGE_DAYS * 24 * 60 * 60 * 1000;
+  const days = isOfficialNewsCluster(cluster)
+    ? OFFICIAL_MAX_AGE_DAYS
+    : BAY_MAX_AGE_DAYS;
+  const maxAgeMs = days * 24 * 60 * 60 * 1000;
   return published >= now.getTime() - maxAgeMs;
 }
 
@@ -544,6 +674,7 @@ export function selectAroundTheBay(
     .filter((c) => !isOutletHomepageUrl(c.url))
     .filter((c) => !isLifestyleJunk(c))
     .filter((c) => !looksLikeCivicListing(c))
+    .filter((c) => getSiteId() !== "ann-arbor" || !looksLikeUmVarsity(c))
     .filter((c) => withinBayMaxAge(c, now))
     .sort((a, b) => {
       const diff = clusterScore(b) - clusterScore(a);
@@ -595,9 +726,31 @@ export function selectAroundTheBay(
       maxUpNorth,
   );
 
-  // 0) Reserve a few official city/county/tribal headlines (may be older).
+  // 0) One slot per reserved suburb (Ypsilanti / Saline / Chelsea / Dexter)
+  // before official city RSS, so one town hall cannot take the first two
+  // slots and Daily / Observer volume cannot zero those towns.
+  for (const place of getSite().reservedPlaces) {
+    if (picked.length >= limit) break;
+    const match = freeNews.find((c) => {
+      if (used.has(c.id)) return false;
+      return reservedPlaceForCluster(c) === place;
+    });
+    if (!match) continue;
+    const key = primarySourceKey(match);
+    if ((counts.get(key) ?? 0) >= maxPerSource) continue;
+    if (!underHeavy(key)) continue;
+    if (isEyesOnlyCluster(match) && !underEyesOnly()) continue;
+    used.add(match.id);
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+    if (isEyesOnlyCluster(match)) eyesOnlyCount.n += 1;
+    picked.push(match);
+  }
+
+  // 0b) Then a few official city/county/tribal headlines (may be older).
   for (const c of officialNews) {
-    if (picked.length >= maxOfficial) break;
+    if (picked.length >= limit) break;
+    const officialAlready = picked.filter(isOfficialNewsCluster).length;
+    if (officialAlready >= maxOfficial) break;
     if (used.has(c.id)) continue;
     const key = primarySourceKey(c);
     if ((counts.get(key) ?? 0) >= maxPerSource) continue;

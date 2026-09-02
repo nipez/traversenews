@@ -4,6 +4,7 @@ import { PublicShell } from "@/components/PublicShell";
 import { SectionHero } from "@/components/SectionHero";
 import { ShowsVenueFilter } from "@/components/ShowsVenueFilter";
 import { detroitDayKey } from "@/lib/dates";
+import { getSite } from "@/lib/sites";
 import {
   getSectionHeadersSnapshot,
   getShowsSnapshot,
@@ -14,37 +15,6 @@ export const dynamic = "force-dynamic";
 export const metadata = {
   title: "Shows",
 };
-
-const VENUE_LINKS = [
-  {
-    name: "State Theatre / Bijou",
-    href: "https://stateandbijou.org/",
-  },
-  {
-    name: "The Bay Theatre",
-    href: "https://thebaytheatre.org/",
-  },
-  {
-    name: "Elk Rapids Cinema",
-    href: "https://www.elkrapidscinema.com/",
-  },
-  {
-    name: "AMC Cherry Blossom 14",
-    href: "https://www.amctheatres.com/movie-theatres/traverse-city-mi/amc-cherry-blossom-14",
-  },
-  {
-    name: "Old Town Playhouse",
-    href: "https://www.oldtownplayhouse.com/",
-  },
-  {
-    name: "City Opera House",
-    href: "https://www.cityoperahouse.org/",
-  },
-  {
-    name: "The Alluvion",
-    href: "https://www.thealluvion.org/",
-  },
-];
 
 export default async function ShowsPage() {
   const snap = await getShowsSnapshot();
@@ -67,7 +37,7 @@ export default async function ShowsPage() {
         kicker="On screen & stage"
         title="Shows"
         header={headers.headers.shows}
-        dek="Movies and live theatre around the bay."
+        dek={getSite().pageCopy.showsDek}
       />
       <div className="about-layout civic-layout">
         <div className="about-essay civic-main">
@@ -88,7 +58,7 @@ export default async function ShowsPage() {
 
         <DeskRail
           active="/shows"
-          outboundLinks={VENUE_LINKS}
+          outboundLinks={getSite().showsVenueLinks}
           outboundKicker="Venues"
         />
       </div>

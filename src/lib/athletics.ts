@@ -4,6 +4,12 @@ import {
   parseEventStartsAt,
 } from "@/lib/dates";
 import { HS_ATHLETICS_EVENT_SOURCE_IDS, shortHash } from "@/lib/events";
+import { getSiteId } from "@/lib/sites";
+import {
+  ANN_ARBOR_ATHLETICS_CORE_CHIPS,
+  ANN_ARBOR_ATHLETICS_CORE_SCHOOLS,
+  ANN_ARBOR_ATHLETICS_CORE_SOURCE_IDS,
+} from "@/lib/sites/ann-arbor/athletics";
 import type { AthleticsGame, Source } from "@/lib/types";
 
 /** Soft ceiling for stored athletics games (upcoming slate, not a full season). */
@@ -50,10 +56,34 @@ export const ATHLETICS_CORE_SCHOOLS = [
 ] as const;
 
 export type AthleticsCoreChip = {
-  label: (typeof ATHLETICS_CORE_SCHOOLS)[number];
+  label: string;
   sourceId: string;
   aliases: string[];
 };
+
+export function getAthleticsCoreSourceIds(): Set<string> {
+  if (getSiteId() === "ann-arbor") {
+    return new Set(ANN_ARBOR_ATHLETICS_CORE_SOURCE_IDS);
+  }
+  return ATHLETICS_CORE_SOURCE_IDS;
+}
+
+export function getAthleticsCoreChips(): AthleticsCoreChip[] {
+  return getSiteId() === "ann-arbor"
+    ? ANN_ARBOR_ATHLETICS_CORE_CHIPS
+    : ATHLETICS_CORE_CHIPS;
+}
+
+export function getAthleticsCoreSchools(): readonly string[] {
+  return getSiteId() === "ann-arbor"
+    ? ANN_ARBOR_ATHLETICS_CORE_SCHOOLS
+    : ATHLETICS_CORE_SCHOOLS;
+}
+
+export function getAthleticsSurroundingSourceIds(): Set<string> {
+  if (getSiteId() === "ann-arbor") return new Set();
+  return ATHLETICS_SURROUNDING_SOURCE_IDS;
+}
 
 export const ATHLETICS_CORE_CHIPS: AthleticsCoreChip[] = [
   {
@@ -106,14 +136,11 @@ function normalizeSchoolName(raw: string): string {
 export function coreChipForGame(
   game: AthleticsGame,
 ): AthleticsCoreChip | null {
-  const bySource = ATHLETICS_CORE_CHIPS.find(
-    (c) => c.sourceId === game.source_id,
-  );
+  const chips = getAthleticsCoreChips();
+  const bySource = chips.find((c) => c.sourceId === game.source_id);
   if (bySource) return bySource;
   const school = normalizeSchoolName(game.school);
-  return (
-    ATHLETICS_CORE_CHIPS.find((c) => c.aliases.includes(school)) ?? null
-  );
+  return chips.find((c) => c.aliases.includes(school)) ?? null;
 }
 
 /** Public school label in the slate (St. Francis chip wording). */
@@ -129,11 +156,10 @@ export function gameMatchesSchoolFilter(
 ): boolean {
   const wanted = school.trim();
   if (!wanted) return true;
+  const chips = getAthleticsCoreChips();
   const chip =
-    ATHLETICS_CORE_CHIPS.find((c) => c.label === wanted) ??
-    ATHLETICS_CORE_CHIPS.find((c) =>
-      c.aliases.includes(normalizeSchoolName(wanted)),
-    );
+    chips.find((c) => c.label === wanted) ??
+    chips.find((c) => c.aliases.includes(normalizeSchoolName(wanted)));
   if (chip) {
     return (
       game.source_id === chip.sourceId ||
@@ -144,12 +170,12 @@ export function gameMatchesSchoolFilter(
 }
 
 export function isCoreAthleticsGame(game: AthleticsGame): boolean {
-  if (ATHLETICS_CORE_SOURCE_IDS.has(game.source_id)) return true;
+  if (getAthleticsCoreSourceIds().has(game.source_id)) return true;
   return coreChipForGame(game) != null;
 }
 
 export function isSurroundingAthleticsGame(game: AthleticsGame): boolean {
-  if (ATHLETICS_SURROUNDING_SOURCE_IDS.has(game.source_id)) return true;
+  if (getAthleticsSurroundingSourceIds().has(game.source_id)) return true;
   return (ATHLETICS_SURROUNDING_SCHOOLS as readonly string[]).includes(
     game.school,
   );
@@ -223,6 +249,20 @@ export function schoolFromSourceId(sourceId: string): string {
       return "Northport";
     case "src_centrallake_ath":
       return "Central Lake";
+    case "src_pioneer_ath":
+      return "Pioneer";
+    case "src_skyline_ath":
+      return "Skyline";
+    case "src_huron_ath":
+      return "Huron";
+    case "src_dexter_ath":
+      return "Dexter";
+    case "src_ypsi_ath":
+      return "Ypsilanti";
+    case "src_saline_ath":
+      return "Saline";
+    case "src_chelsea_ath":
+      return "Chelsea";
     default:
       return "Prep";
   }

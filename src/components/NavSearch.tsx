@@ -6,7 +6,13 @@ import { useState, type FormEvent } from "react";
 /**
  * Compact search in the shared ink nav (home + interiors).
  */
-export function NavSearch({ initialQuery = "" }: { initialQuery?: string }) {
+export function NavSearch({
+  initialQuery = "",
+  siteName = "traverse.news",
+}: {
+  initialQuery?: string;
+  siteName?: string;
+}) {
   const router = useRouter();
   const [q, setQ] = useState(initialQuery);
   const [open, setOpen] = useState(false);
@@ -54,7 +60,7 @@ export function NavSearch({ initialQuery = "" }: { initialQuery?: string }) {
         onSubmit={onSubmit}
       >
         <label className="sr-only" htmlFor="nav-search-q">
-          Search traverse.news
+          Search {siteName}
         </label>
         <input
           id="nav-search-q"

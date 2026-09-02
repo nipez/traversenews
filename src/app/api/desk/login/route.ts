@@ -6,6 +6,7 @@ import {
 } from "@/lib/auth";
 import { getSupabaseAnon } from "@/lib/data/supabase";
 import { supabaseConfigured } from "@/lib/data/store";
+import { getSite, isSiteAllowed, siteOrigin } from "@/lib/sites";
 
 function isFormPost(request: Request): boolean {
   const type = request.headers.get("content-type")?.toLowerCase() ?? "";
@@ -17,11 +18,10 @@ function isFormPost(request: Request): boolean {
 
 function apexOrigin(request: Request): string {
   const url = new URL(request.url);
-  if (
-    url.hostname === "www.traverse.news" ||
-    url.hostname === "traverse.news"
-  ) {
-    return "https://traverse.news";
+  const site = getSite();
+  const host = site.hostname.replace(/^www\./, "");
+  if (url.hostname === `www.${host}` || url.hostname === host) {
+    return siteOrigin();
   }
   return url.origin;
 }
@@ -73,6 +73,9 @@ function failureResponse(request: Request, message: string, status: number) {
 }
 
 export async function POST(request: Request) {
+  if (!isSiteAllowed()) {
+    return failureResponse(request, "This city is not on your staff list", 403);
+  }
   const { email, password } = await readCredentials(request);
 
   if (supabaseConfigured()) {

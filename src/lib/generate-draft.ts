@@ -1,3 +1,4 @@
+import { siteWordmark } from "@/lib/sites";
 import type { OriginalDraft } from "@/lib/types";
 
 export type GenerateResult =
@@ -28,7 +29,7 @@ export async function generateDraftBody(draft: OriginalDraft): Promise<GenerateR
     .filter(Boolean)
     .join("\n");
 
-  const system = `You draft short local-news articles for traverse.news.
+  const system = `You draft short local-news articles for ${siteWordmark()}.
 Hard rules:
 - Use ONLY facts present in the provided source title and dek.
 - Do NOT invent quotes, people, crashes, officials, organizers, or events.

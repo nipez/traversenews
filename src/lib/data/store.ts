@@ -1,5 +1,6 @@
 import { cache } from "react";
 import { createSeedData } from "@/lib/data/seed";
+import { getSiteId, siteOrigin } from "@/lib/sites";
 import { getTraverseDataKv, STORE_KEY } from "@/lib/data/kv";
 import {
   isBannedOriginalSlug,
@@ -91,16 +92,19 @@ function cloneSeed(): AppData {
 
 /** Seed catalog once per isolate — normalize used to rebuild it on every KV load. */
 let seedCatalog: AppData | null = null;
+let seedCatalogSite: string | null = null;
 function getSeedCatalog(): AppData {
-  if (!seedCatalog) seedCatalog = createSeedData();
+  const id = getSiteId();
+  if (!seedCatalog || seedCatalogSite !== id) {
+    seedCatalog = createSeedData();
+    seedCatalogSite = id;
+  }
   return seedCatalog;
 }
 
-function siteOrigin(): string {
-  return (
-    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
-    "https://traverse.news"
-  );
+export function resetSeedCatalog(): void {
+  seedCatalog = null;
+  seedCatalogSite = null;
 }
 
 function normalizeAppData(data: AppData): { data: AppData; scrubbed: boolean } {
@@ -215,7 +219,13 @@ function normalizeAppData(data: AppData): { data: AppData; scrubbed: boolean } {
       existing.name !== source.name ||
       existing.notes !== source.notes ||
       (source.calendar_url ?? null) !== (existing.calendar_url ?? null) ||
-      (source.calendar_pdf_url ?? null) !== (existing.calendar_pdf_url ?? null)
+      (source.calendar_pdf_url ?? null) !== (existing.calendar_pdf_url ?? null) ||
+      existing.lane !== source.lane ||
+      existing.place !== source.place ||
+      existing.weight !== source.weight ||
+      existing.paywalled !== source.paywalled ||
+      existing.family !== source.family ||
+      existing.heavy !== source.heavy
     ) {
       existing.feed_url = source.feed_url;
       existing.pull_method = source.pull_method;
@@ -225,6 +235,12 @@ function normalizeAppData(data: AppData): { data: AppData; scrubbed: boolean } {
       existing.notes = source.notes;
       existing.calendar_url = source.calendar_url ?? null;
       existing.calendar_pdf_url = source.calendar_pdf_url ?? null;
+      existing.lane = source.lane;
+      existing.place = source.place;
+      existing.weight = source.weight;
+      existing.paywalled = source.paywalled;
+      existing.family = source.family;
+      existing.heavy = source.heavy;
       catalogChanged = true;
     }
   }

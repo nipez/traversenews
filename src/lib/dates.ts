@@ -1,3 +1,5 @@
+import { getSite } from "@/lib/sites";
+
 const MONTHS = [
   "January",
   "February",
@@ -406,7 +408,7 @@ export function formatShowDateRange(
   return `${start} – ${end}`;
 }
 
-/** Homepage bay dateline, e.g. "Saturday, August 22 · Traverse City". */
+/** Homepage dateline, e.g. "Saturday, August 22 · Traverse City". */
 export function formatBayDateline(at = new Date()): string {
   const day = new Intl.DateTimeFormat("en-US", {
     timeZone: DETROIT,
@@ -414,7 +416,7 @@ export function formatBayDateline(at = new Date()): string {
     month: "long",
     day: "numeric",
   }).format(at);
-  return `${day} · Traverse City`;
+  return `${day} · ${getSite().place}`;
 }
 
 export function isWeekendWindow(iso: string, now = new Date()): boolean {
@@ -430,5 +432,5 @@ export function emailDateLabel(date = new Date()): string {
     month: "short",
     day: "numeric",
   }).format(date);
-  return `${label.toUpperCase()} · TRAVERSE CITY`;
+  return `${label.toUpperCase()} · ${getSite().place.toUpperCase()}`;
 }

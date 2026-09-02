@@ -1,6 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
+import { OfficialCalendars } from "@/components/OfficialCalendars";
 import { formatEventWhenParts } from "@/lib/dates";
+import { getSite } from "@/lib/sites";
 import type { EventItem } from "@/lib/types";
 
 export function TonightBlock({
@@ -24,9 +26,7 @@ export function TonightBlock({
         <div>
           <p className="tonight-kicker">Local happenings</p>
           <h2 className="tonight-hed">Coming up</h2>
-          <p className="tonight-dek">
-            Concerts, markets, and things to do around the bay.
-          </p>
+          <p className="tonight-dek">{getSite().pageCopy.comingUpDek}</p>
         </div>
         {showStamp ? (
           <Image
@@ -87,6 +87,9 @@ export function TonightBlock({
           </li>
         ) : null}
       </ul>
+      {shown.length === 0 ? (
+        <OfficialCalendars links={getSite().eventsHandoffs} />
+      ) : null}
 
       <Link href="/events" className="tonight-more">
         All Events →

@@ -12,7 +12,7 @@ import {
   type PublicOriginalCard,
 } from "@/lib/public-snapshots";
 import { sourceLinksFromUrls } from "@/lib/source-links";
-import { PUBLIC_ORIGINAL_BYLINE } from "@/lib/originals";
+import { getPublicOriginalByline } from "@/lib/originals";
 import {
   isQuotedParagraph,
   readTimeMinutes,
@@ -35,7 +35,7 @@ export async function generateMetadata({ params }: Props) {
   return {
     title: story.title,
     description: story.dek,
-    authors: [{ name: PUBLIC_ORIGINAL_BYLINE }],
+    authors: [{ name: getPublicOriginalByline() }],
   };
 }
 

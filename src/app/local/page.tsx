@@ -2,7 +2,8 @@ import { DeskRail } from "@/components/DeskRail";
 import { PublicShell } from "@/components/PublicShell";
 import { SectionHero } from "@/components/SectionHero";
 import { getSectionHeadersSnapshot } from "@/lib/public-snapshots";
-import { LOCAL_GROUPS } from "@/lib/useful-local";
+import { getLocalGroups } from "@/lib/useful-local";
+import { getSite } from "@/lib/sites";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +17,7 @@ export default async function LocalPage() {
   return (
     <PublicShell active="/local" header="compact">
       <SectionHero
-        kicker="Bay side"
+        kicker={getSite().localKicker}
         title="Useful local"
         header={headers.headers.local}
         dek="Standing outbound directories and places."
@@ -25,7 +26,7 @@ export default async function LocalPage() {
         <div className="about-essay local-main">
         <div className="local-page">
         <div className="local-groups">
-          {LOCAL_GROUPS.map((group) => (
+          {getLocalGroups().map((group) => (
             <section key={group.id} className="local-group">
               <h2 className="local-group-hed">{group.title}</h2>
               <ul className="local-list">

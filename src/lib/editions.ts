@@ -7,7 +7,8 @@ import {
   isCivicEvent,
   selectTonightEvents,
 } from "@/lib/events";
-import { PUBLIC_ORIGINAL_BYLINE } from "@/lib/originals";
+import { getPublicOriginalByline } from "@/lib/originals";
+import { siteWordmark } from "@/lib/sites";
 import { clusterStories } from "@/lib/pull/cluster";
 import type {
   AppData,
@@ -57,19 +58,19 @@ function civicForEdition(
 
 function toStoryCard(
   item: ClusteredStory | Story,
-  sourcesFallback: string[] = ["traverse.news"],
+  sourcesFallback?: string[],
 ): EditionStoryCard {
   const sources =
     "sources" in item && Array.isArray(item.sources)
       ? item.sources.map((s) => s.name)
-      : sourcesFallback;
+      : sourcesFallback ?? [siteWordmark()];
   return {
     title: item.title,
     dek: item.dek,
     url: item.url,
     published_at: item.published_at,
     sources,
-    byline: item.is_original ? PUBLIC_ORIGINAL_BYLINE : item.byline,
+    byline: item.is_original ? getPublicOriginalByline() : item.byline,
     slug: item.slug,
     is_original: item.is_original,
   };
@@ -121,7 +122,7 @@ export function buildEditionSnapshot(
     date: detroitDateKey(at),
     captured_at: at.toISOString(),
     lead: leadCluster
-      ? toStoryCard(leadCluster, ["traverse.news"])
+      ? toStoryCard(leadCluster, [siteWordmark()])
       : null,
     around: around.map((c) => toStoryCard(c)),
     events: weekendEvents.map(toEventCard),

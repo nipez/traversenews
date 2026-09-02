@@ -3,17 +3,21 @@ import {
   loadStore,
   replacePulledEvents,
   replacePulledStories,
+  replaceSchoolCalendarItems,
   replaceShowListings,
   saveStore,
   snapshotTodaysEdition,
   withSkippedPublicSnapshots,
 } from "@/lib/data/store";
 import { isInventedStory, keepRealOriginals } from "@/lib/data/scrub";
+import { pullAnnArborHtml, pullAnnArborNews } from "@/lib/pull/html-ann-arbor";
 import { pullHtmlEvents } from "@/lib/pull/html-events";
 import { pullHtmlShows } from "@/lib/pull/html-shows";
 import { pullIcsSource } from "@/lib/pull/ics";
 import { pullRssSource } from "@/lib/pull/rss";
-import type { EventItem, ShowListing, Story } from "@/lib/types";
+import { schoolItemsFromEvents } from "@/lib/schools";
+import { isSchoolCalSource } from "@/lib/source-lanes";
+import type { EventItem, SchoolCalendarItem, ShowListing, Story } from "@/lib/types";
 
 export type PullResult = {
   ok: boolean;
@@ -35,11 +39,25 @@ const HTML_EVENT_SOURCE_IDS = new Set([
   "src_visit_events",
 ]);
 
+/** Ann Arbor listings the Worker can read (Legistar / Ark / UMS / AADL / CivicClerk). */
+const HTML_AA_LISTING_IDS = new Set([
+  "src_a2_legistar",
+  "src_ark_events",
+  "src_ums_events",
+  "src_marquee_events",
+  "src_aadl_events",
+  "src_washtenaw_calendar",
+]);
+
+/** Official HTML newsrooms the Worker can read (headline + link only). */
+const HTML_AA_NEWS_IDS = new Set(["src_a2_news"]);
+
 /** Shows venues with static HTML showtimes the Worker can read. */
 const HTML_SHOW_SOURCE_IDS = new Set([
   "src_state_theatre",
   "src_elk_cinema",
   "src_alluvion",
+  "src_marquee_shows",
 ]);
 
 export async function runPull(): Promise<PullResult> {
@@ -64,6 +82,7 @@ async function runPullInner(): Promise<PullResult> {
   const pulledStories: Story[] = [];
   const pulledEvents: EventItem[] = [];
   const pulledShows: ShowListing[] = [];
+  const pulledSchools: SchoolCalendarItem[] = [];
   const pulledAt = new Date().toISOString();
   const touch = new Map<
     string,
@@ -78,7 +97,11 @@ async function runPullInner(): Promise<PullResult> {
         touch.set(source.id, { ok: true, error: null, attempted: true });
       } else if (source.pull_method === "ics") {
         const items = await pullIcsSource(source);
-        pulledEvents.push(...items);
+        if (isSchoolCalSource(source, source.id)) {
+          pulledSchools.push(...schoolItemsFromEvents(items));
+        } else {
+          pulledEvents.push(...items);
+        }
         touch.set(source.id, { ok: true, error: null, attempted: true });
       } else if (
         source.pull_method === "html" &&
@@ -100,6 +123,38 @@ async function runPullInner(): Promise<PullResult> {
             error: htmlResult.error,
             attempted: true,
           });
+        } else {
+          touch.set(source.id, { ok: true, error: null, attempted: true });
+        }
+      } else if (
+        source.pull_method === "html" &&
+        HTML_AA_NEWS_IDS.has(source.id)
+      ) {
+        const htmlResult = await pullAnnArborNews(source);
+        pulledStories.push(...htmlResult.stories);
+        if (htmlResult.bot_blocked) {
+          const msg =
+            `Bot-blocked or empty newsroom (${htmlResult.status ?? "n/a"}). ` +
+            "Do not invent headlines. Need Traverse News to pull this URL on the live computer " +
+            "and POST /api/desk/stories/import.";
+          errors.push({ source: source.name, error: msg });
+          touch.set(source.id, { ok: false, error: msg, attempted: true });
+        } else {
+          touch.set(source.id, { ok: true, error: null, attempted: true });
+        }
+      } else if (
+        source.pull_method === "html" &&
+        HTML_AA_LISTING_IDS.has(source.id)
+      ) {
+        const htmlResult = await pullAnnArborHtml(source);
+        pulledEvents.push(...htmlResult.events);
+        if (htmlResult.bot_blocked) {
+          const msg =
+            `Bot-blocked or empty listing (${htmlResult.status ?? "n/a"}). ` +
+            "Do not invent events. Need Traverse News to pull this URL on the live computer " +
+            "and POST the list to the matching /api/desk/*/import route.";
+          errors.push({ source: source.name, error: msg });
+          touch.set(source.id, { ok: false, error: msg, attempted: true });
         } else {
           touch.set(source.id, { ok: true, error: null, attempted: true });
         }
@@ -171,6 +226,12 @@ async function runPullInner(): Promise<PullResult> {
       ...new Set(pulledEvents.map((e) => e.source_id)),
     ];
     await replacePulledEvents(pulledEvents, icsSourceIds);
+  }
+  if (pulledSchools.length > 0) {
+    const schoolSourceIds = [
+      ...new Set(pulledSchools.map((s) => s.source_id)),
+    ];
+    await replaceSchoolCalendarItems(pulledSchools, schoolSourceIds);
   }
   if (pulledShows.length > 0) {
     const showSourceIds = [...new Set(pulledShows.map((s) => s.source_id))];

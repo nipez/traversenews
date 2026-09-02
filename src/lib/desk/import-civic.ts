@@ -8,6 +8,7 @@ import {
   isSchoolCalendarSource,
   stableEventId,
 } from "@/lib/events";
+import { getSite } from "@/lib/sites";
 import type { EventItem, Source } from "@/lib/types";
 
 export type CivicImportRow = {
@@ -101,7 +102,7 @@ export function normalizeImportedCivic(
     const place =
       typeof row.place === "string" && row.place.trim()
         ? row.place.trim()
-        : "Traverse City area";
+        : `${getSite().fallbackPlace} area`;
     const url =
       typeof row.url === "string" && row.url.trim() ? row.url.trim() : null;
 

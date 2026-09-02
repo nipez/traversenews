@@ -1174,6 +1174,16 @@ a:hover {
   color: #1c1712;
 }
 
+.civic-title a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.12em;
+}
+
+.civic-title a:hover {
+  color: #2a6f6c;
+}
+
 .civic-place {
   margin: 4px 0 0;
   font-size: 12px;
@@ -1184,6 +1194,41 @@ a:hover {
   padding: 12px 0;
   font-size: 14px;
   color: #7a7060;
+}
+
+.official-cals {
+  margin: 1.25rem 0 0;
+}
+
+.official-cals-kicker {
+  margin: 0 0 0.4rem;
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #7a7060;
+}
+
+.official-cals-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.official-cals-list li {
+  margin: 0.25rem 0;
+  font-size: 14px;
+}
+
+.official-cals-list a {
+  color: #1c1712;
+  text-decoration: underline;
+  text-underline-offset: 0.12em;
+}
+
+.official-cals-list a:hover {
+  color: #2a6f6c;
 }
 
 .civic-more {

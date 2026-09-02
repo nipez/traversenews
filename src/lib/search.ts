@@ -7,6 +7,7 @@ import {
   isHsAthleticsEventSource,
 } from "@/lib/events";
 import { selectUpcomingSchoolDays } from "@/lib/schools";
+import { siteWordmark } from "@/lib/sites";
 import type {
   AppData,
   AthleticsGame,
@@ -158,7 +159,7 @@ export function searchAppData(data: AppData, rawQuery: string): SearchResults {
       href,
       meta:
         sourceName(story.source_id) ||
-        (story.is_original ? "traverse.news" : undefined),
+        (story.is_original ? siteWordmark() : undefined),
       external,
     };
 

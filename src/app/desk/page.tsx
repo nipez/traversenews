@@ -3,6 +3,7 @@ import { DeskChrome } from "@/components/desk/DeskChrome";
 import { SmartAddSource } from "@/components/desk/SmartAddSource";
 import { beatSourceCounts } from "@/lib/data/seed";
 import { getAppData } from "@/lib/data/store";
+import { getSite } from "@/lib/sites";
 
 export const dynamic = "force-dynamic";
 
@@ -91,8 +92,7 @@ export default async function DeskSourcesPage({ searchParams }: Props) {
           <div className="mt-4 border border-[#ddd4c4] bg-paper-2 px-4 py-3">
             <p className="text-sm font-medium text-ink">Hand-add an alert</p>
             <p className="mt-0.5 text-sm text-muted">
-              Saw a Grand Traverse 911 or Ticker Facebook post? Paste the URL
-              on the Desk — no chat needed.
+              {getSite().pageCopy.deskAlertHint}
             </p>
             <Link href="/desk/alerts" className="mt-2 inline-block text-sm font-semibold text-teal hover:underline">
               Open Alerts →
