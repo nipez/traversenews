@@ -304,7 +304,14 @@ export async function getTodaysWeatherLine(
   at = new Date(),
 ): Promise<string | null> {
   const snap = await getWeatherSnapshot(at);
-  return snap?.line ?? null;
+  if (snap?.line) return snap.line;
+  // Local `next dev` has no KV — warm once per process so the date row
+  // is reviewable. Production still omits on a cold public GET.
+  if (process.env.NODE_ENV === "development") {
+    const fresh = await refreshWeatherSnapshot(at);
+    return fresh?.line ?? null;
+  }
+  return null;
 }
 
 /**
