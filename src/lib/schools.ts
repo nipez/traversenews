@@ -7,7 +7,7 @@ import { SCHOOL_CALENDAR_SOURCE_IDS, shortHash } from "@/lib/events";
 import type { SchoolCalendarItem, Source } from "@/lib/types";
 
 /** Soft ceiling for district academic calendar rows (not a full season dump). */
-export const MAX_STORED_SCHOOLS = 120;
+export const MAX_STORED_SCHOOLS = 300;
 
 export const SCHOOL_SOURCE_IDS = SCHOOL_CALENDAR_SOURCE_IDS;
 
@@ -289,11 +289,18 @@ export function sanitizeStoredSchools(items: SchoolCalendarItem[]): {
           new Date(b.starts_at).getTime() - new Date(a.starts_at).getTime(),
       );
     const room = Math.max(0, MAX_STORED_SCHOOLS - upcoming.length);
-    next = [...upcoming, ...past.slice(0, room)].sort(
+    const capped = [...upcoming, ...past.slice(0, room)].sort(
       (a, b) =>
         new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime(),
     );
-    changed = true;
+    // Overflow of upcoming-only rows must not flag dirty — nothing was dropped.
+    if (
+      capped.length !== next.length ||
+      capped.map((g) => g.id).join(",") !== next.map((g) => g.id).join(",")
+    ) {
+      next = capped;
+      changed = true;
+    }
   }
 
   return { items: next, changed };

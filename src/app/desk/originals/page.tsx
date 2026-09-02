@@ -1,15 +1,20 @@
 import Link from "next/link";
 import { DeskChrome } from "@/components/desk/DeskChrome";
 import { OriginalsIndex } from "@/components/desk/OriginalsIndex";
-import { listDrafts } from "@/lib/data/store";
+import { getAppData, listDrafts } from "@/lib/data/store";
 
 export const dynamic = "force-dynamic";
 
 export default async function DeskOriginalsPage() {
-  const drafts = await listDrafts();
+  // listDrafts → loadStore; getAppData shares the same request-memoized load.
+  const [drafts, data] = await Promise.all([listDrafts(), getAppData()]);
 
   return (
-    <DeskChrome active="originals">
+    <DeskChrome
+      active="originals"
+      lastPullAt={data.last_pull_at}
+      pulledItemCount={data.stories.filter((s) => !s.is_original).length}
+    >
       <div className="mx-auto max-w-3xl px-4 py-10 md:px-6">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>

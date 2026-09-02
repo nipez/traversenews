@@ -15,6 +15,7 @@
     "dry-run:bay-fresh": "tsx scripts/dry-run-bay-fresh.ts",
     "test:shows-parsers": "tsx scripts/test-shows-parsers.ts",
     "test:killed-original": "tsx scripts/test-killed-original.ts",
+    "test:desk-store-speed": "tsx scripts/test-desk-store-speed.ts",
     "pull": "tsx scripts/pull.ts",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",

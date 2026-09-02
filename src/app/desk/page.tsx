@@ -25,7 +25,11 @@ export default async function DeskSourcesPage({ searchParams }: Props) {
     data.beats.find((b) => b.id === id)?.name ?? "—";
 
   return (
-    <DeskChrome active="sources">
+    <DeskChrome
+      active="sources"
+      lastPullAt={data.last_pull_at}
+      pulledItemCount={data.stories.filter((s) => !s.is_original).length}
+    >
       <div className="mx-auto grid max-w-6xl gap-6 px-4 py-6 md:grid-cols-[220px_minmax(0,1fr)] md:px-6">
         <aside className="desk-beats">
           <div className="mb-3 flex items-center justify-between">

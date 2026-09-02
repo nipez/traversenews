@@ -7,7 +7,7 @@ import { shortHash } from "@/lib/events";
 import type { ShowListing, Source } from "@/lib/types";
 
 /** Soft ceiling — grouped titles, not a 14-screen grid dump. */
-export const MAX_STORED_SHOWS = 80;
+export const MAX_STORED_SHOWS = 160;
 
 /**
  * Cinema + playhouse sources for /shows.
@@ -229,8 +229,15 @@ export function sanitizeStoredShows(listings: ShowListing[]): {
           new Date(b.starts_at).getTime() - new Date(a.starts_at).getTime(),
       );
     const room = Math.max(0, MAX_STORED_SHOWS - upcoming.length);
-    next = dedupeShows([...upcoming, ...past.slice(0, room)]);
-    changed = true;
+    const capped = dedupeShows([...upcoming, ...past.slice(0, room)]);
+    // Overflow of upcoming-only rows must not flag dirty — nothing was dropped.
+    if (
+      capped.length !== next.length ||
+      capped.map((s) => s.id).join(",") !== next.map((s) => s.id).join(",")
+    ) {
+      next = capped;
+      changed = true;
+    }
   }
 
   return { shows: next, changed };
