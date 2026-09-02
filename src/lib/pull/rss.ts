@@ -8,6 +8,7 @@ function rssParser(): Parser {
     timeout: 15000,
     headers: {
       "User-Agent": getSite().userAgent,
+      Accept: "application/rss+xml, application/xml, text/xml, */*",
     },
   });
 }
