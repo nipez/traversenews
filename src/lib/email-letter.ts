@@ -2,6 +2,7 @@ import { emailDateLabel, formatEventWhenParts } from "@/lib/dates";
 import {
   emailDetroitDateKey,
   formatEmailEditionLabel,
+  titlesLikelySameStory,
 } from "@/lib/email-editions";
 import {
   isImportantSchoolDate,
@@ -273,22 +274,34 @@ function isGenericPlace(phrase: string): boolean {
 }
 
 /**
+ * Bare adjectives left by a budget cut — "to purchase new", "faces life-threatening".
+ * Object must follow; ending here is not stranger-parseable.
+ */
+const TRAIL_BARE_ADJECTIVE =
+  /\b(new|old|young|big|small|major|local|serious|critical|fatal|severe|life-threatening)$/i;
+
+/**
+ * Verbs / participles that need an object or complement — "boy faces",
+ * "office looking", "to purchase", "driver charged". OK mid-phrase when the
+ * object is present; never as the last word.
+ */
+const TRAIL_DANGLING_VERB =
+  /\b(looking|seeking|searching|investigating|asking|asks|calling|urging|hoping|planning|working|trying|charged|arrested|faces|facing|purchase|purchases|purchasing|seeks|seek|wants|needs)$/i;
+
+/**
  * Truncated / dangling phrases a stranger cannot parse — "Sheriff's office
- * looking", "Driver Charged in Center", "Teaching Kids in the Age".
+ * looking", "North Ed to purchase new", "1-year-old Acme boy faces",
+ * "Driver Charged in Center", "Teaching Kids in the Age".
  */
 function isIncompleteSubjectPhrase(phrase: string): boolean {
   const t = phrase.replace(/\s+/g, " ").trim();
   if (!t) return true;
   // Trailing preposition / article left after a bad cut.
   if (TRAIL_STOP.test(t)) return true;
-  // Dangling verb / participle with no object ("looking", "seeking", …).
-  if (
-    /\b(looking|seeking|searching|investigating|asking|calling|urging|hoping|planning|working|trying|charged|arrested)$/i.test(
-      t,
-    )
-  ) {
-    return true;
-  }
+  // Bare adjective with no noun after it.
+  if (TRAIL_BARE_ADJECTIVE.test(t)) return true;
+  // Dangling verb / participle with no object ("looking", "faces", "purchase").
+  if (TRAIL_DANGLING_VERB.test(t)) return true;
   // Truncated road / street name: "… in Center" / "… on Main" without Road/St.
   if (
     /\b(in|on|at|near|along)\s+(Center|Main|Front|State|Union|Division|Eighth|Fourteenth|Peninsula|Airport|Boardman)$/i.test(
@@ -302,14 +315,23 @@ function isIncompleteSubjectPhrase(phrase: string): boolean {
   // Classroom-AI era cut: "… in the Age", "… in the Age of", "… of Artificial".
   if (/\bin the Age(?:\s+of)?$/i.test(t)) return true;
   if (/\bof Artificial$/i.test(t)) return true;
+  // Cut mid-complement: "… for student" (needs transportation / students).
+  if (/\bfor (student|child|resident|driver)$/i.test(t)) return true;
+  // Gerund cut: "… After Falling" / "… After Being".
+  if (/\bAfter (Falling|Being|Getting|Leaving|Hitting)\b$/i.test(t)) return true;
   return false;
 }
 
-function usableSubjectPhrase(phrase: string): boolean {
+/** True when a stranger can parse the phrase (place + what, or full name). */
+export function usableSubjectPhrase(phrase: string): boolean {
   if (!phrase || isInsiderShorthand(phrase) || isGenericPlace(phrase)) return false;
   if (isIncompleteSubjectPhrase(phrase)) return false;
   // Never ship an ALL CAPS org kicker as a subject phrase.
   if (isAllCapsKicker(phrase)) return false;
+  // "North Ed" alone is local shorthand — require Northwest Ed (or a fuller name).
+  if (/\bNorth Ed\b/i.test(phrase) && !/\bNorthwest Ed\b/i.test(phrase)) {
+    return false;
+  }
   // "Grand Traverse Area Genealogical" is still just a place + one leftover word.
   const n = phrase
     .toLowerCase()
@@ -335,6 +357,61 @@ function usableSubjectPhrase(phrase: string): boolean {
     }
   }
   return true;
+}
+
+/** Acme / pond / toddler rewrite signals for same-story subject dedupe. */
+function toddlerIncidentSignals(text: string): {
+  toddler: boolean;
+  acme: boolean;
+  pond: boolean;
+  hospital: boolean;
+} {
+  const t = text.toLowerCase();
+  return {
+    toddler:
+      /1[- ]?year[- ]?old|one[- ]?year[- ]?old|toddler|infant|\bbaby\b/.test(t),
+    acme: /\bacme\b/.test(t),
+    pond: /\bpond\b/.test(t),
+    hospital: /hospitaliz|injur/.test(t),
+  };
+}
+
+/**
+ * Same toddler / pond / Acme incident across desks — even when one head is
+ * "1-year-old Acme boy faces …" and the other is "One-Year-Old Hospitalized".
+ */
+function looksLikeSameToddlerIncident(a: string, b: string): boolean {
+  const sa = toddlerIncidentSignals(a);
+  const sb = toddlerIncidentSignals(b);
+  if (!sa.toddler || !sb.toddler) return false;
+  if (sa.acme && sb.acme) return true;
+  if (sa.pond && sb.pond) return true;
+  if (sa.hospital && sb.hospital) return true;
+  // Cross-desk rewrite: Acme toddler + hospitalized / pond on the other.
+  if (
+    (sa.acme || sb.acme) &&
+    (sa.pond || sb.pond || sa.hospital || sb.hospital)
+  ) {
+    return true;
+  }
+  return false;
+}
+
+/** Same-story subject candidates — fuzzy, not title-exact only. */
+function isSameSubjectStory(
+  a: { text: string; sourceTitle: string },
+  b: { text: string; sourceTitle: string },
+): boolean {
+  if (a.text === b.text) return true;
+  if (titlesLikelySameStory(a.sourceTitle, b.sourceTitle)) return true;
+  if (titlesLikelySameStory(a.text, b.text)) return true;
+  if (titlesLikelySameStory(a.sourceTitle, b.text)) return true;
+  if (titlesLikelySameStory(a.text, b.sourceTitle)) return true;
+  if (looksLikeSameToddlerIncident(a.sourceTitle, b.sourceTitle)) return true;
+  if (looksLikeSameToddlerIncident(a.text, b.text)) return true;
+  if (looksLikeSameToddlerIncident(a.sourceTitle, b.text)) return true;
+  if (looksLikeSameToddlerIncident(a.text, b.sourceTitle)) return true;
+  return false;
 }
 
 function stripTrailingStops(s: string): string {
@@ -384,6 +461,38 @@ function phraseFromTitle(title: string, budget = 40): string {
   }
   if (/parking rates?/i.test(t) && /decrease|labor day|coming/i.test(t)) {
     return "Decrease in Parking Rates";
+  }
+  // Northwest Ed vehicle buy — compress from the title's actual object only
+  // (vans, buses). Never invent "buses"; never ship insider "North Ed" or a
+  // dangling "to purchase new".
+  if (
+    /\b(northwest(?:\s+education(?:\s+services)?)?|northwest\s+ed|north\s*ed|nwes)\b/i.test(
+      t,
+    ) &&
+    /\b(purchase|buy|buys)\b/i.test(t)
+  ) {
+    const object = t.match(
+      /\b(?:purchase|buy|buys)\s+(?:new\s+)?(?:passenger\s+)?(vans?|buses|bus)\b/i,
+    );
+    if (object) {
+      const raw = object[1].toLowerCase();
+      const noun =
+        raw === "bus" || raw === "buses"
+          ? "buses"
+          : raw === "van" || raw === "vans"
+            ? "vans"
+            : raw;
+      return `Northwest Ed new ${noun}`;
+    }
+    // No recognizable vehicle object in the title — fall through / drop.
+  }
+  // Acme / pond toddler — one short complete phrase across desk rewrites.
+  if (
+    /(1[- ]?year[- ]?old|one[- ]?year[- ]?old|toddler)/i.test(t) &&
+    /(acme|pond)/i.test(t) &&
+    /(hospitaliz|injur|faces|falling|fell)/i.test(t)
+  ) {
+    return "Acme toddler hospitalized";
   }
   // South Airport reopen — keep the verb; never ship a bare place stump.
   if (/south airport/i.test(t) && /reopen|opens?/i.test(t)) {
@@ -460,10 +569,13 @@ function phraseFromTitle(title: string, budget = 40): string {
     }
   }
 
-  // Word-budget cut: refuse incomplete endings; try keeping one more word when
-  // it completes a road name ("Center" → "Center Road") or crash noun.
+  // Word-budget cut: refuse incomplete endings. Soft-overflow a few words when
+  // that completes an object ("new" → "new vans", "faces" → "faces surgery")
+  // or a road name — never ship a dangling stump just to hit the budget.
   const words = t.split(" ");
+  const softCap = budget + 16;
   let out = "";
+  let cutAt = 0;
   for (let i = 0; i < words.length; i += 1) {
     const next = out ? `${out} ${words[i]}` : words[i];
     if (next.length > budget) {
@@ -490,18 +602,34 @@ function phraseFromTitle(title: string, budget = 40): string {
         const done = finalize(`${out} ${closer[1]}`);
         if (done) return done;
       }
+      cutAt = i;
       break;
     }
     out = next;
+    cutAt = i + 1;
+  }
+
+  // If the budget cut left a dangling adjective/verb, keep adding words until
+  // the phrase parses (within softCap) — else drop the phrase entirely.
+  if (out && isIncompleteSubjectPhrase(stripTrailingStops(out))) {
+    let extended = out;
+    for (let i = cutAt; i < words.length; i += 1) {
+      const next = `${extended} ${words[i]}`;
+      if (next.length > softCap) break;
+      extended = next;
+      const done = finalize(extended);
+      if (done) return done;
+    }
   }
 
   const cut = finalize(out);
   if (cut) return cut;
 
   // Last resort: try shorter complete prefixes from the full title.
+  // Prefer the longest complete phrase that still fits — never a stump.
   for (let n = words.length; n >= 3; n -= 1) {
     const candidate = finalize(words.slice(0, n).join(" "));
-    if (candidate && candidate.length <= Math.max(budget + 10, 48)) {
+    if (candidate && candidate.length <= Math.max(softCap, 48)) {
       return candidate;
     }
   }
@@ -527,6 +655,7 @@ function isSportsSourceCard(card: {
 function pickAroundNews(
   around: EmailEditionSnapshot["around"],
   limit = 2,
+  already: SubjectItem[] = [],
 ): SubjectItem[] {
   const ranked = [...around].sort((a, b) => {
     const ta = a.title || "";
@@ -534,6 +663,7 @@ function pickAroundNews(
     return hardNewsSubjectRank(ta) - hardNewsSubjectRank(tb);
   });
   const out: SubjectItem[] = [];
+  const seen = [...already];
   for (const card of ranked) {
     const title = (card.title || "").replace(/\s+/g, " ").trim();
     if (
@@ -547,8 +677,10 @@ function pickAroundNews(
     }
     const text = phraseFromTitle(title, 44);
     if (!usableSubjectPhrase(text)) continue;
-    if (out.some((p) => p.text === text)) continue;
-    out.push({ text, sourceTitle: title, kind: "around" });
+    const item: SubjectItem = { text, sourceTitle: title, kind: "around" };
+    if (seen.some((p) => isSameSubjectStory(p, item))) continue;
+    out.push(item);
+    seen.push(item);
     if (out.length >= limit) break;
   }
   return out;
@@ -557,7 +689,7 @@ function pickAroundNews(
 function pickAlertNews(
   alerts: EmailEditionSnapshot["alerts"],
   limit: number,
-  already: string[],
+  already: SubjectItem[],
 ): SubjectItem[] {
   const ranked = [...alerts].sort((a, b) => {
     const ta = a.title || "";
@@ -567,6 +699,7 @@ function pickAlertNews(
     return ra - rb;
   });
   const out: SubjectItem[] = [];
+  const seen = [...already];
   for (const alert of ranked) {
     const title = (alert.title || "").replace(/\s+/g, " ").trim();
     if (!title) continue;
@@ -574,8 +707,10 @@ function pickAlertNews(
     if (isLifestyleOrEventTitle(title) || isRegularSportsRecap(title)) continue;
     const text = phraseFromTitle(title, 36);
     if (!usableSubjectPhrase(text)) continue;
-    if (already.includes(text) || out.some((p) => p.text === text)) continue;
-    out.push({ text, sourceTitle: title, kind: "alert" });
+    const item: SubjectItem = { text, sourceTitle: title, kind: "alert" };
+    if (seen.some((p) => isSameSubjectStory(p, item))) continue;
+    out.push(item);
+    seen.push(item);
     if (out.length >= limit) break;
   }
   return out;
@@ -597,26 +732,25 @@ export function buildMorningLetterSubject(snapshot: EmailEditionSnapshot): strin
     }
   }
 
-  // Prefer three news phrases. No usable lead → take three from around.
-  const aroundNeed = Math.max(0, 3 - parts.length);
-  for (const item of pickAroundNews(snapshot.around, aroundNeed)) {
+  // Pull a wider pool so we can pack 3 complete phrases under the soft cap
+  // when the top-ranked three are too long together.
+  const aroundPool = pickAroundNews(snapshot.around, 5, parts);
+  for (const item of aroundPool) {
+    if (parts.some((p) => isSameSubjectStory(p, item))) continue;
     parts.push(item);
   }
 
-  // Fill remaining slots from news alerts (e.g. rabies) when around is thin.
-  const alertNeed = Math.max(0, 3 - parts.length);
-  if (alertNeed > 0) {
+  if (parts.length < 5) {
     for (const item of pickAlertNews(
       snapshot.alerts,
-      alertNeed,
-      parts.map((p) => p.text),
+      5 - parts.length,
+      parts,
     )) {
       parts.push(item);
     }
   }
 
-  let chosen = parts.slice(0, 3);
-  if (chosen.length === 0) {
+  if (parts.length === 0) {
     return `🗞️ ${letterWordmark()} · ${emailDetroitDateKey()}`;
   }
 
@@ -627,60 +761,66 @@ export function buildMorningLetterSubject(snapshot: EmailEditionSnapshot): strin
     return `🗞️ ${bits.join(" · ")}`;
   };
 
-  chosen = chosen
-    .map((p) => {
-      let text = p.text.replace(/\s+for a (year|month|week|day)$/i, "").trim();
-      text = text.replace(/\bheads back to court\b/i, "back in court");
-      text = text.replace(/\bPark back in court\b/i, "back in court");
-      text = text.replace(/\bsqueaks out (?:a )?win vs\.?\s+/i, "over ");
-      text = text.replace(/\bsqueaks out (?:a )?win\b/i, "wins");
-      text = text.replace(/\bwins? vs\.?\s+/i, "over ");
-      text = text.replace(
-        /^(?:three-vehicle |head-on )?crash on (M-\d+) near ([A-Za-z][A-Za-z .]+)$/i,
-        "$1 crash near $2",
-      );
-      text = stripTrailingStops(text);
-      // Never keep a post-compress incomplete phrase ("looking", "in Center").
-      return { ...p, text: usableSubjectPhrase(text) ? text : p.text };
-    })
-    .filter((p) => usableSubjectPhrase(p.text));
+  const compressItem = (p: SubjectItem): SubjectItem => {
+    let text = p.text.replace(/\s+for a (year|month|week|day)$/i, "").trim();
+    text = text.replace(/\bheads back to court\b/i, "back in court");
+    text = text.replace(/\bPark back in court\b/i, "back in court");
+    text = text.replace(/\bsqueaks out (?:a )?win vs\.?\s+/i, "over ");
+    text = text.replace(/\bsqueaks out (?:a )?win\b/i, "wins");
+    text = text.replace(/\bwins? vs\.?\s+/i, "over ");
+    text = text.replace(
+      /^(?:three-vehicle |head-on )?crash on (M-\d+) near ([A-Za-z][A-Za-z .]+)$/i,
+      "$1 crash near $2",
+    );
+    text = stripTrailingStops(text);
+    // Never keep a post-compress incomplete phrase ("looking", "in Center").
+    return { ...p, text: usableSubjectPhrase(text) ? text : p.text };
+  };
+
+  const pool: SubjectItem[] = [];
+  for (const raw of parts.map(compressItem)) {
+    if (!usableSubjectPhrase(raw.text)) continue;
+    if (pool.some((p) => isSameSubjectStory(p, raw))) continue;
+    pool.push(raw);
+  }
+  if (pool.length === 0) {
+    return `🗞️ ${letterWordmark()} · ${emailDetroitDateKey()}`;
+  }
+
+  const phraseLen = (s: string) => s.replace(/^🗞️\s*/, "").length;
+
+  // Pack up to 3 complete phrases under 84 — skip a long card when a later
+  // shorter one still fits rather than stump-recutting.
+  const packUnderCap = (ordered: SubjectItem[]): SubjectItem[] => {
+    const packed: SubjectItem[] = [];
+    for (const item of ordered) {
+      if (packed.length >= 3) break;
+      if (packed.some((p) => isSameSubjectStory(p, item))) continue;
+      const trial = [...packed, item];
+      if (phraseLen(render(trial)) <= 84) packed.push(item);
+    }
+    return packed;
+  };
+
+  // Prefer hard-news rank order; if that yields fewer than 3, retry packing
+  // shortest-first so three complete phrases still fit when they can.
+  let chosen = packUnderCap(pool);
+  if (chosen.length < 3 && pool.length > chosen.length) {
+    const byShort = [...pool].sort((a, b) => a.text.length - b.text.length);
+    const packed = packUnderCap(byShort);
+    if (packed.length > chosen.length) chosen = packed;
+  }
+
   if (chosen.length === 0) {
     return `🗞️ ${letterWordmark()} · ${emailDetroitDateKey()}`;
   }
-  const phraseLen = (s: string) => s.replace(/^🗞️\s*/, "").length;
+
   let subject = render(chosen);
 
-  // Soft cap ~80 (emoji not counted). Recut from original titles only; never
-  // emit a 28-char stump — prefer dropping to 2 complete phrases instead.
-  if (phraseLen(subject) > 80) {
-    const originals = chosen;
-    const recut = originals
-      .map((p) => ({
-        ...p,
-        text: phraseFromTitle(p.sourceTitle, 28),
-      }))
-      .filter((p) => usableSubjectPhrase(p.text));
-
-    if (recut.length >= 3 && phraseLen(render(recut)) <= 84) {
-      // Three complete recuts that still fit — keep them, then drop to 2 if >84.
-      chosen = recut;
-    } else if (recut.length >= 2) {
-      // Prefer 2 complete recut phrases over shipping an incomplete stump.
-      chosen = recut.slice(0, 2);
-    } else if (originals.length >= 2) {
-      // Recut produced stumps — drop to 2 already-complete originals.
-      chosen = originals.slice(0, 2);
-    } else if (recut.length === 1) {
-      chosen = recut;
-    } else {
-      chosen = originals.slice(0, 1);
-    }
-    if (chosen.length === 0) {
-      return `🗞️ ${letterWordmark()} · ${emailDetroitDateKey()}`;
-    }
-    subject = render(chosen);
-  }
-  if (phraseLen(subject) > 84 && chosen.length === 3) {
+  // Soft cap ~80 (emoji not counted). Never recut a complete phrase into a
+  // char-budget stump ("to purchase new", "boy faces") — if three complete
+  // phrases still run past 84, drop to 2 instead of truncating mid-thought.
+  if (phraseLen(subject) > 84 && chosen.length >= 3) {
     chosen = chosen.slice(0, 2);
     subject = render(chosen);
   }
