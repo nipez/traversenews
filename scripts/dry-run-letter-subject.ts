@@ -2,14 +2,18 @@
  * Dry-run: Saturday-style morning letter subject prefers 3 news phrases,
  * maps Stimson reconstruction to "Stimson Street Project", and skips sports.
  * Also refuses truncated failures — first 8/31 ("Driver Charged in Center",
- * "Sheriff's office looking") and the second preview ("Teaching Kids in the
- * Age", sheriff looking, Center stump).
+ * "Sheriff's office looking"), the second preview ("Teaching Kids in the
+ * Age", sheriff looking, Center stump), and 9/3 ("to purchase new",
+ * "boy faces", duplicate toddler).
  *
  *   npx tsx scripts/dry-run-letter-subject.ts
  *   npm run dry-run:letter-subject
  */
 import assert from "node:assert/strict";
-import { buildMorningLetterSubject } from "../src/lib/email-letter";
+import {
+  buildMorningLetterSubject,
+  usableSubjectPhrase,
+} from "../src/lib/email-letter";
 import type { EmailEditionSnapshot } from "../src/lib/types";
 
 const saturdaySnapshot: EmailEditionSnapshot = {
@@ -418,6 +422,158 @@ const allCapsSubject = buildMorningLetterSubject(allCapsOnly);
 assert.doesNotMatch(allCapsSubject, /LEAGUE OF WOMEN VOTERS/);
 assert.match(allCapsSubject, /Decrease in Parking Rates/);
 
+// --- 2026-09-03: dangling "new" / "faces" + duplicate toddler must never ship ---
+const THURSDAY_BROKEN =
+  "🗞️ North Ed to purchase new · 1-year-old Acme boy faces · One-Year-Old Hospitalized";
+
+assert.equal(usableSubjectPhrase("North Ed to purchase new"), false);
+assert.equal(usableSubjectPhrase("1-year-old Acme boy faces"), false);
+assert.equal(usableSubjectPhrase("office looking"), false);
+assert.equal(usableSubjectPhrase("North Ed to purchase"), false);
+// Complete object / full event name still OK.
+assert.equal(usableSubjectPhrase("North Ed new buses"), true);
+assert.equal(usableSubjectPhrase("North Ed to purchase new buses"), true);
+assert.equal(usableSubjectPhrase("Acme toddler hospitalized"), true);
+assert.equal(usableSubjectPhrase("One-Year-Old Hospitalized"), true);
+assert.equal(usableSubjectPhrase("Decrease in Parking Rates"), true);
+
+const thursdayStumps: EmailEditionSnapshot = {
+  date: "2026-09-03",
+  captured_at: "2026-09-03T12:00:00.000Z",
+  lead: null,
+  around: [
+    {
+      title: "North Ed to purchase new buses for student transportation",
+      dek: "",
+      url: "https://www.traverseticker.com/news/north-ed-buses/",
+      sources: ["The Ticker"],
+    },
+    {
+      title:
+        "1-year-old Acme boy faces life-threatening injuries after falling into pond",
+      dek: "",
+      url: "https://www.9and10news.com/2026/09/02/acme-toddler-pond/",
+      sources: ["9&10 News"],
+    },
+    {
+      title: "One-Year-Old Hospitalized After Falling Into Pond in Acme",
+      dek: "",
+      url: "https://www.record-eagle.com/acme-toddler-hospitalized",
+      sources: ["Record-Eagle"],
+      paywalled: true,
+    },
+  ],
+  alerts: [],
+  tonight: [],
+  civic: [],
+  sports: [],
+};
+
+const thursday = buildMorningLetterSubject(thursdayStumps);
+assert.notEqual(thursday, THURSDAY_BROKEN);
+assert.doesNotMatch(thursday, /to purchase new ·|to purchase new$/i);
+assert.doesNotMatch(thursday, /boy faces ·|boy faces$/i);
+assert.ok(
+  !/purchase new\b/i.test(thursday) || /purchase new buses/i.test(thursday),
+  `must not end a phrase on bare "new": ${thursday}`,
+);
+assert.ok(
+  !/\bboy faces\b/i.test(thursday) ||
+    /\bboy faces \S+/i.test(thursday.replace(/^🗞️\s*/, "")),
+  `must not end a phrase on dangling "faces": ${thursday}`,
+);
+// Same pond / toddler story must appear at most once.
+const thursdayBody = thursday.replace(/^🗞️\s*/, "");
+const toddlerHits = thursdayBody
+  .split(" · ")
+  .filter((p) =>
+    /1[- ]?year[- ]?old|one[- ]?year[- ]?old|toddler|hospitaliz|acme.*pond|pond.*acme/i.test(
+      p,
+    ),
+  );
+assert.ok(
+  toddlerHits.length <= 1,
+  `toddler/pond story must not duplicate in subject: ${thursday}`,
+);
+assert.match(thursday, /North Ed new buses/i);
+assert.ok(
+  /Acme toddler hospitalized/i.test(thursday),
+  `expected one complete toddler phrase, got: ${thursday}`,
+);
+
+// Prefer 3 complete phrases when real-shaped titles all parse under the cap.
+const thursdayCompleteThree: EmailEditionSnapshot = {
+  date: "2026-09-03",
+  captured_at: "2026-09-03T12:00:00.000Z",
+  lead: null,
+  around: [
+    {
+      title: "North Ed to purchase new buses for student transportation",
+      dek: "",
+      url: "https://www.traverseticker.com/news/north-ed-buses/",
+      sources: ["The Ticker"],
+    },
+    {
+      title:
+        "1-year-old Acme boy faces life-threatening injuries after falling into pond",
+      dek: "",
+      url: "https://www.9and10news.com/2026/09/02/acme-toddler-pond/",
+      sources: ["9&10 News"],
+    },
+    {
+      title: "One-Year-Old Hospitalized After Falling Into Pond in Acme",
+      dek: "",
+      url: "https://www.record-eagle.com/acme-toddler-hospitalized",
+      sources: ["Record-Eagle"],
+      paywalled: true,
+    },
+    {
+      title: "Decrease in Parking Rates Coming After Labor Day",
+      dek: "",
+      url: "https://www.traverseticker.com/news/parking-rates/",
+      sources: ["The Ticker"],
+    },
+    {
+      title:
+        "Bat found in local home tests positive for rabies; health department warns community",
+      dek: "",
+      url: "https://www.facebook.com/TraverseCityTicker/posts/rabies",
+      sources: ["Ticker (Facebook)"],
+    },
+  ],
+  alerts: [],
+  tonight: [],
+  civic: [],
+  sports: [],
+};
+
+const thursdayThree = buildMorningLetterSubject(thursdayCompleteThree);
+assert.doesNotMatch(thursdayThree, /to purchase new ·|boy faces ·/i);
+assert.equal(
+  thursdayThree.split(" · ").length,
+  3,
+  `prefer three complete phrases when they parse: ${thursdayThree}`,
+);
+assert.match(thursdayThree, /North Ed new buses/i);
+assert.match(thursdayThree, /Decrease in Parking Rates|Bat tests positive for rabies|Acme toddler hospitalized/i);
+const thursdayThreeToddler = thursdayThree
+  .replace(/^🗞️\s*/, "")
+  .split(" · ")
+  .filter((p) =>
+    /1[- ]?year[- ]?old|one[- ]?year[- ]?old|toddler|hospitaliz|acme|pond/i.test(
+      p,
+    ),
+  );
+assert.ok(
+  thursdayThreeToddler.length <= 1,
+  `still only one toddler phrase among three: ${thursdayThree}`,
+);
+const thursdayThreeLen = thursdayThree.replace(/^🗞️\s*/, "").length;
+assert.ok(
+  thursdayThreeLen <= 84,
+  `thursday three phrase length ${thursdayThreeLen} must be ≤84`,
+);
+
 console.log(
-  `dry-run-letter-subject: ok\n  subject=${subject}\n  phraseLen=${phraseLen}\n  aug31=${aug31}\n  brokenOnly=${brokenSubject}\n  secondPreview=${secondPreview}\n  recut=${recutSubject}\n  sept1=${sept1}\n  deputyOnly=${deputySubject}\n  allCaps=${allCapsSubject}`,
+  `dry-run-letter-subject: ok\n  subject=${subject}\n  phraseLen=${phraseLen}\n  aug31=${aug31}\n  brokenOnly=${brokenSubject}\n  secondPreview=${secondPreview}\n  recut=${recutSubject}\n  sept1=${sept1}\n  deputyOnly=${deputySubject}\n  allCaps=${allCapsSubject}\n  thursday=${thursday}\n  thursdayThree=${thursdayThree}`,
 );
