@@ -47,6 +47,7 @@ const HTML_AA_LISTING_IDS = new Set([
   "src_marquee_events",
   "src_aadl_events",
   "src_washtenaw_calendar",
+  "src_encore_shows",
 ]);
 
 /** Official HTML newsrooms the Worker can read (headline + link only). */
@@ -148,6 +149,9 @@ async function runPullInner(): Promise<PullResult> {
       ) {
         const htmlResult = await pullAnnArborHtml(source);
         pulledEvents.push(...htmlResult.events);
+        if (htmlResult.shows?.length) {
+          pulledShows.push(...htmlResult.shows);
+        }
         if (htmlResult.bot_blocked) {
           const msg =
             `Bot-blocked or empty listing (${htmlResult.status ?? "n/a"}). ` +

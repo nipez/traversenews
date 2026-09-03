@@ -14,11 +14,14 @@ import {
   extractAadlEvents,
   extractArkEventFromPage,
   extractCivicClerkMeetings,
+  extractEncoreShowsFromTribe,
   extractLegistarMeetings,
   extractMarqueeLiveEvents,
   extractMarqueeShows,
   extractUmsListingEvents,
+  showListingFromEvent,
 } from "../src/lib/pull/html-ann-arbor";
+import { looksLikeWashtenawPrep } from "../src/lib/sports";
 import { eventsFromIcsText } from "../src/lib/pull/ics";
 import { resetSiteCache } from "../src/lib/sites";
 import type { ClusteredStory, Source } from "../src/lib/types";
@@ -506,6 +509,82 @@ assert.equal(
   1,
   "Saline city RSS does not take three of the first six slots",
 );
+
+assert.equal(
+  looksLikeWashtenawPrep({
+    title: "Big Reds Tennis Takes On Dexter and Tecumseh",
+    url: "https://thesuntimesnews.com/big-reds-tennis/",
+  }),
+  true,
+);
+assert.equal(
+  looksLikeWashtenawPrep({
+    title: "City of Ann Arbor tackles uptick of littering in the Huron River",
+    url: "https://www.wemu.org/wemu-news/huron-river",
+  }),
+  false,
+);
+assert.equal(
+  looksLikeWashtenawPrep({
+    title: "Wolverines football opens Big Ten play",
+    url: "https://www.michigandaily.com/sports/football/",
+  }),
+  false,
+);
+assert.equal(
+  looksLikeWashtenawPrep({
+    title: "Ypsi resident develops app to help delivery drivers share info",
+    url: "https://concentratemedia.com/ypsi-app/",
+  }),
+  false,
+);
+
+const arkShow = showListingFromEvent(
+  {
+    id: "evt_ark",
+    title: "The Brudi Brothers",
+    starts_at: "2026-09-03T00:00:00.000Z",
+    place: "The Ark",
+    url: "https://theark.org/event/the-brudi-brothers/",
+    source_id: "src_ark_events",
+  },
+  "src_theark",
+  "The Ark",
+);
+assert.equal(arkShow.source_id, "src_theark");
+assert.equal(arkShow.venue, "The Ark");
+assert.equal(arkShow.time_unknown, undefined);
+assert.ok(arkShow.times.length === 1, "Ark show keeps the printed clock");
+
+const encore = extractEncoreShowsFromTribe(
+  JSON.stringify({
+    events: [
+      {
+        title: "Sister Act",
+        url: "https://theencoretheatre.org/event/sister-act/",
+        start_date: "2026-10-08 00:01:00",
+        end_date: "2026-10-17 23:30:00",
+        venue: { venue: "The Encore Musical Theatre" },
+      },
+    ],
+  }),
+  {
+    id: "src_encore_shows",
+    name: "The Encore Theatre — Shows",
+    homepage: "https://theencoretheatre.org/",
+    feed_url: "https://theencoretheatre.org/wp-json/tribe/events/v1/events",
+    pull_method: "html",
+    beat_id: "beat_shows",
+    enabled: true,
+    notes: "",
+    lane: "shows",
+  },
+  new Date("2026-09-02T16:00:00.000Z"),
+);
+assert.equal(encore.length, 1, "Encore tribe run is one production");
+assert.equal(encore[0].title, "Sister Act");
+assert.equal(encore[0].time_unknown, true, "12:01 AM is not a curtain");
+assert.equal(encore[0].times.length, 0);
 
 console.log("test-aa-listings: ok");
 console.log(

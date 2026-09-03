@@ -142,6 +142,14 @@ We will not treat U-M varsity as local high-school sports.`,
       name: "UMS",
       href: "https://ums.org/",
     },
+    {
+      name: "The Encore Theatre",
+      href: "https://theencoretheatre.org/",
+    },
+    {
+      name: "Purple Rose Theatre",
+      href: "https://www.purplerosetheatre.org/calendar/",
+    },
   ],
   eventsHandoffs: [
     {

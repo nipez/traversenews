@@ -1,8 +1,76 @@
+import { looksLikeUmVarsity } from "@/lib/around";
 import { isRecordEagleStory } from "@/lib/paywall";
+import { getSiteId } from "@/lib/sites";
 import { isPreferredSportsSource } from "@/lib/source-lanes";
 import type { Source, Story } from "@/lib/types";
 
 const SPORTS_BEATS = new Set(["beat_sports", "beat_hs_sports"]);
+
+const PREP_SPORT_MARKERS = [
+  "football",
+  "basketball",
+  "soccer",
+  "volleyball",
+  "baseball",
+  "softball",
+  "hockey",
+  "lacrosse",
+  "wrestling",
+  "tennis",
+  "golf",
+  "swim",
+  "diving",
+  "track",
+  "cross country",
+  "invitational",
+  "mhsaa",
+];
+
+const PREP_TEAM_MARKERS = [
+  "pioneer",
+  "skyline",
+  "dexter",
+  "saline",
+  "chelsea",
+  "ypsilanti",
+  "ypsi",
+  "big reds",
+  "hornets",
+  "grizzlies",
+  "huron high",
+  "huron hs",
+];
+
+/**
+ * Washtenaw prep headline already pulled on a general desk (Sun Times Big Reds,
+ * Saline–Skyline invitational). Requires a team + a sport — "Huron River" alone
+ * is not sports. Never invents a score.
+ */
+export function looksLikeWashtenawPrep(input: {
+  title: string;
+  dek?: string;
+  url: string;
+}): boolean {
+  if (looksLikeUmVarsity(input)) return false;
+  const title = input.title.toLowerCase();
+  if (/\bhuron river\b/.test(title)) return false;
+  const team = PREP_TEAM_MARKERS.some((m) => title.includes(m));
+  const sport = PREP_SPORT_MARKERS.some((m) => title.includes(m));
+  if (team && sport) return true;
+  if (/\bhigh school\b/.test(title) && sport) return true;
+  if (/\bmhsaa\b/.test(title)) return true;
+  return false;
+}
+
+const SPORTS_JUNK_TITLE = [
+  "sports fishery",
+  "hidden in plain sight",
+];
+
+export function looksLikeSportsJunk(title: string): boolean {
+  const t = title.toLowerCase();
+  return SPORTS_JUNK_TITLE.some((m) => t.includes(m));
+}
 
 /** Prefer free sports wire when ranking / deduping against Record-Eagle. */
 const PREFERRED_SPORTS_SOURCE_IDS = new Set(["src_910_sports"]);
@@ -33,11 +101,14 @@ export function selectSportsStories(
 
   return stories
     .filter((s) => !s.is_original)
+    .filter((s) => s.title.trim() && s.url.trim())
+    .filter((s) => !looksLikeUmVarsity(s))
+    .filter((s) => !looksLikeSportsJunk(s.title))
     .filter((s) => {
       const src = byId.get(s.source_id);
-      return src != null && SPORTS_BEATS.has(src.beat_id);
+      if (src != null && SPORTS_BEATS.has(src.beat_id)) return true;
+      return getSiteId() === "ann-arbor" && looksLikeWashtenawPrep(s);
     })
-    .filter((s) => s.title.trim() && s.url.trim())
     .sort((a, b) => {
       const rankDiff =
         sportsRank(b, byId.get(b.source_id)) -
