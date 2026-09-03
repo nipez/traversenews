@@ -328,6 +328,10 @@ export function usableSubjectPhrase(phrase: string): boolean {
   if (isIncompleteSubjectPhrase(phrase)) return false;
   // Never ship an ALL CAPS org kicker as a subject phrase.
   if (isAllCapsKicker(phrase)) return false;
+  // "North Ed" alone is local shorthand — require Northwest Ed (or a fuller name).
+  if (/\bNorth Ed\b/i.test(phrase) && !/\bNorthwest Ed\b/i.test(phrase)) {
+    return false;
+  }
   // "Grand Traverse Area Genealogical" is still just a place + one leftover word.
   const n = phrase
     .toLowerCase()
@@ -458,9 +462,29 @@ function phraseFromTitle(title: string, budget = 40): string {
   if (/parking rates?/i.test(t) && /decrease|labor day|coming/i.test(t)) {
     return "Decrease in Parking Rates";
   }
-  // North Ed bus purchase — keep the object; never "to purchase new".
-  if (/north ed/i.test(t) && /purchase|buy/i.test(t) && /buses?\b/i.test(t)) {
-    return "North Ed new buses";
+  // Northwest Ed vehicle buy — compress from the title's actual object only
+  // (vans, buses). Never invent "buses"; never ship insider "North Ed" or a
+  // dangling "to purchase new".
+  if (
+    /\b(northwest(?:\s+education(?:\s+services)?)?|northwest\s+ed|north\s*ed|nwes)\b/i.test(
+      t,
+    ) &&
+    /\b(purchase|buy|buys)\b/i.test(t)
+  ) {
+    const object = t.match(
+      /\b(?:purchase|buy|buys)\s+(?:new\s+)?(?:passenger\s+)?(vans?|buses|bus)\b/i,
+    );
+    if (object) {
+      const raw = object[1].toLowerCase();
+      const noun =
+        raw === "bus" || raw === "buses"
+          ? "buses"
+          : raw === "van" || raw === "vans"
+            ? "vans"
+            : raw;
+      return `Northwest Ed new ${noun}`;
+    }
+    // No recognizable vehicle object in the title — fall through / drop.
   }
   // Acme / pond toddler — one short complete phrase across desk rewrites.
   if (
@@ -546,7 +570,7 @@ function phraseFromTitle(title: string, budget = 40): string {
   }
 
   // Word-budget cut: refuse incomplete endings. Soft-overflow a few words when
-  // that completes an object ("new" → "new buses", "faces" → "faces surgery")
+  // that completes an object ("new" → "new vans", "faces" → "faces surgery")
   // or a road name — never ship a dangling stump just to hit the budget.
   const words = t.split(" ");
   const softCap = budget + 16;

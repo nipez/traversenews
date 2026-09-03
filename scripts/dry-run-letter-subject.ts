@@ -423,16 +423,22 @@ assert.doesNotMatch(allCapsSubject, /LEAGUE OF WOMEN VOTERS/);
 assert.match(allCapsSubject, /Decrease in Parking Rates/);
 
 // --- 2026-09-03: dangling "new" / "faces" + duplicate toddler must never ship ---
+// Record-Eagle Thursday head is passenger vans (not buses). Never invent buses.
 const THURSDAY_BROKEN =
   "🗞️ North Ed to purchase new · 1-year-old Acme boy faces · One-Year-Old Hospitalized";
+const NW_ED_VANS_TITLE =
+  "Northwest Education Services to purchase new passenger vans for student transportation";
 
 assert.equal(usableSubjectPhrase("North Ed to purchase new"), false);
 assert.equal(usableSubjectPhrase("1-year-old Acme boy faces"), false);
 assert.equal(usableSubjectPhrase("office looking"), false);
 assert.equal(usableSubjectPhrase("North Ed to purchase"), false);
-// Complete object / full event name still OK.
-assert.equal(usableSubjectPhrase("North Ed new buses"), true);
-assert.equal(usableSubjectPhrase("North Ed to purchase new buses"), true);
+// Insider "North Ed" shorthand is not stranger-parseable.
+assert.equal(usableSubjectPhrase("North Ed new vans"), false);
+assert.equal(usableSubjectPhrase("North Ed new buses"), false);
+// Complete Northwest Ed + title object (vans) is OK.
+assert.equal(usableSubjectPhrase("Northwest Ed new vans"), true);
+assert.equal(usableSubjectPhrase("Northwest Ed buys vans"), true);
 assert.equal(usableSubjectPhrase("Acme toddler hospitalized"), true);
 assert.equal(usableSubjectPhrase("One-Year-Old Hospitalized"), true);
 assert.equal(usableSubjectPhrase("Decrease in Parking Rates"), true);
@@ -443,10 +449,11 @@ const thursdayStumps: EmailEditionSnapshot = {
   lead: null,
   around: [
     {
-      title: "North Ed to purchase new buses for student transportation",
+      title: NW_ED_VANS_TITLE,
       dek: "",
-      url: "https://www.traverseticker.com/news/north-ed-buses/",
-      sources: ["The Ticker"],
+      url: "https://www.record-eagle.com/northwest-ed-vans",
+      sources: ["Record-Eagle"],
+      paywalled: true,
     },
     {
       title:
@@ -473,13 +480,13 @@ const thursday = buildMorningLetterSubject(thursdayStumps);
 assert.notEqual(thursday, THURSDAY_BROKEN);
 assert.doesNotMatch(thursday, /to purchase new ·|to purchase new$/i);
 assert.doesNotMatch(thursday, /boy faces ·|boy faces$/i);
+assert.doesNotMatch(thursday, /\bbuses\b/i);
 assert.ok(
-  !/purchase new\b/i.test(thursday) || /purchase new buses/i.test(thursday),
+  !/\bnew ·|\bnew$/i.test(thursday.replace(/^🗞️\s*/, "")),
   `must not end a phrase on bare "new": ${thursday}`,
 );
 assert.ok(
-  !/\bboy faces\b/i.test(thursday) ||
-    /\bboy faces \S+/i.test(thursday.replace(/^🗞️\s*/, "")),
+  !/\bfaces ·|\bfaces$/i.test(thursday.replace(/^🗞️\s*/, "")),
   `must not end a phrase on dangling "faces": ${thursday}`,
 );
 // Same pond / toddler story must appear at most once.
@@ -495,7 +502,10 @@ assert.ok(
   toddlerHits.length <= 1,
   `toddler/pond story must not duplicate in subject: ${thursday}`,
 );
-assert.match(thursday, /North Ed new buses/i);
+assert.ok(
+  /Northwest Ed (?:new|buys) vans/i.test(thursday),
+  `expected Northwest Ed + vans from title object, got: ${thursday}`,
+);
 assert.ok(
   /Acme toddler hospitalized/i.test(thursday),
   `expected one complete toddler phrase, got: ${thursday}`,
@@ -508,10 +518,11 @@ const thursdayCompleteThree: EmailEditionSnapshot = {
   lead: null,
   around: [
     {
-      title: "North Ed to purchase new buses for student transportation",
+      title: NW_ED_VANS_TITLE,
       dek: "",
-      url: "https://www.traverseticker.com/news/north-ed-buses/",
-      sources: ["The Ticker"],
+      url: "https://www.record-eagle.com/northwest-ed-vans",
+      sources: ["Record-Eagle"],
+      paywalled: true,
     },
     {
       title:
@@ -549,13 +560,20 @@ const thursdayCompleteThree: EmailEditionSnapshot = {
 
 const thursdayThree = buildMorningLetterSubject(thursdayCompleteThree);
 assert.doesNotMatch(thursdayThree, /to purchase new ·|boy faces ·/i);
+assert.doesNotMatch(thursdayThree, /\bbuses\b/i);
 assert.equal(
   thursdayThree.split(" · ").length,
   3,
   `prefer three complete phrases when they parse: ${thursdayThree}`,
 );
-assert.match(thursdayThree, /North Ed new buses/i);
-assert.match(thursdayThree, /Decrease in Parking Rates|Bat tests positive for rabies|Acme toddler hospitalized/i);
+assert.ok(
+  /Northwest Ed (?:new|buys) vans/i.test(thursdayThree),
+  `expected Northwest Ed + vans, got: ${thursdayThree}`,
+);
+assert.match(
+  thursdayThree,
+  /Decrease in Parking Rates|Bat tests positive for rabies|Acme toddler hospitalized/i,
+);
 const thursdayThreeToddler = thursdayThree
   .replace(/^🗞️\s*/, "")
   .split(" · ")
