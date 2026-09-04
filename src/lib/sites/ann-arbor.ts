@@ -102,19 +102,19 @@ We will not treat U-M varsity as local high-school sports.`,
   sportsBeatLinks: [
     {
       name: "Pioneer HS Athletics",
-      href: "https://pioneerathletics.arbitersports.com/",
+      href: "https://pioneerathletics.net/Events",
     },
     {
       name: "Skyline HS Athletics",
-      href: "https://skylineathletics.arbitersports.com/",
+      href: "https://skyline.a2schools.org/athletics",
     },
     {
       name: "Huron HS Athletics",
-      href: "https://huronsports.arbitersports.com/",
+      href: "https://huron.a2schools.org/athletics",
     },
     {
       name: "Dexter HS Athletics",
-      href: "https://dexterathletics.arbitersports.com/",
+      href: "https://websites.eventlink.com/s/dexterathletics/Events",
     },
     {
       name: "Ypsilanti HS Athletics",
@@ -122,11 +122,11 @@ We will not treat U-M varsity as local high-school sports.`,
     },
     {
       name: "Saline HS Athletics",
-      href: "https://salinehighschool.bigteams.com/main/calendar",
+      href: "https://websites.eventlink.com/s/saline/Events",
     },
     {
       name: "Chelsea HS Athletics",
-      href: "https://chelseabulldogs.org/",
+      href: "https://chelseabulldogs.org/Events",
     },
   ],
   showsVenueLinks: [

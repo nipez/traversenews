@@ -3,6 +3,8 @@ import {
   isSchoolCalendarSource,
   isShowEventSource,
 } from "@/lib/events";
+import { EVENTLINK_ATHLETICS_SOURCE_IDS } from "@/lib/pull/html-athletics";
+import { hasIcsFeedOverride } from "@/lib/pull/ics";
 import type { Source } from "@/lib/types";
 
 /** Civic calendar desks — meetings on /civic via civic/import. */
@@ -26,7 +28,11 @@ export function ingestPathForSource(source: Source): {
     };
   }
 
-  if (source.pull_method === "rss" || source.pull_method === "ics") {
+  if (
+    source.pull_method === "rss" ||
+    source.pull_method === "ics" ||
+    hasIcsFeedOverride(source.id)
+  ) {
     return {
       workerPulls: true,
       importPath: null,
@@ -35,11 +41,13 @@ export function ingestPathForSource(source: Source): {
   }
 
   if (isHsAthleticsEventSource(source.id)) {
+    const workerHtml = EVENTLINK_ATHLETICS_SOURCE_IDS.has(source.id);
     return {
-      workerPulls: false,
+      workerPulls: workerHtml,
       importPath: "/api/desk/athletics/import",
-      summary:
-        "Traverse News pulls on the box → POST /api/desk/athletics/import (Sports, never Events).",
+      summary: workerHtml
+        ? "Worker reads EventLink /Events tables (printed clock or TBD). If empty, Traverse News → POST /api/desk/athletics/import."
+        : "Traverse News pulls on the box → POST /api/desk/athletics/import (Sports, never Events).",
     };
   }
 

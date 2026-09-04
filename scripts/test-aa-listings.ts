@@ -23,6 +23,7 @@ import {
 } from "../src/lib/pull/html-ann-arbor";
 import { looksLikeWashtenawPrep } from "../src/lib/sports";
 import { eventsFromIcsText } from "../src/lib/pull/ics";
+import { extractEventLinkGames, parseEventLinkWhen } from "../src/lib/pull/html-athletics";
 import { resetSiteCache } from "../src/lib/sites";
 import type { ClusteredStory, Source } from "../src/lib/types";
 
@@ -585,6 +586,87 @@ assert.equal(encore.length, 1, "Encore tribe run is one production");
 assert.equal(encore[0].title, "Sister Act");
 assert.equal(encore[0].time_unknown, true, "12:01 AM is not a curtain");
 assert.equal(encore[0].times.length, 0);
+
+const clock = parseEventLinkWhen("Thu, Sep. 3 2026 3:00 PM EDT");
+assert.ok(clock && !clock.timeUnknown, "EventLink EDT clock");
+assert.equal(clock!.starts.toISOString(), "2026-09-03T19:00:00.000Z");
+const tbd = parseEventLinkWhen("Fri, Sep. 4 2026 TBD");
+assert.ok(tbd?.timeUnknown, "EventLink TBD is time_unknown");
+assert.equal(tbd!.starts.toISOString(), "2026-09-04T04:00:00.000Z");
+assert.equal(
+  parseEventLinkWhen("Thu, Sep. 3 2026 4:30 PM MDT"),
+  null,
+  "Idaho MDT is not Washtenaw",
+);
+
+const pioneerHtml = `
+<table><tbody>
+<tr><th>Calendar</th></tr>
+<tr>
+  <td><h4>Soccer (Boys V)</h4></td>
+  <td><p>Skyline High School <span>(A)</span></p></td>
+  <td><p>Thu, Sep. 3 2026</p><p>7:00 PM EDT</p></td>
+  <td><p>Skyline High School</p></td>
+  <td><a href="/Event/abc-1">DETAILS</a></td>
+</tr>
+<tr>
+  <td><h4>Water Polo (Boys V)</h4></td>
+  <td><p>Upper Arlington Tournament (A)</p></td>
+  <td><p>Fri, Sep. 4 2026</p><p>TBD</p></td>
+  <td><p>Upper Arlington High School</p></td>
+  <td><a href="/Event/abc-2">DETAILS</a></td>
+</tr>
+</tbody></table>
+`;
+const pioneerGames = extractEventLinkGames(
+  pioneerHtml,
+  {
+    id: "src_pioneer_ath",
+    name: "Pioneer HS Athletics",
+    homepage: "https://pioneerathletics.net/",
+    feed_url: "https://pioneerathletics.net/Events",
+    pull_method: "html",
+    beat_id: "beat_hs_sports",
+    enabled: true,
+    notes: "",
+    lane: "athletics",
+  },
+  new Date("2026-09-02T16:00:00.000Z"),
+  "https://pioneerathletics.net/Events",
+);
+assert.equal(pioneerGames.length, 2, "EventLink rows become games");
+assert.equal(pioneerGames[0].school, "Pioneer");
+assert.equal(pioneerGames[0].title, "Soccer (Boys V) — Skyline High School (A)");
+assert.equal(pioneerGames[0].time_unknown, undefined);
+assert.equal(pioneerGames[1].time_unknown, true, "TBD row stays time_unknown");
+assert.ok(
+  pioneerGames[0].url?.includes("/Event/abc-1"),
+  "DETAILS permalink kept",
+);
+assert.equal(
+  extractEventLinkGames(
+    `<table><tr>
+      <td>Golf (Girls V)</td>
+      <td>Canceled: Lincoln Senior High School (A)</td>
+      <td>Thu, Sep. 3 2026 3:00 PM EDT</td>
+      <td>Lincoln</td>
+    </tr></table>`,
+    {
+      id: "src_saline_ath",
+      name: "Saline HS Athletics",
+      homepage: "https://salinehornets.com/",
+      feed_url: "https://websites.eventlink.com/s/saline/Events",
+      pull_method: "html",
+      beat_id: "beat_hs_sports",
+      enabled: true,
+      notes: "",
+      lane: "athletics",
+    },
+    new Date("2026-09-02T16:00:00.000Z"),
+  ).length,
+  0,
+  "Canceled EventLink rows are dropped",
+);
 
 console.log("test-aa-listings: ok");
 console.log(

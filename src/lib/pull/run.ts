@@ -1,6 +1,7 @@
 import {
   listStories,
   loadStore,
+  replaceAthleticsGames,
   replacePulledEvents,
   replacePulledStories,
   replaceSchoolCalendarItems,
@@ -11,13 +12,23 @@ import {
 } from "@/lib/data/store";
 import { isInventedStory, keepRealOriginals } from "@/lib/data/scrub";
 import { pullAnnArborHtml, pullAnnArborNews } from "@/lib/pull/html-ann-arbor";
+import {
+  EVENTLINK_ATHLETICS_SOURCE_IDS,
+  pullEventLinkAthletics,
+} from "@/lib/pull/html-athletics";
 import { pullHtmlEvents } from "@/lib/pull/html-events";
 import { pullHtmlShows } from "@/lib/pull/html-shows";
-import { pullIcsSource } from "@/lib/pull/ics";
+import { hasIcsFeedOverride, pullIcsSource } from "@/lib/pull/ics";
 import { pullRssSource } from "@/lib/pull/rss";
 import { schoolItemsFromEvents } from "@/lib/schools";
 import { isSchoolCalSource } from "@/lib/source-lanes";
-import type { EventItem, SchoolCalendarItem, ShowListing, Story } from "@/lib/types";
+import type {
+  AthleticsGame,
+  EventItem,
+  SchoolCalendarItem,
+  ShowListing,
+  Story,
+} from "@/lib/types";
 
 export type PullResult = {
   ok: boolean;
@@ -84,6 +95,7 @@ async function runPullInner(): Promise<PullResult> {
   const pulledEvents: EventItem[] = [];
   const pulledShows: ShowListing[] = [];
   const pulledSchools: SchoolCalendarItem[] = [];
+  const pulledAthletics: AthleticsGame[] = [];
   const pulledAt = new Date().toISOString();
   const touch = new Map<
     string,
@@ -96,7 +108,7 @@ async function runPullInner(): Promise<PullResult> {
         const items = await pullRssSource(source);
         pulledStories.push(...items);
         touch.set(source.id, { ok: true, error: null, attempted: true });
-      } else if (source.pull_method === "ics") {
+      } else if (source.pull_method === "ics" || hasIcsFeedOverride(source.id)) {
         const items = await pullIcsSource(source);
         if (isSchoolCalSource(source, source.id)) {
           pulledSchools.push(...schoolItemsFromEvents(items));
@@ -138,6 +150,22 @@ async function runPullInner(): Promise<PullResult> {
             `Bot-blocked or empty newsroom (${htmlResult.status ?? "n/a"}). ` +
             "Do not invent headlines. Need Traverse News to pull this URL on the live computer " +
             "and POST /api/desk/stories/import.";
+          errors.push({ source: source.name, error: msg });
+          touch.set(source.id, { ok: false, error: msg, attempted: true });
+        } else {
+          touch.set(source.id, { ok: true, error: null, attempted: true });
+        }
+      } else if (
+        source.pull_method === "html" &&
+        EVENTLINK_ATHLETICS_SOURCE_IDS.has(source.id)
+      ) {
+        const htmlResult = await pullEventLinkAthletics(source);
+        pulledAthletics.push(...htmlResult.games);
+        if (htmlResult.bot_blocked) {
+          const msg =
+            `Bot-blocked or empty athletics page (${htmlResult.status ?? "n/a"}). ` +
+            "Do not invent games. Need Traverse News to pull this URL on the live computer " +
+            "and POST the list to /api/desk/athletics/import.";
           errors.push({ source: source.name, error: msg });
           touch.set(source.id, { ok: false, error: msg, attempted: true });
         } else {
@@ -240,6 +268,12 @@ async function runPullInner(): Promise<PullResult> {
   if (pulledShows.length > 0) {
     const showSourceIds = [...new Set(pulledShows.map((s) => s.source_id))];
     await replaceShowListings(pulledShows, showSourceIds);
+  }
+  if (pulledAthletics.length > 0) {
+    const athleticsSourceIds = [
+      ...new Set(pulledAthletics.map((g) => g.source_id)),
+    ];
+    await replaceAthleticsGames(pulledAthletics, athleticsSourceIds);
   }
 
   const store = await loadStore();

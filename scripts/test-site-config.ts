@@ -130,6 +130,13 @@ assert(
 );
 assert(isSchoolCalSource(undefined, "src_ycs_cal"), "YCS calendar lane");
 assert(isSchoolCalSource(undefined, "src_saline_cal"), "Saline calendar lane");
+const salineCal = aa.sources.find((s) => s.id === "src_saline_cal");
+assert(salineCal?.pull_method === "ics", "Saline calendar is public Google ICS");
+const pioneerAth = aa.sources.find((s) => s.id === "src_pioneer_ath");
+assert(
+  pioneerAth?.feed_url?.includes("pioneerathletics.net/Events"),
+  "Pioneer athletics is EventLink Events, not Arbiter",
+);
 assert(isSchoolCalSource(undefined, "src_chelsea_cal"), "Chelsea calendar lane");
 assert(
   aa.sources.some((s) => s.id === "src_ark_events" && s.lane === "events"),
