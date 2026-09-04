@@ -9,6 +9,8 @@ import {
   ANN_ARBOR_ATHLETICS_CORE_CHIPS,
   ANN_ARBOR_ATHLETICS_CORE_SCHOOLS,
   ANN_ARBOR_ATHLETICS_CORE_SOURCE_IDS,
+  ANN_ARBOR_ATHLETICS_SURROUNDING_SCHOOLS,
+  ANN_ARBOR_ATHLETICS_SURROUNDING_SOURCE_IDS,
 } from "@/lib/sites/ann-arbor/athletics";
 import type { AthleticsGame, Source } from "@/lib/types";
 
@@ -81,8 +83,16 @@ export function getAthleticsCoreSchools(): readonly string[] {
 }
 
 export function getAthleticsSurroundingSourceIds(): Set<string> {
-  if (getSiteId() === "ann-arbor") return new Set();
+  if (getSiteId() === "ann-arbor") {
+    return new Set(ANN_ARBOR_ATHLETICS_SURROUNDING_SOURCE_IDS);
+  }
   return ATHLETICS_SURROUNDING_SOURCE_IDS;
+}
+
+export function getAthleticsSurroundingSchools(): readonly string[] {
+  return getSiteId() === "ann-arbor"
+    ? ANN_ARBOR_ATHLETICS_SURROUNDING_SCHOOLS
+    : ATHLETICS_SURROUNDING_SCHOOLS;
 }
 
 export const ATHLETICS_CORE_CHIPS: AthleticsCoreChip[] = [
@@ -176,9 +186,7 @@ export function isCoreAthleticsGame(game: AthleticsGame): boolean {
 
 export function isSurroundingAthleticsGame(game: AthleticsGame): boolean {
   if (getAthleticsSurroundingSourceIds().has(game.source_id)) return true;
-  return (ATHLETICS_SURROUNDING_SCHOOLS as readonly string[]).includes(
-    game.school,
-  );
+  return getAthleticsSurroundingSchools().includes(game.school);
 }
 
 /** Default Sports This week / letter: TC only. Pass includeSurrounding for map-ring. */
@@ -263,6 +271,8 @@ export function schoolFromSourceId(sourceId: string): string {
       return "Saline";
     case "src_chelsea_ath":
       return "Chelsea";
+    case "src_milan_ath":
+      return "Milan";
     default:
       return "Prep";
   }

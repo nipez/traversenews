@@ -1221,6 +1221,63 @@ export function extractA2GovNews(html: string, source: Source): Story[] {
   );
 }
 
+/**
+ * TheRide /about/news teasers. Headline + permalink + printed month day year.
+ * Never invent a dek or a holiday schedule.
+ */
+export function extractTheRideNews(html: string, source: Source): Story[] {
+  const blocks = html.match(/<article\b[^>]*>[\s\S]*?<\/article>/gi) ?? [];
+  const out: Story[] = [];
+  const seen = new Set<string>();
+  for (const block of blocks) {
+    const href = decodeEntities(
+      block.match(/href="(\/about\/news\/[^"]+)"/i)?.[1] ?? "",
+    );
+    const title = stripTags(
+      block.match(/<h2\b[^>]*>([\s\S]*?)<\/h2>/i)?.[1] ?? "",
+    );
+    const dateText = stripTags(
+      block.match(/text-meta[^>]*>([\s\S]*?)<\/p>/i)?.[1] ?? "",
+    );
+    if (!href || !title) continue;
+    const dm = dateText.match(/^([A-Za-z]{3,9})\s+(\d{1,2}),\s+(\d{4})$/);
+    if (!dm) continue;
+    const month = monthNumber(dm[1]);
+    if (!month) continue;
+    const published = detroitWallToUtc(
+      Number(dm[3]),
+      month,
+      Number(dm[2]),
+      0,
+      0,
+      0,
+    );
+    if (Number.isNaN(published.getTime())) continue;
+    const url = href.startsWith("http")
+      ? href
+      : `https://www.theride.org${href}`;
+    if (seen.has(url)) continue;
+    seen.add(url);
+    out.push({
+      id: newId("story"),
+      source_id: source.id,
+      title,
+      dek: "",
+      url,
+      published_at: published.toISOString(),
+      is_original: false,
+      body: null,
+      image_url: null,
+      byline: null,
+      slug: null,
+    });
+  }
+  return out.sort(
+    (a, b) =>
+      new Date(b.published_at).getTime() - new Date(a.published_at).getTime(),
+  );
+}
+
 export async function pullAnnArborNews(
   source: Source,
 ): Promise<{ stories: Story[]; bot_blocked: boolean; status: number | null }> {
@@ -1234,8 +1291,12 @@ export async function pullAnnArborNews(
   if (!page.ok) {
     throw new Error(`AA news fetch failed ${page.status} for ${source.name}`);
   }
+  const stories =
+    source.id === "src_theride"
+      ? extractTheRideNews(page.text, source)
+      : extractA2GovNews(page.text, source);
   return {
-    stories: extractA2GovNews(page.text, source),
+    stories,
     bot_blocked: false,
     status: page.status,
   };

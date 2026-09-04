@@ -128,6 +128,10 @@ We will not treat U-M varsity as local high-school sports.`,
       name: "Chelsea HS Athletics",
       href: "https://chelseabulldogs.org/Events",
     },
+    {
+      name: "Milan HS Athletics",
+      href: "https://milanbigreds.org/Events",
+    },
   ],
   showsVenueLinks: [
     {

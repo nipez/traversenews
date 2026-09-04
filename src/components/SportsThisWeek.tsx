@@ -2,8 +2,8 @@
 
 import { useMemo, useState } from "react";
 import {
-  ATHLETICS_SURROUNDING_SCHOOLS,
   getAthleticsCoreSchools,
+  getAthleticsSurroundingSchools,
   displayAthleticsSchool,
   filterAthleticsSlate,
   gameMatchesSchoolFilter,
@@ -106,7 +106,7 @@ export function SportsThisWeek({
     const have = new Set(
       chipPool.filter(isSurroundingAthleticsGame).map((g) => g.school),
     );
-    return ATHLETICS_SURROUNDING_SCHOOLS.filter((name) => have.has(name));
+    return getAthleticsSurroundingSchools().filter((name) => have.has(name));
   }, [chipPool]);
 
   const [showSurrounding, setShowSurrounding] = useState(false);
@@ -186,9 +186,7 @@ export function SportsThisWeek({
               if (
                 !next &&
                 activeSchool &&
-                (ATHLETICS_SURROUNDING_SCHOOLS as readonly string[]).includes(
-                  activeSchool,
-                )
+                getAthleticsSurroundingSchools().includes(activeSchool)
               ) {
                 setActiveSchool(null);
               }

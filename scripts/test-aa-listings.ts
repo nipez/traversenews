@@ -11,6 +11,7 @@ import {
 import {
   collectArkEventLinks,
   extractA2GovNews,
+  extractTheRideNews,
   extractAadlEvents,
   extractArkEventFromPage,
   extractCivicClerkMeetings,
@@ -299,6 +300,41 @@ assert.equal(
 );
 assert.equal(news[0].published_at, "2026-08-14T04:00:00.000Z");
 
+const rideSrc: Source = {
+  id: "src_theride",
+  name: "TheRide — News",
+  homepage: "https://www.theride.org/",
+  feed_url: "https://www.theride.org/about/news",
+  pull_method: "html",
+  beat_id: "beat_transit",
+  enabled: true,
+  notes: "",
+  lane: "wire",
+  family: "official",
+};
+const ride = extractTheRideNews(
+  `<article class="content-article content-teaser">
+    <h2><a href="/about/news/theride-announces-2026-labor-day-transit-schedule">TheRide Announces 2026 Labor Day Transit Schedule</a></h2>
+    <p class="text-meta">AUGUST 17, 2026</p>
+  </article>
+  <article class="content-alert content-teaser">
+    <h2><a href="/alerts/foo">System alert</a></h2>
+    <p class="text-meta">Live</p>
+  </article>`,
+  rideSrc,
+);
+assert.equal(ride.length, 1, "TheRide skips undated alerts");
+assert.equal(
+  ride[0].title,
+  "TheRide Announces 2026 Labor Day Transit Schedule",
+);
+assert.equal(
+  ride[0].url,
+  "https://www.theride.org/about/news/theride-announces-2026-labor-day-transit-schedule",
+);
+assert.equal(ride[0].dek, "", "headline and link only");
+assert.equal(ride[0].published_at, "2026-08-17T04:00:00.000Z");
+
 const aadlSrc: Source = {
   id: "src_aadl_events",
   name: "AADL",
@@ -539,6 +575,13 @@ assert.equal(
   }),
   false,
 );
+assert.equal(
+  looksLikeWashtenawPrep({
+    title: "Milan football opens at Riverview",
+    url: "https://milanbigreds.org/Event/x",
+  }),
+  true,
+);
 
 const arkShow = showListingFromEvent(
   {
@@ -666,6 +709,61 @@ assert.equal(
   ).length,
   0,
   "Canceled EventLink rows are dropped",
+);
+
+const milanGames = extractEventLinkGames(
+  `<table><tbody>
+<tr>
+  <td><h4>Football (Boys V)</h4></td>
+  <td><p>Riverview Community High School <span>(H)</span></p></td>
+  <td><p>Thu, Sep. 3 2026</p><p>7:00 PM EDT</p></td>
+  <td><p>Milan High School</p></td>
+  <td><a href="/Event/milan-1">DETAILS</a></td>
+</tr>
+</tbody></table>`,
+  {
+    id: "src_milan_ath",
+    name: "Milan HS Athletics",
+    homepage: "https://milanbigreds.org/",
+    feed_url: "https://milanbigreds.org/Events",
+    pull_method: "html",
+    beat_id: "beat_hs_sports",
+    enabled: true,
+    notes: "",
+    lane: "athletics",
+  },
+  new Date("2026-09-02T16:00:00.000Z"),
+  "https://milanbigreds.org/Events",
+);
+assert.equal(milanGames.length, 1);
+assert.equal(milanGames[0].school, "Milan");
+assert.ok(
+  milanGames[0].url?.includes("/Event/milan-1"),
+  "Milan DETAILS permalink kept",
+);
+assert.equal(
+  extractEventLinkGames(
+    `<table><tr>
+      <td>Golf (Girls V)</td>
+      <td>Canceled: E.C./Lawrenceburg/Milan (A)</td>
+      <td>Thu, Sep. 3 2026 5:00 PM EDT</td>
+      <td>Lawrenceburg</td>
+    </tr></table>`,
+    {
+      id: "src_milan_ath",
+      name: "Milan HS Athletics",
+      homepage: "https://milanbigreds.org/",
+      feed_url: "https://milanbigreds.org/Events",
+      pull_method: "html",
+      beat_id: "beat_hs_sports",
+      enabled: true,
+      notes: "",
+      lane: "athletics",
+    },
+    new Date("2026-09-02T16:00:00.000Z"),
+  ).length,
+  0,
+  "Indiana Milan EventLink lookalikes still drop Canceled rows",
 );
 
 console.log("test-aa-listings: ok");

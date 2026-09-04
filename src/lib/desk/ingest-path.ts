@@ -29,6 +29,18 @@ export function ingestPathForSource(source: Source): {
   }
 
   if (
+    source.pull_method === "html" &&
+    (source.id === "src_a2_news" || source.id === "src_theride")
+  ) {
+    return {
+      workerPulls: true,
+      importPath: "/api/desk/stories/import",
+      summary:
+        "Worker reads the newsroom HTML (headline + permalink + printed date). If empty, Traverse News → POST /api/desk/stories/import.",
+    };
+  }
+
+  if (
     source.pull_method === "rss" ||
     source.pull_method === "ics" ||
     hasIcsFeedOverride(source.id)

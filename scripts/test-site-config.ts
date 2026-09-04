@@ -125,6 +125,38 @@ assert(
   "AA seed has City of Chelsea official news",
 );
 assert(
+  aa.sources.some((s) => s.id === "src_pulp" && s.feed_url?.includes("aadl.org/pulp")),
+  "AA seed has AADL Pulp",
+);
+assert(
+  aa.sources.some((s) => s.id === "src_theride" && s.pull_method === "html"),
+  "AA seed has TheRide HTML news",
+);
+assert(
+  aa.sources.some(
+    (s) =>
+      s.id === "src_milan_ath" && s.feed_url?.includes("milanbigreds.org/Events"),
+  ),
+  "AA Milan athletics is milanbigreds.org, not Indiana EventLink /s/milan",
+);
+assert(
+  aa.sources.some((s) => s.id === "src_lincoln_cal" && s.pull_method === "ics"),
+  "AA seed has Lincoln Consolidated ICS",
+);
+assert(
+  aa.sources.some((s) => s.id === "src_michigandaily_aa"),
+  "AA seed has Michigan Daily city section",
+);
+assert(
+  !aa.sources.some((s) => s.pull_method === ("civicengage" as never)),
+  "AA seed does not invent a civicengage pull method",
+);
+assert(
+  aa.sources.length >= 65,
+  "AA seed grew past the first 45 Washtenaw desks",
+);
+assert(isSchoolCalSource(undefined, "src_lincoln_cal"), "Lincoln calendar lane");
+assert(
   aa.sources.some((s) => s.id === "src_ycs_cal" && s.lane === "school_cal"),
   "AA seed has YCS calendar",
 );

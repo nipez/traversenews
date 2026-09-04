@@ -24,6 +24,21 @@ export const ANN_ARBOR_LOCAL_GROUPS: readonly LocalGroup[] = [
         label: "YDL",
         dek: "Ypsilanti District Library",
       },
+      {
+        href: "https://www.salinelibrary.org/",
+        label: "Saline District Library",
+        dek: "Saline",
+      },
+      {
+        href: "https://www.dexter.lib.mi.us/",
+        label: "Dexter District Library",
+        dek: "Dexter",
+      },
+      {
+        href: "https://www.chelseadistrictlibrary.org/",
+        label: "Chelsea District Library",
+        dek: "Chelsea",
+      },
     ],
   },
   {
@@ -55,6 +70,11 @@ export const ANN_ARBOR_LOCAL_GROUPS: readonly LocalGroup[] = [
         label: "Washtenaw County",
         dek: "County offices and services",
       },
+      {
+        href: "https://www.pittsfield-mi.gov/",
+        label: "Pittsfield Township",
+        dek: "Official township site",
+      },
     ],
   },
   {
@@ -85,6 +105,26 @@ export const ANN_ARBOR_LOCAL_GROUPS: readonly LocalGroup[] = [
         href: "https://www.dexterschools.org/",
         label: "Dexter Schools",
         dek: "Dexter Community Schools",
+      },
+      {
+        href: "https://www.lincolnk12.org/",
+        label: "Lincoln Schools",
+        dek: "Lincoln Consolidated Schools",
+      },
+      {
+        href: "https://umich.edu/",
+        label: "University of Michigan",
+        dek: "Campus directory",
+      },
+      {
+        href: "https://www.emich.edu/",
+        label: "Eastern Michigan University",
+        dek: "Ypsilanti campus",
+      },
+      {
+        href: "https://www.wccnet.edu/",
+        label: "Washtenaw Community College",
+        dek: "WCC",
       },
     ],
   },

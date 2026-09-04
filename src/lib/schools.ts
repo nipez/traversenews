@@ -279,6 +279,8 @@ export function sourceIdForDistrict(district: string): string | null {
       return "src_chelsea_cal";
     case "Dexter":
       return "src_dexter_cal";
+    case "Lincoln":
+      return "src_lincoln_cal";
     default:
       return null;
   }

@@ -39,6 +39,9 @@ const PREP_TEAM_MARKERS = [
   "grizzlies",
   "huron high",
   "huron hs",
+  "milan",
+  "lincoln consolidated",
+  "railsplitters",
 ];
 
 /**

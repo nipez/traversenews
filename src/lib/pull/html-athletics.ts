@@ -36,6 +36,7 @@ export const EVENTLINK_ATHLETICS_FEEDS: Record<string, string> = {
   src_dexter_ath: "https://websites.eventlink.com/s/dexterathletics/Events",
   src_saline_ath: "https://websites.eventlink.com/s/saline/Events",
   src_chelsea_ath: "https://chelseabulldogs.org/Events",
+  src_milan_ath: "https://milanbigreds.org/Events",
 };
 
 export const EVENTLINK_ATHLETICS_SOURCE_IDS = new Set(

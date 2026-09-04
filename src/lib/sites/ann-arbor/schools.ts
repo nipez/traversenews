@@ -37,6 +37,8 @@ export function annArborDistrictFromSourceId(sourceId: string): string | null {
       return "Chelsea";
     case "src_dexter_cal":
       return "Dexter";
+    case "src_lincoln_cal":
+      return "Lincoln";
     default:
       return null;
   }

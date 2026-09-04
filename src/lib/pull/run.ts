@@ -62,7 +62,7 @@ const HTML_AA_LISTING_IDS = new Set([
 ]);
 
 /** Official HTML newsrooms the Worker can read (headline + link only). */
-const HTML_AA_NEWS_IDS = new Set(["src_a2_news"]);
+const HTML_AA_NEWS_IDS = new Set(["src_a2_news", "src_theride"]);
 
 /** Shows venues with static HTML showtimes the Worker can read. */
 const HTML_SHOW_SOURCE_IDS = new Set([

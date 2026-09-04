@@ -35,6 +35,7 @@ const FALLBACK_SCHOOL_CAL = new Set([
   "src_ycs_cal",
   "src_saline_cal",
   "src_chelsea_cal",
+  "src_lincoln_cal",
 ]);
 const FALLBACK_ATHLETICS = new Set([
   "src_tcc_ath",
@@ -61,6 +62,7 @@ const FALLBACK_ATHLETICS = new Set([
   "src_ypsi_ath",
   "src_saline_ath",
   "src_chelsea_ath",
+  "src_milan_ath",
 ]);
 const FALLBACK_CIVIC_IDS = new Set([
   "src_gt_cal",

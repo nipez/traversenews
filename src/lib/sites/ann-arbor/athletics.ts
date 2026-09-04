@@ -8,6 +8,13 @@ export const ANN_ARBOR_ATHLETICS_CORE_SOURCE_IDS = [
   "src_chelsea_ath",
 ] as const;
 
+/** Adjacent Washtenaw — Sports Surrounding, not the default This-week chips. */
+export const ANN_ARBOR_ATHLETICS_SURROUNDING_SOURCE_IDS = [
+  "src_milan_ath",
+] as const;
+
+export const ANN_ARBOR_ATHLETICS_SURROUNDING_SCHOOLS = ["Milan"] as const;
+
 export const ANN_ARBOR_ATHLETICS_CORE_SCHOOLS = [
   "Pioneer",
   "Skyline",
