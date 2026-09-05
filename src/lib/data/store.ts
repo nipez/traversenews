@@ -38,6 +38,7 @@ import type {
   EmailEditionSnapshot,
   EmailLetterSendRecord,
   EmailOneOffSendsRecord,
+  EmailStoryCard,
   EventItem,
   EventTip,
   OriginalDraft,
@@ -830,7 +831,8 @@ export async function getEmailEdition(
  * Capture / replace today's morning-email letter from the live mix.
  * Does not send mail. Freezes today’s weather line when the cache is warm
  * (or after a best-effort NWS refresh). Preserves a Desk subject_override
- * when the prior row for this Detroit date already had one.
+ * and a Desk-locked Around slate when the prior row for this Detroit date
+ * already had them.
  */
 export async function snapshotTodaysEmailEdition(
   at = new Date(),
@@ -844,6 +846,7 @@ export async function snapshotTodaysEmailEdition(
     prior.subject_override.trim()
       ? prior.subject_override.trim()
       : null;
+  const aroundLocked = Boolean(prior?.around_locked && prior.around?.length);
   let weather_line: string | null = null;
   try {
     const { getOrRefreshWeatherSnapshot } = await import("@/lib/weather");
@@ -855,6 +858,8 @@ export async function snapshotTodaysEmailEdition(
   const snapshot = buildEmailEditionSnapshot(data, at, {
     weather_line,
     subject_override: priorOverride,
+    around: aroundLocked ? prior!.around : null,
+    around_locked: aroundLocked,
   });
   data.email_editions = upsertEmailEdition(data.email_editions, snapshot);
   await saveStore(data);
@@ -881,6 +886,57 @@ export async function setEmailEditionSubjectOverride(
   const next: EmailEditionSnapshot = {
     ...edition,
     subject_override: nextOverride,
+  };
+  const data = await loadStore();
+  if (!Array.isArray(data.email_editions)) data.email_editions = [];
+  data.email_editions = upsertEmailEdition(data.email_editions, next);
+  await saveStore(data);
+  return next;
+}
+
+/**
+ * Save or clear today’s Desk Around slate on the email_editions row.
+ * Passing around locks the mix for preview / send / pull until cleared.
+ * null clears the lock and rebuilds Around from the live mixer while keeping
+ * subject_override. Does not send mail.
+ */
+export async function setEmailEditionAround(
+  around: EmailStoryCard[] | null,
+  at = new Date(),
+): Promise<EmailEditionSnapshot> {
+  const todayKey = emailDetroitDateKey(at);
+  let edition = await getEmailEdition(todayKey);
+  if (!edition) {
+    edition = await snapshotTodaysEmailEdition(at);
+  }
+
+  const priorOverride =
+    typeof edition.subject_override === "string" &&
+    edition.subject_override.trim()
+      ? edition.subject_override.trim()
+      : null;
+
+  if (around === null) {
+    const data = await loadStore();
+    if (!Array.isArray(data.email_editions)) data.email_editions = [];
+    const rebuilt = buildEmailEditionSnapshot(data, at, {
+      weather_line: edition.weather_line ?? null,
+      subject_override: priorOverride,
+      around_locked: false,
+    });
+    // Keep non-story sections Nick may already have from the prior capture
+    // when weather was frozen — rebuild refreshes alerts/tonight/civic/sports
+    // from live data (same as a normal snapshot without lock).
+    data.email_editions = upsertEmailEdition(data.email_editions, rebuilt);
+    await saveStore(data);
+    return rebuilt;
+  }
+
+  const next: EmailEditionSnapshot = {
+    ...edition,
+    around: around.slice(0, 6),
+    around_locked: true,
+    subject_override: priorOverride,
   };
   const data = await loadStore();
   if (!Array.isArray(data.email_editions)) data.email_editions = [];

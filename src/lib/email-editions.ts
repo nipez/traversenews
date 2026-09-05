@@ -117,7 +117,7 @@ function normalizeLetterUrl(url: string | null | undefined): string {
   try {
     const u = new URL(url.trim());
     u.hash = "";
-    let path = u.pathname.replace(/\/+$/, "") || "/";
+    const path = u.pathname.replace(/\/+$/, "") || "/";
     return `${u.protocol}//${u.hostname.toLowerCase()}${path}${u.search}`.toLowerCase();
   } catch {
     return url.trim().replace(/\/+$/, "").toLowerCase();
@@ -551,6 +551,12 @@ export function buildEmailEditionSnapshot(
     weather_line?: string | null;
     /** Preserve Desk subject when pull/snapshot rebuilds the letter. */
     subject_override?: string | null;
+    /**
+     * When set with around_locked, keep Desk’s Around slate instead of
+     * auto-picking bay cards. Other sections still rebuild.
+     */
+    around?: EmailStoryCard[] | null;
+    around_locked?: boolean;
   } = {},
 ): EmailEditionSnapshot {
   const {
@@ -605,11 +611,16 @@ export function buildEmailEditionSnapshot(
     now: at,
   });
   // Freshness vs recent letters (hard news may be bay-stale).
-  const around = pickFreshAroundForLetter(
+  const autoAround = pickFreshAroundForLetter(
     aroundClusters.map(toAroundCard),
     priorExpanded,
     LETTER_AROUND_MAX,
   );
+  const aroundLocked = Boolean(options.around_locked && options.around);
+  const around =
+    aroundLocked && Array.isArray(options.around)
+      ? options.around.slice(0, LETTER_AROUND_MAX)
+      : autoAround;
 
   const alerts: EmailAlertCard[] = selectAlerts(data.stories, data.sources, {
     limit: 4,
@@ -691,5 +702,6 @@ export function buildEmailEditionSnapshot(
     sports,
     weather_line: options.weather_line ?? null,
     subject_override,
+    around_locked: aroundLocked || undefined,
   };
 }

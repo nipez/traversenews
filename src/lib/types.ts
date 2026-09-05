@@ -342,6 +342,12 @@ export type EmailEditionSnapshot = {
    * `buildMorningLetterSubject`. Pull/snapshot rebuilds must preserve it.
    */
   subject_override?: string | null;
+  /**
+   * When true, Desk locked today’s Around slate. Pull/snapshot must keep
+   * `around` (and this flag) instead of auto-rebuilding bay cards. Clear via
+   * Desk “Reset to auto” / POST cards with around: null.
+   */
+  around_locked?: boolean;
 };
 
 /** Thin pointer for a section page photo header (bytes live in R2 or /art). */
