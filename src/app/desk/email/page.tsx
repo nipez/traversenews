@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { DeskChrome } from "@/components/desk/DeskChrome";
+import { DeskLetterCardPicker } from "@/components/desk/DeskLetterCardPicker";
 import { DeskLetterSendControls } from "@/components/desk/DeskLetterSendControls";
 import { DeskSubscribers } from "@/components/desk/DeskSubscribers";
 import { formatStoryDateline } from "@/lib/dates";
@@ -12,9 +13,14 @@ import {
   listEmailEditions,
 } from "@/lib/data/store";
 import {
+  deskLetterMixHint,
+  listDeskLetterCandidates,
+} from "@/lib/desk-letter-cards";
+import {
   buildEmailEditionSnapshot,
   emailDetroitDateKey,
   formatEmailEditionLabel,
+  LETTER_AROUND_MAX,
 } from "@/lib/email-editions";
 import {
   buildMorningLetter,
@@ -60,6 +66,12 @@ export default async function DeskEmailPage() {
   if (today === "2026-08-28") oneOffs.add("stacietceye@hotmail.com");
   const liveSentAt = sent?.sent_at ? new Date(sent.sent_at).getTime() : null;
 
+  const candidates = listDeskLetterCandidates(data, {
+    currentAround: edition.around,
+    today,
+  });
+  const mixHint = deskLetterMixHint(edition.around);
+
   return (
     <DeskChrome
       active="email"
@@ -69,9 +81,18 @@ export default async function DeskEmailPage() {
       <div className="mx-auto max-w-3xl px-4 py-10 md:px-6">
         <h1 className="font-serif text-3xl">Email</h1>
         <p className="mt-2 text-[#444]">
-          Morning letter for signups. Check the subject, send live from here,
-          and keep the archive. Do not invent a letter.
+          Morning letter for signups. Pick the Around mix, set the subject,
+          send live from here, and keep the archive. Do not invent a letter.
         </p>
+
+        <DeskLetterCardPicker
+          key={`cards-${today}-${edition.around_locked ? "locked" : "auto"}-${edition.around.map((c) => c.url).join("|")}`}
+          max={LETTER_AROUND_MAX}
+          initialAround={edition.around}
+          aroundLocked={Boolean(edition.around_locked)}
+          candidates={candidates}
+          initialMixHint={mixHint}
+        />
 
         <DeskLetterSendControls
           key={`subject-${today}-${subjectOverride}`}
@@ -181,6 +202,7 @@ export default async function DeskEmailPage() {
                   {letter.alerts.length
                     ? ` · ${letter.alerts.length} alerts`
                     : ""}
+                  {letter.around_locked ? " · Desk mix" : ""}
                 </p>
               </li>
             ))}

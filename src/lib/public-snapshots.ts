@@ -19,6 +19,7 @@ import {
 } from "@/lib/data/scrub";
 import {
   buildEmailEditionSnapshot,
+  emailDetroitDateKey,
   selectFreshAroundTheBay,
 } from "@/lib/email-editions";
 import {
@@ -498,10 +499,14 @@ export function buildEmailSnapshot(
   data: AppData,
   at = new Date(),
 ): PublicEmailSnapshot {
+  const today = emailDetroitDateKey(at);
+  const stored = (data.email_editions ?? []).find((e) => e.date === today);
+  // Prefer today’s Desk/captured letter so public /email matches preview/send
+  // (and weather-line / card-picker saves do not silently rebuild the bay).
   return {
     v: 1,
     captured_at: at.toISOString(),
-    letter: buildEmailEditionSnapshot(data, at),
+    letter: stored ?? buildEmailEditionSnapshot(data, at),
   };
 }
 
