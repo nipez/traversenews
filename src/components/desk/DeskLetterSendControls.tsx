@@ -2,6 +2,13 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import {
+  SUBJECT_PHRASE_HARD_MAX,
+  SUBJECT_PHRASE_SOFT_CAP,
+  isMorningLetterSubjectOverMax,
+  isMorningLetterSubjectOverSoftCap,
+  morningLetterSubjectPhraseLen,
+} from "@/lib/email-subject-length";
 
 type SendMode = "live" | "preview";
 
@@ -30,6 +37,11 @@ export function DeskLetterSendControls({
   const [error, setError] = useState("");
   const [flash, setFlash] = useState("");
   const [draft, setDraft] = useState(subjectOverride);
+
+  const phraseLen = morningLetterSubjectPhraseLen(draft);
+  const overMax = isMorningLetterSubjectOverMax(draft);
+  const overSoft =
+    !overMax && draft.trim() !== "" && isMorningLetterSubjectOverSoftCap(draft);
 
   async function send(mode: SendMode) {
     setBusy(mode);
@@ -80,6 +92,13 @@ export function DeskLetterSendControls({
   }
 
   async function saveOverride(clear: boolean) {
+    if (!clear && overMax) {
+      setError(
+        `Subject is too long (${phraseLen} / ${SUBJECT_PHRASE_HARD_MAX}). Shorten before saving.`,
+      );
+      setFlash("");
+      return;
+    }
     setBusy(clear ? "clear" : "save");
     setError("");
     setFlash("");
@@ -115,6 +134,11 @@ export function DeskLetterSendControls({
 
   const hasOverride = Boolean(subjectOverride.trim());
   const controlsBusy = busy !== null;
+  const countClass = overMax
+    ? "text-[#a33]"
+    : overSoft
+      ? "text-[#a66]"
+      : "text-muted";
 
   return (
     <section className="mt-8 border border-rule bg-paper-2 px-4 py-5 md:px-5">
@@ -123,7 +147,8 @@ export function DeskLetterSendControls({
       </h2>
       <p className="mt-1 text-sm text-[#444]">
         Type today’s subject once, save it, then preview or send live. Pulls
-        keep a saved override.
+        keep a saved override. Soft target ~{SUBJECT_PHRASE_SOFT_CAP}; hard max{" "}
+        {SUBJECT_PHRASE_HARD_MAX} (leading 🗞️ not counted).
       </p>
 
       <p className="mt-4 text-sm text-muted">{subjectLabel}</p>
@@ -135,11 +160,19 @@ export function DeskLetterSendControls({
       )}
 
       <label className="mt-5 block">
-        <span className="text-sm font-extrabold uppercase tracking-wide text-ink">
-          Subject override
+        <span className="flex flex-wrap items-baseline justify-between gap-2 text-sm font-extrabold uppercase tracking-wide text-ink">
+          <span>Subject override</span>
+          <span
+            className={`normal-case tracking-normal font-semibold tabular-nums ${countClass}`}
+            aria-live="polite"
+          >
+            {phraseLen} / {SUBJECT_PHRASE_HARD_MAX}
+          </span>
         </span>
         <textarea
-          className="mt-2 min-h-[5.5rem] w-full resize-y border border-ink bg-paper px-3 py-3 text-base text-ink [field-sizing:content] focus:outline-none focus:ring-2 focus:ring-teal"
+          className={`mt-2 min-h-[5.5rem] w-full resize-y border bg-paper px-3 py-3 text-base text-ink [field-sizing:content] focus:outline-none focus:ring-2 focus:ring-teal ${
+            overMax ? "border-[#a33]" : "border-ink"
+          }`}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           placeholder="🗞️ Phrase · Phrase · Phrase"
@@ -147,8 +180,17 @@ export function DeskLetterSendControls({
           autoComplete="off"
           spellCheck
           disabled={controlsBusy}
+          aria-invalid={overMax || undefined}
+          aria-describedby="desk-subject-len-hint"
         />
       </label>
+      <p id="desk-subject-len-hint" className={`mt-1 text-sm ${countClass}`}>
+        {overMax
+          ? `Over the hard max — shorten before save (emoji pack not counted).`
+          : overSoft
+            ? `Past the soft ~${SUBJECT_PHRASE_SOFT_CAP} band — still saveable up to ${SUBJECT_PHRASE_HARD_MAX}.`
+            : `Phrase body length (leading 🗞️ not counted).`}
+      </p>
 
       <p className="mt-2 text-sm text-muted">
         Auto suggestion
@@ -169,7 +211,7 @@ export function DeskLetterSendControls({
         <button
           type="button"
           className="btn-teal inline-flex disabled:opacity-50"
-          disabled={controlsBusy}
+          disabled={controlsBusy || overMax}
           onClick={() => void saveOverride(false)}
         >
           {busy === "save" ? "Saving…" : "Save subject"}

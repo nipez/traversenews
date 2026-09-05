@@ -19,6 +19,10 @@ import type {
 } from "@/lib/types";
 
 import { getSite, siteOrigin, siteWordmark } from "@/lib/sites";
+import {
+  SUBJECT_PHRASE_HARD_MAX,
+  morningLetterSubjectPhraseLen,
+} from "@/lib/email-subject-length";
 
 const DETROIT_TIME_ZONE = "America/Detroit";
 
@@ -787,7 +791,7 @@ export function buildMorningLetterSubject(snapshot: EmailEditionSnapshot): strin
     return `🗞️ ${letterWordmark()} · ${emailDetroitDateKey()}`;
   }
 
-  const phraseLen = (s: string) => s.replace(/^🗞️\s*/, "").length;
+  const phraseLen = morningLetterSubjectPhraseLen;
 
   // Pack up to 3 complete phrases under 84 — skip a long card when a later
   // shorter one still fits rather than stump-recutting.
@@ -797,7 +801,7 @@ export function buildMorningLetterSubject(snapshot: EmailEditionSnapshot): strin
       if (packed.length >= 3) break;
       if (packed.some((p) => isSameSubjectStory(p, item))) continue;
       const trial = [...packed, item];
-      if (phraseLen(render(trial)) <= 84) packed.push(item);
+      if (phraseLen(render(trial)) <= SUBJECT_PHRASE_HARD_MAX) packed.push(item);
     }
     return packed;
   };
@@ -820,17 +824,17 @@ export function buildMorningLetterSubject(snapshot: EmailEditionSnapshot): strin
   // Soft cap ~80 (emoji not counted). Never recut a complete phrase into a
   // char-budget stump ("to purchase new", "boy faces") — if three complete
   // phrases still run past 84, drop to 2 instead of truncating mid-thought.
-  if (phraseLen(subject) > 84 && chosen.length >= 3) {
+  if (phraseLen(subject) > SUBJECT_PHRASE_HARD_MAX && chosen.length >= 3) {
     chosen = chosen.slice(0, 2);
     subject = render(chosen);
   }
   // Final guard: never slice mid-phrase into an incomplete stump with "…".
   // Prefer dropping a phrase over a hard character cut.
-  if (phraseLen(subject) > 84 && chosen.length > 1) {
+  if (phraseLen(subject) > SUBJECT_PHRASE_HARD_MAX && chosen.length > 1) {
     chosen = chosen.slice(0, Math.max(1, chosen.length - 1));
     subject = render(chosen);
   }
-  if (phraseLen(subject) > 84) {
+  if (phraseLen(subject) > SUBJECT_PHRASE_HARD_MAX) {
     // Last resort only when a single phrase is still over — trim at a word
     // boundary, then refuse if the result is incomplete.
     const trimmed = `${subject.slice(0, 81).replace(/\s+\S*$/, "").replace(/[·,\s]+$/, "")}`;

@@ -5,6 +5,11 @@ import {
   buildMorningLetterSubject,
   resolveMorningLetterSubject,
 } from "@/lib/email-letter";
+import {
+  SUBJECT_PHRASE_HARD_MAX,
+  isMorningLetterSubjectOverMax,
+  morningLetterSubjectPhraseLen,
+} from "@/lib/email-subject-length";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +19,7 @@ export const dynamic = "force-dynamic";
  * Body: `{ subject_override: string | null }`
  * - Non-empty string → lock that subject for preview / send-today / send-live
  * - null / "" / whitespace → clear; fall back to buildMorningLetterSubject
+ * - Phrase body (leading 🗞️ not counted) must be ≤ 84 or Save is refused
  *
  * Auth: Desk cookie OR Authorization: Bearer <DESK_IMPORT_TOKEN|DEV_DESK_PASSWORD>
  * Does not send mail.
@@ -44,6 +50,18 @@ export async function POST(request: Request) {
     );
   }
 
+  if (nextOverride && isMorningLetterSubjectOverMax(nextOverride)) {
+    const phrase_len = morningLetterSubjectPhraseLen(nextOverride);
+    return NextResponse.json(
+      {
+        error: `Subject is too long (${phrase_len} / ${SUBJECT_PHRASE_HARD_MAX}). Shorten the phrase body (leading 🗞️ does not count).`,
+        phrase_len,
+        max: SUBJECT_PHRASE_HARD_MAX,
+      },
+      { status: 400 },
+    );
+  }
+
   const edition = await setEmailEditionSubjectOverride(nextOverride);
   const auto_subject = buildMorningLetterSubject(edition);
   const subject = resolveMorningLetterSubject(edition);
@@ -54,6 +72,10 @@ export async function POST(request: Request) {
     subject_override: edition.subject_override ?? null,
     auto_subject,
     subject,
+    phrase_len: nextOverride
+      ? morningLetterSubjectPhraseLen(nextOverride)
+      : null,
+    max: SUBJECT_PHRASE_HARD_MAX,
   });
 }
 

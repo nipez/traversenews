@@ -1,5 +1,6 @@
 /**
  * Desk subject override: explicit string wins; empty/whitespace falls back.
+ * Phrase length: leading 🗞️ not counted; soft 80 / hard 84.
  *
  *   npm run test:letter-subject-override
  */
@@ -10,6 +11,13 @@ import {
   resolveMorningLetterSubject,
 } from "../src/lib/email-letter";
 import { buildEmailEditionSnapshot } from "../src/lib/email-editions";
+import {
+  SUBJECT_PHRASE_HARD_MAX,
+  SUBJECT_PHRASE_SOFT_CAP,
+  isMorningLetterSubjectOverMax,
+  isMorningLetterSubjectOverSoftCap,
+  morningLetterSubjectPhraseLen,
+} from "../src/lib/email-subject-length";
 import type { AppData, EmailEditionSnapshot } from "../src/lib/types";
 
 const base: EmailEditionSnapshot = {
@@ -137,4 +145,46 @@ assert.equal(
   "blank override is stored as null on rebuild",
 );
 
-console.log("ok — subject override wins; empty falls back");
+// Length: emoji pack not counted
+assert.equal(
+  morningLetterSubjectPhraseLen("🗞️ abc"),
+  3,
+  "strips leading newspaper emoji + space",
+);
+assert.equal(
+  morningLetterSubjectPhraseLen(locked),
+  locked.replace(/^🗞️\s*/, "").length,
+  "locked fixture uses phrase-body length",
+);
+assert.ok(
+  morningLetterSubjectPhraseLen(locked) <= SUBJECT_PHRASE_HARD_MAX,
+  "Nick’s 3-pack fixture fits under hard max",
+);
+assert.equal(SUBJECT_PHRASE_SOFT_CAP, 80);
+assert.equal(SUBJECT_PHRASE_HARD_MAX, 84);
+
+const softBody = "x".repeat(SUBJECT_PHRASE_SOFT_CAP + 1);
+assert.equal(
+  isMorningLetterSubjectOverSoftCap(`🗞️ ${softBody}`),
+  true,
+  "81 phrase chars is over soft cap",
+);
+assert.equal(
+  isMorningLetterSubjectOverMax(`🗞️ ${softBody}`),
+  false,
+  "81 is still under hard max",
+);
+
+const hardBody = "x".repeat(SUBJECT_PHRASE_HARD_MAX);
+assert.equal(
+  isMorningLetterSubjectOverMax(`🗞️ ${hardBody}`),
+  false,
+  "exactly 84 is allowed",
+);
+assert.equal(
+  isMorningLetterSubjectOverMax(`🗞️ ${hardBody}!`),
+  true,
+  "85 phrase chars is over hard max — API/Save must refuse",
+);
+
+console.log("ok — subject override wins; empty falls back; length caps ok");
