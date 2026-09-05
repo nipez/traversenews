@@ -547,7 +547,11 @@ export function selectFreshAroundTheBay(
 export function buildEmailEditionSnapshot(
   data: AppData,
   at = new Date(),
-  options: { weather_line?: string | null } = {},
+  options: {
+    weather_line?: string | null;
+    /** Preserve Desk subject when pull/snapshot rebuilds the letter. */
+    subject_override?: string | null;
+  } = {},
 ): EmailEditionSnapshot {
   const {
     identities: prior,
@@ -670,6 +674,12 @@ export function buildEmailEditionSnapshot(
         }
       : null;
 
+  const subject_override =
+    typeof options.subject_override === "string" &&
+    options.subject_override.trim()
+      ? options.subject_override.trim()
+      : null;
+
   return {
     date: emailDetroitDateKey(at),
     captured_at: at.toISOString(),
@@ -680,5 +690,6 @@ export function buildEmailEditionSnapshot(
     civic,
     sports,
     weather_line: options.weather_line ?? null,
+    subject_override,
   };
 }

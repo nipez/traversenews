@@ -19,6 +19,7 @@
     "test:site-config": "tsx scripts/test-site-config.ts",
     "test:aa-listings": "tsx scripts/test-aa-listings.ts",
     "test:weather": "tsx scripts/test-weather.ts",
+    "test:letter-subject-override": "tsx scripts/test-letter-subject-override.ts",
     "dev:ann-arbor": "SITE_ID=ann-arbor NEXT_PUBLIC_SITE_ID=ann-arbor NEXT_PUBLIC_SITE_URL=http://localhost:3000 next dev",
     "deploy:ann-arbor": "SITE_ID=ann-arbor NEXT_PUBLIC_SITE_ID=ann-arbor NEXT_PUBLIC_SITE_URL=https://ann-arbor-news.nickperez.workers.dev opennextjs-cloudflare build && wrangler deploy -c wrangler.ann-arbor.jsonc",
     "pull": "tsx scripts/pull.ts",
