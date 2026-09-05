@@ -1,7 +1,14 @@
 import { detroitWallToUtc } from "@/lib/dates";
 import { schoolFromSourceId, stableAthleticsId } from "@/lib/athletics";
+import { eventLinkFeedUrl } from "@/lib/pull/eventlink-feeds";
 import { getSite } from "@/lib/sites";
 import type { AthleticsGame, Source } from "@/lib/types";
+
+export {
+  EVENTLINK_ATHLETICS_FEEDS,
+  EVENTLINK_ATHLETICS_SOURCE_IDS,
+  eventLinkFeedUrl,
+} from "@/lib/pull/eventlink-feeds";
 
 const MONTHS: Record<string, number> = {
   jan: 1,
@@ -29,24 +36,6 @@ const MONTHS: Record<string, number> = {
   dec: 12,
   december: 12,
 };
-
-/** EventLink Events tables the Worker can read (printed date + clock or TBD). */
-export const EVENTLINK_ATHLETICS_FEEDS: Record<string, string> = {
-  src_pioneer_ath: "https://pioneerathletics.net/Events",
-  src_dexter_ath: "https://websites.eventlink.com/s/dexterathletics/Events",
-  src_saline_ath: "https://websites.eventlink.com/s/saline/Events",
-  src_chelsea_ath: "https://chelseabulldogs.org/Events",
-  src_milan_ath: "https://milanbigreds.org/Events",
-};
-
-export const EVENTLINK_ATHLETICS_SOURCE_IDS = new Set(
-  Object.keys(EVENTLINK_ATHLETICS_FEEDS),
-);
-
-/** Prefer the verified EventLink list — KV may still hold dead Arbiter /front URLs. */
-export function eventLinkFeedUrl(source: Source): string | null {
-  return EVENTLINK_ATHLETICS_FEEDS[source.id] ?? source.feed_url;
-}
 
 const MAX_EVENTLINK_PAGES = 4;
 const HORIZON_DAYS = 21;

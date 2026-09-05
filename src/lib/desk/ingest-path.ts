@@ -3,8 +3,8 @@ import {
   isSchoolCalendarSource,
   isShowEventSource,
 } from "@/lib/events";
-import { EVENTLINK_ATHLETICS_SOURCE_IDS } from "@/lib/pull/html-athletics";
-import { hasIcsFeedOverride } from "@/lib/pull/ics";
+import { EVENTLINK_ATHLETICS_SOURCE_IDS } from "@/lib/pull/eventlink-feeds";
+import { hasIcsFeedOverride } from "@/lib/pull/ics-overrides";
 import type { Source } from "@/lib/types";
 
 /** Civic calendar desks — meetings on /civic via civic/import. */
