@@ -1,8 +1,11 @@
 import ical from "node-ical";
 import { detroitWallToUtc } from "@/lib/dates";
 import { stableEventId } from "@/lib/events";
+import { icsFeedUrl } from "@/lib/pull/ics-overrides";
 import { getSite } from "@/lib/sites";
 import type { EventItem, Source } from "@/lib/types";
+
+export { hasIcsFeedOverride, icsFeedUrl } from "@/lib/pull/ics-overrides";
 
 function isIcsDateOnly(value: {
   datetype?: string;
@@ -76,20 +79,6 @@ export function eventsFromIcsText(
   return Array.from(byId.values()).sort(
     (a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime(),
   );
-}
-
-/** Verified public ICS — KV may still hold the HTML calendar page. */
-const ICS_FEED_OVERRIDES: Record<string, string> = {
-  src_saline_cal:
-    "https://calendar.google.com/calendar/ical/saline.k12.mi.us_tsbl8qslkk5cv66m75m4js4it4%40group.calendar.google.com/public/basic.ics",
-};
-
-export function icsFeedUrl(source: Source): string | null {
-  return ICS_FEED_OVERRIDES[source.id] ?? source.feed_url;
-}
-
-export function hasIcsFeedOverride(sourceId: string): boolean {
-  return sourceId in ICS_FEED_OVERRIDES;
 }
 
 export async function pullIcsSource(source: Source): Promise<EventItem[]> {
