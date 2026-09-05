@@ -969,6 +969,21 @@ export function unsubscribeUrl(email?: string | null): string {
   return `${base}?email=${encodeURIComponent(normalized)}`;
 }
 
+/**
+ * Resend / Desk subject for a letter. Explicit Desk override wins; empty or
+ * missing falls back to `buildMorningLetterSubject`.
+ */
+export function resolveMorningLetterSubject(
+  letter: EmailEditionSnapshot,
+): string {
+  const override =
+    typeof letter.subject_override === "string"
+      ? letter.subject_override.trim()
+      : "";
+  if (override) return override;
+  return buildMorningLetterSubject(letter);
+}
+
 export function buildMorningLetter(
   letter: EmailEditionSnapshot,
   options: {
@@ -977,7 +992,7 @@ export function buildMorningLetter(
     unsubscribeEmail?: string | null;
   } = {},
 ): { subject: string; html: string; text: string } {
-  const subject = buildMorningLetterSubject(letter);
+  const subject = resolveMorningLetterSubject(letter);
   const editionLabel = formatEmailEditionLabel(letter.date);
   const dateLabel = emailDateLabel(
     (() => {

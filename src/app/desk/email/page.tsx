@@ -18,6 +18,7 @@ import {
 } from "@/lib/email-editions";
 import {
   buildMorningLetter,
+  buildMorningLetterSubject,
   pickLetterSchoolDate,
 } from "@/lib/email-letter";
 
@@ -45,6 +46,11 @@ export default async function DeskEmailPage() {
     typeof sent?.subject === "string" && sent.subject.trim()
       ? sent.subject
       : "";
+  const autoSubject = buildMorningLetterSubject(edition);
+  const subjectOverride =
+    typeof edition.subject_override === "string"
+      ? edition.subject_override.trim()
+      : "";
   // After live send, Desk shows the stored subject — do not rebuild.
   const subject = sentSubject
     ? sentSubject
@@ -68,7 +74,10 @@ export default async function DeskEmailPage() {
         </p>
 
         <DeskLetterSendControls
+          key={`subject-${today}-${subjectOverride}`}
           subject={subject}
+          autoSubject={autoSubject}
+          subjectOverride={subjectOverride}
           subjectLabel={sentSubject ? "Sent subject" : "Today’s subject"}
           alreadySent={Boolean(sent)}
           alreadyPreviewed={Boolean(previewed)}

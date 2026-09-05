@@ -336,6 +336,12 @@ export type EmailEditionSnapshot = {
    * (e.g. "72° / 55° · rain likely"). Archive must not change later.
    */
   weather_line?: string | null;
+  /**
+   * Desk-typed morning-letter Resend subject for this date. When set (non-empty
+   * after trim), preview / send-today / send-live use it instead of
+   * `buildMorningLetterSubject`. Pull/snapshot rebuilds must preserve it.
+   */
+  subject_override?: string | null;
 };
 
 /** Thin pointer for a section page photo header (bytes live in R2 or /art). */

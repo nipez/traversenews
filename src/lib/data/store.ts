@@ -11,6 +11,7 @@ import { STAFF_PUBLISHED_ORIGINALS, STAFF_UNPUBLISHED_DRAFTS } from "@/lib/data/
 import { buildEditionSnapshot, upsertEdition } from "@/lib/editions";
 import {
   buildEmailEditionSnapshot,
+  emailDetroitDateKey,
   upsertEmailEdition,
 } from "@/lib/email-editions";
 import { sanitizeStoredAthletics } from "@/lib/athletics";
@@ -828,13 +829,21 @@ export async function getEmailEdition(
 /**
  * Capture / replace today's morning-email letter from the live mix.
  * Does not send mail. Freezes today’s weather line when the cache is warm
- * (or after a best-effort NWS refresh).
+ * (or after a best-effort NWS refresh). Preserves a Desk subject_override
+ * when the prior row for this Detroit date already had one.
  */
 export async function snapshotTodaysEmailEdition(
   at = new Date(),
 ): Promise<EmailEditionSnapshot> {
   const data = await loadStore();
   if (!Array.isArray(data.email_editions)) data.email_editions = [];
+  const todayKey = emailDetroitDateKey(at);
+  const prior = data.email_editions.find((e) => e.date === todayKey);
+  const priorOverride =
+    typeof prior?.subject_override === "string" &&
+    prior.subject_override.trim()
+      ? prior.subject_override.trim()
+      : null;
   let weather_line: string | null = null;
   try {
     const { getOrRefreshWeatherSnapshot } = await import("@/lib/weather");
@@ -843,10 +852,41 @@ export async function snapshotTodaysEmailEdition(
   } catch {
     weather_line = null;
   }
-  const snapshot = buildEmailEditionSnapshot(data, at, { weather_line });
+  const snapshot = buildEmailEditionSnapshot(data, at, {
+    weather_line,
+    subject_override: priorOverride,
+  });
   data.email_editions = upsertEmailEdition(data.email_editions, snapshot);
   await saveStore(data);
   return snapshot;
+}
+
+/**
+ * Save or clear today’s Desk subject override on the email_editions row.
+ * Empty / null clears (falls back to buildMorningLetterSubject). Creates
+ * today’s snapshot first when none is captured yet.
+ */
+export async function setEmailEditionSubjectOverride(
+  subject_override: string | null,
+  at = new Date(),
+): Promise<EmailEditionSnapshot> {
+  const trimmed =
+    typeof subject_override === "string" ? subject_override.trim() : "";
+  const nextOverride = trimmed || null;
+  const todayKey = emailDetroitDateKey(at);
+  let edition = await getEmailEdition(todayKey);
+  if (!edition) {
+    edition = await snapshotTodaysEmailEdition(at);
+  }
+  const next: EmailEditionSnapshot = {
+    ...edition,
+    subject_override: nextOverride,
+  };
+  const data = await loadStore();
+  if (!Array.isArray(data.email_editions)) data.email_editions = [];
+  data.email_editions = upsertEmailEdition(data.email_editions, next);
+  await saveStore(data);
+  return next;
 }
 
 /**
