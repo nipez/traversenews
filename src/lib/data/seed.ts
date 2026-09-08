@@ -505,7 +505,18 @@ const sources: Source[] = [
     beat_id: "beat_transit",
     enabled: true,
     notes:
-      "No Worker GTFS-RT parser. Official service alerts via POST /api/desk/stories/import (source_id src_bata) when printed — headline + link only. Do not invent outages.",
+      "No Worker GTFS-RT parser. Official printed/service alerts via POST /api/desk/stories/import (source_id src_bata) — headline + link only. Facebook posts use src_bata_fb. Do not invent outages.",
+  },
+  {
+    id: "src_bata_fb",
+    name: "BATA",
+    homepage: "https://www.facebook.com/batatransit",
+    feed_url: "https://www.facebook.com/batatransit",
+    pull_method: "facebook",
+    beat_id: "beat_transit",
+    enabled: true,
+    notes:
+      "Official BATA Facebook service alerts only. Browser-pulled → POST /api/desk/stories/import (source_id src_bata_fb). Prefer over GTFS src_bata for FB posts. Do not invent outages.",
   },
   {
     id: "src_nws",
@@ -529,6 +540,17 @@ const sources: Source[] = [
       "Official alerts only (outages, crashes, closures). Browser-pulled by Traverse News on the live computer → POST /api/desk/stories/import. Do not dump the Facebook feed. No memes, hiring fluff, or unverified pile-ons. Empty Worker pull is OK.",
   },
   {
+    id: "src_gtcrc",
+    name: "GTCRC",
+    homepage: "https://www.facebook.com/profile.php?id=100064583803947",
+    feed_url: "https://www.facebook.com/profile.php?id=100064583803947",
+    pull_method: "facebook",
+    beat_id: "beat_public_safety",
+    enabled: true,
+    notes:
+      "Grand Traverse County Road Commission Facebook — road closures / construction alerts only. Browser-pulled → POST /api/desk/stories/import (source_id src_gtcrc). Do not invent closures.",
+  },
+  {
     id: "src_ticker_fb",
     name: "Ticker (Facebook)",
     homepage: "https://www.facebook.com/TraverseCityTicker",
@@ -537,7 +559,7 @@ const sources: Source[] = [
     beat_id: "beat_public_safety",
     enabled: true,
     notes:
-      "Browser-pulled → POST /api/desk/stories/import. Alerts/breaking only (crashes, outages, closures, developing). Not a dump of every Ticker FB post. Worker does not scrape FB. Separate from The Ticker RSS (src_ticker) — do not duplicate that firehose into Around the bay.",
+      "Browser-pulled → POST /api/desk/stories/import. Alerts/breaking only (crashes, outages, closures, developing). Not a dump of every Ticker FB post. True Ticker-only tips — agency posts (GTCRC, BATA, 911) should use their own source ids. Worker does not scrape FB. Separate from The Ticker RSS (src_ticker) — do not duplicate that firehose into Around the bay.",
   },
   {
     id: "src_910_sports",

@@ -237,7 +237,7 @@ async function runPullInner(): Promise<PullResult> {
   const originals = keepRealOriginals(existing);
 
   // RSS pull only replaces rows for sources we actually fetched this run —
-  // keep browser-imported Facebook alerts (src_gt911, src_ticker_fb, etc.) intact.
+  // keep browser-imported Facebook alerts (src_gt911, src_gtcrc, src_bata_fb, src_ticker_fb, etc.) intact.
   const nextAggregated =
     pulledStories.length > 0
       ? (() => {

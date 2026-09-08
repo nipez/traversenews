@@ -1,8 +1,11 @@
 import type { Source, SourceLane } from "@/lib/types";
 
-/** Traverse fallback IDs — used when KV rows predate `lane`. */
+/** Traverse / AA fallback IDs — used when KV rows predate `lane`. */
 const FALLBACK_ALERT = new Set([
   "src_gt911",
+  "src_gtcrc",
+  "src_bata_fb",
+  "src_bata",
   "src_ticker_fb",
   "src_a2_police_news",
   "src_washtenaw_press",

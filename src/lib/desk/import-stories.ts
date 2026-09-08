@@ -1,4 +1,4 @@
-import { stableStoryId } from "@/lib/alerts";
+import { resolveAlertSourceId, stableStoryId } from "@/lib/alerts";
 import type { Source, Story } from "@/lib/types";
 
 export type StoryImportRow = {
@@ -24,6 +24,7 @@ function truncateDek(input: string, max = 180): string {
 /**
  * Normalize browser-pulled story rows (Facebook alerts).
  * Never invents titles or URLs — invalid rows are skipped.
+ * Agency Facebook URLs (GTCRC, BATA, 911) override a Ticker default.
  */
 export function normalizeImportedStories(
   rows: StoryImportRow[],
@@ -42,17 +43,17 @@ export function normalizeImportedStories(
       return;
     }
 
-    const sourceId =
-      (typeof row.source_id === "string" && row.source_id.trim()) ||
-      defaultSourceId;
-    if (!byId.has(sourceId)) {
-      skipped.push({ index, reason: `Unknown source_id: ${sourceId}` });
-      return;
-    }
-
     const url = typeof row.url === "string" ? row.url.trim() : "";
     if (!url) {
       skipped.push({ index, reason: "Missing url (Facebook permalink)" });
+      return;
+    }
+
+    const provided =
+      typeof row.source_id === "string" ? row.source_id.trim() : "";
+    const sourceId = resolveAlertSourceId(url, provided, defaultSourceId);
+    if (!byId.has(sourceId)) {
+      skipped.push({ index, reason: `Unknown source_id: ${sourceId}` });
       return;
     }
 
