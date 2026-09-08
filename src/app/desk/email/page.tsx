@@ -1,6 +1,10 @@
 import Link from "next/link";
 import { DeskChrome } from "@/components/desk/DeskChrome";
+<<<<<<< HEAD
 import { DeskLetterAroundProvider } from "@/components/desk/DeskLetterAroundContext";
+=======
+import { DeskGlobalPull } from "@/components/desk/DeskGlobalPull";
+>>>>>>> 7a2aff4 (Add global Desk Pull now for full feed refresh)
 import { DeskLetterCardPicker } from "@/components/desk/DeskLetterCardPicker";
 import { DeskLetterSendControls } from "@/components/desk/DeskLetterSendControls";
 import { DeskSubscribers } from "@/components/desk/DeskSubscribers";
@@ -86,7 +90,19 @@ export default async function DeskEmailPage() {
           send live from here, and keep the archive. Do not invent a letter.
         </p>
 
+<<<<<<< HEAD
         <DeskLetterAroundProvider
+=======
+        <div className="mt-6">
+          <DeskGlobalPull
+            variant="panel"
+            lastPullAt={data.last_pull_at}
+            itemCount={data.stories.filter((s) => !s.is_original).length}
+          />
+        </div>
+
+        <DeskLetterCardPicker
+>>>>>>> 7a2aff4 (Add global Desk Pull now for full feed refresh)
           key={`cards-${today}-${edition.around_locked ? "locked" : "auto"}-${edition.around.map((c) => c.url).join("|")}`}
           initialAround={edition.around}
           aroundLocked={Boolean(edition.around_locked)}

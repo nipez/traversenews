@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { DeskGlobalPull } from "@/components/desk/DeskGlobalPull";
 import { SignOutButton } from "@/components/desk/SignOutButton";
 import { CitiesSwitcher } from "@/components/desk/CitiesSwitcher";
 import { getDevDeskEmail, isDeskAuthed } from "@/lib/auth";
@@ -106,19 +107,13 @@ export async function DeskChrome({
             </nav>
           )}
 
-          <div className="ml-auto flex items-center gap-3 text-sm text-white/80">
+          <div className="ml-auto flex items-center gap-2 text-sm text-white/80 sm:gap-3">
             {!backHref ? (
-              <span className="hidden text-xs lg:inline">
-                Last pull{" "}
-                {pullAt
-                  ? new Date(pullAt).toLocaleTimeString("en-US", {
-                      hour: "numeric",
-                      minute: "2-digit",
-                    })
-                  : "not yet"}
-                {" · "}
-                {itemCount ?? 0} items
-              </span>
+              <DeskGlobalPull
+                variant="chrome"
+                lastPullAt={pullAt ?? null}
+                itemCount={itemCount ?? 0}
+              />
             ) : null}
             <strong className="text-white">{display}</strong>
             <SignOutButton />

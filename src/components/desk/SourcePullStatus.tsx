@@ -3,6 +3,10 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ingestPathForSource } from "@/lib/desk/ingest-path";
+import {
+  formatPullFlash,
+  type PullApiResult,
+} from "@/lib/desk/pull-flash";
 import type { Source } from "@/lib/types";
 
 /**
@@ -21,6 +25,7 @@ export function SourcePullStatus({
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const [messageOk, setMessageOk] = useState(true);
   const path = ingestPathForSource(source);
   const liveCount = storyCount + eventCount;
   const lastPull = source.last_pulled_at;
@@ -30,6 +35,7 @@ export function SourcePullStatus({
     setMessage("");
     try {
       if (!path.workerPulls) {
+        setMessageOk(false);
         setMessage(
           path.importPath
             ? `Worker will not scrape this ${source.pull_method} source. Use ${path.importPath} from the box.`
@@ -38,20 +44,19 @@ export function SourcePullStatus({
         return;
       }
       const res = await fetch("/api/pull", { method: "POST" });
-      const json = (await res.json().catch(() => null)) as {
-        ok?: boolean;
-        errors?: Array<{ source: string; error: string }>;
-      } | null;
+      const json = (await res.json().catch(() => null)) as PullApiResult | null;
       const mine = json?.errors?.find((e) => e.source === source.name);
-      setMessage(
-        mine
-          ? mine.error
-          : json?.ok === false
-            ? "Pull finished with other-source errors. Refresh for counts."
-            : "Pull finished. Refreshing…",
-      );
+      if (mine) {
+        setMessageOk(false);
+        setMessage(mine.error);
+      } else {
+        const flash = formatPullFlash(json, res.ok);
+        setMessageOk(flash.ok);
+        setMessage(flash.text);
+      }
       router.refresh();
     } catch (err) {
+      setMessageOk(false);
       setMessage(err instanceof Error ? err.message : "Pull failed");
     } finally {
       setBusy(false);
@@ -85,6 +90,10 @@ export function SourcePullStatus({
               : "—"}
           </p>
           <p className="mt-2 text-sm text-[#444]">{path.summary}</p>
+          <p className="mt-1 text-xs text-muted">
+            Pull now runs the full site feed pull (all enabled sources), not
+            this source alone.
+          </p>
           {source.last_pull_error ? (
             <p className="mt-2 text-sm text-red-800">{source.last_pull_error}</p>
           ) : null}
@@ -98,7 +107,13 @@ export function SourcePullStatus({
           {busy ? "Pulling…" : "Pull now"}
         </button>
       </div>
-      {message ? <p className="mt-3 text-sm text-muted">{message}</p> : null}
+      {message ? (
+        <p
+          className={`mt-3 text-sm ${messageOk ? "text-teal" : "text-red-800"}`}
+        >
+          {message}
+        </p>
+      ) : null}
     </div>
   );
 }

@@ -1964,6 +1964,56 @@ a:hover {
   color: #fff;
 }
 
+.desk-pull-chrome-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  min-height: 2rem;
+  padding: 0.35rem 0.7rem;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: #2a6f6c;
+  color: #fff;
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.desk-pull-chrome-btn:hover:not(:disabled) {
+  background: #1f5856;
+  border-color: rgba(255, 255, 255, 0.55);
+}
+
+.desk-pull-chrome-flash {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.45rem);
+  z-index: 40;
+  width: min(22rem, calc(100vw - 2rem));
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--rule);
+  background: #fff;
+  color: #1c1712;
+  font-size: 0.8rem;
+  line-height: 1.35;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+
+.desk-pull-chrome-flash[data-ok="false"] {
+  color: #7f1d1d;
+}
+
+.desk-pull-chrome-flash[data-ok="true"] {
+  color: #1f5856;
+}
+
+.desk-pull-panel code {
+  font-size: 0.85em;
+}
+
 .desk-table th {
   font-size: 0.68rem;
   letter-spacing: 0.06em;
