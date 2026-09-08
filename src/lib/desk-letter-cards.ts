@@ -367,6 +367,21 @@ export function listDeskLetterCandidates(
 }
 
 /** Normalize Desk POST body into at most LETTER_AROUND_MAX story cards. */
+/**
+ * True when Desk’s visible Around slate matches `baseline` card-for-card
+ * (identity + order). Used so Preview/Send can detect unsaved picker edits.
+ */
+export function isSameAroundOrder(
+  a: EmailStoryCard[],
+  b: EmailStoryCard[],
+): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (letterCardIdentity(a[i]) !== letterCardIdentity(b[i])) return false;
+  }
+  return true;
+}
+
 export function normalizeDeskAroundSelection(
   input: unknown,
 ): { ok: true; around: EmailStoryCard[] } | { ok: false; error: string } {

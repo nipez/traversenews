@@ -9,10 +9,14 @@ import {
   deskLetterMixHint,
   findPastEditionAppearances,
   formatPastRunFlag,
+  isSameAroundOrder,
   normalizeDeskAroundSelection,
 } from "../src/lib/desk-letter-cards";
 import { buildEmailEditionSnapshot } from "../src/lib/email-editions";
-import { resolveMorningLetterSubject } from "../src/lib/email-letter";
+import {
+  buildMorningLetter,
+  resolveMorningLetterSubject,
+} from "../src/lib/email-letter";
 import type {
   AppData,
   EditionSnapshot,
@@ -225,6 +229,41 @@ const tooMany = normalizeDeskAroundSelection(
 );
 assert.equal(tooMany.ok, false, "rejects more than 6 cards");
 
+function deskAroundFixture(): EmailStoryCard[] {
+  return [
+    {
+      title: "Hannah Avenue closed for water main work",
+      dek: "Detour",
+      url: "https://example.com/hannah",
+      sources: ["TC Record-Eagle"],
+      paywalled: true,
+    },
+    {
+      title: "IPR covers Boardman Level 2 advisory",
+      dek: "Health",
+      url: "https://example.com/boardman",
+      sources: ["IPR"],
+    },
+  ];
+}
+
+// Dirty detection: order change must flag unsaved picker edits.
+assert.equal(
+  isSameAroundOrder(deskAroundFixture(), deskAroundFixture()),
+  true,
+  "identical order is clean",
+);
+assert.equal(
+  isSameAroundOrder(deskAroundFixture(), [...deskAroundFixture()].reverse()),
+  false,
+  "reordered slate is dirty",
+);
+assert.equal(
+  isSameAroundOrder(deskAroundFixture(), deskAroundFixture().slice(0, 1)),
+  false,
+  "length change is dirty",
+);
+
 // Saving a Desk Around slate must not wipe subject_override on rebuild path.
 const emptyApp = {
   stories: [],
@@ -244,21 +283,7 @@ const emptyApp = {
   section_headers: {},
 } as unknown as AppData;
 
-const deskAround: EmailStoryCard[] = [
-  {
-    title: "Hannah Avenue closed for water main work",
-    dek: "Detour",
-    url: "https://example.com/hannah",
-    sources: ["TC Record-Eagle"],
-    paywalled: true,
-  },
-  {
-    title: "IPR covers Boardman Level 2 advisory",
-    dek: "Health",
-    url: "https://example.com/boardman",
-    sources: ["IPR"],
-  },
-];
+const deskAround = deskAroundFixture();
 
 const lockedRebuild = buildEmailEditionSnapshot(
   emptyApp,
@@ -287,6 +312,19 @@ assert.equal(
   "subject resolve still uses override after card lock",
 );
 
+// buildMorningLetter must render locked Around in Desk order (not auto re-rank).
+const letter = buildMorningLetter(lockedRebuild);
+assert.match(
+  letter.html,
+  /Hannah Avenue closed for water main work[\s\S]*IPR covers Boardman Level 2 advisory/,
+  "HTML Around order matches locked slate",
+);
+assert.match(
+  letter.text,
+  /Hannah Avenue closed for water main work[\s\S]*IPR covers Boardman Level 2 advisory/,
+  "text Around order matches locked slate",
+);
+
 const unlocked = buildEmailEditionSnapshot(
   emptyApp,
   new Date("2026-09-05T16:00:00.000Z"),
@@ -302,4 +340,94 @@ assert.equal(
 );
 assert.ok(!unlocked.around_locked, "unlocked rebuild clears around_locked");
 
-console.log("ok — past-edition flags + subject_override survives card lock");
+// Empty locked slate survives rebuild the same way subject_override does
+// (pull/snapshot must not treat length 0 as unlocked).
+const emptyLocked = buildEmailEditionSnapshot(
+  emptyApp,
+  new Date("2026-09-05T16:00:00.000Z"),
+  {
+    subject_override: lockedSubject,
+    around: [],
+    around_locked: true,
+  },
+);
+assert.equal(emptyLocked.around_locked, true, "empty Desk lock keeps flag");
+assert.equal(emptyLocked.around.length, 0, "empty Desk lock keeps empty around");
+assert.equal(
+  emptyLocked.subject_override,
+  lockedSubject,
+  "empty lock still keeps subject_override",
+);
+
+// Simulate the pull/snapshot survival path: prior locked row → rebuild options.
+function snapshotPreservesLockedAround(
+  prior: EmailEditionSnapshot,
+  at: Date,
+): EmailEditionSnapshot {
+  const priorOverride =
+    typeof prior.subject_override === "string" && prior.subject_override.trim()
+      ? prior.subject_override.trim()
+      : null;
+  const aroundLocked = Boolean(
+    prior.around_locked && Array.isArray(prior.around),
+  );
+  return buildEmailEditionSnapshot(emptyApp, at, {
+    weather_line: prior.weather_line ?? null,
+    subject_override: priorOverride,
+    around: aroundLocked ? prior.around : null,
+    around_locked: aroundLocked,
+  });
+}
+
+const afterPull = snapshotPreservesLockedAround(
+  {
+    ...lockedRebuild,
+    weather_line: "72° / 55° · fair",
+  },
+  new Date("2026-09-05T18:00:00.000Z"),
+);
+assert.equal(afterPull.around_locked, true, "pull path keeps around_locked");
+assert.ok(
+  isSameAroundOrder(afterPull.around, deskAround),
+  "pull path keeps Desk Around order",
+);
+assert.equal(
+  afterPull.subject_override,
+  lockedSubject,
+  "pull path keeps subject_override beside locked around",
+);
+
+const afterPullEmpty = snapshotPreservesLockedAround(
+  emptyLocked,
+  new Date("2026-09-05T18:00:00.000Z"),
+);
+assert.equal(
+  afterPullEmpty.around_locked,
+  true,
+  "pull path keeps empty around_locked",
+);
+assert.equal(
+  afterPullEmpty.around.length,
+  0,
+  "pull path does not auto-fill an empty locked slate",
+);
+
+// Reordered Desk slate must mail in that order after a weather-line-only update
+// (ensureEmailEditionWeatherLine spreads the edition — order must stick).
+const reordered = [...deskAround].reverse();
+const weatherTouched: EmailEditionSnapshot = {
+  ...lockedRebuild,
+  around: reordered,
+  around_locked: true,
+  weather_line: "68° / 50° · showers",
+};
+const mailed = buildMorningLetter(weatherTouched);
+assert.match(
+  mailed.html,
+  /IPR covers Boardman Level 2 advisory[\s\S]*Hannah Avenue closed for water main work/,
+  "weather freeze must not reshuffle locked Around",
+);
+
+console.log(
+  "ok — past-edition flags + subject_override survives card lock + Around order sticks",
+);
