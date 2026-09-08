@@ -304,7 +304,7 @@ curl -X POST https://traverse-news.nickperez.workers.dev/api/desk/shows/import \
 
 ### Browser story import (Facebook alerts)
 
-Cloud Agents do not scrape Facebook. **Do not invent posts.** Traverse News pulls Grand Traverse 911 and Ticker (Facebook) alert posts on the live computer and POSTs here. The homepage **Alerts** strip shows `src_gt911` and `src_ticker_fb` stories only (1–3 total, newest first); it stays hidden when both are empty. Separate from The Ticker RSS (`src_ticker`) Around the bay wire.
+Cloud Agents do not scrape Facebook. **Do not invent posts.** Traverse News pulls official alert posts (Grand Traverse 911, GTCRC, BATA, and true Ticker-only tips) on the live computer and POSTs here. The homepage **Alerts** strip shows stories from `ALERT_SOURCE_IDS` (`src_gt911`, `src_gtcrc`, `src_bata_fb`, `src_bata`, `src_ticker_fb`) — 1–3 total, newest first; it stays hidden when empty. Those source ids never appear as Around the bay cards. Separate from The Ticker RSS (`src_ticker`) bay wire.
 
 ```bash
 curl -X POST https://traverse-news.nickperez.workers.dev/api/desk/stories/import \
@@ -325,7 +325,7 @@ curl -X POST https://traverse-news.nickperez.workers.dev/api/desk/stories/import
 ```
 
 - Auth: same as events import (`DESK_IMPORT_TOKEN` or `DEV_DESK_PASSWORD`).
-- Default `source_id`: `src_gt911`. Also accepts `src_ticker_fb` (Ticker Facebook alerts/breaking only).
+- Default `source_id`: `src_gt911`. Also accepts `src_gtcrc`, `src_bata_fb`, `src_bata` (printed/GTFS), and `src_ticker_fb` (Ticker Facebook tips only). Agency Facebook URLs are inferred from the page path/id when importing.
 - Replaces that source’s story rows when `replace: true` (default). Does not wipe RSS / originals.
 - Hand-add from Desk **Alerts** (`/desk/alerts`): paste URL + title (+ optional dek), `replace: false`. If the URL is already on the strip, API returns `409` + `needsConfirm` until `confirm: true` (Replace) or the editor Skips.
 - RSS pulls preserve browser-imported alert stories for other source ids.

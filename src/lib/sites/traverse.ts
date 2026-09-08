@@ -1,3 +1,4 @@
+import { TRAVERSE_ALERT_SOURCES } from "@/lib/alert-sources";
 import type { SiteConfig } from "@/lib/sites/types";
 
 export const TRAVERSE_SITE: SiteConfig = {
@@ -55,7 +56,7 @@ export const TRAVERSE_SITE: SiteConfig = {
     sportsDek:
       "Headlines from 9&10 Sports, Record-Eagle Sports, and local prep across the greater bay.",
     deskAlertHint:
-      "Saw a Grand Traverse 911 or Ticker Facebook post? Paste the URL on the Desk — no chat needed.",
+      "Saw a 911, GTCRC, BATA, or Ticker Facebook alert? Paste the URL on the Desk — no chat needed.",
     aboutTitle: "About traverse.news",
     aboutDek: "A Traverse City desk. One place to read the bay.",
     aboutBody: `## Why this exists
@@ -156,8 +157,8 @@ We will not publish a calendar item we cannot point back to.`,
       href: "https://www.gtcountymi.gov",
     },
   ],
-  alertSources: [
-    { id: "src_gt911", label: "Grand Traverse 911" },
-    { id: "src_ticker_fb", label: "Ticker Facebook" },
-  ],
+  alertSources: TRAVERSE_ALERT_SOURCES.map((s) => ({
+    id: s.id,
+    label: s.label,
+  })),
 };

@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
+import { inferAlertSourceIdFromUrl } from "@/lib/alerts";
 import type { Story } from "@/lib/types";
 
 function normalizeUrl(url: string): string {
@@ -137,8 +138,16 @@ export function AddAlertForm({
             required
             value={url}
             onChange={(e) => {
-              setUrl(e.target.value);
+              const next = e.target.value;
+              setUrl(next);
               setPendingDuplicate(null);
+              const inferred = inferAlertSourceIdFromUrl(next);
+              if (
+                inferred &&
+                sources.some((s) => s.id === inferred)
+              ) {
+                setSourceId(inferred);
+              }
             }}
             placeholder="https://www.facebook.com/…"
             disabled={saving}

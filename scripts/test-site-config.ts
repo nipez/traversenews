@@ -57,6 +57,16 @@ const ticker = tc.sources.find((s) => s.id === "src_ticker");
 assert(ticker?.lane === "wire", "Ticker has lane wire");
 assert(ticker?.family === "eyes-only", "Ticker is eyes-only family");
 assert(isAlertSource(undefined, "src_gt911"), "TC alert fallback");
+assert(isAlertSource(undefined, "src_gtcrc"), "TC GTCRC alert fallback");
+assert(isAlertSource(undefined, "src_bata_fb"), "TC BATA FB alert fallback");
+assert(
+  getSite().alertSources.some((s) => s.id === "src_gtcrc"),
+  "TC Desk alert picker includes GTCRC",
+);
+assert(
+  getSite().alertSources.some((s) => s.id === "src_bata_fb"),
+  "TC Desk alert picker includes BATA FB",
+);
 
 setSite("ann-arbor");
 assert(getSite().id === "ann-arbor", "AA site id");
