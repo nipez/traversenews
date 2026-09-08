@@ -2,7 +2,10 @@ import { dedupeEvents, eventInUpcomingWindow, isCivicEvent } from "@/lib/events"
 import {
   getEmailSnapshot,
   getHomeSnapshot,
+  getPageCopySnapshot,
+  getSectionHeadersSnapshot,
 } from "@/lib/public-snapshots";
+import { resolveHomeHero } from "@/lib/section-headers";
 import type { EventItem } from "@/lib/types";
 import { getTodaysWeatherLine } from "@/lib/weather";
 
@@ -10,10 +13,13 @@ export async function getHomepageData() {
   // Public homepage: one compact snapshot key. Clustering runs on write
   // (pull/import), not on every visitor GET. Weather is a second cheap
   // KV get (public:weather) — never an NWS fetch here.
-  const [snap, weatherLine] = await Promise.all([
+  const [snap, weatherLine, headers, pageCopy] = await Promise.all([
     getHomeSnapshot(),
     getTodaysWeatherLine().catch(() => null),
+    getSectionHeadersSnapshot(),
+    getPageCopySnapshot(),
   ]);
+  const hero = resolveHomeHero(headers.headers.home);
 
   return {
     lead: snap.lead,
@@ -22,6 +28,9 @@ export async function getHomepageData() {
     civic: snap.civic,
     alerts: snap.alerts,
     weatherLine,
+    heroSrc: hero.src,
+    heroAlt: hero.alt,
+    heroDek: pageCopy.copy.hero_dek,
   };
 }
 

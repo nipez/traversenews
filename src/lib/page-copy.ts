@@ -1,5 +1,5 @@
 /**
- * Desk-editable static page copy (Events dek, About essay, …).
+ * Desk-editable static page copy (homepage tagline, Events dek, About essay).
  * Defaults match the shipped hardcoded text so empty KV looks the same.
  * Links use markdown: [Civic](/civic). Headings: ## Why this exists
  */
@@ -53,6 +53,7 @@ We will not publish a calendar item we cannot point back to.`;
 
 export function emptyPageCopy(): PageCopy {
   return {
+    hero_dek: "",
     events_dek: "",
     about_title: "",
     about_dek: "",
@@ -62,8 +63,10 @@ export function emptyPageCopy(): PageCopy {
 }
 
 export function defaultPageCopy(): PageCopy {
-  const copy = getSite().pageCopy;
+  const site = getSite();
+  const copy = site.pageCopy;
   return {
+    hero_dek: site.hero.dek,
     events_dek: copy.eventsDek,
     about_title: copy.aboutTitle,
     about_dek: copy.aboutDek,
@@ -79,6 +82,7 @@ export function resolvePageCopy(
   const d = defaultPageCopy();
   if (!raw || typeof raw !== "object") return d;
   return {
+    hero_dek: raw.hero_dek?.trim() || d.hero_dek,
     events_dek: raw.events_dek?.trim() || d.events_dek,
     about_title: raw.about_title?.trim() || d.about_title,
     about_dek: raw.about_dek?.trim() || d.about_dek,
@@ -102,6 +106,7 @@ export function normalizePageCopyInput(
     return "";
   };
   return {
+    hero_dek: pick("hero_dek"),
     events_dek: pick("events_dek"),
     about_title: pick("about_title"),
     about_dek: pick("about_dek"),
@@ -110,12 +115,16 @@ export function normalizePageCopyInput(
   };
 }
 
+const MAX_HERO_DEK = 200;
 const MAX_DEK = 800;
 const MAX_TITLE = 200;
 const MAX_ABOUT_DEK = 400;
 const MAX_BODY = 40_000;
 
 export function validatePageCopy(copy: PageCopy): string | null {
+  if (copy.hero_dek.length > MAX_HERO_DEK) {
+    return `Homepage tagline is too long (max ${MAX_HERO_DEK} characters)`;
+  }
   if (copy.events_dek.length > MAX_DEK) {
     return `Events dek is too long (max ${MAX_DEK} characters)`;
   }

@@ -3,6 +3,7 @@ import { isDeskRequestAuthed } from "@/lib/auth";
 import { getAppData, setPageCopy } from "@/lib/data/store";
 import {
   defaultPageCopy,
+  normalizePageCopyInput,
   resolvePageCopy,
   validatePageCopy,
   type PageCopy,
@@ -36,19 +37,24 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "JSON body required" }, { status: 400 });
   }
 
-  const candidate = {
-    events_dek: typeof body.events_dek === "string" ? body.events_dek : "",
-    about_title: typeof body.about_title === "string" ? body.about_title : "",
-    about_dek: typeof body.about_dek === "string" ? body.about_dek : "",
-    about_body: typeof body.about_body === "string" ? body.about_body : "",
-    updated_at: new Date().toISOString(),
-  };
+  const patch: Partial<PageCopy> = {};
+  if (typeof body.hero_dek === "string") patch.hero_dek = body.hero_dek;
+  if (typeof body.events_dek === "string") patch.events_dek = body.events_dek;
+  if (typeof body.about_title === "string") patch.about_title = body.about_title;
+  if (typeof body.about_dek === "string") patch.about_dek = body.about_dek;
+  if (typeof body.about_body === "string") patch.about_body = body.about_body;
+  if (Object.keys(patch).length === 0) {
+    return NextResponse.json({ error: "No copy fields to save" }, { status: 400 });
+  }
+
+  const current = await getAppData();
+  const candidate = normalizePageCopyInput(patch, current.page_copy);
   const err = validatePageCopy(candidate);
   if (err) {
     return NextResponse.json({ error: err }, { status: 400 });
   }
 
-  const data = await setPageCopy(candidate);
+  const data = await setPageCopy(patch);
   return NextResponse.json({
     ok: true,
     copy: data.page_copy,

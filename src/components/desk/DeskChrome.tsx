@@ -60,7 +60,7 @@ export async function DeskChrome({
     { id: "events", href: "/desk/events", label: "Events" },
     { id: "queue", href: "/desk/queue", label: "Queue" },
     { id: "originals", href: "/desk/originals", label: "Originals" },
-    { id: "headers", href: "/desk/headers", label: "Headers" },
+    { id: "headers", href: "/desk/headers", label: "Home & headers" },
     { id: "editions", href: "/desk/editions", label: "Editions" },
     { id: "email", href: "/desk/email", label: "Email" },
   ] as const;

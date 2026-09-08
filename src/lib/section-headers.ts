@@ -4,8 +4,8 @@
  * Hypothesis (storage): keep JPEG bytes out of fat `app_data` / public
  * snapshots to avoid Worker 1102 on save/rebuild. Prefer R2
  * (`TRAVERSE_MEDIA`) for uploads; AppData + `public:section-headers:v1`
- * hold thin `{ src, alt, updated_at }` pointers only. Homepage bay masthead
- * stays static `/art/bay-hero.jpg` and is intentionally not in this map.
+ * hold thin `{ src, alt, updated_at }` pointers only. Homepage hero is
+ * `home` in this map; an empty slot falls back to `site.hero`.
  */
 
 import { getSite, getSiteId } from "@/lib/sites";
@@ -18,6 +18,16 @@ import type {
 export type { SectionHeaderId, SectionHeaderMeta, SectionHeadersMap };
 
 export const SECTION_HEADER_IDS: readonly SectionHeaderId[] = [
+  "home",
+  "whats-on",
+  "shows",
+  "sports",
+  "civic",
+  "schools",
+  "local",
+] as const;
+
+export const INTERIOR_SECTION_HEADER_IDS: readonly SectionHeaderId[] = [
   "whats-on",
   "shows",
   "sports",
@@ -30,6 +40,7 @@ const SECTION_HEADER_LABELS_BASE: Record<
   SectionHeaderId,
   { title: string; path: string; kicker: string }
 > = {
+  home: { title: "Home", path: "/", kicker: "Today" },
   "whats-on": { title: "Events", path: "/events", kicker: "Local happenings" },
   shows: { title: "Shows", path: "/shows", kicker: "On screen & stage" },
   sports: { title: "Sports", path: "/sports", kicker: "Scores & prep" },
@@ -70,6 +81,7 @@ export const SECTION_HEADER_SEEDS: Partial<
 
 export function emptySectionHeaders(): SectionHeadersMap {
   return {
+    home: null,
     "whats-on": null,
     shows: null,
     sports: null,
@@ -77,6 +89,21 @@ export function emptySectionHeaders(): SectionHeadersMap {
     schools: null,
     local: null,
   };
+}
+
+/** Desk photo if set; otherwise the shipped site masthead (may be empty). */
+export function resolveHomeHero(header: SectionHeaderMeta | null | undefined): {
+  src: string;
+  alt: string;
+} {
+  const site = getSite();
+  if (header?.src?.trim()) {
+    return {
+      src: header.src.trim(),
+      alt: header.alt?.trim() || site.hero.alt,
+    };
+  }
+  return { src: site.hero.src, alt: site.hero.alt };
 }
 
 export function isSectionHeaderId(value: string): value is SectionHeaderId {

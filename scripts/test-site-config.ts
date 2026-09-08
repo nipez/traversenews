@@ -10,6 +10,11 @@ import {
   resetSiteCache,
   siteWordmark,
 } from "../src/lib/sites";
+import {
+  emptySectionHeaders,
+  isSectionHeaderId,
+  resolveHomeHero,
+} from "../src/lib/section-headers";
 import { schoolItemsFromEvents } from "../src/lib/schools";
 import { isAlertSource, isSchoolCalSource } from "../src/lib/source-lanes";
 
@@ -39,6 +44,21 @@ assert(
 assert(getSite().letterPreviewOnly === false, "TC letter is not preview-only");
 assert(getSite().weather?.gridId === "APX", "TC weather is NWS APX");
 assert(getSite().weather?.gridX === 29 && getSite().weather?.gridY === 46, "TC grid 29,46");
+assert(isSectionHeaderId("home"), "home is a Desk photo slot");
+assert(emptySectionHeaders().home === null, "home starts empty");
+assert(
+  resolveHomeHero(null).src === "/art/bay-hero.jpg",
+  "empty home slot uses shipped bay masthead",
+);
+const homeOverride = resolveHomeHero({
+  src: "/media/section/home?v=1",
+  alt: "Custom bay",
+  updated_at: "2026-09-08T00:00:00.000Z",
+});
+assert(
+  homeOverride.src.includes("/media/section/home"),
+  "Desk home photo wins over shipped masthead",
+);
 assert(
   getSite().hero.dek ===
     "One tab for the bay: news, nights out, civic, sports, and schools.",
@@ -71,6 +91,10 @@ assert(
 setSite("ann-arbor");
 assert(getSite().id === "ann-arbor", "AA site id");
 assert(siteWordmark() === "a2.news", "AA wordmark");
+assert(
+  resolveHomeHero(null).src === "",
+  "AA empty home slot has no shipped photo",
+);
 assert(getSite().aroundLabel === "Around town", "AA around label");
 assert(
   !getSite().pageCopy.comingUpDek.includes("bay"),

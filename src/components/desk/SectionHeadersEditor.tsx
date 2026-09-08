@@ -12,8 +12,15 @@ import {
 
 export function SectionHeadersEditor({
   initial,
+  ids = SECTION_HEADER_IDS,
+  fallbacks,
+  showIntro = true,
 }: {
   initial: SectionHeadersMap;
+  ids?: readonly SectionHeaderId[];
+  /** Preview when Desk has not set a photo (homepage shipped masthead). */
+  fallbacks?: Partial<Record<SectionHeaderId, { src: string; alt: string }>>;
+  showIntro?: boolean;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -112,13 +119,14 @@ export function SectionHeadersEditor({
 
   return (
     <div className="space-y-8">
-      <p className="text-sm text-[#444]">
-        One photo per public section page. Upload writes to R2 (
-        <code className="bg-paper-2 px-1">TRAVERSE_MEDIA</code>
-        ); paste URL works without R2. Homepage bay masthead stays{" "}
-        <code className="bg-paper-2 px-1">/art/bay-hero.jpg</code> and is not
-        here. Empty = type-only header (no cartoon stamp).
-      </p>
+      {showIntro ? (
+        <p className="text-sm text-[#444]">
+          Upload writes to R2 (
+          <code className="bg-paper-2 px-1">TRAVERSE_MEDIA</code>
+          ). A pasted URL works without R2. Empty interior slots stay type-only
+          (no cartoon stamp). Empty Home falls back to the shipped masthead.
+        </p>
+      ) : null}
 
       {error ? (
         <p className="border border-terracotta/40 bg-peach/40 px-3 py-2 text-sm text-ink">
@@ -126,9 +134,12 @@ export function SectionHeadersEditor({
         </p>
       ) : null}
 
-      {SECTION_HEADER_IDS.map((id) => {
+      {ids.map((id) => {
         const label = getSectionHeaderLabels()[id];
         const meta = headers[id];
+        const fallback = fallbacks?.[id];
+        const previewSrc = meta?.src || fallback?.src || "";
+        const previewAlt = meta?.alt || fallback?.alt || "";
         return (
           <section
             key={id}
@@ -146,18 +157,25 @@ export function SectionHeadersEditor({
               </a>
             </div>
 
-            {meta?.src ? (
+            {previewSrc ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={meta.src}
-                alt={meta.alt || ""}
+                src={previewSrc}
+                alt={previewAlt}
                 className="mt-4 h-36 w-full object-cover bg-[#123]"
               />
             ) : (
               <div className="mt-4 flex h-36 items-center justify-center border border-dashed border-rule bg-paper-2 text-sm text-muted">
-                No photo — type-only header on the public page
+                {id === "home"
+                  ? "No photo — homepage uses the color band"
+                  : "No photo — type-only header on the public page"}
               </div>
             )}
+            {id === "home" && !meta?.src && fallback?.src ? (
+              <p className="mt-2 text-xs text-muted">
+                Showing the shipped masthead until you save a replacement.
+              </p>
+            ) : null}
 
             <label className="mt-4 block">
               <span className="text-[0.68rem] font-bold tracking-[0.08em] text-muted-2 uppercase">

@@ -16,15 +16,18 @@ import { createElement } from "react";
 function main() {
   const empty = resolvePageCopy(undefined);
   assert.equal(empty.events_dek, DEFAULT_EVENTS_DEK);
+  assert.ok(empty.hero_dek.length > 0, "hero tagline falls back to site.hero.dek");
   assert.ok(empty.about_body.includes("## Why this exists"));
 
   const custom = resolvePageCopy({
+    hero_dek: "One tab, plus the weather.",
     events_dek: "Hello [Civic](/civic).",
     about_title: "",
     about_dek: "Custom dek",
     about_body: "",
     updated_at: "2026-08-29T00:00:00.000Z",
   });
+  assert.equal(custom.hero_dek, "One tab, plus the weather.");
   assert.equal(custom.events_dek, "Hello [Civic](/civic).");
   assert.equal(custom.about_dek, "Custom dek");
   assert.ok(custom.about_title.includes("About")); // fell back

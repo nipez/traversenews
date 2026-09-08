@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { isDeskRequestAuthed } from "@/lib/auth";
+import { getSite } from "@/lib/sites";
 import {
   deleteSectionHeaderObject,
   putSectionHeaderObject,
@@ -17,6 +18,9 @@ export const dynamic = "force-dynamic";
 const MAX_BYTES = 4.5 * 1024 * 1024; // stay under Worker request body limits
 
 function defaultAlt(id: string): string {
+  if (id === "home") {
+    return getSite().hero.alt || "Homepage photo";
+  }
   if (isSectionHeaderId(id) && SECTION_HEADER_SEEDS[id]?.alt) {
     return SECTION_HEADER_SEEDS[id]!.alt;
   }
@@ -96,7 +100,7 @@ export async function POST(request: Request) {
 
   if (!body || typeof body.id !== "string" || !isSectionHeaderId(body.id)) {
     return NextResponse.json(
-      { error: "Body must include id (whats-on|sports|civic|schools|local)" },
+      { error: "Body must include id (home|whats-on|shows|sports|civic|schools|local)" },
       { status: 400 },
     );
   }
