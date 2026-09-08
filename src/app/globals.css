@@ -2135,6 +2135,18 @@ a:hover {
   }
 }
 
+@media (max-width: 420px) {
+  .desk-topnav-rule,
+  .desk-topnav-title {
+    display: none;
+  }
+
+  .desk-topnav-utils .desk-pull-chrome-btn {
+    padding: 0.3rem 0.5rem;
+    font-size: 0.65rem;
+  }
+}
+
 .desk-pull-chrome-btn {
   display: inline-flex;
   align-items: center;
