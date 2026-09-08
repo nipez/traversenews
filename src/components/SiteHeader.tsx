@@ -48,21 +48,32 @@ export function SiteHeader({
   active = "/",
   variant = "compact",
   weatherLine = null,
+  heroSrc = null,
+  heroAlt = null,
+  heroDek = null,
 }: {
   active?: string;
   variant?: "hero" | "compact";
   /** One-glance weather under the hero dek (hero only). */
   weatherLine?: string | null;
+  /** Desk-set homepage photo; empty string keeps the shipped masthead. */
+  heroSrc?: string | null;
+  heroAlt?: string | null;
+  /** Desk-set homepage tagline. */
+  heroDek?: string | null;
 }) {
   const site = getSite();
+  const photoSrc = heroSrc?.trim() || site.hero.src;
+  const photoAlt = heroAlt?.trim() || site.hero.alt;
+  const dek = heroDek?.trim() || site.hero.dek;
   if (variant === "hero") {
     return (
       <header className="site-header-hero">
         <div className="hero-photo">
-          {site.hero.src ? (
+          {photoSrc ? (
             <Image
-              src={site.hero.src}
-              alt={site.hero.alt}
+              src={photoSrc}
+              alt={photoAlt}
               fill
               priority
               className="hero-photo-img"
@@ -88,7 +99,7 @@ export function SiteHeader({
               <Link href="/" className="hero-wordmark" aria-label={siteWordmark()}>
                 <Wordmark tone="cream" />
               </Link>
-              <p className="hero-dek">{site.hero.dek}</p>
+              <p className="hero-dek">{dek}</p>
               {weatherLine ? (
                 <p className="hero-weather">{weatherLine}</p>
               ) : null}

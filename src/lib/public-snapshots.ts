@@ -612,27 +612,36 @@ export function buildAllPublicSnapshots(data: AppData, at = new Date()) {
   };
 }
 
-let writing = false;
+const snapshotGlobals = globalThis as typeof globalThis & {
+  __tnPublicSnapshots?: Map<string, unknown>;
+  __tnPublicSnapshotsWriting?: boolean;
+};
 
-/** Per-isolate cache so warm Workers skip repeat KV gets within the isolate. */
-const memSnapshots = new Map<string, unknown>();
+/** Shared across Next route/page bundles in `next dev`. Worker has one isolate. */
+function memSnapshots(): Map<string, unknown> {
+  if (!snapshotGlobals.__tnPublicSnapshots) {
+    snapshotGlobals.__tnPublicSnapshots = new Map();
+  }
+  return snapshotGlobals.__tnPublicSnapshots;
+}
 
 function rememberAll(
   all: ReturnType<typeof buildAllPublicSnapshots>,
 ): void {
-  memSnapshots.set(PUBLIC_KEYS.home, all.home);
-  memSnapshots.set(PUBLIC_KEYS.schools, all.schools);
-  memSnapshots.set(PUBLIC_KEYS.events, all.events);
-  memSnapshots.set(PUBLIC_KEYS.civic, all.civic);
-  memSnapshots.set(PUBLIC_KEYS.sports, all.sports);
-  memSnapshots.set(PUBLIC_KEYS.shows, all.shows);
-  memSnapshots.set(PUBLIC_KEYS.email, all.email);
-  memSnapshots.set(PUBLIC_KEYS.alerts, all.alerts);
-  memSnapshots.set(PUBLIC_KEYS.editions, all.editions);
-  memSnapshots.set(PUBLIC_KEYS.emailArchive, all.emailArchive);
-  memSnapshots.set(PUBLIC_KEYS.originals, all.originals);
-  memSnapshots.set(PUBLIC_KEYS.sectionHeaders, all.sectionHeaders);
-  memSnapshots.set(PUBLIC_KEYS.pageCopy, all.pageCopy);
+  const mem = memSnapshots();
+  mem.set(PUBLIC_KEYS.home, all.home);
+  mem.set(PUBLIC_KEYS.schools, all.schools);
+  mem.set(PUBLIC_KEYS.events, all.events);
+  mem.set(PUBLIC_KEYS.civic, all.civic);
+  mem.set(PUBLIC_KEYS.sports, all.sports);
+  mem.set(PUBLIC_KEYS.shows, all.shows);
+  mem.set(PUBLIC_KEYS.email, all.email);
+  mem.set(PUBLIC_KEYS.alerts, all.alerts);
+  mem.set(PUBLIC_KEYS.editions, all.editions);
+  mem.set(PUBLIC_KEYS.emailArchive, all.emailArchive);
+  mem.set(PUBLIC_KEYS.originals, all.originals);
+  mem.set(PUBLIC_KEYS.sectionHeaders, all.sectionHeaders);
+  mem.set(PUBLIC_KEYS.pageCopy, all.pageCopy);
 }
 
 /**
@@ -640,8 +649,8 @@ function rememberAll(
  * Call after desk/cron mutations (via saveStore). Uses the data already in hand.
  */
 export async function writeAllPublicSnapshots(data: AppData): Promise<void> {
-  if (writing) return;
-  writing = true;
+  if (snapshotGlobals.__tnPublicSnapshotsWriting) return;
+  snapshotGlobals.__tnPublicSnapshotsWriting = true;
   try {
     const at = new Date();
     const all = buildAllPublicSnapshots(data, at);
@@ -676,7 +685,7 @@ export async function writeAllPublicSnapshots(data: AppData): Promise<void> {
     ];
     await Promise.all(puts);
   } finally {
-    writing = false;
+    snapshotGlobals.__tnPublicSnapshotsWriting = false;
   }
 }
 
@@ -700,12 +709,12 @@ export async function readPublicSnapshot<T>(
   key: PublicSnapshotKey,
   pick: (all: ReturnType<typeof buildAllPublicSnapshots>) => T,
 ): Promise<T> {
-  const fromMem = memSnapshots.get(key);
+  const fromMem = memSnapshots().get(key);
   if (fromMem !== undefined) return fromMem as T;
 
   const cached = await readJsonKey<T>(key);
   if (cached) {
-    memSnapshots.set(key, cached);
+    memSnapshots().set(key, cached);
     return cached;
   }
 
@@ -713,7 +722,7 @@ export async function readPublicSnapshot<T>(
   const { loadStore } = await import("@/lib/data/store");
   const data = await loadStore();
   // Scrub-on-load may have already rebuilt via saveStore.
-  const afterLoad = memSnapshots.get(key);
+  const afterLoad = memSnapshots().get(key);
   if (afterLoad !== undefined) return afterLoad as T;
 
   const all = buildAllPublicSnapshots(data);
@@ -743,11 +752,11 @@ export async function getSportsSnapshot(): Promise<PublicSportsSnapshot> {
   if (Array.isArray(snap.nextWeekGames)) return snap;
 
   // Stale v1 sports KV row without Next week — rebuild that slice.
-  memSnapshots.delete(PUBLIC_KEYS.sports);
+  memSnapshots().delete(PUBLIC_KEYS.sports);
   const { loadStore } = await import("@/lib/data/store");
   const data = await loadStore();
   const rebuilt = buildSportsSnapshot(data);
-  memSnapshots.set(PUBLIC_KEYS.sports, rebuilt);
+  memSnapshots().set(PUBLIC_KEYS.sports, rebuilt);
   const kv = await getTraverseDataKv();
   if (kv) {
     await kv.put(PUBLIC_KEYS.sports, JSON.stringify(rebuilt));

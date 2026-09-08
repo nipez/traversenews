@@ -358,6 +358,7 @@ export type SectionHeaderMeta = {
 };
 
 export type SectionHeaderId =
+  | "home"
   | "whats-on"
   | "shows"
   | "sports"
@@ -370,8 +371,10 @@ export type SectionHeadersMap = Record<
   SectionHeaderMeta | null
 >;
 
-/** Desk-editable static page copy (Events dek, About essay). */
+/** Desk-editable static page copy (hero tagline, Events dek, About essay). */
 export type PageCopy = {
+  /** Homepage hero tagline. Weather sits under this, not inside it. */
+  hero_dek: string;
   events_dek: string;
   about_title: string;
   about_dek: string;
@@ -430,8 +433,8 @@ export type AppData = {
   /** Desk originals workflow. Drafts are never public. */
   drafts: OriginalDraft[];
   /**
-   * Photo headers for public section pages. Pointers only — never store
-   * image bytes here (R2 / static /art). Homepage bay masthead is separate.
+   * Photo headers for the homepage hero and public section pages.
+   * Pointers only — never store image bytes here (R2 / static /art).
    */
   section_headers: SectionHeadersMap;
   /**
