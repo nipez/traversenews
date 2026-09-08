@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { DeskChrome } from "@/components/desk/DeskChrome";
+import { DeskGlobalPull } from "@/components/desk/DeskGlobalPull";
 import { SmartAddSource } from "@/components/desk/SmartAddSource";
 import { beatSourceCounts } from "@/lib/data/seed";
 import { getAppData } from "@/lib/data/store";
@@ -83,6 +84,14 @@ export default async function DeskSourcesPage({ searchParams }: Props) {
                 Add source
               </Link>
             </div>
+          </div>
+
+          <div className="mt-5">
+            <DeskGlobalPull
+              variant="panel"
+              lastPullAt={data.last_pull_at}
+              itemCount={data.stories.filter((s) => !s.is_original).length}
+            />
           </div>
 
           <div className="mt-5">

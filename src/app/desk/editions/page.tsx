@@ -14,16 +14,13 @@ export default async function DeskEditionsPage() {
         <h1 className="font-serif text-3xl">Editions</h1>
         <p className="mt-2 text-[#444]">
           Dated homepage snapshots (America/Detroit). Each successful pull
-          refreshes today&apos;s edition.
+          refreshes today&apos;s edition. Use <strong>Pull now</strong> in the
+          Desk header for a full feed pull.
         </p>
 
         {editions.length === 0 ? (
           <p className="mt-8 text-sm text-muted">
-            None yet.{" "}
-            <Link href="/api/pull" className="text-teal">
-              Run a pull
-            </Link>
-            .
+            None yet. Run <strong>Pull now</strong> from the Desk header.
           </p>
         ) : (
           <ul className="mt-8">
