@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useDeskLetterAround } from "@/components/desk/DeskLetterAroundContext";
 import {
   SUBJECT_PHRASE_HARD_MAX,
   SUBJECT_PHRASE_SOFT_CAP,
@@ -9,6 +10,7 @@ import {
   isMorningLetterSubjectOverSoftCap,
   morningLetterSubjectPhraseLen,
 } from "@/lib/email-subject-length";
+import type { EmailStoryCard } from "@/lib/types";
 
 type SendMode = "live" | "preview";
 
@@ -33,6 +35,7 @@ export function DeskLetterSendControls({
   subjectLabel = "Today’s subject",
 }: Props) {
   const router = useRouter();
+  const { selected, dirty, markSynced } = useDeskLetterAround();
   const [busy, setBusy] = useState<SendMode | "save" | "clear" | null>(null);
   const [error, setError] = useState("");
   const [flash, setFlash] = useState("");
@@ -47,11 +50,22 @@ export function DeskLetterSendControls({
     setBusy(mode);
     setError("");
     setFlash("");
+    const wasDirty = dirty;
     try {
+      // Always ship the visible Around slate with Desk preview/send so unsaved
+      // picker edits cannot be silently ignored (Worker cron omits `around`).
+      const payload: {
+        preview?: boolean;
+        around: EmailStoryCard[];
+      } = {
+        around: selected,
+      };
+      if (mode === "preview") payload.preview = true;
+
       const res = await fetch("/api/desk/email/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(mode === "preview" ? { preview: true } : {}),
+        body: JSON.stringify(payload),
       });
       const json = (await res.json()) as {
         error?: string;
@@ -63,16 +77,28 @@ export function DeskLetterSendControls({
         sent_count?: number;
         failed_count?: number;
         preview?: boolean;
+        around?: EmailStoryCard[];
+        around_locked?: boolean;
       };
       if (!res.ok) throw new Error(json.error || "Send failed");
+
+      if (Array.isArray(json.around)) {
+        markSynced(json.around, Boolean(json.around_locked));
+      }
 
       if (json.already_sent) {
         setFlash("Live letter already went out today.");
       } else if (json.already_previewed) {
-        setFlash("Preview already hit Nick’s inbox today.");
+        setFlash(
+          wasDirty || json.around_locked
+            ? "Preview already hit Nick’s inbox today · Around mix locked."
+            : "Preview already hit Nick’s inbox today.",
+        );
       } else if (mode === "preview") {
         setFlash(
-          `Preview sent${json.subject ? `: ${json.subject}` : ""}.`,
+          `Preview sent${json.subject ? `: ${json.subject}` : ""}${
+            wasDirty || json.around_locked ? " · Around mix locked" : ""
+          }.`,
         );
       } else {
         const n =
@@ -146,9 +172,10 @@ export function DeskLetterSendControls({
         Morning letter
       </h2>
       <p className="mt-1 text-sm text-[#444]">
-        Type today’s subject once, save it, then preview or send live. Pulls
-        keep a saved override. Soft target ~{SUBJECT_PHRASE_SOFT_CAP}; hard max{" "}
-        {SUBJECT_PHRASE_HARD_MAX} (leading 🗞️ not counted).
+        Type today’s subject once, save it, then preview or send live. Preview
+        and send also lock the Around mix shown above. Pulls keep a saved
+        subject override and locked mix. Soft target ~{SUBJECT_PHRASE_SOFT_CAP};
+        hard max {SUBJECT_PHRASE_HARD_MAX} (leading 🗞️ not counted).
       </p>
 
       <p className="mt-4 text-sm text-muted">{subjectLabel}</p>

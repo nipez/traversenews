@@ -846,7 +846,12 @@ export async function snapshotTodaysEmailEdition(
     prior.subject_override.trim()
       ? prior.subject_override.trim()
       : null;
-  const aroundLocked = Boolean(prior?.around_locked && prior.around?.length);
+  // Same survival rule as subject_override: a Desk lock sticks across pull /
+  // snapshot even when Around is intentionally empty. Require an array, not
+  // a truthy length — length checks used to drop empty locked slates.
+  const aroundLocked = Boolean(
+    prior?.around_locked && Array.isArray(prior.around),
+  );
   let weather_line: string | null = null;
   try {
     const { getOrRefreshWeatherSnapshot } = await import("@/lib/weather");

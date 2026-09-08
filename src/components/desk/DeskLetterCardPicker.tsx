@@ -2,43 +2,18 @@
 
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import { useDeskLetterAround } from "@/components/desk/DeskLetterAroundContext";
 import type {
   DeskLetterCandidate,
-  DeskLetterMixHint,
   LetterCardPastRun,
 } from "@/lib/desk-letter-cards";
+import { letterCardIdentity } from "@/lib/email-editions";
 import type { EmailStoryCard } from "@/lib/types";
 
 type Props = {
   max: number;
-  initialAround: EmailStoryCard[];
-  aroundLocked: boolean;
   candidates: DeskLetterCandidate[];
-  initialMixHint: DeskLetterMixHint | null;
 };
-
-/** Client-safe identity (mirrors letterCardIdentity — URL else title). */
-function cardIdentity(item: { title: string; url?: string | null }): string {
-  const raw = (item.url || "").trim();
-  if (raw) {
-    try {
-      const u = new URL(raw);
-      u.hash = "";
-      const path = u.pathname.replace(/\/+$/, "") || "/";
-      return `url:${u.protocol}//${u.hostname.toLowerCase()}${path}${u.search}`.toLowerCase();
-    } catch {
-      return `url:${raw.replace(/\/+$/, "").toLowerCase()}`;
-    }
-  }
-  const title = item.title
-    .trim()
-    .toLowerCase()
-    .replace(/['’]/g, "")
-    .replace(/[^a-z0-9]+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-  return `title:${title}`;
-}
 
 function pastFlags(runs: LetterCardPastRun[]): string {
   return runs
@@ -60,26 +35,23 @@ function pastFlags(runs: LetterCardPastRun[]): string {
     .join(" · ");
 }
 
-export function DeskLetterCardPicker({
-  max,
-  initialAround,
-  aroundLocked,
-  candidates,
-  initialMixHint,
-}: Props) {
+export function DeskLetterCardPicker({ max, candidates }: Props) {
   const router = useRouter();
-  const [selected, setSelected] = useState<EmailStoryCard[]>(initialAround);
+  const {
+    selected,
+    setSelected,
+    locked,
+    dirty,
+    mixHint,
+    persistAround,
+  } = useDeskLetterAround();
   const [busy, setBusy] = useState<"save" | "reset" | null>(null);
   const [error, setError] = useState("");
   const [flash, setFlash] = useState("");
-  const [mixHint, setMixHint] = useState<DeskLetterMixHint | null>(
-    initialMixHint,
-  );
-  const [locked, setLocked] = useState(aroundLocked);
   const [q, setQ] = useState("");
 
   const selectedIds = useMemo(
-    () => new Set(selected.map((c) => cardIdentity(c))),
+    () => new Set(selected.map((c) => letterCardIdentity(c))),
     [selected],
   );
 
@@ -155,8 +127,8 @@ export function DeskLetterCardPicker({
   function addCard(card: EmailStoryCard) {
     setSelected((prev) => {
       if (prev.length >= max) return prev;
-      const id = cardIdentity(card);
-      if (prev.some((c) => cardIdentity(c) === id)) return prev;
+      const id = letterCardIdentity(card);
+      if (prev.some((c) => letterCardIdentity(c) === id)) return prev;
       return [...prev, card];
     });
   }
@@ -165,38 +137,29 @@ export function DeskLetterCardPicker({
     setBusy(reset ? "reset" : "save");
     setError("");
     setFlash("");
-    try {
-      const res = await fetch("/api/desk/email/cards", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ around: reset ? null : selected }),
-      });
-      const json = (await res.json()) as {
-        error?: string;
-        around?: EmailStoryCard[];
-        around_locked?: boolean;
-        mix_hint?: DeskLetterMixHint | null;
-        subject_override?: string | null;
-      };
-      if (!res.ok) throw new Error(json.error || "Save failed");
-      const nextAround = Array.isArray(json.around) ? json.around : [];
-      setSelected(nextAround);
-      setLocked(Boolean(json.around_locked));
-      setMixHint(json.mix_hint ?? null);
-      setFlash(
-        reset
-          ? "Around reset to auto mix. Subject override kept."
-          : `Around saved (${nextAround.length} cards). Preview/send use this slate.`,
-      );
-      router.refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Save failed");
-    } finally {
+    const result = await persistAround(reset ? null : selected);
+    if (!result.ok) {
+      setError(result.error || "Save failed");
       setBusy(null);
+      return;
     }
+    setFlash(
+      reset
+        ? "Around reset to auto mix. Subject override kept."
+        : `Around saved (${result.around?.length ?? 0} cards). Preview/send use this slate.`,
+    );
+    router.refresh();
+    setBusy(null);
   }
 
   const controlsBusy = busy !== null;
+  const statusLabel = locked
+    ? dirty
+      ? "Desk mix locked · unsaved edits"
+      : "Desk mix locked"
+    : dirty
+      ? "Unsaved edits — preview/send will save this mix"
+      : "Using auto mix";
 
   return (
     <section className="mt-8 border border-rule bg-paper-2 px-4 py-5 md:px-5">
@@ -205,12 +168,12 @@ export function DeskLetterCardPicker({
       </h2>
       <p className="mt-1 text-sm text-[#444]">
         Pick up to {max} cards for today&apos;s morning letter. Flags show
-        recent letter or homepage runs. Save locks the mix for preview and
-        send — pulls keep it until you reset to auto.
+        recent letter or homepage runs. Preview and send lock the mix you see
+        here — pulls keep it until you reset to auto.
       </p>
 
       <p className="mt-3 text-sm text-muted">
-        {locked ? "Desk mix locked" : "Using auto mix (or unsaved edits)"}
+        {statusLabel}
         {" · "}
         {selected.length}/{max} selected
       </p>
@@ -228,7 +191,7 @@ export function DeskLetterCardPicker({
           </li>
         ) : (
           selected.map((card, index) => {
-            const identity = cardIdentity(card);
+            const identity = letterCardIdentity(card);
             const past =
               candidates.find((c) => c.identity === identity)?.past_runs ?? [];
             return (

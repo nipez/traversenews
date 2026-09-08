@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { DeskChrome } from "@/components/desk/DeskChrome";
+import { DeskLetterAroundProvider } from "@/components/desk/DeskLetterAroundContext";
 import { DeskLetterCardPicker } from "@/components/desk/DeskLetterCardPicker";
 import { DeskLetterSendControls } from "@/components/desk/DeskLetterSendControls";
 import { DeskSubscribers } from "@/components/desk/DeskSubscribers";
@@ -85,24 +86,27 @@ export default async function DeskEmailPage() {
           send live from here, and keep the archive. Do not invent a letter.
         </p>
 
-        <DeskLetterCardPicker
+        <DeskLetterAroundProvider
           key={`cards-${today}-${edition.around_locked ? "locked" : "auto"}-${edition.around.map((c) => c.url).join("|")}`}
-          max={LETTER_AROUND_MAX}
           initialAround={edition.around}
           aroundLocked={Boolean(edition.around_locked)}
-          candidates={candidates}
           initialMixHint={mixHint}
-        />
+        >
+          <DeskLetterCardPicker
+            max={LETTER_AROUND_MAX}
+            candidates={candidates}
+          />
 
-        <DeskLetterSendControls
-          key={`subject-${today}-${subjectOverride}`}
-          subject={subject}
-          autoSubject={autoSubject}
-          subjectOverride={subjectOverride}
-          subjectLabel={sentSubject ? "Sent subject" : "Today’s subject"}
-          alreadySent={Boolean(sent)}
-          alreadyPreviewed={Boolean(previewed)}
-        />
+          <DeskLetterSendControls
+            key={`subject-${today}-${subjectOverride}`}
+            subject={subject}
+            autoSubject={autoSubject}
+            subjectOverride={subjectOverride}
+            subjectLabel={sentSubject ? "Sent subject" : "Today’s subject"}
+            alreadySent={Boolean(sent)}
+            alreadyPreviewed={Boolean(previewed)}
+          />
+        </DeskLetterAroundProvider>
 
         <section className="mt-8">
           <h2 className="font-display text-lg font-black tracking-tight">

@@ -616,7 +616,9 @@ export function buildEmailEditionSnapshot(
     priorExpanded,
     LETTER_AROUND_MAX,
   );
-  const aroundLocked = Boolean(options.around_locked && options.around);
+  const aroundLocked = Boolean(
+    options.around_locked && Array.isArray(options.around),
+  );
   const around =
     aroundLocked && Array.isArray(options.around)
       ? options.around.slice(0, LETTER_AROUND_MAX)

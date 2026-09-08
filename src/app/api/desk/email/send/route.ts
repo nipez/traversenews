@@ -8,8 +8,10 @@ import {
   ensureEmailEditionWeatherLine,
   markEmailLetterPreviewed,
   markEmailLetterSent,
+  setEmailEditionAround,
   snapshotTodaysEmailEdition,
 } from "@/lib/data/store";
+import { normalizeDeskAroundSelection } from "@/lib/desk-letter-cards";
 import { emailDetroitDateKey } from "@/lib/email-editions";
 import {
   buildMorningLetter,
@@ -121,10 +123,14 @@ async function sendLetterToOneRecipient(args: {
  * Body:
  * - `{ preview: true }` — Nick-only preview (`Preview · ` subject on Worker
  *   cron). Uses today’s stored `email_editions` row when present.
+ * - `{ around: EmailStoryCard[] }` — Desk Preview/Send locks this exact Around
+ *   slate before mailing (same as POST /api/desk/email/cards). Worker cron
+ *   omits `around` and mails the stored/locked row.
  * - `{}` or `{ force: true }` — live send to resolveLetterRecipients; marks
  *   morning_letter_sent.
  * - `{ rebuild: true }` — pull + recapture today’s letter before mailing
- *   (clobbers a restage). Default is to mail the stored snapshot.
+ *   (clobbers a restage). Default is to mail the stored snapshot. When
+ *   `around` is also set, the Desk slate is re-applied after rebuild.
  *
  * Auth: Desk cookie OR Authorization: Bearer <DESK_IMPORT_TOKEN|DEV_DESK_PASSWORD>
  *
@@ -146,10 +152,12 @@ export async function POST(request: Request) {
     force?: unknown;
     preview?: unknown;
     rebuild?: unknown;
+    around?: unknown;
   };
   const force = body.force === true;
   const preview = body.preview === true;
   const rebuild = body.rebuild === true;
+  const hasAround = Object.prototype.hasOwnProperty.call(body, "around");
 
   if (!preview && getSite().letterPreviewOnly) {
     return NextResponse.json(
@@ -168,27 +176,71 @@ export async function POST(request: Request) {
 
   const today = emailDetroitDateKey();
 
+  // Desk Preview/Send always ships the visible picker slate. Persist it before
+  // already_previewed / already_sent short-circuits so a second click still
+  // locks the mix for live (Worker cron omits `around`).
+  let deskAroundLocked = false;
+  if (hasAround) {
+    if (body.around === null) {
+      return NextResponse.json(
+        {
+          error:
+            "Send cannot reset Around. Use POST /api/desk/email/cards with around: null.",
+        },
+        { status: 400 },
+      );
+    }
+    const parsed = normalizeDeskAroundSelection(body.around);
+    if (!parsed.ok) {
+      return NextResponse.json({ error: parsed.error }, { status: 400 });
+    }
+    const lockedEdition = await setEmailEditionAround(parsed.around);
+    deskAroundLocked = Boolean(lockedEdition.around_locked);
+  }
+
   if (preview) {
     if (!force && (await getEmailLetterPreview(today))) {
+      const stored = await getEmailEdition(today);
       return NextResponse.json({
         ok: true,
         already_previewed: true,
         preview: true,
         date: today,
+        around: stored?.around ?? [],
+        around_locked: Boolean(stored?.around_locked ?? deskAroundLocked),
       });
     }
   } else if (!force && (await getEmailLetterSend(today))) {
-    return NextResponse.json({ ok: true, already_sent: true, date: today });
+    const stored = await getEmailEdition(today);
+    return NextResponse.json({
+      ok: true,
+      already_sent: true,
+      date: today,
+      around: stored?.around ?? [],
+      around_locked: Boolean(stored?.around_locked ?? deskAroundLocked),
+    });
   }
 
   // Prefer today’s stored / restaged letter. runPull also snapshots and would
   // clobber a Desk restage — only pull+recapture when missing or rebuild.
-  const stored = await getEmailEdition(today);
+  // Locked Around (including a Desk slate just persisted above) survives
+  // snapshotTodaysEmailEdition the same way subject_override does.
+  let stored = await getEmailEdition(today);
   let edition = stored && !rebuild ? stored : null;
   if (!edition) {
     await runPull();
     edition =
       (await getEmailEdition(today)) ?? (await snapshotTodaysEmailEdition());
+    // Rebuild/pull may have run after Desk around was set; re-apply so mail
+    // matches the picker even if something cleared mid-flight.
+    if (hasAround && body.around !== null) {
+      const parsed = normalizeDeskAroundSelection(body.around);
+      if (parsed.ok) {
+        edition = await setEmailEditionAround(parsed.around);
+        deskAroundLocked = Boolean(edition.around_locked);
+      }
+    }
+    stored = edition;
   }
   edition = await ensureEmailEditionWeatherLine(edition);
 
@@ -307,6 +359,8 @@ export async function POST(request: Request) {
     archive_url: `/email/${edition.date}`,
     preview,
     used_stored: Boolean(stored && !rebuild),
+    around: edition.around,
+    around_locked: Boolean(edition.around_locked),
   });
 }
 
