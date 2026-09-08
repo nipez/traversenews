@@ -2012,10 +2012,6 @@ a:hover {
   color: rgba(255, 255, 255, 0.8);
 }
 
-.desk-topnav-cities {
-  max-width: 12.5rem;
-}
-
 .desk-topnav-cities nav,
 .desk-topnav-cities span {
   font-size: 0.58rem !important;
@@ -2026,9 +2022,14 @@ a:hover {
 
 .desk-topnav-cities nav {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: baseline;
-  gap: 0.2rem 0.55rem;
+  gap: 0.55rem;
+}
+
+.desk-topnav-cities a,
+.desk-topnav-cities span {
+  white-space: nowrap;
 }
 
 .desk-topnav-back {
@@ -3867,10 +3868,10 @@ a:hover {
 .desk-mobile-more > summary {
   flex: 0 0 auto;
   color: rgba(255, 255, 255, 0.7);
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.02em;
-  padding: 0.4rem 0.7rem;
+  padding: 0.35rem 0.55rem;
   border-radius: 999px;
   border: 1px solid rgba(255, 255, 255, 0.18);
 }
