@@ -13,6 +13,7 @@ import {
 } from "@/lib/public-snapshots";
 import { sourceLinksFromUrls } from "@/lib/source-links";
 import { getPublicOriginalByline } from "@/lib/originals";
+import { publicPageMeta } from "@/lib/page-meta";
 import {
   isQuotedParagraph,
   readTimeMinutes,
@@ -31,12 +32,11 @@ async function loadOriginal(slug: string): Promise<PublicOriginalCard | null> {
 export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
   const story = await loadOriginal(slug);
-  if (!story) return { title: "Story" };
-  return {
-    title: story.title,
+  if (!story) return publicPageMeta("Story");
+  return publicPageMeta(story.title, {
     description: story.dek,
     authors: [{ name: getPublicOriginalByline() }],
-  };
+  });
 }
 
 export default async function StoryPage({ params }: Props) {

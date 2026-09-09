@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { PublicShell } from "@/components/PublicShell";
 import { getAppData } from "@/lib/data/store";
+import { publicPageMeta, publicTitleSegments } from "@/lib/page-meta";
 import { searchAppData, searchHasAny, type SearchHit } from "@/lib/search";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "Search",
-};
+export function generateMetadata() {
+  return publicPageMeta(publicTitleSegments().search);
+}
 
 type Props = { searchParams: Promise<{ q?: string }> };
 

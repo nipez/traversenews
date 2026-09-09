@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 import { Archivo, Source_Serif_4 } from "next/font/google";
+import { publicTitleSegments } from "@/lib/page-meta";
 import { getSite, siteWordmark } from "@/lib/sites";
 import "./globals.css";
 
@@ -21,12 +22,21 @@ const sourceSerif = Source_Serif_4({
 export function generateMetadata(): Metadata {
   const site = getSite();
   const mark = siteWordmark();
+  const homeTitle = publicTitleSegments().home;
   return {
     title: {
-      default: mark,
+      default: homeTitle,
       template: `%s · ${mark}`,
     },
     description: site.description,
+    openGraph: {
+      title: homeTitle,
+      description: site.description,
+    },
+    twitter: {
+      title: homeTitle,
+      description: site.description,
+    },
     other: {
       "color-scheme": "light only",
     },

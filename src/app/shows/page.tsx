@@ -4,6 +4,7 @@ import { PublicShell } from "@/components/PublicShell";
 import { SectionHero } from "@/components/SectionHero";
 import { ShowsVenueFilter } from "@/components/ShowsVenueFilter";
 import { detroitDayKey } from "@/lib/dates";
+import { publicPageMeta, publicTitleSegments } from "@/lib/page-meta";
 import { getSite } from "@/lib/sites";
 import {
   getSectionHeadersSnapshot,
@@ -12,9 +13,9 @@ import {
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "Shows",
-};
+export function generateMetadata() {
+  return publicPageMeta(publicTitleSegments().shows);
+}
 
 export default async function ShowsPage() {
   const snap = await getShowsSnapshot();

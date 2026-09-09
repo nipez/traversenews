@@ -2,6 +2,7 @@ import { DeskRail } from "@/components/DeskRail";
 import { PublicShell } from "@/components/PublicShell";
 import { SectionHero } from "@/components/SectionHero";
 import { SchoolsDistrictToggle } from "@/components/SchoolsDistrictToggle";
+import { publicPageMeta, publicTitleSegments } from "@/lib/page-meta";
 import {
   getSchoolsSnapshot,
   getSectionHeadersSnapshot,
@@ -9,9 +10,9 @@ import {
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "Schools",
-};
+export function generateMetadata() {
+  return publicPageMeta(publicTitleSegments().schools);
+}
 
 export default async function SchoolsPage() {
   const snap = await getSchoolsSnapshot();
