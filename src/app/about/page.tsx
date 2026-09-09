@@ -1,13 +1,13 @@
 import { DeskRail } from "@/components/DeskRail";
 import { PublicShell } from "@/components/PublicShell";
+import { publicPageMeta, publicTitleSegments } from "@/lib/page-meta";
 import { getPageCopySnapshot } from "@/lib/public-snapshots";
 import { SafeEssayBody, SafeInlineCopy } from "@/lib/safe-copy";
-import { siteWordmark } from "@/lib/sites";
 
 export const dynamic = "force-dynamic";
 
 export function generateMetadata() {
-  return { title: `About ${siteWordmark()}` };
+  return publicPageMeta(publicTitleSegments().about);
 }
 
 export default async function AboutPage() {

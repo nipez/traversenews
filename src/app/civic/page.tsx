@@ -3,6 +3,7 @@ import { OfficialCalendars } from "@/components/OfficialCalendars";
 import { PublicShell } from "@/components/PublicShell";
 import { SectionHero } from "@/components/SectionHero";
 import { formatCivicDate, formatEventWhenParts } from "@/lib/dates";
+import { publicPageMeta, publicTitleSegments } from "@/lib/page-meta";
 import { getSite } from "@/lib/sites";
 import {
   getCivicSnapshot,
@@ -12,9 +13,9 @@ import type { EventItem } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "Civic Calendar",
-};
+export function generateMetadata() {
+  return publicPageMeta(publicTitleSegments().civic);
+}
 
 function isCancelled(title: string) {
   return /\bcancell?ed\b/i.test(title);

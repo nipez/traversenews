@@ -1,15 +1,16 @@
 import { DeskRail } from "@/components/DeskRail";
 import { PublicShell } from "@/components/PublicShell";
 import { SectionHero } from "@/components/SectionHero";
+import { publicPageMeta, publicTitleSegments } from "@/lib/page-meta";
 import { getSectionHeadersSnapshot } from "@/lib/public-snapshots";
 import { getLocalGroups } from "@/lib/useful-local";
 import { getSite } from "@/lib/sites";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "Useful local",
-};
+export function generateMetadata() {
+  return publicPageMeta(publicTitleSegments().local);
+}
 
 export default async function LocalPage() {
   const headers = await getSectionHeadersSnapshot();

@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { PublicShell } from "@/components/PublicShell";
 import { formatEmailEditionLabel } from "@/lib/email-editions";
+import { publicPageMeta, publicTitleSegments } from "@/lib/page-meta";
 import { getEmailArchiveSnapshot } from "@/lib/public-snapshots";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "Past mornings",
-};
+export function generateMetadata() {
+  return publicPageMeta(publicTitleSegments().emailArchive);
+}
 
 export default async function EmailArchivePage() {
   const snap = await getEmailArchiveSnapshot();

@@ -4,6 +4,11 @@
  */
 import { createSeedData } from "../src/lib/data/seed";
 import { resetSeedCatalog } from "../src/lib/data/store";
+import {
+  publicPageMeta,
+  publicTitleSegments,
+  withBrandTitle,
+} from "../src/lib/page-meta";
 import { buildSchoolsSnapshot } from "../src/lib/public-snapshots";
 import {
   getSite,
@@ -333,5 +338,52 @@ assert(
   tcSchools.districts.length === 0,
   "Traverse /schools still hides empty districts",
 );
+
+// Public page titles (SEO) — place from site config, brand via wordmark.
+setSite("traverse");
+{
+  const t = publicTitleSegments();
+  assert(t.home === "Traverse City News · traverse.news", "TC home title");
+  assert(t.events === "Events in Traverse City", "TC events title");
+  assert(t.sports === "Prep sports in Traverse City", "TC sports title");
+  assert(t.schools === "Schools in Traverse City", "TC schools title");
+  assert(t.civic === "Civic calendar · Traverse City", "TC civic title");
+  assert(t.shows === "Movies & theatre · Traverse City", "TC shows title");
+  assert(t.local === "Useful local · Traverse City", "TC local title");
+  assert(t.about === "About", "TC about segment (no doubled brand)");
+  assert(t.email === "Morning email · Traverse City", "TC email title");
+  assert(t.emailArchive === "Past morning emails", "TC email archive title");
+  assert(t.editions === "Daily editions · Traverse City", "TC editions title");
+  assert(t.tips === "Send a tip · Traverse City", "TC tips title");
+  assert(t.search === "Search", "TC search title stays short");
+  const aboutMeta = publicPageMeta(t.about);
+  assert(aboutMeta.title === "About", "about metadata title segment");
+  assert(
+    (aboutMeta.openGraph as { title?: string })?.title ===
+      "About · traverse.news",
+    "about og:title includes brand once",
+  );
+  assert(
+    withBrandTitle(t.events) === "Events in Traverse City · traverse.news",
+    "events branded title",
+  );
+}
+
+setSite("ann-arbor");
+{
+  const t = publicTitleSegments();
+  assert(t.home === "Ann Arbor News · a2.news", "AA home title");
+  assert(t.events === "Events in Ann Arbor", "AA events uses place, not TC");
+  assert(
+    !t.civic.includes("Traverse"),
+    "AA titles must not hardcode Traverse City",
+  );
+  assert(
+    withBrandTitle(t.tips) === "Send a tip · Ann Arbor · a2.news",
+    "AA tips branded title",
+  );
+}
+
+setSite("traverse");
 
 console.log("test-site-config: ok");

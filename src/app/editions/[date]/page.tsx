@@ -9,6 +9,7 @@ import {
   formatEditionLabel,
   isValidEditionDate,
 } from "@/lib/editions";
+import { publicPageMeta } from "@/lib/page-meta";
 import { getEditionsSnapshot } from "@/lib/public-snapshots";
 import type { ClusteredStory, EventItem } from "@/lib/types";
 
@@ -18,8 +19,8 @@ type Props = { params: Promise<{ date: string }> };
 
 export async function generateMetadata({ params }: Props) {
   const { date } = await params;
-  if (!isValidEditionDate(date)) return { title: "Edition" };
-  return { title: `${formatEditionLabel(date)} edition` };
+  if (!isValidEditionDate(date)) return publicPageMeta("Edition");
+  return publicPageMeta(`${formatEditionLabel(date)} edition`);
 }
 
 export default async function EditionPage({ params }: Props) {

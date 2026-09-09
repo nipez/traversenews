@@ -10,13 +10,14 @@ import {
   getSportsSnapshot,
   type PublicSportsStoryCard,
 } from "@/lib/public-snapshots";
+import { publicPageMeta, publicTitleSegments } from "@/lib/page-meta";
 import { getSite } from "@/lib/sites";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "Sports",
-};
+export function generateMetadata() {
+  return publicPageMeta(publicTitleSegments().sports);
+}
 
 function SportsList({ items }: { items: PublicSportsStoryCard[] }) {
   if (items.length === 0) {

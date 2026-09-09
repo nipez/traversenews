@@ -6,6 +6,7 @@ import { SectionHero } from "@/components/SectionHero";
 import { getSite } from "@/lib/sites";
 import { formatCivicDate, formatEventWhenParts } from "@/lib/dates";
 import { venueKicker } from "@/lib/events";
+import { publicPageMeta, publicTitleSegments } from "@/lib/page-meta";
 import {
   getEventsSnapshot,
   getPageCopySnapshot,
@@ -16,9 +17,9 @@ import type { EventItem } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "Events",
-};
+export function generateMetadata() {
+  return publicPageMeta(publicTitleSegments().events);
+}
 
 function eventTime(event: EventItem): string {
   const t = formatEventWhenParts(event.starts_at, new Date(), {

@@ -2,14 +2,15 @@ import Link from "next/link";
 import { MorningLetter } from "@/components/MorningLetter";
 import { MorningScanSignup } from "@/components/MorningScanSignup";
 import { PublicShell } from "@/components/PublicShell";
+import { publicPageMeta, publicTitleSegments } from "@/lib/page-meta";
 import { getEmailPreviewData } from "@/lib/queries";
 import { getSite } from "@/lib/sites";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "Morning email",
-};
+export function generateMetadata() {
+  return publicPageMeta(publicTitleSegments().email);
+}
 
 export default async function EmailPreviewPage() {
   const { letter } = await getEmailPreviewData();

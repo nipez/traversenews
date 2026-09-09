@@ -6,6 +6,7 @@ import {
   formatEmailEditionLabel,
   isValidEmailEditionDate,
 } from "@/lib/email-editions";
+import { publicPageMeta } from "@/lib/page-meta";
 import { getEmailArchiveSnapshot } from "@/lib/public-snapshots";
 
 export const dynamic = "force-dynamic";
@@ -15,9 +16,11 @@ type Props = { params: Promise<{ date: string }> };
 export async function generateMetadata({ params }: Props) {
   const { date } = await params;
   if (!isValidEmailEditionDate(date)) {
-    return { title: "Morning email" };
+    return publicPageMeta("Morning email");
   }
-  return { title: `Morning email · ${formatEmailEditionLabel(date)}` };
+  return publicPageMeta(
+    `Morning email · ${formatEmailEditionLabel(date)}`,
+  );
 }
 
 export default async function EmailEditionPage({ params }: Props) {
