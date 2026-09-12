@@ -7,7 +7,9 @@ import { searchAppData, searchHasAny, type SearchHit } from "@/lib/search";
 export const dynamic = "force-dynamic";
 
 export function generateMetadata() {
-  return publicPageMeta(publicTitleSegments().search);
+  return publicPageMeta(publicTitleSegments().search, {
+    canonicalPath: "/search",
+  });
 }
 
 type Props = { searchParams: Promise<{ q?: string }> };

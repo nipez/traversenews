@@ -20,7 +20,9 @@ type Props = { params: Promise<{ date: string }> };
 export async function generateMetadata({ params }: Props) {
   const { date } = await params;
   if (!isValidEditionDate(date)) return publicPageMeta("Edition");
-  return publicPageMeta(`${formatEditionLabel(date)} edition`);
+  return publicPageMeta(`${formatEditionLabel(date)} edition`, {
+    canonicalPath: `/editions/${date}`,
+  });
 }
 
 export default async function EditionPage({ params }: Props) {

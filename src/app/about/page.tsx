@@ -7,7 +7,9 @@ import { SafeEssayBody, SafeInlineCopy } from "@/lib/safe-copy";
 export const dynamic = "force-dynamic";
 
 export function generateMetadata() {
-  return publicPageMeta(publicTitleSegments().about);
+  return publicPageMeta(publicTitleSegments().about, {
+    canonicalPath: "/about",
+  });
 }
 
 export default async function AboutPage() {

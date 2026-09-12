@@ -11,7 +11,9 @@ import {
 export const dynamic = "force-dynamic";
 
 export function generateMetadata() {
-  return publicPageMeta(publicTitleSegments().schools);
+  return publicPageMeta(publicTitleSegments().schools, {
+    canonicalPath: "/schools",
+  });
 }
 
 export default async function SchoolsPage() {

@@ -7,7 +7,9 @@ import { getEditionsSnapshot } from "@/lib/public-snapshots";
 export const dynamic = "force-dynamic";
 
 export function generateMetadata() {
-  return publicPageMeta(publicTitleSegments().editions);
+  return publicPageMeta(publicTitleSegments().editions, {
+    canonicalPath: "/editions",
+  });
 }
 
 export default async function EditionsIndexPage() {

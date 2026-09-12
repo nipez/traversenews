@@ -29,27 +29,45 @@ export function withBrandTitle(segment: string): string {
   return `${segment} · ${siteWordmark()}`;
 }
 
+type PublicMetaExtra = Metadata & {
+  /** Path for rel=canonical (resolved against layout metadataBase). */
+  canonicalPath?: string;
+};
+
 /**
  * Page metadata: `title` is the template segment; openGraph + twitter
  * get the resolved branded string so shares match the SERP title.
+ * Pass `canonicalPath` (e.g. `/events` or `/story/slug`) for a consistent
+ * absolute canonical via layout `metadataBase`.
  */
 export function publicPageMeta(
   segment: string,
-  extra: Metadata = {},
+  extra: PublicMetaExtra = {},
 ): Metadata {
+  const { canonicalPath, ...rest } = extra;
   const full = withBrandTitle(segment);
   const og =
-    typeof extra.openGraph === "object" && extra.openGraph
-      ? extra.openGraph
+    typeof rest.openGraph === "object" && rest.openGraph
+      ? rest.openGraph
       : {};
   const tw =
-    typeof extra.twitter === "object" && extra.twitter ? extra.twitter : {};
+    typeof rest.twitter === "object" && rest.twitter ? rest.twitter : {};
+  const fromExtra =
+    typeof rest.alternates === "object" && rest.alternates
+      ? rest.alternates
+      : {};
+  const alternates = {
+    ...fromExtra,
+    ...(canonicalPath ? { canonical: canonicalPath } : {}),
+  };
   return {
-    ...extra,
+    ...rest,
     title: segment,
+    ...(Object.keys(alternates).length > 0 ? { alternates } : {}),
     openGraph: {
       ...og,
       title: full,
+      ...(canonicalPath ? { url: canonicalPath } : {}),
     },
     twitter: {
       ...tw,

@@ -18,9 +18,9 @@ export async function generateMetadata({ params }: Props) {
   if (!isValidEmailEditionDate(date)) {
     return publicPageMeta("Morning email");
   }
-  return publicPageMeta(
-    `Morning email · ${formatEmailEditionLabel(date)}`,
-  );
+  return publicPageMeta(`Morning email · ${formatEmailEditionLabel(date)}`, {
+    canonicalPath: `/email/${date}`,
+  });
 }
 
 export default async function EmailEditionPage({ params }: Props) {

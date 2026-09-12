@@ -18,7 +18,9 @@ import type { EventItem } from "@/lib/types";
 export const dynamic = "force-dynamic";
 
 export function generateMetadata() {
-  return publicPageMeta(publicTitleSegments().events);
+  return publicPageMeta(publicTitleSegments().events, {
+    canonicalPath: "/events",
+  });
 }
 
 function eventTime(event: EventItem): string {

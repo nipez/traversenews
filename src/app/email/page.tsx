@@ -9,7 +9,9 @@ import { getSite } from "@/lib/sites";
 export const dynamic = "force-dynamic";
 
 export function generateMetadata() {
-  return publicPageMeta(publicTitleSegments().email);
+  return publicPageMeta(publicTitleSegments().email, {
+    canonicalPath: "/email",
+  });
 }
 
 export default async function EmailPreviewPage() {

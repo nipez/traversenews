@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 import { Archivo, Source_Serif_4 } from "next/font/google";
+import { JsonLd } from "@/components/JsonLd";
+import { siteGraphJsonLd } from "@/lib/json-ld";
 import { publicTitleSegments } from "@/lib/page-meta";
-import { getSite, siteWordmark } from "@/lib/sites";
+import { getSite, siteOrigin, siteWordmark } from "@/lib/sites";
 import "./globals.css";
 
 const archivo = Archivo({
@@ -22,16 +24,24 @@ const sourceSerif = Source_Serif_4({
 export function generateMetadata(): Metadata {
   const site = getSite();
   const mark = siteWordmark();
+  const origin = siteOrigin();
   const homeTitle = publicTitleSegments().home;
   return {
+    metadataBase: new URL(origin),
     title: {
       default: homeTitle,
       template: `%s · ${mark}`,
     },
     description: site.description,
+    alternates: {
+      canonical: "/",
+    },
     openGraph: {
       title: homeTitle,
       description: site.description,
+      url: origin,
+      siteName: mark,
+      type: "website",
     },
     twitter: {
       title: homeTitle,
@@ -54,6 +64,7 @@ export default function RootLayout({
         <meta name="color-scheme" content="light only" />
       </head>
       <body className={`${archivo.variable} ${sourceSerif.variable} antialiased`}>
+        <JsonLd data={siteGraphJsonLd()} />
         {children}
         {getSite().gaId ? (
           <>

@@ -16,7 +16,9 @@ import { getSite } from "@/lib/sites";
 export const dynamic = "force-dynamic";
 
 export function generateMetadata() {
-  return publicPageMeta(publicTitleSegments().sports);
+  return publicPageMeta(publicTitleSegments().sports, {
+    canonicalPath: "/sports",
+  });
 }
 
 function SportsList({ items }: { items: PublicSportsStoryCard[] }) {

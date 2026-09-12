@@ -1,10 +1,12 @@
 import { notFound } from "next/navigation";
 import { PublicShell } from "@/components/PublicShell";
 import { CivicList } from "@/components/CivicList";
+import { JsonLd } from "@/components/JsonLd";
 import { MorningScanSignup } from "@/components/MorningScanSignup";
 import { TipsForm } from "@/components/TipsForm";
 import { TonightBlock } from "@/components/TonightBlock";
 import { formatStoryDateline } from "@/lib/dates";
+import { newsArticleJsonLd } from "@/lib/json-ld";
 import {
   getHomeSnapshot,
   getOriginalsSnapshot,
@@ -33,9 +35,16 @@ export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
   const story = await loadOriginal(slug);
   if (!story) return publicPageMeta("Story");
+  const path = `/story/${slug}`;
   return publicPageMeta(story.title, {
     description: story.dek,
     authors: [{ name: getPublicOriginalByline() }],
+    canonicalPath: path,
+    openGraph: {
+      type: "article",
+      publishedTime: story.published_at,
+      ...(story.image_url ? { images: [{ url: story.image_url }] } : {}),
+    },
   });
 }
 
@@ -61,6 +70,7 @@ export default async function StoryPage({ params }: Props) {
 
   return (
     <PublicShell active="/" header="compact">
+      <JsonLd data={newsArticleJsonLd(story)} />
       <div className="story-page">
         <header className="story-hero">
           {section ? (

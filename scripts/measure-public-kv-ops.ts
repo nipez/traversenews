@@ -35,13 +35,13 @@ function countBefore(): Record<string, Counter> {
       gets: 1,
       lists: 0,
       puts: 0,
-      keys: ["cache:sitemap.xml:v1"],
+      keys: ["cache:sitemap.xml:v2"],
     },
     "/sitemap.xml (cold)": {
       gets: 2,
       lists: 0,
       puts: 1,
-      keys: ["cache:sitemap.xml:v1", "app_data"],
+      keys: ["cache:sitemap.xml:v2", "app_data"],
     },
   };
 }
@@ -61,12 +61,12 @@ function countAfter(): Record<string, Counter> {
     "/sports": one(PUBLIC_KEYS.sports),
     "/email": one(PUBLIC_KEYS.email),
     "/editions": one(PUBLIC_KEYS.editions),
-    "/sitemap.xml (warm)": one("cache:sitemap.xml:v1"),
+    "/sitemap.xml (warm)": one("cache:sitemap.xml:v2"),
     "/sitemap.xml (cold after deploy)": {
       gets: 1,
       lists: 0,
       puts: 0,
-      keys: ["cache:sitemap.xml:v1"],
+      keys: ["cache:sitemap.xml:v2"],
       // Warm on every saveStore / pull via writeAllPublicSnapshots.
     },
   };
