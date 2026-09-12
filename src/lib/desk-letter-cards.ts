@@ -366,7 +366,7 @@ export function listDeskLetterCandidates(
   return rows;
 }
 
-/** Normalize Desk POST body into at most LETTER_AROUND_MAX story cards. */
+/** Normalize Desk POST body into at most `max` story cards. */
 /**
  * True when Desk’s visible Around slate matches `baseline` card-for-card
  * (identity + order). Used so Preview/Send can detect unsaved picker edits.
@@ -384,14 +384,15 @@ export function isSameAroundOrder(
 
 export function normalizeDeskAroundSelection(
   input: unknown,
+  max = LETTER_AROUND_MAX,
 ): { ok: true; around: EmailStoryCard[] } | { ok: false; error: string } {
   if (!Array.isArray(input)) {
     return { ok: false, error: "around must be an array of story cards." };
   }
-  if (input.length > LETTER_AROUND_MAX) {
+  if (input.length > max) {
     return {
       ok: false,
-      error: `Around the bay is capped at ${LETTER_AROUND_MAX} cards.`,
+      error: `Around the bay is capped at ${max} cards.`,
     };
   }
   const around: EmailStoryCard[] = [];

@@ -279,7 +279,15 @@ function scrubEdition(edition: EditionSnapshot): {
   if (!changed) return { edition, changed: false };
   return {
     changed: true,
-    edition: { ...edition, lead, around, events, civic },
+    edition: {
+      ...edition,
+      lead,
+      around,
+      events,
+      civic,
+      // Preserve Desk homepage lock when scrub only drops invented cards.
+      around_locked: edition.around_locked,
+    },
   };
 }
 

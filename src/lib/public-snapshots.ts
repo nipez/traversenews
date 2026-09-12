@@ -22,6 +22,7 @@ import {
   emailDetroitDateKey,
   selectFreshAroundTheBay,
 } from "@/lib/email-editions";
+import { detroitDateKey } from "@/lib/editions";
 import {
   dedupeEvents,
   eventInUpcomingWindow,
@@ -58,6 +59,7 @@ import type {
   AthleticsGame,
   ClusteredStory,
   EditionSnapshot,
+  EditionStoryCard,
   EmailEditionSnapshot,
   EventItem,
   PageCopy,
@@ -313,6 +315,35 @@ function toAround(c: ClusteredStory): PublicAroundCard {
   };
 }
 
+/** Desk-locked edition bay card → public homepage card (enrich from clusters). */
+function toAroundFromEditionCard(
+  card: EditionStoryCard,
+  clusters: ClusteredStory[],
+): PublicAroundCard {
+  const byUrl = clusters.find((c) => c.url === card.url);
+  if (byUrl) {
+    return {
+      ...toAround(byUrl),
+      title: card.title,
+      dek: card.dek,
+      published_at: card.published_at || byUrl.published_at,
+    };
+  }
+  return {
+    id: `desk_${card.url}`,
+    title: card.title,
+    dek: card.dek,
+    url: card.url,
+    published_at: card.published_at,
+    sources: card.sources.map((name) => ({ id: "", name })),
+    is_original: false,
+    byline: null,
+    slug: null,
+    image_url: null,
+    body: null,
+  };
+}
+
 function toAlert(a: {
   id: string;
   title: string;
@@ -343,9 +374,19 @@ export function buildHomeSnapshot(data: AppData, at = new Date()): PublicHomeSna
   });
   // Drop yesterday’s edition bay heads only (not the whole older archive).
   // Staff original lead stays even if it also ran yesterday — never invent a lead.
-  const around = selectFreshAroundTheBay(clusters, data.editions, at, {
-    maxUpNorth: 3,
-  });
+  // Desk lock on today’s edition wins over the auto hard-news mixer.
+  const todayKey = detroitDateKey(at);
+  const todayEdition = (data.editions ?? []).find((e) => e.date === todayKey);
+  const aroundLocked = Boolean(
+    todayEdition?.around_locked && Array.isArray(todayEdition.around),
+  );
+  const around: PublicAroundCard[] = aroundLocked
+    ? todayEdition!.around.map((card) =>
+        toAroundFromEditionCard(card, clusters),
+      )
+    : selectFreshAroundTheBay(clusters, data.editions, at, {
+        maxUpNorth: 3,
+      }).map(toAround);
   const lead = originals[0] ?? null;
   const weekendEvents = selectTonightEvents(data.events, data.sources, {
     now: at,
@@ -365,7 +406,7 @@ export function buildHomeSnapshot(data: AppData, at = new Date()): PublicHomeSna
     v: 1,
     captured_at: at.toISOString(),
     lead: lead ? toLead(lead) : null,
-    around: around.map(toAround),
+    around,
     weekendEvents,
     civic,
     alerts,

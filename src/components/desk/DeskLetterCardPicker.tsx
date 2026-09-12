@@ -13,6 +13,8 @@ import type { EmailStoryCard } from "@/lib/types";
 type Props = {
   max: number;
   candidates: DeskLetterCandidate[];
+  /** Letter vs homepage bay — copy only; persist URL lives on the provider. */
+  variant?: "letter" | "homepage";
 };
 
 function pastFlags(runs: LetterCardPastRun[]): string {
@@ -35,7 +37,11 @@ function pastFlags(runs: LetterCardPastRun[]): string {
     .join(" · ");
 }
 
-export function DeskLetterCardPicker({ max, candidates }: Props) {
+export function DeskLetterCardPicker({
+  max,
+  candidates,
+  variant = "letter",
+}: Props) {
   const router = useRouter();
   const {
     selected,
@@ -145,8 +151,12 @@ export function DeskLetterCardPicker({ max, candidates }: Props) {
     }
     setFlash(
       reset
-        ? "Around reset to auto mix. Subject override kept."
-        : `Around saved (${result.around?.length ?? 0} cards). Preview/send use this slate.`,
+        ? variant === "homepage"
+          ? "Homepage Around reset to auto hard-news mix."
+          : "Around reset to auto mix. Subject override kept."
+        : variant === "homepage"
+          ? `Homepage Around saved (${result.around?.length ?? 0} cards). Pulls keep this slate.`
+          : `Around saved (${result.around?.length ?? 0} cards). Preview/send use this slate.`,
     );
     router.refresh();
     setBusy(null);
@@ -158,7 +168,9 @@ export function DeskLetterCardPicker({ max, candidates }: Props) {
       ? "Desk mix locked · unsaved edits"
       : "Desk mix locked"
     : dirty
-      ? "Unsaved edits — preview/send will save this mix"
+      ? variant === "homepage"
+        ? "Unsaved edits — save to lock the public homepage bay"
+        : "Unsaved edits — preview/send will save this mix"
       : "Using auto mix";
 
   return (
@@ -167,9 +179,9 @@ export function DeskLetterCardPicker({ max, candidates }: Props) {
         Around the bay
       </h2>
       <p className="mt-1 text-sm text-[#444]">
-        Pick up to {max} cards for today&apos;s morning letter. Flags show
-        recent letter or homepage runs. Preview and send lock the mix you see
-        here — pulls keep it until you reset to auto.
+        {variant === "homepage"
+          ? `Pick up to ${max} cards for today’s public homepage bay. Flags show recent letter or homepage runs. Saves lock the mix — pulls keep it until you reset to auto.`
+          : `Pick up to ${max} cards for today's morning letter. Flags show recent letter or homepage runs. Preview and send lock the mix you see here — pulls keep it until you reset to auto.`}
       </p>
 
       <p className="mt-3 text-sm text-muted">
@@ -329,7 +341,11 @@ export function DeskLetterCardPicker({ max, candidates }: Props) {
                       {pastFlags(row.past_runs)}
                     </p>
                   ) : (
-                    <p className="mt-1 text-sm text-muted">Not in recent letters</p>
+                    <p className="mt-1 text-sm text-muted">
+                      {variant === "homepage"
+                        ? "Not in recent editions"
+                        : "Not in recent letters"}
+                    </p>
                   )}
                 </div>
                 <button

@@ -8,8 +8,9 @@ import {
   scrubAppData,
 } from "@/lib/data/scrub";
 import { STAFF_PUBLISHED_ORIGINALS, STAFF_UNPUBLISHED_DRAFTS } from "@/lib/data/staff-drafts";
-import { buildEditionSnapshot, upsertEdition } from "@/lib/editions";
+import { buildEditionSnapshot, detroitDateKey, upsertEdition } from "@/lib/editions";
 import {
+  BAY_AROUND_MAX,
   buildEmailEditionSnapshot,
   emailDetroitDateKey,
   upsertEmailEdition,
@@ -35,6 +36,7 @@ import type {
   AppData,
   AthleticsGame,
   EditionSnapshot,
+  EditionStoryCard,
   EmailEditionSnapshot,
   EmailLetterSendRecord,
   EmailOneOffSendsRecord,
@@ -804,13 +806,61 @@ export async function getEdition(date: string): Promise<EditionSnapshot | undefi
   return data.editions.find((e) => e.date === date);
 }
 
-/** Snapshot today's clustered homepage into the edition archive (upsert by Detroit date). */
+/** Snapshot today's clustered homepage into the edition archive (upsert by Detroit date).
+ * Preserves a Desk-locked Around slate when the prior row for this Detroit date
+ * already had one (same survival rule as the morning-letter lock).
+ */
 export async function snapshotTodaysEdition(at = new Date()): Promise<EditionSnapshot> {
   const data = await loadStore();
-  const snapshot = buildEditionSnapshot(data, at);
+  const todayKey = detroitDateKey(at);
+  const prior = data.editions.find((e) => e.date === todayKey);
+  const aroundLocked = Boolean(
+    prior?.around_locked && Array.isArray(prior.around),
+  );
+  const snapshot = buildEditionSnapshot(data, at, {
+    around: aroundLocked ? prior!.around : null,
+    around_locked: aroundLocked,
+  });
   data.editions = upsertEdition(data.editions, snapshot);
   await saveStore(data);
   return snapshot;
+}
+
+/**
+ * Save or clear today’s Desk Around slate on the homepage editions row.
+ * Passing around locks the mix for the public homepage / dated edition / pull
+ * until cleared. null clears the lock and rebuilds Around from the live
+ * hard-news mixer. Does not touch the morning-letter email_editions lock.
+ */
+export async function setEditionAround(
+  around: EditionStoryCard[] | null,
+  at = new Date(),
+): Promise<EditionSnapshot> {
+  const todayKey = detroitDateKey(at);
+  let edition = await getEdition(todayKey);
+  if (!edition) {
+    edition = await snapshotTodaysEdition(at);
+  }
+
+  if (around === null) {
+    const data = await loadStore();
+    const rebuilt = buildEditionSnapshot(data, at, {
+      around_locked: false,
+    });
+    data.editions = upsertEdition(data.editions, rebuilt);
+    await saveStore(data);
+    return rebuilt;
+  }
+
+  const next: EditionSnapshot = {
+    ...edition,
+    around: around.slice(0, BAY_AROUND_MAX),
+    around_locked: true,
+  };
+  const data = await loadStore();
+  data.editions = upsertEdition(data.editions, next);
+  await saveStore(data);
+  return next;
 }
 
 export async function listEmailEditions(): Promise<EmailEditionSnapshot[]> {
