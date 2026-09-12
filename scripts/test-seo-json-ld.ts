@@ -16,7 +16,8 @@ function assert(cond: unknown, message: string): asserts cond {
 function setSite(id: string) {
   process.env.SITE_ID = id;
   process.env.NEXT_PUBLIC_SITE_ID = id;
-  delete process.env.NEXT_PUBLIC_SITE_URL;
+  // Clear overlay so siteOrigin() uses SiteConfig.defaultOrigin (TS: env keys are required).
+  process.env.NEXT_PUBLIC_SITE_URL = "";
   resetSiteCache();
   resetSeedCatalog();
 }
