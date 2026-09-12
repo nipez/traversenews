@@ -5,7 +5,9 @@ import { publicPageMeta, publicTitleSegments } from "@/lib/page-meta";
 export const dynamic = "force-dynamic";
 
 export function generateMetadata() {
-  return publicPageMeta(publicTitleSegments().tips);
+  return publicPageMeta(publicTitleSegments().tips, {
+    canonicalPath: "/tips",
+  });
 }
 
 export default function TipsPage() {

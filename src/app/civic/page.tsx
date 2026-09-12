@@ -14,7 +14,9 @@ import type { EventItem } from "@/lib/types";
 export const dynamic = "force-dynamic";
 
 export function generateMetadata() {
-  return publicPageMeta(publicTitleSegments().civic);
+  return publicPageMeta(publicTitleSegments().civic, {
+    canonicalPath: "/civic",
+  });
 }
 
 function isCancelled(title: string) {

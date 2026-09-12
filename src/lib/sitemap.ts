@@ -11,10 +11,14 @@ function sitemapOrigin(): string {
   return siteOrigin();
 }
 
-const SITEMAP_CACHE_KEY = "cache:sitemap.xml:v1";
+const SITEMAP_CACHE_KEY = "cache:sitemap.xml:v2";
 /** Minutes — keep crawler hits off the full store path. */
 const SITEMAP_TTL_SECONDS = 15 * 60;
 
+/**
+ * Public section + utility pages only. No /whats-on (redirects to /events),
+ * no outbound aggregated card URLs, no Desk/API.
+ */
 const STATIC_PATHS = [
   "/",
   "/events",
@@ -28,7 +32,13 @@ const STATIC_PATHS = [
   "/email",
   "/email/archive",
   "/tips",
+  "/search",
 ] as const;
+
+/** Cap dated email archive URLs so a thin archive does not dominate the map. */
+const MAX_EMAIL_EDITION_URLS = 90;
+/** Cap daily edition URLs similarly (recent first after sort). */
+const MAX_EDITION_URLS = 90;
 
 type SitemapSlice = {
   stories?: Array<{
@@ -55,9 +65,32 @@ function lastmodAttr(iso: string | null | undefined): string {
   return `<lastmod>${d.toISOString()}</lastmod>`;
 }
 
+function datedLocs(
+  rows: Array<{ date?: string; captured_at?: string | null }> | undefined,
+  pathPrefix: string,
+  limit: number,
+): string[] {
+  const dated = (rows ?? [])
+    .map((row) => {
+      const date = row.date?.trim();
+      if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return null;
+      return { date, captured_at: row.captured_at };
+    })
+    .filter((r): r is { date: string; captured_at: string | null | undefined } =>
+      Boolean(r),
+    )
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, limit);
+
+  return dated.map(
+    (row) =>
+      `<url><loc>${xmlEscape(`${sitemapOrigin()}${pathPrefix}/${row.date}`)}</loc>${lastmodAttr(row.captured_at)}</url>`,
+  );
+}
+
 /**
  * Build a small public sitemap: static routes + published originals +
- * edition / email archive dates. Never walks events, never repairs drafts.
+ * recent edition / email archive dates. Never walks events, never repairs drafts.
  */
 export function buildSitemapXml(slice: SitemapSlice): string {
   const urls: string[] = [];
@@ -85,21 +118,10 @@ export function buildSitemapXml(slice: SitemapSlice): string {
     );
   }
 
-  for (const edition of slice.editions ?? []) {
-    const date = edition.date?.trim();
-    if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
-    urls.push(
-      `<url><loc>${xmlEscape(`${sitemapOrigin()}/editions/${date}`)}</loc>${lastmodAttr(edition.captured_at)}</url>`,
-    );
-  }
-
-  for (const letter of slice.email_editions ?? []) {
-    const date = letter.date?.trim();
-    if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
-    urls.push(
-      `<url><loc>${xmlEscape(`${sitemapOrigin()}/email/${date}`)}</loc>${lastmodAttr(letter.captured_at)}</url>`,
-    );
-  }
+  urls.push(...datedLocs(slice.editions, "/editions", MAX_EDITION_URLS));
+  urls.push(
+    ...datedLocs(slice.email_editions, "/email", MAX_EMAIL_EDITION_URLS),
+  );
 
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join("\n")}\n</urlset>\n`;
 }

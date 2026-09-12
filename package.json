@@ -17,6 +17,7 @@
     "test:killed-original": "tsx scripts/test-killed-original.ts",
     "test:desk-store-speed": "tsx scripts/test-desk-store-speed.ts",
     "test:site-config": "tsx scripts/test-site-config.ts",
+    "test:seo-json-ld": "tsx scripts/test-seo-json-ld.ts",
     "test:alerts-sources": "tsx scripts/test-alerts-sources.ts",
     "test:aa-listings": "tsx scripts/test-aa-listings.ts",
     "test:weather": "tsx scripts/test-weather.ts",

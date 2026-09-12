@@ -7,7 +7,9 @@ import { getEmailArchiveSnapshot } from "@/lib/public-snapshots";
 export const dynamic = "force-dynamic";
 
 export function generateMetadata() {
-  return publicPageMeta(publicTitleSegments().emailArchive);
+  return publicPageMeta(publicTitleSegments().emailArchive, {
+    canonicalPath: "/email/archive",
+  });
 }
 
 export default async function EmailArchivePage() {

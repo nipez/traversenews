@@ -9,7 +9,9 @@ import { getSite } from "@/lib/sites";
 export const dynamic = "force-dynamic";
 
 export function generateMetadata() {
-  return publicPageMeta(publicTitleSegments().local);
+  return publicPageMeta(publicTitleSegments().local, {
+    canonicalPath: "/local",
+  });
 }
 
 export default async function LocalPage() {
