@@ -650,8 +650,9 @@ function takeFromPool(
  * Express + TCBN) shares one owner-family cap of 2 like Record-Eagle.
  * UpNorthLive and Record-Eagle stay capped. Official city/county/tribal
  * headlines get a few reserved slots.
- * preferHardNews (letter): hard free + RE before soft lifestyle fillers;
- * Eyes Only hard news is deferred so IPR / Glen Arbor / government win first.
+ * preferHardNews (letter + homepage default): hard free + RE before soft
+ * lifestyle/memorial fillers; Eyes Only hard news is deferred so IPR /
+ * Glen Arbor / government win first.
  */
 export function selectAroundTheBay(
   clusters: ClusteredStory[],

@@ -43,11 +43,14 @@ export function DeskLetterAroundProvider({
   initialAround,
   aroundLocked,
   initialMixHint,
+  persistUrl = "/api/desk/email/cards",
   children,
 }: {
   initialAround: EmailStoryCard[];
   aroundLocked: boolean;
   initialMixHint: DeskLetterMixHint | null;
+  /** POST endpoint — letter cards or homepage editions cards. */
+  persistUrl?: string;
   children: ReactNode;
 }) {
   const [selected, setSelected] = useState<EmailStoryCard[]>(initialAround);
@@ -72,7 +75,7 @@ export function DeskLetterAroundProvider({
   const persistAround = useCallback(
     async (around: EmailStoryCard[] | null): Promise<PersistResult> => {
       try {
-        const res = await fetch("/api/desk/email/cards", {
+        const res = await fetch(persistUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ around }),
@@ -103,7 +106,7 @@ export function DeskLetterAroundProvider({
         };
       }
     },
-    [markSynced],
+    [markSynced, persistUrl],
   );
 
   const value = useMemo(

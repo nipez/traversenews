@@ -211,10 +211,11 @@ OpenNext deploys this app as a **Worker with static assets** (not classic Pages)
 Each successful `/api/pull` writes (or refreshes) today's edition snapshot in the same `TRAVERSE_DATA` KV blob (`app_data.editions[]`).
 
 - Date key: `YYYY-MM-DD` in **America/Detroit**
-- One edition per day; later pulls the same day overwrite that day's snapshot so the archive matches the last homepage readers saw
+- One edition per day; later pulls the same day overwrite that day's snapshot so the archive matches the last homepage readers saw — **unless** Desk locked today’s Around slate (`around_locked`), in which case pulls keep the Desk mix and still refresh lead/events/civic
 - Payload: lead (staff original only — empty if none), around-the-bay cards, tonight/community events, civic meetings (no third-party full bodies)
+- Auto Around mixer prefers hard news (same `preferHardNews` path as the morning letter): RE cap 2, Eyes Only family cap 2, drop yesterday’s heads / same-story rewrites
+- Desk: `/desk/editions` → pick/reorder/lock homepage Around (up to 18) via `POST /api/desk/editions/cards` (`around: [...]` lock, `around: null` reset to auto). Independent of the letter lock at `/api/desk/email/cards`
 - Public: `/editions`, `/editions/[date]` (linked from the footer)
-- Desk: `/desk/editions`
 
 ## Editorial
 
@@ -224,7 +225,7 @@ Each successful `/api/pull` writes (or refreshes) today's edition snapshot in th
 - Seed data may include **real source records only** (beats, outlet names, feed/ICS URLs, enable flags, notes). No fake `Story` bodies. No fake bylines on fiction. No placeholder wire cards that point at outlet homepages instead of article permalinks.
 - Homepage originals / “More from us” stay **empty** until a real piece is saved in the Desk. Empty layout is correct; do not invent copy to make the page look full.
 - Around the bay and civic/events listings must come from a real RSS/ICS pull (real title, dek, permalink). If a pull has not run yet, show empty — not fabricated seed stories.
-- Around the bay filters lifestyle columns/briefs/calendars and **mixes desks** (about 3 slots max per outlet) so one feed cannot dominate the homepage.
+- Around the bay filters lifestyle columns/briefs/calendars and **mixes desks** (about 3 slots max per outlet) so one feed cannot dominate the homepage. Unattended pulls prefer hard news over soft memorial/lifestyle fillers; Desk can lock a custom mix on `/desk/editions`.
 - **Tonight & What's on** = night-out (concerts, markets, festivals, Visit TC, Interlochen, TADL). **Civic** = government + school board only. Meeting titles never lead What's on.
 - If there is no staff original, the homepage hero stays empty and **Around the bay** starts the page. Never promote another desk's crime story to the hero.
 - `src/lib/data/scrub.ts` strips known invented seed IDs from KV on load. Do not reintroduce those slugs or placeholder journalism.

@@ -494,12 +494,14 @@ function priorBayTitles(priorCards: PriorBayCards): string[] {
  * Saturday can fill after a full Friday. Multi-day leftovers for the letter
  * stay in collectStaleEditionBayIdentities. 14-day max age lives in around.ts.
  * Staff originals are not passed in (lead is separate).
+ * preferHardNews defaults true so unattended pulls put free/RE hard news
+ * ahead of soft memorial/lifestyle fillers (same order as the morning letter).
  */
 export function selectFreshAroundTheBay(
   clusters: ClusteredStory[],
   editions: EditionSnapshot[] | null | undefined,
   at: Date,
-  options: { maxUpNorth?: number } = {},
+  options: { maxUpNorth?: number; preferHardNews?: boolean } = {},
 ): ClusteredStory[] {
   const priorEdition = findPriorDetroitDaySnapshot(editions, at);
   const priorBay = collectPriorEditionBayIdentities(priorEdition);
@@ -524,6 +526,7 @@ export function selectFreshAroundTheBay(
     maxHeavyWire: 2,
     maxEyesOnly: 2,
     maxUpNorth: options.maxUpNorth ?? 3,
+    preferHardNews: options.preferHardNews ?? true,
     now: at,
   });
 

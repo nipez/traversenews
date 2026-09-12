@@ -266,6 +266,13 @@ export type EditionSnapshot = {
   around: EditionStoryCard[];
   events: EditionEventCard[];
   civic: EditionEventCard[];
+  /**
+   * When true, Desk locked today’s homepage Around slate. Pull / snapshot
+   * must keep `around` (and this flag) instead of auto-rebuilding bay cards.
+   * Clear via Desk “Reset to auto” / POST /api/desk/editions/cards with
+   * around: null. Independent of the morning-letter `email_editions` lock.
+   */
+  around_locked?: boolean;
 };
 
 /** Compact story card inside a morning-email letter snapshot. */
