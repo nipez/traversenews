@@ -1,6 +1,7 @@
 import Parser from "rss-parser";
 import { newId } from "@/lib/ids";
 import { getSite } from "@/lib/sites";
+import { sanitizePublicText } from "@/lib/text-encoding";
 import type { Source, Story } from "@/lib/types";
 
 function rssParser(): Parser {
@@ -35,13 +36,44 @@ function resolveItemUrl(raw: string, source: Source): string {
   }
 }
 
+/**
+ * Fetch feed bytes and decode as UTF-8 before xml parse.
+ *
+ * Do not use rss-parser's parseURL: on Cloudflare Workers its https
+ * setEncoding path can treat UTF-8 body bytes as latin1, which stores
+ * curly punctuation as mojibake (â€™ / â€” / â€¦) in KV and the letter.
+ */
+async function fetchFeedXml(feedUrl: string): Promise<string> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 15000);
+  try {
+    const res = await fetch(feedUrl, {
+      method: "GET",
+      redirect: "follow",
+      signal: controller.signal,
+      headers: {
+        "User-Agent": getSite().userAgent,
+        Accept: "application/rss+xml, application/xml, text/xml, */*",
+      },
+    });
+    if (!res.ok) {
+      throw new Error(`RSS HTTP ${res.status}`);
+    }
+    const bytes = await res.arrayBuffer();
+    return new TextDecoder("utf-8").decode(bytes);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export async function pullRssSource(source: Source): Promise<Story[]> {
   if (!source.feed_url) return [];
-  const feed = await rssParser().parseURL(source.feed_url);
+  const xml = await fetchFeedXml(source.feed_url);
+  const feed = await rssParser().parseString(xml);
   const items = feed.items.slice(0, 25);
   const stories: Story[] = [];
   for (const item of items) {
-    const title = (item.title ?? "").trim();
+    const title = sanitizePublicText(item.title ?? "");
     const url = resolveItemUrl(item.link ?? item.guid ?? "", source);
     if (!title || !url || !/^https?:\/\//i.test(url)) continue;
     const rawDek =
@@ -50,7 +82,7 @@ export async function pullRssSource(source: Source): Promise<Story[]> {
       item.content ||
       item["content:encoded"] ||
       "";
-    const dek = truncate(stripHtml(String(rawDek)));
+    const dek = truncate(sanitizePublicText(stripHtml(String(rawDek))));
     const published =
       item.isoDate ||
       (item.pubDate ? new Date(item.pubDate).toISOString() : new Date().toISOString());
