@@ -23,6 +23,7 @@ import {
   SUBJECT_PHRASE_HARD_MAX,
   morningLetterSubjectPhraseLen,
 } from "@/lib/email-subject-length";
+import { sanitizePublicText } from "@/lib/text-encoding";
 
 const DETROIT_TIME_ZONE = "America/Detroit";
 
@@ -867,8 +868,12 @@ export function letterSourceCredit(sources: string[] | undefined): string {
 
 function renderStory(story: EmailStoryCard): RenderedItem {
   const url = canonicalPublicUrl(story.url);
-  const title = escapeHtml(story.title);
-  const dek = story.dek?.trim() ? escapeHtml(story.dek.trim()) : "";
+  const cleanTitle = sanitizePublicText(story.title);
+  const cleanDek = story.dek?.trim()
+    ? sanitizePublicText(story.dek.trim())
+    : "";
+  const title = escapeHtml(cleanTitle);
+  const dek = cleanDek ? escapeHtml(cleanDek) : "";
   const source = letterSourceCredit(story.sources);
 
   return {
@@ -880,8 +885,8 @@ function renderStory(story: EmailStoryCard): RenderedItem {
 ${dek ? `<p style="margin:12px 0 6px;font-family:${LETTER_FONT};font-size:14px;line-height:1.5;color:#333333;">${dek}</p>` : ""}
 ${source ? `<p style="margin:0 0 18px;font-family:${LETTER_FONT};font-size:12px;color:#666666;">${escapeHtml(source)}${story.paywalled ? " · Paywall" : ""}</p>` : '<p style="margin:0 0 18px;"></p>'}`,
     text: [
-      url ? `${story.title} ${url}` : story.title,
-      story.dek?.trim() || "",
+      url ? `${cleanTitle} ${url}` : cleanTitle,
+      cleanDek || "",
       source ? `${source}${story.paywalled ? " · Paywall" : ""}` : "",
     ]
       .filter(Boolean)
@@ -891,8 +896,12 @@ ${source ? `<p style="margin:0 0 18px;font-family:${LETTER_FONT};font-size:12px;
 
 function renderAlert(alert: EmailAlertCard): RenderedItem {
   const url = canonicalPublicUrl(alert.url);
-  const title = escapeHtml(alert.title);
-  const dek = alert.dek?.trim() ? escapeHtml(alert.dek.trim()) : "";
+  const cleanTitle = sanitizePublicText(alert.title);
+  const cleanDek = alert.dek?.trim()
+    ? sanitizePublicText(alert.dek.trim())
+    : "";
+  const title = escapeHtml(cleanTitle);
+  const dek = cleanDek ? escapeHtml(cleanDek) : "";
 
   return {
     html: `<p style="margin:0;font-family:${LETTER_FONT};font-size:16px;line-height:1.35;">${
@@ -903,8 +912,8 @@ function renderAlert(alert: EmailAlertCard): RenderedItem {
 ${dek ? `<p style="margin:12px 0 6px;font-family:${LETTER_FONT};font-size:14px;line-height:1.5;color:#333333;">${dek}</p>` : ""}
 <p style="margin:0 0 18px;font-family:${LETTER_FONT};font-size:12px;color:#666666;">${escapeHtml(alert.source_name)}</p>`,
     text: [
-      url ? `${alert.title} ${url}` : alert.title,
-      alert.dek?.trim() || "",
+      url ? `${cleanTitle} ${url}` : cleanTitle,
+      cleanDek || "",
       alert.source_name,
     ]
       .filter(Boolean)
@@ -929,12 +938,17 @@ function renderEvent(
     event.time_unknown || whenParts.time === "-" ? "" : whenParts.time;
   const when = time ? `${day} ${time}` : day;
   const url = canonicalPublicUrl(event.url);
-  const title = escapeHtml(event.title);
+  const cleanTitle = sanitizePublicText(event.title);
+  const title = escapeHtml(cleanTitle);
   const titleHtml = url
     ? `<a href="${escapeHtml(url)}" style="color:#111111;font-weight:700;text-decoration:underline;">${title}</a>`
     : `<strong>${title}</strong>`;
-  const place = event.place?.trim() ? escapeHtml(event.place.trim()) : "";
-  const details = [context ? escapeHtml(context) : "", place]
+  const cleanPlace = event.place?.trim()
+    ? sanitizePublicText(event.place.trim())
+    : "";
+  const place = cleanPlace ? escapeHtml(cleanPlace) : "";
+  const cleanContext = context ? sanitizePublicText(context) : "";
+  const details = [cleanContext ? escapeHtml(cleanContext) : "", place]
     .filter(Boolean)
     .join(" · ");
 
@@ -944,8 +958,8 @@ function renderEvent(
 ${details ? `<p style="margin:0 0 18px;font-family:${LETTER_FONT};font-size:13px;color:#555555;">${details}</p>` : '<p style="margin:0 0 18px;"></p>'}`,
     text: [
       when,
-      url ? `${event.title} ${url}` : event.title,
-      [context, event.place].filter(Boolean).join(" · "),
+      url ? `${cleanTitle} ${url}` : cleanTitle,
+      [cleanContext, cleanPlace].filter(Boolean).join(" · "),
     ]
       .filter(Boolean)
       .join("\n"),
@@ -982,10 +996,58 @@ export function resolveMorningLetterSubject(
 ): string {
   const override =
     typeof letter.subject_override === "string"
-      ? letter.subject_override.trim()
+      ? sanitizePublicText(letter.subject_override.trim())
       : "";
   if (override) return override;
   return buildMorningLetterSubject(letter);
+}
+
+function sanitizeStoryCard(card: EmailStoryCard): EmailStoryCard {
+  return {
+    ...card,
+    title: sanitizePublicText(card.title),
+    dek: sanitizePublicText(card.dek ?? ""),
+  };
+}
+
+function sanitizeAlertCard(card: EmailAlertCard): EmailAlertCard {
+  return {
+    ...card,
+    title: sanitizePublicText(card.title),
+    dek: sanitizePublicText(card.dek ?? ""),
+  };
+}
+
+function sanitizeEventCard<T extends EmailEventCard | EmailSportsCard>(
+  card: T,
+): T {
+  return {
+    ...card,
+    title: sanitizePublicText(card.title),
+    place: card.place ? sanitizePublicText(card.place) : card.place,
+  };
+}
+
+/** Heal mojibake on a stored letter snapshot before subject + HTML build. */
+export function sanitizeEmailEditionSnapshot(
+  letter: EmailEditionSnapshot,
+): EmailEditionSnapshot {
+  return {
+    ...letter,
+    weather_line: letter.weather_line
+      ? sanitizePublicText(letter.weather_line)
+      : letter.weather_line,
+    subject_override:
+      typeof letter.subject_override === "string"
+        ? sanitizePublicText(letter.subject_override)
+        : letter.subject_override,
+    lead: letter.lead ? sanitizeStoryCard(letter.lead) : letter.lead,
+    around: (letter.around ?? []).map(sanitizeStoryCard),
+    alerts: (letter.alerts ?? []).map(sanitizeAlertCard),
+    tonight: (letter.tonight ?? []).map(sanitizeEventCard),
+    civic: (letter.civic ?? []).map(sanitizeEventCard),
+    sports: (letter.sports ?? []).map(sanitizeEventCard),
+  };
 }
 
 export function buildMorningLetter(
@@ -996,6 +1058,7 @@ export function buildMorningLetter(
     unsubscribeEmail?: string | null;
   } = {},
 ): { subject: string; html: string; text: string } {
+  letter = sanitizeEmailEditionSnapshot(letter);
   const subject = resolveMorningLetterSubject(letter);
   const editionLabel = formatEmailEditionLabel(letter.date);
   const dateLabel = emailDateLabel(
@@ -1016,6 +1079,7 @@ export function buildMorningLetter(
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${escapeHtml(subject)}</title>
 </head>

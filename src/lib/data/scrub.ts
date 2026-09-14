@@ -7,6 +7,7 @@ import {
   getPublicOriginalByline,
   PUBLIC_ORIGINAL_BYLINE,
 } from "@/lib/originals";
+import { sanitizePublicText } from "@/lib/text-encoding";
 
 /** Invented seed copy that must never appear as reporting. See README → Editorial. */
 export const BANNED_ORIGINAL_SLUGS = new Set([
@@ -137,6 +138,18 @@ export function scrubAppData(data: AppData): { data: AppData; changed: boolean }
     data.stories = nextStories;
   }
 
+  // Heal UTF-8-as-latin1 mojibake on titles/deks so homepage + letter rebuilds
+  // pick up clean copy without waiting for the source to re-publish.
+  data.stories = data.stories.map((s) => {
+    const title = sanitizePublicText(s.title ?? "");
+    const dek = sanitizePublicText(s.dek ?? "");
+    const body =
+      typeof s.body === "string" ? sanitizePublicText(s.body) : s.body;
+    if (title === s.title && dek === s.dek && body === s.body) return s;
+    changed = true;
+    return { ...s, title, dek, body };
+  });
+
   // Public originals never carry a staff name (Nick Perez, etc.).
   data.stories = data.stories.map((s) => {
     if (!s.is_original) return s;
@@ -199,6 +212,12 @@ export function scrubAppData(data: AppData): { data: AppData; changed: boolean }
   if (!Array.isArray(data.email_editions)) {
     data.email_editions = [];
     changed = true;
+  } else {
+    data.email_editions = data.email_editions.map((ed) => {
+      const next = scrubEmailEditionCopy(ed);
+      if (next.changed) changed = true;
+      return next.edition;
+    });
   }
 
   data.editions = data.editions.map((ed) => {
@@ -208,6 +227,55 @@ export function scrubAppData(data: AppData): { data: AppData; changed: boolean }
   });
 
   return { data, changed };
+}
+
+function scrubEmailEditionCopy(
+  ed: AppData["email_editions"][number],
+): { edition: AppData["email_editions"][number]; changed: boolean } {
+  let changed = false;
+  const fixStory = <T extends { title: string; dek: string }>(card: T): T => {
+    const title = sanitizePublicText(card.title);
+    const dek = sanitizePublicText(card.dek ?? "");
+    if (title === card.title && dek === card.dek) return card;
+    changed = true;
+    return { ...card, title, dek };
+  };
+  const fixEvent = <T extends { title: string; place?: string | null }>(
+    card: T,
+  ): T => {
+    const title = sanitizePublicText(card.title);
+    const place =
+      typeof card.place === "string"
+        ? sanitizePublicText(card.place)
+        : card.place;
+    if (title === card.title && place === card.place) return card;
+    changed = true;
+    return { ...card, title, place };
+  };
+  const weather_line = ed.weather_line
+    ? sanitizePublicText(ed.weather_line)
+    : ed.weather_line;
+  if (weather_line !== ed.weather_line) changed = true;
+  const subject_override =
+    typeof ed.subject_override === "string"
+      ? sanitizePublicText(ed.subject_override)
+      : ed.subject_override;
+  if (subject_override !== ed.subject_override) changed = true;
+
+  return {
+    changed,
+    edition: {
+      ...ed,
+      weather_line,
+      subject_override,
+      lead: ed.lead ? fixStory(ed.lead) : ed.lead,
+      around: (ed.around ?? []).map((c) => fixStory(c)),
+      alerts: (ed.alerts ?? []).map((c) => fixStory(c)),
+      tonight: (ed.tonight ?? []).map((c) => fixEvent(c)),
+      civic: (ed.civic ?? []).map((c) => fixEvent(c)),
+      sports: (ed.sports ?? []).map((c) => fixEvent(c)),
+    },
+  };
 }
 
 function eventCardLooksInvented(title: string): boolean {
@@ -266,12 +334,35 @@ function scrubEdition(edition: EditionSnapshot): {
     changed = true;
   }
 
+  const healCard = <T extends { title: string; dek?: string }>(card: T): T => {
+    const title = sanitizePublicText(card.title);
+    const dek =
+      typeof card.dek === "string" ? sanitizePublicText(card.dek) : card.dek;
+    if (title === card.title && dek === card.dek) return card;
+    changed = true;
+    return { ...card, title, dek };
+  };
+  if (lead) lead = healCard(lead);
+  around = around.map(healCard);
+
   const events = dedupeEditionEventCards(
     edition.events.filter((e) => !eventCardLooksInvented(e.title)),
-  );
+  ).map((e) => {
+    const title = sanitizePublicText(e.title);
+    const place = sanitizePublicText(e.place ?? "");
+    if (title === e.title && place === e.place) return e;
+    changed = true;
+    return { ...e, title, place };
+  });
   const civic = dedupeEditionEventCards(
     edition.civic.filter((e) => !eventCardLooksInvented(e.title)),
-  );
+  ).map((e) => {
+    const title = sanitizePublicText(e.title);
+    const place = sanitizePublicText(e.place ?? "");
+    if (title === e.title && place === e.place) return e;
+    changed = true;
+    return { ...e, title, place };
+  });
   if (events.length !== edition.events.length || civic.length !== edition.civic.length) {
     changed = true;
   }

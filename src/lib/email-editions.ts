@@ -15,6 +15,7 @@ import {
 } from "@/lib/events";
 import { isRecordEagleCluster } from "@/lib/paywall";
 import { clusterStories } from "@/lib/pull/cluster";
+import { sanitizePublicText } from "@/lib/text-encoding";
 import type {
   AppData,
   ClusteredStory,
@@ -438,8 +439,8 @@ function toAroundCard(
   },
 ): EmailStoryCard {
   return {
-    title: cluster.title,
-    dek: cluster.dek,
+    title: sanitizePublicText(cluster.title),
+    dek: sanitizePublicText(cluster.dek),
     url: cluster.url,
     sources: cluster.sources.map((s) => s.name),
     paywalled: isRecordEagleCluster(cluster),
