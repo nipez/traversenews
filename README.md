@@ -186,7 +186,7 @@ curl https://traverse-news.nickperez.workers.dev/
 
 Mon–Sat at **11:30 UTC** (7:30am EDT): `30 11 * * 1-6` in `wrangler.jsonc` → `cloudflare-worker.ts` `scheduled` handler POSTs `/api/pull` via the self service binding.
 
-Mon–Sat at **12:00 UTC** (8:00am EDT): `0 12 * * 1-6` → POST `/api/desk/email/send` with `{"preview":true}` (Nick-only preview; does not mark the day publicly sent). **Live send** is from Desk `/desk/email` (POST `{}` to the same route).
+Mon–Sat at **12:00 UTC** (8:00am EDT): `0 12 * * 1-6` → POST `/api/desk/email/send` with `{"preview":true}` (Nick-only preview; does not mark the day publicly sent). **Live send** is from Desk `/desk/email` (POST `{"live":true,"preview":false}` to the same route). Empty `{}` is rejected — mode must be explicit.
 
 Test locally:
 

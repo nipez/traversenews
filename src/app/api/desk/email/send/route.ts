@@ -21,6 +21,11 @@ import {
   resolveLetterRecipients,
   resolvePreviewLetterRecipients,
 } from "@/lib/email-letter";
+import {
+  isSecondLiveSendBlocked,
+  resolveDeskLetterSendMode,
+  SECOND_LIVE_SEND_ERROR,
+} from "@/lib/email-letter-send-mode";
 import { runPull } from "@/lib/pull/run";
 import { getSite } from "@/lib/sites";
 
@@ -120,14 +125,18 @@ async function sendLetterToOneRecipient(args: {
 /**
  * Send today's morning letter via Resend (Worker cron preview + Desk live).
  *
- * Body:
- * - `{ preview: true }` — Nick-only preview (`Preview · ` subject on Worker
- *   cron). Uses today’s stored `email_editions` row when present.
+ * Body (mode is required — empty `{}` is rejected; incident 2026-09-22):
+ * - `{ preview: true }` or `{ mode: "preview" }` — Nick-only preview
+ *   (`Preview · ` subject). Uses today’s stored `email_editions` row when present.
+ * - `{ live: true, preview: false }` or `{ mode: "live" }` — full subscriber
+ *   list; marks morning_letter_sent.
  * - `{ around: EmailStoryCard[] }` — Desk Preview/Send locks this exact Around
  *   slate before mailing (same as POST /api/desk/email/cards). Worker cron
  *   omits `around` and mails the stored/locked row.
- * - `{}` or `{ force: true }` — live send to resolveLetterRecipients; marks
- *   morning_letter_sent.
+ * - `{ confirm_second_live: true }` — required override to live-send again
+ *   after a successful live archive for today (otherwise 409).
+ * - `{ force: true }` — re-run Nick-only preview after already_previewed
+ *   (does not bypass the live double-send guard).
  * - `{ rebuild: true }` — pull + recapture today’s letter before mailing
  *   (clobbers a restage). Default is to mail the stored snapshot. When
  *   `around` is also set, the Desk slate is re-applied after rebuild.
@@ -142,6 +151,9 @@ async function sendLetterToOneRecipient(args: {
  * Privacy: one Resend API call per recipient with `to: [thatEmail]` only.
  * Never blast the full list in a single `to` / `cc` / `bcc`.
  * Pace ~200ms between calls (under Resend 10/s) and retry 429 with backoff.
+ *
+ * Note: Nick (DESK_LETTER_FALLBACK) is on the live list, so an explicit
+ * preview after a live send can mean a second inbox hit for him.
  */
 export async function POST(request: Request) {
   if (!(await isDeskRequestAuthed(request))) {
@@ -151,11 +163,24 @@ export async function POST(request: Request) {
   const body = (await request.json().catch(() => ({}))) as {
     force?: unknown;
     preview?: unknown;
+    live?: unknown;
+    mode?: unknown;
+    confirm_second_live?: unknown;
     rebuild?: unknown;
     around?: unknown;
   };
+
+  const modeResult = resolveDeskLetterSendMode(body);
+  if (!modeResult.ok) {
+    return NextResponse.json(
+      { ok: false, error: modeResult.error },
+      { status: 400 },
+    );
+  }
+
+  const preview = modeResult.mode === "preview";
   const force = body.force === true;
-  const preview = body.preview === true;
+  const confirmSecondLive = body.confirm_second_live === true;
   const rebuild = body.rebuild === true;
   const hasAround = Object.prototype.hasOwnProperty.call(body, "around");
 
@@ -210,15 +235,24 @@ export async function POST(request: Request) {
         around_locked: Boolean(stored?.around_locked ?? deskAroundLocked),
       });
     }
-  } else if (!force && (await getEmailLetterSend(today))) {
+  } else if (
+    isSecondLiveSendBlocked(
+      Boolean(await getEmailLetterSend(today)),
+      confirmSecondLive,
+    )
+  ) {
     const stored = await getEmailEdition(today);
-    return NextResponse.json({
-      ok: true,
-      already_sent: true,
-      date: today,
-      around: stored?.around ?? [],
-      around_locked: Boolean(stored?.around_locked ?? deskAroundLocked),
-    });
+    return NextResponse.json(
+      {
+        ok: false,
+        error: SECOND_LIVE_SEND_ERROR,
+        already_sent: true,
+        date: today,
+        around: stored?.around ?? [],
+        around_locked: Boolean(stored?.around_locked ?? deskAroundLocked),
+      },
+      { status: 409 },
+    );
   }
 
   // Prefer today’s stored / restaged letter. runPull also snapshots and would
