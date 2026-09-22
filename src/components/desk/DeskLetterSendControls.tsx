@@ -54,13 +54,21 @@ export function DeskLetterSendControls({
     try {
       // Always ship the visible Around slate with Desk preview/send so unsaved
       // picker edits cannot be silently ignored (Worker cron omits `around`).
+      // Mode must be explicit — empty / missing mode is rejected by the API
+      // (2026-09-22 incident: `{}` defaulted to live).
       const payload: {
         preview?: boolean;
+        live?: boolean;
         around: EmailStoryCard[];
       } = {
         around: selected,
       };
-      if (mode === "preview") payload.preview = true;
+      if (mode === "preview") {
+        payload.preview = true;
+      } else {
+        payload.live = true;
+        payload.preview = false;
+      }
 
       const res = await fetch("/api/desk/email/send", {
         method: "POST",
@@ -175,7 +183,9 @@ export function DeskLetterSendControls({
         Type today’s subject once, save it, then preview or send live. Preview
         and send also lock the Around mix shown above. Pulls keep a saved
         subject override and locked mix. Soft target ~{SUBJECT_PHRASE_SOFT_CAP};
-        hard max {SUBJECT_PHRASE_HARD_MAX} (leading 🗞️ not counted).
+        hard max {SUBJECT_PHRASE_HARD_MAX} (leading 🗞️ not counted). Preview
+        goes only to Nick; he is also on the live list, so a preview after live
+        (or a second preview) can mean a second inbox hit for him.
       </p>
 
       <p className="mt-4 text-sm text-muted">{subjectLabel}</p>
