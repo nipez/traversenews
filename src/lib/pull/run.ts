@@ -11,6 +11,11 @@ import {
   withSkippedPublicSnapshots,
 } from "@/lib/data/store";
 import { isInventedStory, keepRealOriginals } from "@/lib/data/scrub";
+import {
+  ARBITERLIVE_ATHLETICS_SOURCE_IDS,
+  pullArbiterLiveAthletics,
+} from "@/lib/pull/arbiterlive";
+import { collectEmptySlateWarnings } from "@/lib/pull/empty-slate";
 import { pullAnnArborHtml, pullAnnArborNews } from "@/lib/pull/html-ann-arbor";
 import {
   EVENTLINK_ATHLETICS_SOURCE_IDS,
@@ -29,6 +34,8 @@ import type {
   ShowListing,
   Story,
 } from "@/lib/types";
+
+export { collectEmptySlateWarnings } from "@/lib/pull/empty-slate";
 
 export type PullResult = {
   ok: boolean;
@@ -64,9 +71,10 @@ const HTML_AA_LISTING_IDS = new Set([
 /** Official HTML newsrooms the Worker can read (headline + link only). */
 const HTML_AA_NEWS_IDS = new Set(["src_a2_news", "src_theride"]);
 
-/** Shows venues with static HTML showtimes the Worker can read. */
+/** Shows venues with Worker pulls (HTML, Agile, or GraphQL). */
 const HTML_SHOW_SOURCE_IDS = new Set([
   "src_state_theatre",
+  "src_bay_theatre",
   "src_elk_cinema",
   "src_alluvion",
   "src_marquee_shows",
@@ -152,6 +160,29 @@ async function runPullInner(): Promise<PullResult> {
             "and POST /api/desk/stories/import.";
           errors.push({ source: source.name, error: msg });
           touch.set(source.id, { ok: false, error: msg, attempted: true });
+        } else {
+          touch.set(source.id, { ok: true, error: null, attempted: true });
+        }
+      } else if (
+        source.pull_method === "html" &&
+        ARBITERLIVE_ATHLETICS_SOURCE_IDS.has(source.id)
+      ) {
+        const htmlResult = await pullArbiterLiveAthletics(source);
+        pulledAthletics.push(...htmlResult.games);
+        if (htmlResult.bot_blocked) {
+          const msg =
+            `Bot-blocked or empty ArbiterLive calendar (${htmlResult.status ?? "n/a"}). ` +
+            "Do not invent games. Need Traverse News to pull this URL on the live computer " +
+            "and POST the list to /api/desk/athletics/import.";
+          errors.push({ source: source.name, error: msg });
+          touch.set(source.id, { ok: false, error: msg, attempted: true });
+        } else if (htmlResult.error) {
+          errors.push({ source: source.name, error: htmlResult.error });
+          touch.set(source.id, {
+            ok: false,
+            error: htmlResult.error,
+            attempted: true,
+          });
         } else {
           touch.set(source.id, { ok: true, error: null, attempted: true });
         }
@@ -265,6 +296,7 @@ async function runPullInner(): Promise<PullResult> {
     ];
     await replaceSchoolCalendarItems(pulledSchools, schoolSourceIds);
   }
+  // Only replace show/athletics rows for sources that returned data this run.
   if (pulledShows.length > 0) {
     const showSourceIds = [...new Set(pulledShows.map((s) => s.source_id))];
     await replaceShowListings(pulledShows, showSourceIds);
@@ -278,13 +310,44 @@ async function runPullInner(): Promise<PullResult> {
 
   const store = await loadStore();
   store.last_pull_at = pulledAt;
+
+  // Empty-slate warnings (shows: any upcoming; athletics: next 7 days).
+  const emptyWarnings = collectEmptySlateWarnings(
+    store.sources,
+    store.shows ?? [],
+    store.athletics ?? [],
+    new Date(pulledAt),
+  );
+  for (const w of emptyWarnings) {
+    if (!errors.some((e) => e.source === w.source && e.error === w.error)) {
+      errors.push(w);
+    }
+  }
+
   for (const source of store.sources) {
     const t = touch.get(source.id);
-    if (!t) continue;
-    if (t.attempted) {
-      source.last_pulled_at = pulledAt;
+    const empty = emptyWarnings.find((w) => w.source === source.name);
+    if (t) {
+      if (t.attempted) {
+        source.last_pulled_at = pulledAt;
+      }
+      // Prefer scrape error; else empty-slate warning; else clear on success.
+      if (t.error && t.attempted === false && empty) {
+        // Import-only venue with a standing hint — surface emptiness too.
+        source.last_pull_error = empty.error;
+      } else if (t.error && !t.ok) {
+        source.last_pull_error = t.error;
+      } else if (empty) {
+        source.last_pull_error = empty.error;
+      } else if (t.attempted) {
+        source.last_pull_error = null;
+      } else {
+        // Not attempted (import-only) and not empty — keep prior hint or clear.
+        source.last_pull_error = t.error;
+      }
+    } else if (empty) {
+      source.last_pull_error = empty.error;
     }
-    source.last_pull_error = t.error;
   }
   await saveStore(store);
 

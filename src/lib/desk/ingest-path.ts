@@ -3,12 +3,22 @@ import {
   isSchoolCalendarSource,
   isShowEventSource,
 } from "@/lib/events";
+import { ARBITERLIVE_ATHLETICS_SOURCE_IDS } from "@/lib/pull/arbiterlive";
 import { EVENTLINK_ATHLETICS_SOURCE_IDS } from "@/lib/pull/eventlink-feeds";
 import { hasIcsFeedOverride } from "@/lib/pull/ics-overrides";
 import type { Source } from "@/lib/types";
 
 /** Civic calendar desks — meetings on /civic via civic/import. */
 const CIVIC_CALENDAR_SOURCE_IDS = new Set(["src_gt_cal", "src_civicweb"]);
+
+/** Shows venues the Worker scrapes (HTML / Agile / GraphQL). */
+const WORKER_SHOW_SOURCE_IDS = new Set([
+  "src_state_theatre",
+  "src_bay_theatre",
+  "src_elk_cinema",
+  "src_alluvion",
+  "src_marquee_shows",
+]);
 
 /**
  * How this Desk source gets live rows into KV.
@@ -53,6 +63,14 @@ export function ingestPathForSource(source: Source): {
   }
 
   if (isHsAthleticsEventSource(source.id)) {
+    if (ARBITERLIVE_ATHLETICS_SOURCE_IDS.has(source.id)) {
+      return {
+        workerPulls: true,
+        importPath: "/api/desk/athletics/import",
+        summary:
+          "Worker pulls ArbiterLive (Calendar GET + GetEventsByEntity). Skip canceled/postponed and middle school. If empty, Traverse News → POST /api/desk/athletics/import.",
+      };
+    }
     const workerHtml = EVENTLINK_ATHLETICS_SOURCE_IDS.has(source.id);
     return {
       workerPulls: workerHtml,
@@ -73,16 +91,16 @@ export function ingestPathForSource(source: Source): {
   }
 
   if (isShowEventSource(source.id) || source.beat_id === "beat_shows") {
-    const workerHtml = new Set([
-      "src_state_theatre",
-      "src_elk_cinema",
-      "src_alluvion",
-    ]).has(source.id);
+    const workerHtml = WORKER_SHOW_SOURCE_IDS.has(source.id);
     return {
       workerPulls: workerHtml,
       importPath: "/api/desk/shows/import",
       summary: workerHtml
-        ? "Worker tries HTML showtimes; if bot-blocked or empty, Traverse News → POST /api/desk/shows/import (/shows)."
+        ? source.id === "src_bay_theatre"
+          ? "Worker pulls Bay GraphQL showtimes; if permission fails or empty, Traverse News → POST /api/desk/shows/import (/shows)."
+          : source.id === "src_state_theatre"
+            ? "Worker reads the TCFF Agile Ticketing calendar (ld+json). If Incapsula blocks or empty, Traverse News → POST /api/desk/shows/import (/shows)."
+            : "Worker tries HTML showtimes; if bot-blocked or empty, Traverse News → POST /api/desk/shows/import (/shows)."
         : "Traverse News pulls on the box → POST /api/desk/shows/import (/shows, never Events).",
     };
   }
