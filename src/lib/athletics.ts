@@ -14,11 +14,21 @@ import {
 } from "@/lib/sites/ann-arbor/athletics";
 import type { AthleticsGame, Source } from "@/lib/types";
 
-/** Soft ceiling for stored athletics games (upcoming slate, not a full season). */
-export const MAX_STORED_ATHLETICS = 80;
+/**
+ * Soft ceiling for stored athletics games (rolling slate, not a full season).
+ * Raised so TC core + map-ring ArbiterLive pulls (~21 days) are not stranded
+ * by a write-time trim measured from an old import date.
+ */
+export const MAX_STORED_ATHLETICS = 400;
 
 /** Public Sports “This week” horizon in Detroit calendar days (today inclusive). */
 export const ATHLETICS_WEEK_DAYS = 7;
+
+/**
+ * Always keep this many Detroit calendar days ahead of *now* when capping.
+ * Matches /sports This week + Next week so a prune cannot empty the public slate.
+ */
+export const ATHLETICS_KEEP_AHEAD_DAYS = ATHLETICS_WEEK_DAYS * 2;
 
 export const ATHLETICS_SOURCE_IDS = HS_ATHLETICS_EVENT_SOURCE_IDS;
 
@@ -307,8 +317,10 @@ export function isVarsityGameTitle(title: string): boolean {
 }
 
 /**
- * Keep athletics in their own array. Soft-cap ~80 preferring the near window.
- * Never invents games — only drops.
+ * Keep athletics in their own array. Soft-cap preferring the near window
+ * measured from *current* time (not the import date). Never invents games —
+ * only drops. The upcoming public slate (next ~14 days) is never trimmed away
+ * even when it exceeds MAX_STORED_ATHLETICS.
  */
 export function sanitizeStoredAthletics(games: AthleticsGame[]): {
   games: AthleticsGame[];
@@ -327,10 +339,10 @@ export function sanitizeStoredAthletics(games: AthleticsGame[]): {
 
   if (next.length > MAX_STORED_ATHLETICS) {
     const now = Date.now();
-    const weekMs = ATHLETICS_WEEK_DAYS * 24 * 60 * 60 * 1000;
+    const keepMs = ATHLETICS_KEEP_AHEAD_DAYS * 24 * 60 * 60 * 1000;
     const near = next.filter((g) => {
       const t = new Date(g.starts_at).getTime();
-      return t >= now - 12 * 60 * 60 * 1000 && t <= now + weekMs * 2;
+      return t >= now - 12 * 60 * 60 * 1000 && t <= now + keepMs;
     });
     const rest = next
       .filter((g) => !near.includes(g))
@@ -340,6 +352,7 @@ export function sanitizeStoredAthletics(games: AthleticsGame[]): {
           Math.abs(new Date(b.starts_at).getTime() - now),
       );
     const room = Math.max(0, MAX_STORED_ATHLETICS - near.length);
+    // Prefer keeping the entire near window even above the soft ceiling.
     const capped = [...near, ...rest.slice(0, room)].sort(
       (a, b) =>
         new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime(),

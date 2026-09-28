@@ -115,6 +115,13 @@ export default async function DeskSourcesPage({ searchParams }: Props) {
                   <strong>{source.name}</strong>
                   <span>{beatName(source.beat_id)} · {source.enabled ? "On" : "Off"}</span>
                   <em>{source.pull_method}</em>
+                  {source.last_pull_error ? (
+                    <span className="mt-1 block text-xs text-red-800">
+                      {source.last_pull_error.length > 100
+                        ? `${source.last_pull_error.slice(0, 97)}…`
+                        : source.last_pull_error}
+                    </span>
+                  ) : null}
                 </Link>
               </li>
             ))}
@@ -174,6 +181,13 @@ export default async function DeskSourcesPage({ searchParams }: Props) {
                         />
                         {source.enabled ? "On" : "Off"}
                       </span>
+                      {source.last_pull_error ? (
+                        <div className="mt-1 max-w-[180px] text-xs text-red-800">
+                          {source.last_pull_error.length > 120
+                            ? `${source.last_pull_error.slice(0, 117)}…`
+                            : source.last_pull_error}
+                        </div>
+                      ) : null}
                     </td>
                     <td className="max-w-[240px] text-sm text-[#444]">
                       {source.notes || "—"}

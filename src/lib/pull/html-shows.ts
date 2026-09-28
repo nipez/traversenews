@@ -1,5 +1,6 @@
 import { detroitWallToUtc } from "@/lib/dates";
 import { extractMarqueeShows } from "@/lib/pull/html-ann-arbor";
+import { pullBayTheatreShows } from "@/lib/pull/bay-theatre";
 import { getSite } from "@/lib/sites";
 import {
   stableShowId,
@@ -7,6 +8,12 @@ import {
   type ShowImportRow,
 } from "@/lib/shows";
 import type { ShowListing, Source } from "@/lib/types";
+
+/** Agile Ticketing calendar for State Theatre / Bijou (TCFF websales). */
+export const STATE_THEATRE_AGILE_URL =
+  "https://secure.traversecityfilmfest.org/websales/pages/list.aspx?epguid=f9385ae5-a20d-40bd-8812-c04853a2e0fb&";
+
+const BOT_STATUS = new Set([401, 403, 429, 503]);
 
 const MONTHS: Record<string, number> = {
   january: 0,
@@ -154,7 +161,8 @@ function listingFromParts(args: {
 
 /**
  * State Theatre / Bijou homepage — NOW PLAYING (+ light COMING SOON).
- * Only emits titles and clocks found on the page. RSS feed has no showtimes.
+ * Kept for fixtures / fallback. Live pull prefers the Agile Ticketing calendar
+ * (parseStateTheatreAgileHtml) because the homepage block is often empty.
  */
 export function parseStateTheatreHtml(
   html: string,
@@ -321,6 +329,250 @@ export function parseStateTheatreHtml(
   }
 
   return out;
+}
+
+type AgileLdEvent = {
+  "@type"?: string;
+  name?: string;
+  startDate?: string;
+  offers?: { url?: string };
+};
+
+function formatClockFromOffsetIso(iso: string): string | null {
+  // Prefer the printed offset in the Agile stamp (…-04:00) when present.
+  const m = iso.match(
+    /T(\d{2}):(\d{2})(?::\d{2})?(?:[+-]\d{2}:\d{2}|Z)?$/i,
+  );
+  if (m) {
+    let hour = Number(m[1]);
+    const minute = Number(m[2]);
+    if (Number.isNaN(hour) || Number.isNaN(minute)) return null;
+    const suffix = hour >= 12 ? "PM" : "AM";
+    const h12 = hour % 12 || 12;
+    return minute === 0
+      ? `${h12}:00 ${suffix}`
+      : `${h12}:${String(minute).padStart(2, "0")} ${suffix}`;
+  }
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Detroit",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).formatToParts(d);
+  const hour = parts.find((p) => p.type === "hour")?.value;
+  const minute = parts.find((p) => p.type === "minute")?.value;
+  const dayPeriod = parts.find((p) => p.type === "dayPeriod")?.value;
+  if (!hour || !minute || !dayPeriod) return null;
+  const mer = dayPeriod.toUpperCase().startsWith("P") ? "PM" : "AM";
+  return `${Number(hour)}:${minute} ${mer}`;
+}
+
+/**
+ * State Theatre Agile Ticketing calendar (list.aspx).
+ * Reads application/ld+json Event rows (title + startDate + ticket URL).
+ * Groups by title per Detroit day — never invents clocks.
+ */
+export function parseStateTheatreAgileHtml(
+  html: string,
+  source: Source,
+  now = new Date(),
+): ShowListing[] {
+  if (/incapsula|_Incapsula_Resource|cf-browser-verification/i.test(html.slice(0, 1200))) {
+    return [];
+  }
+  const blocks = [
+    ...html.matchAll(
+      /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi,
+    ),
+  ];
+  const events: AgileLdEvent[] = [];
+  for (const block of blocks) {
+    const raw = block[1]?.trim();
+    if (!raw) continue;
+    try {
+      const parsed = JSON.parse(raw) as unknown;
+      if (Array.isArray(parsed)) {
+        for (const row of parsed) {
+          if (row && typeof row === "object") events.push(row as AgileLdEvent);
+        }
+      } else if (parsed && typeof parsed === "object") {
+        events.push(parsed as AgileLdEvent);
+      }
+    } catch {
+      // skip malformed ld+json
+    }
+  }
+
+  const floor = now.getTime() - 12 * 60 * 60 * 1000;
+  const horizon = now.getTime() + 120 * 24 * 60 * 60 * 1000;
+  const groups = new Map<
+    string,
+    { title: string; day: string; times: string[]; url: string | null }
+  >();
+
+  for (const ev of events) {
+    if (ev["@type"] && !/event/i.test(String(ev["@type"]))) continue;
+    const title = typeof ev.name === "string" ? ev.name.trim() : "";
+    const start = typeof ev.startDate === "string" ? ev.startDate.trim() : "";
+    if (!title || !start) continue;
+    const t = new Date(start).getTime();
+    if (Number.isNaN(t) || t < floor || t > horizon) continue;
+    const day = start.slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) continue;
+    const clock = formatClockFromOffsetIso(start);
+    if (!clock) continue;
+    const url =
+      (typeof ev.offers?.url === "string" && ev.offers.url.trim()) ||
+      source.homepage;
+    const key = `${title.toLowerCase()}|${day}`;
+    const existing = groups.get(key);
+    if (existing) {
+      if (!existing.times.includes(clock)) existing.times.push(clock);
+      continue;
+    }
+    groups.set(key, { title, day, times: [clock], url });
+  }
+
+  const out: ShowListing[] = [];
+  for (const g of groups.values()) {
+    const [y, mo, d] = g.day.split("-").map(Number);
+    out.push(
+      listingFromParts({
+        source,
+        title: g.title,
+        startsIso: detroitWallToUtc(y, mo, d, 0, 0, 0).toISOString(),
+        times: g.times,
+        url: g.url,
+      }),
+    );
+  }
+  return out.sort(
+    (a, b) =>
+      new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime() ||
+      a.title.localeCompare(b.title),
+  );
+}
+
+/** First-of-next-month m/d/Y for Agile ats_GoFilter('mdy', …). */
+export function agileNextMonthMdy(from = new Date()): string {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Detroit",
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+  }).formatToParts(from);
+  const year = Number(parts.find((p) => p.type === "year")?.value);
+  const month = Number(parts.find((p) => p.type === "month")?.value);
+  if (!year || !month) {
+    const d = new Date(from);
+    const y = d.getUTCFullYear();
+    const m = d.getUTCMonth() + 1;
+    const nextM = m === 12 ? 1 : m + 1;
+    const nextY = m === 12 ? y + 1 : y;
+    return `${nextM}/1/${nextY}`;
+  }
+  const nextM = month === 12 ? 1 : month + 1;
+  const nextY = month === 12 ? year + 1 : year;
+  return `${nextM}/1/${nextY}`;
+}
+
+function extractHidden(html: string, name: string): string | null {
+  const re = new RegExp(
+    `<input[^>]+name="${name.replace(/\$/g, "\\$")}"[^>]*value="([^"]*)"`,
+    "i",
+  );
+  const m = html.match(re);
+  return m ? m[1] : null;
+}
+
+/**
+ * Best-effort next-month fetch for Agile list.aspx.
+ * Uses the same form postback shape the calendar "Next >" control triggers.
+ * Returns null when the page cannot be advanced (bot wall / missing viewstate).
+ */
+export async function fetchStateTheatreAgileMonth(
+  url: string,
+  mdy: string | null,
+  cookie: string | null,
+): Promise<{ html: string; status: number; cookie: string; blocked: boolean }> {
+  const headers: Record<string, string> = {
+    "User-Agent": `Mozilla/5.0 (compatible; ${getSite().userAgent})`,
+    Accept: "text/html,application/xhtml+xml",
+  };
+  if (cookie) headers.Cookie = cookie;
+
+  let res: Response;
+  if (!mdy) {
+    res = await fetch(url, { headers, redirect: "follow" });
+  } else {
+    // Try query-string month jump first (works on some Agile builds).
+    const withMdy = url.includes("?")
+      ? `${url}${url.endsWith("&") || url.endsWith("?") ? "" : "&"}mdy=${encodeURIComponent(mdy)}`
+      : `${url}?mdy=${encodeURIComponent(mdy)}`;
+    res = await fetch(withMdy, { headers, redirect: "follow" });
+  }
+
+  const html = await res.text();
+  const anyHeaders = res.headers as Headers & { getSetCookie?: () => string[] };
+  const setCookies =
+    typeof anyHeaders.getSetCookie === "function"
+      ? anyHeaders.getSetCookie()
+      : [];
+  const nextCookie =
+    setCookies.map((c) => c.split(";")[0]).filter(Boolean).join("; ") ||
+    cookie ||
+    "";
+  const blocked =
+    BOT_STATUS.has(res.status) ||
+    /incapsula|_Incapsula_Resource|attention required|cf-browser-verification/i.test(
+      html.slice(0, 1500),
+    );
+
+  // If query mdy did not advance and we have viewstate, try a form POST.
+  if (
+    mdy &&
+    !blocked &&
+    res.ok &&
+    !html.includes("application/ld+json") &&
+    extractHidden(html, "__VIEWSTATE")
+  ) {
+    const viewState = extractHidden(html, "__VIEWSTATE");
+    const viewGen = extractHidden(html, "__VIEWSTATEGENERATOR");
+    const eventVal = extractHidden(html, "__EVENTVALIDATION");
+    const body = new URLSearchParams();
+    if (viewState) body.set("__VIEWSTATE", viewState);
+    if (viewGen) body.set("__VIEWSTATEGENERATOR", viewGen);
+    if (eventVal) body.set("__EVENTVALIDATION", eventVal);
+    body.set("ctl00$CPH1$hidFilterType", "mdy");
+    body.set("ctl00$CPH1$hidFilterValue", mdy);
+    const postHeaders = {
+      ...headers,
+      "Content-Type": "application/x-www-form-urlencoded",
+      ...(nextCookie ? { Cookie: nextCookie } : {}),
+    };
+    const post = await fetch(url, {
+      method: "POST",
+      headers: postHeaders,
+      body: body.toString(),
+      redirect: "follow",
+    });
+    const postHtml = await post.text();
+    const postBlocked =
+      BOT_STATUS.has(post.status) ||
+      /incapsula|_Incapsula_Resource|attention required|cf-browser-verification/i.test(
+        postHtml.slice(0, 1500),
+      );
+    return {
+      html: postHtml,
+      status: post.status,
+      cookie: nextCookie,
+      blocked: postBlocked,
+    };
+  }
+
+  return { html, status: res.status, cookie: nextCookie, blocked };
 }
 
 /**
@@ -506,8 +758,6 @@ export type HtmlShowsPullResult = {
   error: string | null;
 };
 
-const BOT_STATUS = new Set([401, 403, 429, 503]);
-
 /**
  * Worker HTML pull for Shows venues that publish showtimes in static HTML.
  * Bot-blocked / JS-only venues must use Desk /api/desk/shows/import instead.
@@ -515,6 +765,88 @@ const BOT_STATUS = new Set([401, 403, 429, 503]);
 export async function pullHtmlShows(
   source: Source,
 ): Promise<HtmlShowsPullResult> {
+  if (source.id === "src_bay_theatre") {
+    return pullBayTheatreShows(source);
+  }
+
+  if (source.id === "src_state_theatre") {
+    const url = source.feed_url || STATE_THEATRE_AGILE_URL;
+    try {
+      const first = await fetchStateTheatreAgileMonth(url, null, null);
+      if (first.blocked) {
+        return {
+          shows: [],
+          bot_blocked: true,
+          status: first.status,
+          error: `Bot wall on ${url}`,
+        };
+      }
+      if (!first.html || first.status >= 400) {
+        return {
+          shows: [],
+          bot_blocked: false,
+          status: first.status,
+          error: `HTTP ${first.status} fetching ${url}`,
+        };
+      }
+      const byId = new Map<string, ShowListing>();
+      for (const row of parseStateTheatreAgileHtml(first.html, source)) {
+        byId.set(row.id, row);
+      }
+      // Current + next month (Agile month grid).
+      try {
+        const next = await fetchStateTheatreAgileMonth(
+          url,
+          agileNextMonthMdy(new Date()),
+          first.cookie || null,
+        );
+        if (!next.blocked && next.status < 400) {
+          for (const row of parseStateTheatreAgileHtml(next.html, source)) {
+            byId.set(row.id, row);
+          }
+        }
+      } catch {
+        // Next-month is best-effort — keep current month rows.
+      }
+      // Fallback: homepage Now Playing when Agile returns nothing usable.
+      if (byId.size === 0 && source.homepage) {
+        try {
+          const home = await fetch(source.homepage, {
+            headers: {
+              "User-Agent": `Mozilla/5.0 (compatible; ${getSite().userAgent})`,
+              Accept: "text/html,application/xhtml+xml",
+            },
+            redirect: "follow",
+          });
+          if (home.ok) {
+            const homeHtml = await home.text();
+            for (const row of parseStateTheatreHtml(homeHtml, source)) {
+              byId.set(row.id, row);
+            }
+          }
+        } catch {
+          // omit
+        }
+      }
+      return {
+        shows: [...byId.values()].sort(
+          (a, b) =>
+            new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime(),
+        ),
+        bot_blocked: false,
+        status: first.status,
+        error: null,
+      };
+    } catch (err) {
+      return {
+        shows: [],
+        bot_blocked: false,
+        status: null,
+        error: err instanceof Error ? err.message : "State Theatre pull failed",
+      };
+    }
+  }
+
   const url = source.feed_url || source.homepage;
   try {
     const res = await fetch(url, {
@@ -545,7 +877,7 @@ export async function pullHtmlShows(
     const html = await res.text();
     // Cloudflare / Akamai interstitial.
     if (
-      /attention required|cf-browser-verification|access denied due to malicious/i.test(
+      /attention required|cf-browser-verification|access denied due to malicious|incapsula|_Incapsula_Resource/i.test(
         html,
       )
     ) {
@@ -558,9 +890,7 @@ export async function pullHtmlShows(
     }
 
     let shows: ShowListing[] = [];
-    if (source.id === "src_state_theatre") {
-      shows = parseStateTheatreHtml(html, source);
-    } else if (source.id === "src_elk_cinema") {
+    if (source.id === "src_elk_cinema") {
       shows = parseElkRapidsCinemaHtml(html, source);
     } else if (source.id === "src_alluvion") {
       shows = parseAlluvionHtml(html, source);

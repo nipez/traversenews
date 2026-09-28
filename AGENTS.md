@@ -71,11 +71,12 @@ The Worker owns every job that does not need a signed-in Facebook browser.
 
    (default `source_id`: `src_visit_events`). See README → Browser event import.
 
-4. For movie / theatre pages blocked from the Worker (AMC, Old Town Playhouse, Bay Theatre JS app, City Opera House), land listings with:
+4. For movie / theatre pages blocked from the Worker (AMC, Old Town Playhouse, City Opera House), land listings with:
 
-   `POST /api/desk/shows/import`
+ `POST /api/desk/shows/import`
 
-   Group by title. Never invent showtimes. Never write Shows into `/whats-on`.
+ Group by title. Never invent showtimes. Never write Shows into `/whats-on`.
+ Bay Theatre and State Theatre (Agile Ticketing calendar) are Worker-pulled when the GraphQL / calendar endpoints respond; Incapsula or permission failures still use the same import route.
 
 5. Do **not** stop at a shrug or a silent empty pull without that handoff line.
 
