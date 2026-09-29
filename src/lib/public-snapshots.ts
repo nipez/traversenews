@@ -372,7 +372,7 @@ export function buildHomeSnapshot(data: AppData, at = new Date()): PublicHomeSna
     if (slug && isBannedOriginalSlug(slug)) return false;
     return true;
   });
-  // Drop yesterday’s edition bay heads only (not the whole older archive).
+  // Drop every card that already ran in a past letter or homepage edition.
   // Staff original lead stays even if it also ran yesterday — never invent a lead.
   // Desk lock on today’s edition wins over the auto hard-news mixer.
   const todayKey = detroitDateKey(at);
@@ -386,6 +386,7 @@ export function buildHomeSnapshot(data: AppData, at = new Date()): PublicHomeSna
       )
     : selectFreshAroundTheBay(clusters, data.editions, at, {
         maxUpNorth: 3,
+        email_editions: data.email_editions,
       }).map(toAround);
   const lead = originals[0] ?? null;
   const weekendEvents = selectTonightEvents(data.events, data.sources, {
