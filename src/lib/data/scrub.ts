@@ -274,6 +274,8 @@ function scrubEmailEditionCopy(
       tonight: (ed.tonight ?? []).map((c) => fixEvent(c)),
       civic: (ed.civic ?? []).map((c) => fixEvent(c)),
       sports: (ed.sports ?? []).map((c) => fixEvent(c)),
+      lead_locked: ed.lead_locked,
+      around_locked: ed.around_locked,
     },
   };
 }

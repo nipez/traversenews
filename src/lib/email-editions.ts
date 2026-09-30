@@ -1,5 +1,5 @@
 import { selectAlerts } from "@/lib/alerts";
-import { selectAroundTheBay } from "@/lib/around";
+import { looksLikeHardNews, selectAroundTheBay } from "@/lib/around";
 import {
   athleticsSchoolLabel,
   filterAthleticsSlate,
@@ -575,6 +575,59 @@ function toAroundCard(
   };
 }
 
+function toLeadCard(cluster: ClusteredStory): EmailStoryCard {
+  const card = toAroundCard(cluster);
+  if (cluster.is_original) {
+    card.desk_original = true;
+    // Staff originals credit desks when present; otherwise leave empty so the
+    // letter body does not force a fake outlet line.
+    if (!card.sources.length) card.sources = [];
+  }
+  return card;
+}
+
+/**
+ * Auto “The one to read”: newest published original that has not already run
+ * in any past letter or homepage edition (URL / title / same-story within
+ * SAME_STORY_LOOKBACK_DAYS). If none qualify, the best unused hard-news wire
+ * card — never pad with an already-run original.
+ */
+export function pickFreshLeadForLetter(
+  clusters: ClusteredStory[],
+  excluded: Set<string>,
+  priorTitles: string[],
+  at: Date = new Date(),
+): EmailStoryCard | null {
+  const originals = clusters
+    .filter((c) => c.is_original)
+    .sort(
+      (a, b) =>
+        new Date(b.published_at).getTime() - new Date(a.published_at).getTime(),
+    );
+  for (const original of originals) {
+    if (clusterHitsExcluded(original, excluded, priorTitles)) continue;
+    return toLeadCard(original);
+  }
+
+  const unusedHard = clusters.filter(
+    (c) =>
+      !c.is_original &&
+      looksLikeHardNews(c) &&
+      !clusterHitsExcluded(c, excluded, priorTitles),
+  );
+  const ranked = selectAroundTheBay(unusedHard, {
+    limit: 1,
+    maxPerSource: 1,
+    maxSports: 0,
+    maxRecordEagle: 1,
+    maxHeavyWire: 1,
+    maxEyesOnly: 1,
+    preferHardNews: true,
+    now: at,
+  });
+  return ranked[0] ? toLeadCard(ranked[0]) : null;
+}
+
 function toEventCard(e: EventItem): EmailEventCard {
   const card: EmailEventCard = {
     title: e.title,
@@ -686,6 +739,60 @@ export function selectFreshAroundTheBay(
 }
 
 /**
+ * After promoting an Around card to lead, fill one unused bay card so the
+ * Around slate keeps its prior count. Never invents copy.
+ */
+export function pickAroundBackfillCard(
+  data: AppData,
+  around: EmailStoryCard[],
+  lead: EmailStoryCard,
+  at: Date = new Date(),
+): EmailStoryCard | null {
+  const clusters = clusterStories(data.stories, data.sources);
+  const corpus = collectPastBayExclusion(
+    data.email_editions,
+    data.editions,
+    at,
+  );
+  const priorCards = corpusToPriorBayCards(corpus);
+  const priorExpanded = expandExcludedWithClusterMembers(
+    corpus.identities,
+    clusters,
+    priorCards,
+  );
+  const priorTitles = [
+    ...corpus.recentCards.map((c) => c.title),
+    lead.title,
+    ...around.map((c) => c.title),
+  ];
+  const held = new Set(priorExpanded);
+  addIdentity(held, lead);
+  for (const card of around) addIdentity(held, card);
+
+  const unused = clusters.filter((c) => {
+    if (c.is_original) return false;
+    return !clusterHitsExcluded(c, held, priorTitles);
+  });
+  const ranked = selectAroundTheBay(unused, {
+    limit: 8,
+    maxPerSource: 3,
+    maxSports: 0,
+    maxRecordEagle: 2,
+    maxHeavyWire: 2,
+    maxEyesOnly: 2,
+    preferHardNews: true,
+    now: at,
+  });
+  const picked = pickFreshAroundForLetter(
+    ranked.map(toAroundCard),
+    held,
+    1,
+    priorTitles,
+  );
+  return picked[0] ?? null;
+}
+
+/**
  * Assemble the morning letter from the same live mix rules as /email preview.
  *
  * Uniqueness:
@@ -694,6 +801,8 @@ export function selectFreshAroundTheBay(
  * - Same-story second-outlet rewrites inside SAME_STORY_LOOKBACK_DAYS stay out.
  * - When a prior identity hits a cluster, every member URL/title is excluded
  *   so a second-desk rewrite cannot follow.
+ * - Lead (“The one to read”): newest unused original, else best unused hard
+ *   news — never an already-run original with an empty fallthrough.
  * - Shorter unused mix beats padding with already-run heads. Hard news first.
  *
  * Never invents stories, kickoffs, or meetings.
@@ -711,6 +820,12 @@ export function buildEmailEditionSnapshot(
      */
     around?: EmailStoryCard[] | null;
     around_locked?: boolean;
+    /**
+     * When set with lead_locked, keep Desk’s “The one to read” instead of
+     * auto-picking. Survives pull/snapshot like subject_override.
+     */
+    lead?: EmailStoryCard | null;
+    lead_locked?: boolean;
   } = {},
 ): EmailEditionSnapshot {
   const corpus = collectPastBayExclusion(
@@ -727,13 +842,25 @@ export function buildEmailEditionSnapshot(
     priorCards,
   );
 
-  const originals = clusters.filter((c) => c.is_original);
-  const leadCluster = originals[0] ?? null;
+  const leadLocked = Boolean(options.lead_locked && options.lead);
+  const autoLead = leadLocked
+    ? null
+    : pickFreshLeadForLetter(clusters, priorExpanded, priorTitles, at);
+  const lead: EmailStoryCard | null = leadLocked
+    ? options.lead ?? null
+    : autoLead;
+
+  // Exclude the chosen lead from Around so “The one to read” is not repeated.
+  const aroundExclude = new Set(priorExpanded);
+  if (lead) addIdentity(aroundExclude, lead);
+  const aroundPriorTitles = lead
+    ? [...priorTitles, lead.title]
+    : priorTitles;
 
   // Any past letter or homepage appearance blocks everyone — hard news included.
   const unused = clusters.filter((c) => {
     if (c.is_original) return false;
-    return !clusterHitsExcluded(c, priorExpanded, priorTitles);
+    return !clusterHitsExcluded(c, aroundExclude, aroundPriorTitles);
   });
   const aroundClusters = selectAroundTheBay(unused, {
     limit: 24,
@@ -747,9 +874,9 @@ export function buildEmailEditionSnapshot(
   });
   const autoAround = pickFreshAroundForLetter(
     aroundClusters.map(toAroundCard),
-    priorExpanded,
+    aroundExclude,
     LETTER_AROUND_MAX,
-    priorTitles,
+    aroundPriorTitles,
   );
   const aroundLocked = Boolean(
     options.around_locked && Array.isArray(options.around),
@@ -811,17 +938,6 @@ export function buildEmailEditionSnapshot(
     .filter((g) => !wasInPriorLetter(g, priorExpanded))
     .slice(0, 4);
 
-  const lead: EmailStoryCard | null =
-    leadCluster && !wasInPriorLetter(leadCluster, priorExpanded)
-      ? {
-          title: leadCluster.title,
-          dek: leadCluster.dek,
-          url: leadCluster.url,
-          sources: [],
-          desk_original: false,
-        }
-      : null;
-
   const subject_override =
     typeof options.subject_override === "string" &&
     options.subject_override.trim()
@@ -839,6 +955,7 @@ export function buildEmailEditionSnapshot(
     sports,
     weather_line: options.weather_line ?? null,
     subject_override,
+    lead_locked: leadLocked || undefined,
     around_locked: aroundLocked || undefined,
   };
 }

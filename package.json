@@ -26,6 +26,7 @@
     "test:letter-subject-override": "tsx scripts/test-letter-subject-override.ts",
     "test:letter-send-mode": "tsx scripts/test-letter-send-mode.ts",
     "test:letter-card-picker": "tsx scripts/test-letter-card-picker.ts",
+    "test:letter-lead-override": "tsx scripts/test-letter-lead-override.ts",
     "test:auto-mix-exclusion": "tsx scripts/test-auto-mix-exclusion.ts",
     "test:homepage-bay-lock": "tsx scripts/test-homepage-bay-lock.ts",
     "test:desk-pull-flash": "tsx scripts/test-desk-pull-flash.ts",

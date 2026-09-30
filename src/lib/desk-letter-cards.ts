@@ -406,6 +406,34 @@ export function listDeskLetterCandidates(
   return rows;
 }
 
+/** Normalize Desk POST body into a single lead story card. */
+export function normalizeDeskLeadSelection(
+  input: unknown,
+): { ok: true; lead: EmailStoryCard } | { ok: false; error: string } {
+  if (!input || typeof input !== "object") {
+    return { ok: false, error: "lead must be a story card object." };
+  }
+  const row = input as Record<string, unknown>;
+  const title = typeof row.title === "string" ? row.title.trim() : "";
+  const url = typeof row.url === "string" ? row.url.trim() : "";
+  if (!title || !url) {
+    return { ok: false, error: "Lead needs a title and url." };
+  }
+  const dek = typeof row.dek === "string" ? row.dek : "";
+  const sources = Array.isArray(row.sources)
+    ? row.sources.filter((s): s is string => typeof s === "string")
+    : [];
+  const card: EmailStoryCard = {
+    title,
+    dek,
+    url,
+    sources,
+  };
+  if (row.paywalled === true) card.paywalled = true;
+  if (row.desk_original === true) card.desk_original = true;
+  return { ok: true, lead: card };
+}
+
 /** Normalize Desk POST body into at most `max` story cards. */
 /**
  * True when Desk’s visible Around slate matches `baseline` card-for-card
@@ -465,4 +493,101 @@ export function normalizeDeskAroundSelection(
     around.push(card);
   }
   return { ok: true, around };
+}
+
+/**
+ * Candidates for Desk “The one to read”: published originals first, then the
+ * Around picker pool (including cards already on today’s Around slate).
+ */
+export function listDeskLeadCandidates(
+  data: AppData,
+  options: {
+    currentLead?: EmailStoryCard | null;
+    currentAround?: EmailStoryCard[];
+    today?: string;
+    at?: Date;
+  } = {},
+): DeskLetterCandidate[] {
+  const at = options.at ?? new Date();
+  const currentLead = options.currentLead ?? null;
+  const currentLeadId = currentLead ? letterCardIdentity(currentLead) : "";
+  const aroundRows = listDeskLetterCandidates(data, {
+    currentAround: options.currentAround,
+    today: options.today,
+    at,
+  });
+
+  const clusters = clusterStories(data.stories, data.sources);
+  const originals = clusters
+    .filter((c) => c.is_original)
+    .sort(
+      (a, b) =>
+        new Date(b.published_at).getTime() - new Date(a.published_at).getTime(),
+    );
+
+  const byIdentity = new Map<string, DeskLetterCandidate>();
+
+  for (const cluster of originals) {
+    const card: EmailStoryCard = {
+      title: cluster.title,
+      dek: cluster.dek,
+      url: cluster.url,
+      sources: cluster.sources.map((s) => s.name),
+      desk_original: true,
+    };
+    const identity = letterCardIdentity(card);
+    if (!identity || identity === "url:" || identity === "title:") continue;
+    byIdentity.set(identity, {
+      card,
+      identity,
+      source_ids: cluster.sources.map((s) => s.id),
+      past_runs: findPastEditionAppearances(card, {
+        email_editions: data.email_editions,
+        editions: data.editions,
+        today: options.today,
+      }),
+      in_current: identity === currentLeadId,
+    });
+  }
+
+  for (const row of aroundRows) {
+    if (byIdentity.has(row.identity)) continue;
+    byIdentity.set(row.identity, {
+      ...row,
+      in_current: row.identity === currentLeadId,
+    });
+  }
+
+  if (currentLead) {
+    const identity = letterCardIdentity(currentLead);
+    if (identity && !byIdentity.has(identity)) {
+      byIdentity.set(identity, {
+        card: currentLead,
+        identity,
+        source_ids: [],
+        past_runs: findPastEditionAppearances(currentLead, {
+          email_editions: data.email_editions,
+          editions: data.editions,
+          today: options.today,
+        }),
+        in_current: true,
+      });
+    } else if (identity) {
+      const existing = byIdentity.get(identity);
+      if (existing) existing.in_current = true;
+    }
+  }
+
+  const rows = [...byIdentity.values()];
+  rows.sort((a, b) => {
+    if (a.in_current !== b.in_current) return a.in_current ? -1 : 1;
+    if (Boolean(a.card.desk_original) !== Boolean(b.card.desk_original)) {
+      return a.card.desk_original ? -1 : 1;
+    }
+    if (Boolean(a.past_runs.length) !== Boolean(b.past_runs.length)) {
+      return a.past_runs.length ? 1 : -1;
+    }
+    return a.card.title.localeCompare(b.card.title);
+  });
+  return rows;
 }

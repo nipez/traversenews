@@ -350,6 +350,12 @@ export type EmailEditionSnapshot = {
    */
   subject_override?: string | null;
   /**
+   * When true, Desk locked today’s “The one to read” lead. Pull/snapshot must
+   * keep `lead` (and this flag) instead of auto-picking. Clear via Desk
+   * “Reset to auto” / POST /api/desk/email/lead with lead: null.
+   */
+  lead_locked?: boolean;
+  /**
    * When true, Desk locked today’s Around slate. Pull/snapshot must keep
    * `around` (and this flag) instead of auto-rebuilding bay cards. Clear via
    * Desk “Reset to auto” / POST cards with around: null.
