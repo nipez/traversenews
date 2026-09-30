@@ -25,6 +25,14 @@ export type LetterCardPastRun = {
   date: string;
   /** Morning letter archive vs homepage / dated edition bay. */
   kind: "letter" | "homepage";
+  /**
+   * How the candidate matched the prior card.
+   * - exact: same URL or normalized title
+   * - same_story: rewrite / keyword similarity (second-outlet follow)
+   */
+  match: "exact" | "same_story";
+  /** Prior headline when match is same_story (for Desk “same story as X”). */
+  matched_title?: string;
 };
 
 export type DeskLetterCandidate = {
@@ -93,24 +101,48 @@ export function cardMatchesPrior(
   item: { title: string; url?: string | null },
   prior: { title: string; url?: string | null },
 ): boolean {
+  return cardMatchKind(item, prior) !== null;
+}
+
+/**
+ * Classify how a candidate matches a prior card, or null when unrelated.
+ * Exact URL / normalized-title wins over same-story rewrite.
+ */
+export function cardMatchKind(
+  item: { title: string; url?: string | null },
+  prior: { title: string; url?: string | null },
+): "exact" | "same_story" | null {
   if (item.url && prior.url) {
     const a = letterCardIdentity({ title: item.title || "x", url: item.url });
     const b = letterCardIdentity({ title: prior.title || "x", url: prior.url });
-    if (a.startsWith("url:") && a === b) return true;
+    if (a.startsWith("url:") && a === b) return "exact";
   }
   const idA = letterCardIdentity(item);
   const idB = letterCardIdentity(prior);
-  if (idA && idB && idA === idB) return true;
-  if (item.title && prior.title) {
-    if (titlesLikelySameStory(item.title, prior.title)) return true;
-    if (looksLikeSameToddlerIncident(item.title, prior.title)) return true;
+  if (idA && idB && idA === idB) return "exact";
+  // Normalized title alone (no URL) counts as exact for Desk flags.
+  const titleOnlyA = letterCardIdentity({ title: item.title, url: null });
+  const titleOnlyB = letterCardIdentity({ title: prior.title, url: null });
+  if (
+    titleOnlyA.startsWith("title:") &&
+    titleOnlyA !== "title:" &&
+    titleOnlyA === titleOnlyB
+  ) {
+    return "exact";
   }
-  return false;
+  if (item.title && prior.title) {
+    if (titlesLikelySameStory(item.title, prior.title)) return "same_story";
+    if (looksLikeSameToddlerIncident(item.title, prior.title)) {
+      return "same_story";
+    }
+  }
+  return null;
 }
 
 /**
  * Dates where this story (URL / title / same-story rewrite) already ran on a
- * recent morning letter or homepage edition bay.
+ * morning letter or homepage edition bay. Prefer the strongest match per day
+ * (exact over same_story) so Desk can show why a candidate was excluded.
  */
 export function findPastEditionAppearances(
   item: { title: string; url?: string | null },
@@ -122,48 +154,48 @@ export function findPastEditionAppearances(
   },
 ): LetterCardPastRun[] {
   const today = options.today ?? "";
-  const runs: LetterCardPastRun[] = [];
-  const seen = new Set<string>();
+  const byKey = new Map<string, LetterCardPastRun>();
 
-  const push = (date: string, kind: LetterCardPastRun["kind"]) => {
+  const consider = (
+    date: string,
+    kind: LetterCardPastRun["kind"],
+    prior: { title: string; url?: string | null },
+  ) => {
     if (!date || date === today) return;
+    const match = cardMatchKind(item, prior);
+    if (!match) return;
     const key = `${kind}:${date}`;
-    if (seen.has(key)) return;
-    seen.add(key);
-    runs.push({ date, kind });
+    const existing = byKey.get(key);
+    // Exact beats same_story for the same day/kind.
+    if (existing?.match === "exact") return;
+    if (existing && match === "same_story") return;
+    byKey.set(key, {
+      date,
+      kind,
+      match,
+      matched_title:
+        match === "same_story" ? prior.title : existing?.matched_title,
+    });
   };
 
   for (const letter of options.email_editions ?? []) {
-    if (letter.lead && cardMatchesPrior(item, letter.lead)) {
-      push(letter.date, "letter");
-      continue;
-    }
+    if (letter.lead) consider(letter.date, "letter", letter.lead);
     for (const card of letter.around ?? []) {
-      if (cardMatchesPrior(item, card)) {
-        push(letter.date, "letter");
-        break;
-      }
+      consider(letter.date, "letter", card);
     }
   }
 
   for (const edition of options.editions ?? []) {
-    if (edition.lead && cardMatchesPrior(item, edition.lead)) {
-      push(edition.date, "homepage");
-      continue;
-    }
+    if (edition.lead) consider(edition.date, "homepage", edition.lead);
     for (const card of edition.around ?? []) {
-      if (cardMatchesPrior(item, card)) {
-        push(edition.date, "homepage");
-        break;
-      }
+      consider(edition.date, "homepage", card);
     }
   }
 
-  runs.sort((a, b) => b.date.localeCompare(a.date));
-  return runs;
+  return [...byKey.values()].sort((a, b) => b.date.localeCompare(a.date));
 }
 
-/** Short Desk label: "ran Sep 3 letter" / "ran Aug 31 homepage". */
+/** Short Desk label: "ran Sep 3 letter" / "same story as X (Aug 31 homepage)". */
 export function formatPastRunFlag(run: LetterCardPastRun): string {
   const [y, m, d] = run.date.split("-").map(Number);
   const label =
@@ -174,7 +206,15 @@ export function formatPastRunFlag(run: LetterCardPastRun): string {
           day: "numeric",
         }).format(new Date(Date.UTC(y, m - 1, d, 17, 0, 0)))
       : run.date;
-  return run.kind === "letter" ? `ran ${label} letter` : `ran ${label} homepage`;
+  const surface = run.kind === "letter" ? "letter" : "homepage";
+  if (run.match === "same_story" && run.matched_title?.trim()) {
+    const short =
+      run.matched_title.length > 48
+        ? `${run.matched_title.slice(0, 45).trim()}…`
+        : run.matched_title;
+    return `same story as “${short}” (${label} ${surface})`;
+  }
+  return `ran ${label} ${surface}`;
 }
 
 function primaryOutletName(card: EmailStoryCard): string {
@@ -366,6 +406,34 @@ export function listDeskLetterCandidates(
   return rows;
 }
 
+/** Normalize Desk POST body into a single lead story card. */
+export function normalizeDeskLeadSelection(
+  input: unknown,
+): { ok: true; lead: EmailStoryCard } | { ok: false; error: string } {
+  if (!input || typeof input !== "object") {
+    return { ok: false, error: "lead must be a story card object." };
+  }
+  const row = input as Record<string, unknown>;
+  const title = typeof row.title === "string" ? row.title.trim() : "";
+  const url = typeof row.url === "string" ? row.url.trim() : "";
+  if (!title || !url) {
+    return { ok: false, error: "Lead needs a title and url." };
+  }
+  const dek = typeof row.dek === "string" ? row.dek : "";
+  const sources = Array.isArray(row.sources)
+    ? row.sources.filter((s): s is string => typeof s === "string")
+    : [];
+  const card: EmailStoryCard = {
+    title,
+    dek,
+    url,
+    sources,
+  };
+  if (row.paywalled === true) card.paywalled = true;
+  if (row.desk_original === true) card.desk_original = true;
+  return { ok: true, lead: card };
+}
+
 /** Normalize Desk POST body into at most `max` story cards. */
 /**
  * True when Desk’s visible Around slate matches `baseline` card-for-card
@@ -425,4 +493,101 @@ export function normalizeDeskAroundSelection(
     around.push(card);
   }
   return { ok: true, around };
+}
+
+/**
+ * Candidates for Desk “The one to read”: published originals first, then the
+ * Around picker pool (including cards already on today’s Around slate).
+ */
+export function listDeskLeadCandidates(
+  data: AppData,
+  options: {
+    currentLead?: EmailStoryCard | null;
+    currentAround?: EmailStoryCard[];
+    today?: string;
+    at?: Date;
+  } = {},
+): DeskLetterCandidate[] {
+  const at = options.at ?? new Date();
+  const currentLead = options.currentLead ?? null;
+  const currentLeadId = currentLead ? letterCardIdentity(currentLead) : "";
+  const aroundRows = listDeskLetterCandidates(data, {
+    currentAround: options.currentAround,
+    today: options.today,
+    at,
+  });
+
+  const clusters = clusterStories(data.stories, data.sources);
+  const originals = clusters
+    .filter((c) => c.is_original)
+    .sort(
+      (a, b) =>
+        new Date(b.published_at).getTime() - new Date(a.published_at).getTime(),
+    );
+
+  const byIdentity = new Map<string, DeskLetterCandidate>();
+
+  for (const cluster of originals) {
+    const card: EmailStoryCard = {
+      title: cluster.title,
+      dek: cluster.dek,
+      url: cluster.url,
+      sources: cluster.sources.map((s) => s.name),
+      desk_original: true,
+    };
+    const identity = letterCardIdentity(card);
+    if (!identity || identity === "url:" || identity === "title:") continue;
+    byIdentity.set(identity, {
+      card,
+      identity,
+      source_ids: cluster.sources.map((s) => s.id),
+      past_runs: findPastEditionAppearances(card, {
+        email_editions: data.email_editions,
+        editions: data.editions,
+        today: options.today,
+      }),
+      in_current: identity === currentLeadId,
+    });
+  }
+
+  for (const row of aroundRows) {
+    if (byIdentity.has(row.identity)) continue;
+    byIdentity.set(row.identity, {
+      ...row,
+      in_current: row.identity === currentLeadId,
+    });
+  }
+
+  if (currentLead) {
+    const identity = letterCardIdentity(currentLead);
+    if (identity && !byIdentity.has(identity)) {
+      byIdentity.set(identity, {
+        card: currentLead,
+        identity,
+        source_ids: [],
+        past_runs: findPastEditionAppearances(currentLead, {
+          email_editions: data.email_editions,
+          editions: data.editions,
+          today: options.today,
+        }),
+        in_current: true,
+      });
+    } else if (identity) {
+      const existing = byIdentity.get(identity);
+      if (existing) existing.in_current = true;
+    }
+  }
+
+  const rows = [...byIdentity.values()];
+  rows.sort((a, b) => {
+    if (a.in_current !== b.in_current) return a.in_current ? -1 : 1;
+    if (Boolean(a.card.desk_original) !== Boolean(b.card.desk_original)) {
+      return a.card.desk_original ? -1 : 1;
+    }
+    if (Boolean(a.past_runs.length) !== Boolean(b.past_runs.length)) {
+      return a.past_runs.length ? 1 : -1;
+    }
+    return a.card.title.localeCompare(b.card.title);
+  });
+  return rows;
 }

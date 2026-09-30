@@ -124,9 +124,19 @@ assert.ok(
   "flags Sep 3 letter appearance",
 );
 assert.match(
-  formatPastRunFlag({ date: "2026-09-03", kind: "letter" }),
+  formatPastRunFlag({ date: "2026-09-03", kind: "letter", match: "exact" }),
   /ran Sep 3 letter/,
   "human flag label",
+);
+assert.match(
+  formatPastRunFlag({
+    date: "2026-08-31",
+    kind: "homepage",
+    match: "same_story",
+    matched_title: "Garfield Township reports two weekend arrests",
+  }),
+  /same story as .*Garfield Township.*Aug 31 homepage/,
+  "same-story Desk flag names the prior head",
 );
 
 const homepageRuns = findPastEditionAppearances(

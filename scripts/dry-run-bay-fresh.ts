@@ -1,8 +1,7 @@
 /**
- * Dry-run: homepage / dated-edition Around the bay must drop yesterday’s
- * edition cards (and same-story rewrites) — never pad with stale heads.
- * One-shot cards from older days may fill today’s bay. Staff original lead
- * may sit a second day.
+ * Dry-run: homepage / dated-edition Around the bay must drop every card that
+ * already ran in a past edition or morning letter (and same-story rewrites) —
+ * never pad with already-run heads. Staff original lead may sit a second day.
  *
  *   npx tsx scripts/dry-run-bay-fresh.ts
  */
@@ -460,8 +459,8 @@ assert.ok(
 );
 assert.equal(thinEdition.around.length, 2);
 
-// After a full yesterday, one-shot cards from older days (not on yesterday)
-// must still fill today’s bay — do not ban the whole edition archive.
+// After a full Friday, already-run one-shot cards from older days stay out —
+ // never recycle a homepage appearance. Fresh unused wire fills the bay.
 const mondayOnly = {
   title: "Monday harbor dredging award announced",
   url: "https://www.interlochenpublicradio.org/2026/08/24/monday-harbor-dredging/",
@@ -610,16 +609,20 @@ const saturday = new Date("2026-08-29T16:00:00.000Z");
 const saturdayEdition = buildEditionSnapshot(saturdayData, saturday);
 assertNoStaleHeads(saturdayEdition.around, "saturday after full friday");
 assert.ok(
-  saturdayEdition.around.some((c) => c.url === mondayOnly.url),
-  "Monday one-shot leftover must be eligible on Saturday",
+  saturdayEdition.around.every((c) => c.url !== mondayOnly.url),
+  "Monday one-shot leftover must stay out on Saturday (any past homepage run)",
 );
 assert.ok(
-  saturdayEdition.around.some((c) => c.url === tuesdayOnly.url),
-  "Tuesday one-shot leftover must be eligible on Saturday",
+  saturdayEdition.around.every((c) => c.url !== tuesdayOnly.url),
+  "Tuesday one-shot leftover must stay out on Saturday (any past homepage run)",
 );
 assert.ok(
   saturdayEdition.around.length >= BAY_AROUND_MIN_FRESH,
   `Saturday bay should reach soft minimum when unused stories exist (got ${saturdayEdition.around.length})`,
+);
+assert.ok(
+  saturdayEdition.around.some((c) => FRESH.some((f) => f.url === c.url)),
+  "Saturday bay should include never-run fresh cards",
 );
 const boardmanOnBay = saturdayEdition.around.filter(
   (c) =>

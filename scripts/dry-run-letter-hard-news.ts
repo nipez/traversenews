@@ -311,21 +311,35 @@ assert.ok(
 
 const titles = letter.around.map((c) => c.title);
 const urls = letter.around.map((c) => c.url);
+const letterUrls = [
+  ...(letter.lead?.url ? [letter.lead.url] : []),
+  ...urls,
+];
+const letterTitles = [
+  ...(letter.lead?.title ? [letter.lead.title] : []),
+  ...titles,
+];
 
 assert.ok(
-  urls.some((u) => u.includes("cedar-polka-fest")),
+  letterUrls.some((u) => u.includes("cedar-polka-fest")),
   "Polka Fest in letter",
 );
 assert.ok(
-  urls.some((u) => u.includes("garfield-township")),
+  letterUrls.some((u) => u.includes("garfield-township")),
   "Garfield ban in letter",
 );
-assert.ok(urls.some((u) => u.includes("leelanau")), "Leelanau housing in letter");
 assert.ok(
-  urls.some((u) => u.includes("fema-aid") || u.includes("april-flooding")),
+  letterUrls.some((u) => u.includes("leelanau")),
+  "Leelanau housing in letter",
+);
+assert.ok(
+  letterUrls.some((u) => u.includes("fema-aid") || u.includes("april-flooding")),
   "FEMA flood aid in letter",
 );
-assert.ok(urls.some((u) => u.includes("treasurer")), "GT treasurer report in letter");
+assert.ok(
+  letterUrls.some((u) => u.includes("treasurer")),
+  "GT treasurer report in letter (lead or Around)",
+);
 
 const iprCount = urls.filter((u) =>
   u.includes("interlochenpublicradio.org"),
@@ -339,7 +353,12 @@ const reCount = letter.around.filter((c) =>
   (c.sources ?? []).some((s) => /record-eagle/i.test(s)),
 ).length;
 assert.ok(reCount <= 2, "RE cap stays ≤2");
-assert.ok(reCount >= 1, "RE treasurer should rank");
+assert.ok(
+  reCount >= 1 ||
+    (letter.lead?.sources ?? []).some((s) => /record-eagle/i.test(s)) ||
+    (letter.lead?.url ?? "").includes("record-eagle"),
+  "RE treasurer should rank as lead or Around",
+);
 
 const eyesOnlyCount = letter.around.filter((c) =>
   (c.sources ?? []).some((s) =>
@@ -365,14 +384,14 @@ for (const bad of [
   /M-115 near Cadillac/i,
 ]) {
   assert.ok(
-    !titles.some((t) => bad.test(t)),
+    !letterTitles.some((t) => bad.test(t)),
     `lifestyle/out card must not appear: ${bad}`,
   );
 }
 
 // Smaller desks' hard news should beat 9&10 crash flood; IPR can take 3.
 assert.ok(
-  !urls.some((u) => u.includes("m-115-near-cadillac")),
+  !letterUrls.some((u) => u.includes("m-115-near-cadillac")),
   "9&10 Cadillac crash must not crowd out smaller-desk hard news",
 );
 
@@ -381,7 +400,11 @@ const phrasePart = subject.replace(/^🗞️\s*/, "");
 assert.match(subject, /^🗞️ /);
 assert.match(subject, /Garfield data-center ban/);
 assert.match(subject, /Leelanau housing survey/);
-assert.match(subject, /FEMA deadline Monday/);
+// Lead may be RE treasurer (hard-news fallback when no unused original) or FEMA.
+assert.ok(
+  /FEMA deadline Monday|GT treasurer under oath|treasurer/i.test(subject),
+  `subject should include FEMA or treasurer lead phrase, got ${subject}`,
+);
 assert.doesNotMatch(
   subject,
   /Library News|Ski Hall|Ready,? Set|Polka|Glen Eyrie|Driver Charged in Center(?! Road)|Sheriff'?s office looking/i,

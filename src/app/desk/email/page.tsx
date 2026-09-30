@@ -3,6 +3,7 @@ import { DeskChrome } from "@/components/desk/DeskChrome";
 import { DeskGlobalPull } from "@/components/desk/DeskGlobalPull";
 import { DeskLetterAroundProvider } from "@/components/desk/DeskLetterAroundContext";
 import { DeskLetterCardPicker } from "@/components/desk/DeskLetterCardPicker";
+import { DeskLetterLeadPicker } from "@/components/desk/DeskLetterLeadPicker";
 import { DeskLetterSendControls } from "@/components/desk/DeskLetterSendControls";
 import { DeskSubscribers } from "@/components/desk/DeskSubscribers";
 import { formatStoryDateline } from "@/lib/dates";
@@ -16,6 +17,7 @@ import {
 } from "@/lib/data/store";
 import {
   deskLetterMixHint,
+  listDeskLeadCandidates,
   listDeskLetterCandidates,
 } from "@/lib/desk-letter-cards";
 import {
@@ -72,6 +74,11 @@ export default async function DeskEmailPage() {
     currentAround: edition.around,
     today,
   });
+  const leadCandidates = listDeskLeadCandidates(data, {
+    currentLead: edition.lead,
+    currentAround: edition.around,
+    today,
+  });
   const mixHint = deskLetterMixHint(edition.around);
   const pulledItemCount = data.stories.filter((s) => !s.is_original).length;
 
@@ -84,8 +91,9 @@ export default async function DeskEmailPage() {
       <div className="mx-auto max-w-3xl px-4 py-10 md:px-6">
         <h1 className="font-serif text-3xl">Email</h1>
         <p className="mt-2 text-[#444]">
-          Morning letter for signups. Pick the Around mix, set the subject,
-          send live from here, and keep the archive. Do not invent a letter.
+          Morning letter for signups. Pick the lead and Around mix, set the
+          subject, send live from here, and keep the archive. Do not invent a
+          letter.
         </p>
 
         <div className="mt-6">
@@ -97,11 +105,17 @@ export default async function DeskEmailPage() {
         </div>
 
         <DeskLetterAroundProvider
-          key={`cards-${today}-${edition.around_locked ? "locked" : "auto"}-${edition.around.map((c) => c.url).join("|")}`}
+          key={`cards-${today}-${edition.around_locked ? "locked" : "auto"}-${edition.lead_locked ? "lead-lock" : "lead-auto"}-${edition.lead?.url ?? ""}-${edition.around.map((c) => c.url).join("|")}`}
           initialAround={edition.around}
           aroundLocked={Boolean(edition.around_locked)}
           initialMixHint={mixHint}
         >
+          <DeskLetterLeadPicker
+            lead={edition.lead}
+            leadLocked={Boolean(edition.lead_locked)}
+            candidates={leadCandidates}
+          />
+
           <DeskLetterCardPicker
             max={LETTER_AROUND_MAX}
             candidates={candidates}
@@ -213,6 +227,7 @@ export default async function DeskEmailPage() {
                 <p className="mt-0.5 text-sm text-muted">
                   {letter.around.length} headlines
                   {letter.lead ? " · lead" : ""}
+                  {letter.lead_locked ? " · Desk lead" : ""}
                   {letter.alerts.length
                     ? ` · ${letter.alerts.length} alerts`
                     : ""}
