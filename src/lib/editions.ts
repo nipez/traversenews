@@ -109,7 +109,7 @@ export function buildEditionSnapshot(
 ): EditionSnapshot {
   const clusters = clusterStories(data.stories, data.sources);
   const originals = clusters.filter((c) => c.is_original);
-  // Drop yesterday’s edition bay heads only (not the whole older archive).
+  // Drop every card that already ran in a past letter or homepage edition.
   // Staff originals only for the lead — never invent a lead or promote wire
   // into it. Keep today’s original even if the same piece also ran yesterday.
   const aroundLocked = Boolean(
@@ -117,9 +117,9 @@ export function buildEditionSnapshot(
   );
   const around = aroundLocked
     ? options.around!.slice(0, BAY_AROUND_MAX)
-    : selectFreshAroundTheBay(clusters, data.editions, at).map((c) =>
-        toStoryCard(c),
-      );
+    : selectFreshAroundTheBay(clusters, data.editions, at, {
+        email_editions: data.email_editions,
+      }).map((c) => toStoryCard(c));
   const leadCluster = originals[0] ?? null;
 
   const weekendEvents = selectTonightEvents(data.events, data.sources, {

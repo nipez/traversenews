@@ -405,6 +405,210 @@ assert.ok(
   "shorter letter is fine — never pad with Saturday’s head",
 );
 
+// --- Single homepage appearance (not letter) must still block the letter ---
+const HOUSING_TITLE = "Summer Housing Prices Soar Across Grand Traverse";
+const HOUSING_URL =
+  "https://www.record-eagle.com/news/local_news/summer-housing-prices";
+const HOUSING_REWRITE_TITLE =
+  "Summer housing prices soar in Traverse City market";
+const HOUSING_REWRITE_URL =
+  "https://www.9and10news.com/2026/09/29/summer-housing-prices/";
+const FLIGHTS_TICKER_TITLE =
+  "Cherry Capital Airport adds nonstop flights to Denver";
+const FLIGHTS_TICKER_URL =
+  "https://www.traverseticker.com/news/cherry-capital-denver-flights/";
+const FLIGHTS_UPNORTH_TITLE =
+  "Cherry Capital Airport nonstop Denver flights begin this winter";
+const FLIGHTS_UPNORTH_URL =
+  "https://upnorthlive.com/news/local/tvc-denver-nonstop";
+const CADILLAC_TITLE = "Cadillac council OKs downtown streetscape bid";
+const CADILLAC_URL =
+  "https://www.cadillacnews.com/news/streetscape-bid-okd/";
+const FRESH_SEPT_URL = "https://www.interlochenpublicradio.org/2026/09/29/fresh/";
+const FRESH_SEPT_TITLE = "County road millage draft heads to November ballot";
+
+const housingHomepage: EditionSnapshot = {
+  date: "2026-09-26",
+  captured_at: "2026-09-26T12:00:00.000Z",
+  lead: null,
+  around: [
+    {
+      title: HOUSING_TITLE,
+      dek: "Market.",
+      url: HOUSING_URL,
+      published_at: "2026-09-26T10:00:00.000Z",
+      sources: ["Record-Eagle"],
+      byline: null,
+      slug: null,
+      is_original: false,
+    },
+  ],
+  events: [],
+  civic: [],
+};
+
+const flightsLetter: EmailEditionSnapshot = {
+  date: "2026-09-20",
+  captured_at: "2026-09-20T12:00:00.000Z",
+  lead: null,
+  around: [
+    {
+      title: FLIGHTS_TICKER_TITLE,
+      dek: "Airport.",
+      url: FLIGHTS_TICKER_URL,
+      sources: ["The Ticker"],
+    },
+    {
+      title: CADILLAC_TITLE,
+      dek: "Outside Desk picker — still counts.",
+      url: CADILLAC_URL,
+      sources: ["Cadillac News"],
+    },
+  ],
+  alerts: [],
+  tonight: [],
+  civic: [],
+  sports: [],
+};
+
+const sept29Data = {
+  beats: [],
+  sources: [
+    sourceTicker,
+    source910,
+    sourceNx,
+    {
+      id: "src_re",
+      name: "Record-Eagle",
+      beat_id: "beat_news",
+      homepage: "https://www.record-eagle.com",
+      feed_url: null,
+      pull_method: "rss",
+      enabled: true,
+      notes: "",
+    } as Source,
+    {
+      id: "src_upnorth",
+      name: "UpNorthLive",
+      beat_id: "beat_news",
+      homepage: "https://upnorthlive.com",
+      feed_url: null,
+      pull_method: "rss",
+      enabled: true,
+      notes: "",
+    } as Source,
+    {
+      id: "src_cadillac",
+      name: "Cadillac News",
+      beat_id: "beat_news",
+      homepage: "https://www.cadillacnews.com",
+      feed_url: null,
+      pull_method: "rss",
+      enabled: true,
+      notes: "",
+    } as Source,
+  ],
+  stories: [
+    story({
+      id: "housing_re",
+      title: HOUSING_TITLE,
+      url: HOUSING_URL,
+      source_id: "src_re",
+      dek: "Ran Sep 26 homepage only.",
+      published_at: "2026-09-26T10:00:00.000Z",
+    }),
+    story({
+      id: "housing_910",
+      title: HOUSING_REWRITE_TITLE,
+      url: HOUSING_REWRITE_URL,
+      source_id: "src_910",
+      dek: "Same-story rewrite of Sep 26 homepage head.",
+      published_at: "2026-09-29T09:00:00.000Z",
+    }),
+    story({
+      id: "flights_ticker",
+      title: FLIGHTS_TICKER_TITLE,
+      url: FLIGHTS_TICKER_URL,
+      source_id: "src_ticker",
+      dek: "Mailed Sep 20.",
+      published_at: "2026-09-20T10:00:00.000Z",
+    }),
+    story({
+      id: "flights_upnorth",
+      title: FLIGHTS_UPNORTH_TITLE,
+      url: FLIGHTS_UPNORTH_URL,
+      source_id: "src_upnorth",
+      dek: "Second-outlet rewrite of Sep 20 Ticker flights card.",
+      published_at: "2026-09-29T08:00:00.000Z",
+    }),
+    story({
+      id: "cadillac",
+      title: CADILLAC_TITLE,
+      url: CADILLAC_URL,
+      source_id: "src_cadillac",
+      dek: "Outside Desk picker but mailed Sep 20.",
+      published_at: "2026-09-20T11:00:00.000Z",
+    }),
+    story({
+      id: "fresh_sept",
+      title: FRESH_SEPT_TITLE,
+      url: FRESH_SEPT_URL,
+      source_id: "src_910",
+      dek: "Never-run hard news for Sep 29.",
+      published_at: "2026-09-29T07:00:00.000Z",
+    }),
+    story({
+      id: "fresh_sept_2",
+      title: "Boardman River bridge deck repairs start Monday",
+      url: "https://www.northernexpress.com/news/boardman-bridge-deck/",
+      source_id: "src_northern",
+      dek: "Second unused hard news.",
+      published_at: "2026-09-29T06:30:00.000Z",
+    }),
+  ],
+  events: [],
+  athletics: [],
+  schools: [],
+  subscribers: [],
+  unsubscribed: [],
+  tips: [],
+  event_tips: [],
+  last_pull_at: null,
+  editions: [housingHomepage],
+  email_editions: [flightsLetter],
+  drafts: [],
+} as unknown as AppData;
+
+const sept29 = new Date("2026-09-29T16:00:00.000Z");
+const sept29Letter = buildEmailEditionSnapshot(sept29Data, sept29);
+assert.equal(sept29Letter.date, "2026-09-29");
+assert.ok(
+  sept29Letter.around.every(
+    (c) =>
+      c.url !== HOUSING_URL &&
+      c.url !== HOUSING_REWRITE_URL &&
+      !/housing|home prices/i.test(c.title),
+  ),
+  "single Sep 26 homepage housing head (and rewrite) must not enter letter",
+);
+assert.ok(
+  sept29Letter.around.every(
+    (c) =>
+      c.url !== FLIGHTS_TICKER_URL &&
+      c.url !== FLIGHTS_UPNORTH_URL &&
+      !/cherry capital|denver|nonstop/i.test(c.title),
+  ),
+  "Sep 20 letter flights card and UpNorthLive rewrite must stay out",
+);
+assert.ok(
+  sept29Letter.around.every((c) => c.url !== CADILLAC_URL),
+  "Cadillac News card from past letter (outside Desk picker) must stay out",
+);
+assert.ok(
+  sept29Letter.around.some((c) => c.url === FRESH_SEPT_URL),
+  "never-run hard news should ship",
+);
+
 console.log(
-  `dry-run-letter-fresh: ok (around=${letter.around.length}, tueAround=${tuesdayLetter.around.length}, skipped stale + rewrite + recent-letter heads)`,
+  `dry-run-letter-fresh: ok (around=${letter.around.length}, tueAround=${tuesdayLetter.around.length}, sept29=${sept29Letter.around.length}, skipped stale + rewrite + archive heads)`,
 );

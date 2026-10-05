@@ -3,9 +3,10 @@
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { useDeskLetterAround } from "@/components/desk/DeskLetterAroundContext";
-import type {
-  DeskLetterCandidate,
-  LetterCardPastRun,
+import {
+  formatPastRunFlag,
+  type DeskLetterCandidate,
+  type LetterCardPastRun,
 } from "@/lib/desk-letter-cards";
 import { letterCardIdentity } from "@/lib/email-editions";
 import type { EmailStoryCard } from "@/lib/types";
@@ -18,23 +19,7 @@ type Props = {
 };
 
 function pastFlags(runs: LetterCardPastRun[]): string {
-  return runs
-    .slice(0, 3)
-    .map((run) => {
-      const [y, m, d] = run.date.split("-").map(Number);
-      const label =
-        y && m && d
-          ? new Intl.DateTimeFormat("en-US", {
-              timeZone: "America/Detroit",
-              month: "short",
-              day: "numeric",
-            }).format(new Date(Date.UTC(y, m - 1, d, 17, 0, 0)))
-          : run.date;
-      return run.kind === "letter"
-        ? `ran ${label} letter`
-        : `ran ${label} homepage`;
-    })
-    .join(" · ");
+  return runs.slice(0, 3).map(formatPastRunFlag).join(" · ");
 }
 
 export function DeskLetterCardPicker({
@@ -180,8 +165,8 @@ export function DeskLetterCardPicker({
       </h2>
       <p className="mt-1 text-sm text-[#444]">
         {variant === "homepage"
-          ? `Pick up to ${max} cards for today’s public homepage bay. Flags show recent letter or homepage runs. Saves lock the mix — pulls keep it until you reset to auto.`
-          : `Pick up to ${max} cards for today's morning letter. Flags show recent letter or homepage runs. Preview and send lock the mix you see here — pulls keep it until you reset to auto.`}
+          ? `Pick up to ${max} cards for today’s public homepage bay. Flags show why auto mix drops a card (already ran, or same story as a prior head). Saves lock the mix — pulls keep it until you reset to auto.`
+          : `Pick up to ${max} cards for today's morning letter. Flags show why auto mix drops a card (already ran, or same story as a prior head). Preview and send lock the mix you see here — pulls keep it until you reset to auto.`}
       </p>
 
       <p className="mt-3 text-sm text-muted">
@@ -342,9 +327,7 @@ export function DeskLetterCardPicker({
                     </p>
                   ) : (
                     <p className="mt-1 text-sm text-muted">
-                      {variant === "homepage"
-                        ? "Not in recent editions"
-                        : "Not in recent letters"}
+                      Never ran on a letter or homepage edition
                     </p>
                   )}
                 </div>
