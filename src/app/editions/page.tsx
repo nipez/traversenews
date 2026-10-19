@@ -1,13 +1,18 @@
 import Link from "next/link";
 import { PublicShell } from "@/components/PublicShell";
 import { formatEditionLabel } from "@/lib/editions";
-import { publicPageMeta, publicTitleSegments } from "@/lib/page-meta";
+import {
+  publicMetaDescriptions,
+  publicPageMeta,
+  publicTitleSegments,
+} from "@/lib/page-meta";
 import { getEditionsSnapshot } from "@/lib/public-snapshots";
 
 export const dynamic = "force-dynamic";
 
 export function generateMetadata() {
   return publicPageMeta(publicTitleSegments().editions, {
+    description: publicMetaDescriptions().editions,
     canonicalPath: "/editions",
   });
 }

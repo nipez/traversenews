@@ -38,7 +38,7 @@ export const TRAVERSE_SITE: SiteConfig = {
   gaId: "G-H554KXZD5B",
   letterPreviewOnly: false,
   description:
-    "Traverse City local news: original reporting plus headlines from other desks, events, and civic listings.",
+    "Traverse City news today — original local reporting, headlines from other desks, events, civic meetings, and prep sports. One tab for the bay.",
   localKicker: "Bay side",
   staffEmail: "nick@traverse.news",
   tipsEmail: "tips@traverse.news",

@@ -2,10 +2,23 @@
  * JSON-LD + sitemap SEO foundations.
  * Run: npm run test:seo-json-ld
  */
-import { newsArticleJsonLd, siteGraphJsonLd } from "../src/lib/json-ld";
-import { publicPageMeta } from "../src/lib/page-meta";
+import {
+  breadcrumbListJsonLd,
+  newsArticleJsonLd,
+  siteDefaultImageUrl,
+  siteGraphJsonLd,
+} from "../src/lib/json-ld";
+import {
+  publicMetaDescriptions,
+  publicPageMeta,
+  publicTitleSegments,
+  storyDocumentTitle,
+} from "../src/lib/page-meta";
 import type { PublicOriginalCard } from "../src/lib/public-snapshots";
-import { buildSitemapXml } from "../src/lib/sitemap";
+import {
+  buildNewsSitemapXml,
+  buildSitemapXml,
+} from "../src/lib/sitemap";
 import { getSite, resetSiteCache, siteWordmark } from "../src/lib/sites";
 import { resetSeedCatalog } from "../src/lib/data/store";
 
@@ -39,6 +52,19 @@ const sampleStory = (overrides: Partial<PublicOriginalCard> = {}): PublicOrigina
   ...overrides,
 });
 
+/** Real live slug used for field-shape validation (fixture data, not a network fetch). */
+const prowlingStory = (): PublicOriginalCard =>
+  sampleStory({
+    slug: "traverse-city-commissioners-advance-prowling-park-trespass-rules",
+    title:
+      "Traverse City commissioners advance prowling, park-trespass rules after heated Hull Park debate",
+    dek: "All but one commissioner backed the two ordinances Monday night after a public comment period that forced a short recess. A vote to formally enact them is scheduled for Oct. 19.",
+    url: "https://traverse.news/story/traverse-city-commissioners-advance-prowling-park-trespass-rules",
+    published_at: "2026-10-08T15:40:04.056Z",
+    image_url: null,
+    section: "Civic",
+  });
+
 setSite("traverse");
 {
   const graph = siteGraphJsonLd();
@@ -55,6 +81,21 @@ setSite("traverse");
   );
   assert(web["@type"] === "WebSite", "website type");
   assert(web.name === "traverse.news", "website name is wordmark");
+  const action = web.potentialAction as {
+    "@type": string;
+    target: { urlTemplate: string };
+    "query-input": string;
+  };
+  assert(action["@type"] === "SearchAction", "SearchAction present");
+  assert(
+    action.target.urlTemplate ===
+      "https://traverse.news/search?q={search_term_string}",
+    "SearchAction urlTemplate",
+  );
+  assert(
+    action["query-input"] === "required name=search_term_string",
+    "SearchAction query-input",
+  );
   assert(!JSON.stringify(graph).includes("Ann Arbor"), "TC graph has no AA");
 
   const article = newsArticleJsonLd(sampleStory());
@@ -62,7 +103,7 @@ setSite("traverse");
   assert(article.headline === "Sample original headline", "headline");
   assert(article.description === "A short dek for the piece.", "dek");
   assert(article.datePublished === "2026-09-10T12:00:00.000Z", "datePublished");
-  assert(article.dateModified === undefined, "no invented dateModified");
+  assert(article.dateModified === article.datePublished, "dateModified = publish");
   const author = article.author as { "@type": string; name: string };
   assert(author["@type"] === "Organization", "author is Organization");
   assert(author.name === siteWordmark(), "author is desk wordmark");
@@ -82,7 +123,54 @@ setSite("traverse");
   );
 
   const noImage = newsArticleJsonLd(sampleStory({ image_url: null }));
-  assert(noImage.image === undefined, "omit image when missing");
+  assert(Array.isArray(noImage.image), "fallback image always present");
+  assert(
+    (noImage.image as string[])[0] === siteDefaultImageUrl(),
+    "fallback is site default image",
+  );
+
+  // Real slug shape check (required NewsArticle fields).
+  const live = newsArticleJsonLd(prowlingStory());
+  const liveJson = JSON.stringify(live);
+  JSON.parse(liveJson); // must parse
+  for (const key of [
+    "headline",
+    "datePublished",
+    "dateModified",
+    "author",
+    "publisher",
+    "image",
+    "mainEntityOfPage",
+  ] as const) {
+    assert(live[key] !== undefined, `prowling story has ${key}`);
+  }
+  assert(
+    (live.author as { name: string }).name === "traverse.news",
+    "prowling author desk",
+  );
+  assert(
+    (live.publisher as { logo: { url: string } }).logo.url.includes("favicon"),
+    "prowling publisher logo",
+  );
+  assert(
+    (live.mainEntityOfPage as { "@id": string })["@id"].includes(
+      "traverse-city-commissioners-advance-prowling-park-trespass-rules",
+    ),
+    "prowling mainEntityOfPage",
+  );
+
+  const crumbs = breadcrumbListJsonLd([
+    { name: "Today", path: "/" },
+    {
+      name: prowlingStory().title,
+      path: `/story/${prowlingStory().slug}`,
+    },
+  ]);
+  assert(crumbs["@type"] === "BreadcrumbList", "breadcrumb type");
+  assert(
+    (crumbs.itemListElement as unknown[]).length === 2,
+    "breadcrumb two steps",
+  );
 
   const meta = publicPageMeta("Events in Traverse City", {
     canonicalPath: "/events",
@@ -91,12 +179,40 @@ setSite("traverse");
     (meta.alternates as { canonical?: string })?.canonical === "/events",
     "canonical path on meta",
   );
+  assert(
+    (meta.twitter as { card?: string })?.card === "summary_large_image",
+    "twitter card large image",
+  );
+  assert(
+    Array.isArray((meta.openGraph as { images?: unknown })?.images),
+    "og:image fallback on section meta",
+  );
+
+  const storyMeta = publicPageMeta(storyDocumentTitle("Headline here"), {
+    absoluteTitle: true,
+    canonicalPath: "/story/headline-here",
+  });
+  assert(
+    (storyMeta.title as { absolute?: string })?.absolute ===
+      "Headline here | traverse.news",
+    "story absolute title uses pipe",
+  );
+
+  const homeTitle = publicTitleSegments().home;
+  assert(homeTitle.length <= 60, `home title under 60 chars (got ${homeTitle.length})`);
+  assert(homeTitle.includes("Traverse City News Today"), "home title intent");
+  assert(homeTitle.includes("traverse.news"), "home title brand");
+  const homeDesc = publicMetaDescriptions().home;
+  assert(homeDesc.length <= 155, `home desc under 155 (got ${homeDesc.length})`);
+  assert(publicMetaDescriptions().events.includes("Traverse City"), "events desc");
+  assert(publicMetaDescriptions().sports.includes("Traverse City"), "sports desc");
 
   const xml = buildSitemapXml({
     stories: [
       {
         is_original: true,
         slug: "sample-original",
+        title: "Sample original headline",
         published_at: "2026-09-10T12:00:00.000Z",
       },
       { is_original: false, slug: "agg", published_at: "2026-09-10T12:00:00.000Z" },
@@ -110,6 +226,8 @@ setSite("traverse");
   assert(xml.includes("<urlset"), "urlset");
   assert(xml.includes("https://traverse.news/events"), "section events");
   assert(xml.includes("https://traverse.news/civic"), "section civic");
+  assert(xml.includes("https://traverse.news/shows"), "section shows");
+  assert(xml.includes("https://traverse.news/sports"), "section sports");
   assert(xml.includes("https://traverse.news/search"), "section search");
   assert(
     xml.includes("https://traverse.news/story/sample-original"),
@@ -121,6 +239,41 @@ setSite("traverse");
   assert(!xml.includes("/story/agg"), "no aggregated card urls");
   assert(!xml.includes("/whats-on"), "no whats-on redirect");
   assert(!xml.includes("/desk"), "no desk");
+
+  const now = new Date("2026-10-19T00:00:00.000Z");
+  const newsXml = buildNewsSitemapXml(
+    {
+      stories: [
+        {
+          is_original: true,
+          slug: "fresh-piece",
+          title: "Fresh piece & more",
+          published_at: "2026-10-18T12:00:00.000Z",
+        },
+        {
+          is_original: true,
+          slug: "stale-piece",
+          title: "Stale piece",
+          published_at: "2026-10-01T12:00:00.000Z",
+        },
+        {
+          is_original: false,
+          slug: "agg-outbound",
+          title: "Outbound",
+          published_at: "2026-10-18T12:00:00.000Z",
+        },
+      ],
+    },
+    now,
+  );
+  assert(newsXml.includes('xmlns:news='), "news namespace");
+  assert(newsXml.includes("<news:news>"), "news:news block");
+  assert(newsXml.includes("<news:name>Traverse News</news:name>"), "publication name");
+  assert(newsXml.includes("<news:language>en</news:language>"), "language");
+  assert(newsXml.includes("/story/fresh-piece"), "fresh in news sitemap");
+  assert(newsXml.includes("Fresh piece &amp; more"), "title xml-escaped");
+  assert(!newsXml.includes("/story/stale-piece"), "stale excluded from news sitemap");
+  assert(!newsXml.includes("/story/agg-outbound"), "no outbound in news sitemap");
 }
 
 setSite("ann-arbor");
@@ -132,6 +285,15 @@ setSite("ann-arbor");
   assert(web.name === "a2.news", "AA website wordmark");
   assert(!JSON.stringify(graph).includes("Traverse City"), "AA no TC place");
   assert(!JSON.stringify(graph).includes("traverse.news"), "AA no TC domain");
+  const action = web.potentialAction as { target: { urlTemplate: string } };
+  assert(
+    action.target.urlTemplate.includes("search?q="),
+    "AA SearchAction",
+  );
+  assert(
+    !action.target.urlTemplate.includes("traverse.news"),
+    "AA SearchAction not TC",
+  );
 
   const article = newsArticleJsonLd(
     sampleStory({
@@ -156,6 +318,11 @@ setSite("ann-arbor");
   });
   assert(xml.includes(`${getSite().defaultOrigin}/story/aa-piece`), "AA story loc");
   assert(!xml.includes("https://traverse.news/"), "AA sitemap not TC origin");
+
+  const homeTitle = publicTitleSegments().home;
+  assert(homeTitle.includes("Ann Arbor News Today"), "AA home title");
+  assert(homeTitle.includes("a2.news"), "AA home brand");
+  assert(!homeTitle.includes("Traverse"), "AA home no TC");
 }
 
 setSite("traverse");

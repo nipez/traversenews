@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import { Archivo, Source_Serif_4 } from "next/font/google";
 import { JsonLd } from "@/components/JsonLd";
-import { siteGraphJsonLd } from "@/lib/json-ld";
+import { siteDefaultImageUrl, siteGraphJsonLd } from "@/lib/json-ld";
 import { publicTitleSegments } from "@/lib/page-meta";
 import { getSite, siteOrigin, siteWordmark } from "@/lib/sites";
 import "./globals.css";
@@ -26,6 +26,7 @@ export function generateMetadata(): Metadata {
   const mark = siteWordmark();
   const origin = siteOrigin();
   const homeTitle = publicTitleSegments().home;
+  const ogImage = siteDefaultImageUrl();
   return {
     metadataBase: new URL(origin),
     title: {
@@ -42,10 +43,13 @@ export function generateMetadata(): Metadata {
       url: origin,
       siteName: mark,
       type: "website",
+      images: [{ url: ogImage }],
     },
     twitter: {
+      card: "summary_large_image",
       title: homeTitle,
       description: site.description,
+      images: [ogImage],
     },
     other: {
       "color-scheme": "light only",

@@ -1,11 +1,16 @@
 import { PublicShell } from "@/components/PublicShell";
 import { TipsForm } from "@/components/TipsForm";
-import { publicPageMeta, publicTitleSegments } from "@/lib/page-meta";
+import {
+  publicMetaDescriptions,
+  publicPageMeta,
+  publicTitleSegments,
+} from "@/lib/page-meta";
 
 export const dynamic = "force-dynamic";
 
 export function generateMetadata() {
   return publicPageMeta(publicTitleSegments().tips, {
+    description: publicMetaDescriptions().tips,
     canonicalPath: "/tips",
   });
 }

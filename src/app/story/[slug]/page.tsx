@@ -6,7 +6,11 @@ import { MorningScanSignup } from "@/components/MorningScanSignup";
 import { TipsForm } from "@/components/TipsForm";
 import { TonightBlock } from "@/components/TonightBlock";
 import { formatStoryDateline } from "@/lib/dates";
-import { newsArticleJsonLd } from "@/lib/json-ld";
+import {
+  breadcrumbListJsonLd,
+  newsArticleJsonLd,
+  siteDefaultImageUrl,
+} from "@/lib/json-ld";
 import {
   getHomeSnapshot,
   getOriginalsSnapshot,
@@ -15,7 +19,7 @@ import {
 } from "@/lib/public-snapshots";
 import { sourceLinksFromUrls } from "@/lib/source-links";
 import { getPublicOriginalByline } from "@/lib/originals";
-import { publicPageMeta } from "@/lib/page-meta";
+import { publicPageMeta, storyDocumentTitle } from "@/lib/page-meta";
 import {
   isQuotedParagraph,
   readTimeMinutes,
@@ -36,14 +40,17 @@ export async function generateMetadata({ params }: Props) {
   const story = await loadOriginal(slug);
   if (!story) return publicPageMeta("Story");
   const path = `/story/${slug}`;
-  return publicPageMeta(story.title, {
+  const image = story.image_url?.trim() || siteDefaultImageUrl();
+  return publicPageMeta(storyDocumentTitle(story.title), {
+    absoluteTitle: true,
     description: story.dek,
     authors: [{ name: getPublicOriginalByline() }],
     canonicalPath: path,
     openGraph: {
       type: "article",
       publishedTime: story.published_at,
-      ...(story.image_url ? { images: [{ url: story.image_url }] } : {}),
+      modifiedTime: story.published_at,
+      images: [{ url: image }],
     },
   });
 }
@@ -71,6 +78,12 @@ export default async function StoryPage({ params }: Props) {
   return (
     <PublicShell active="/" header="compact">
       <JsonLd data={newsArticleJsonLd(story)} />
+      <JsonLd
+        data={breadcrumbListJsonLd([
+          { name: "Today", path: "/" },
+          { name: story.title, path: `/story/${story.slug}` },
+        ])}
+      />
       <div className="story-page">
         <header className="story-hero">
           {section ? (

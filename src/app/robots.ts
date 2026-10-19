@@ -3,8 +3,10 @@ import { siteOrigin } from "@/lib/sites";
 
 /**
  * Public crawlers: allow the site, keep Desk/API out of the crawl budget.
+ * Both the regular sitemap and Google News sitemap are listed.
  */
 export default function robots(): MetadataRoute.Robots {
+  const origin = siteOrigin();
   return {
     rules: [
       {
@@ -13,6 +15,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/desk", "/desk/", "/api/", "/api"],
       },
     ],
-    sitemap: `${siteOrigin()}/sitemap.xml`,
+    sitemap: [`${origin}/sitemap.xml`, `${origin}/news-sitemap.xml`],
   };
 }

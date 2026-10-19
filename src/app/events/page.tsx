@@ -6,7 +6,11 @@ import { SectionHero } from "@/components/SectionHero";
 import { getSite } from "@/lib/sites";
 import { formatCivicDate, formatEventWhenParts } from "@/lib/dates";
 import { venueKicker } from "@/lib/events";
-import { publicPageMeta, publicTitleSegments } from "@/lib/page-meta";
+import {
+  publicMetaDescriptions,
+  publicPageMeta,
+  publicTitleSegments,
+} from "@/lib/page-meta";
 import {
   getEventsSnapshot,
   getPageCopySnapshot,
@@ -19,6 +23,7 @@ export const dynamic = "force-dynamic";
 
 export function generateMetadata() {
   return publicPageMeta(publicTitleSegments().events, {
+    description: publicMetaDescriptions().events,
     canonicalPath: "/events",
   });
 }

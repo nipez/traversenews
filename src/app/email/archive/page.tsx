@@ -1,13 +1,18 @@
 import Link from "next/link";
 import { PublicShell } from "@/components/PublicShell";
 import { formatEmailEditionLabel } from "@/lib/email-editions";
-import { publicPageMeta, publicTitleSegments } from "@/lib/page-meta";
+import {
+  publicMetaDescriptions,
+  publicPageMeta,
+  publicTitleSegments,
+} from "@/lib/page-meta";
 import { getEmailArchiveSnapshot } from "@/lib/public-snapshots";
 
 export const dynamic = "force-dynamic";
 
 export function generateMetadata() {
   return publicPageMeta(publicTitleSegments().emailArchive, {
+    description: publicMetaDescriptions().emailArchive,
     canonicalPath: "/email/archive",
   });
 }

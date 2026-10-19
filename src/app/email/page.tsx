@@ -2,7 +2,11 @@ import Link from "next/link";
 import { MorningLetter } from "@/components/MorningLetter";
 import { MorningScanSignup } from "@/components/MorningScanSignup";
 import { PublicShell } from "@/components/PublicShell";
-import { publicPageMeta, publicTitleSegments } from "@/lib/page-meta";
+import {
+  publicMetaDescriptions,
+  publicPageMeta,
+  publicTitleSegments,
+} from "@/lib/page-meta";
 import { getEmailPreviewData } from "@/lib/queries";
 import { getSite } from "@/lib/sites";
 
@@ -10,6 +14,7 @@ export const dynamic = "force-dynamic";
 
 export function generateMetadata() {
   return publicPageMeta(publicTitleSegments().email, {
+    description: publicMetaDescriptions().email,
     canonicalPath: "/email",
   });
 }
