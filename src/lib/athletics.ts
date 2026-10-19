@@ -1,5 +1,6 @@
 import {
   detroitDayKey,
+  detroitWallToUtc,
   isDateOnlyStartsAt,
   parseEventStartsAt,
 } from "@/lib/dates";
@@ -371,22 +372,44 @@ export function sanitizeStoredAthletics(games: AthleticsGame[]): {
 }
 
 /**
- * Public Sports page: Detroit start-of-today through +7 days only.
- * Do not render a full season into HTML.
+ * Add Detroit calendar days to a YYYY-MM-DD key (noon Detroit anchor — DST-safe
+ * day step). Shared with letter archive lookback; kept here so athletics week
+ * bounds do not drift across the America/Detroit UTC offset or DST folds.
+ */
+export function addAthleticsDetroitCalendarDays(
+  dayKey: string,
+  daysToAdd: number,
+): string {
+  const [y, m, d] = dayKey.split("-").map(Number);
+  if (!y || !m || !d) return dayKey;
+  const noon = detroitWallToUtc(y, m, d, 12, 0, 0);
+  return detroitDayKey(
+    new Date(noon.getTime() + daysToAdd * 24 * 60 * 60 * 1000),
+  );
+}
+
+/**
+ * Public Sports page: Detroit start-of-today through +7 calendar days only.
+ * Do not render a full season into HTML. Keys are America/Detroit day strings
+ * (not UTC midnights), so a Worker cron at 12:00 UTC / 8am Detroit and a Desk
+ * rebuild later the same Detroit day share one window.
  */
 export function athleticsWeekDayBounds(
   now = new Date(),
   weekOffset: 0 | 1 = 0,
 ): { startKey: string; endKey: string } {
-  const dayMs = 24 * 60 * 60 * 1000;
+  const today = detroitDayKey(now);
   if (weekOffset === 0) {
-    const end = new Date(now.getTime() + ATHLETICS_WEEK_DAYS * dayMs);
-    return { startKey: detroitDayKey(now), endKey: detroitDayKey(end) };
+    return {
+      startKey: today,
+      endKey: addAthleticsDetroitCalendarDays(today, ATHLETICS_WEEK_DAYS),
+    };
   }
-  const thisEnd = new Date(now.getTime() + ATHLETICS_WEEK_DAYS * dayMs);
-  const nextEnd = new Date(now.getTime() + ATHLETICS_WEEK_DAYS * 2 * dayMs);
-  const start = new Date(thisEnd.getTime() + dayMs);
-  return { startKey: detroitDayKey(start), endKey: detroitDayKey(nextEnd) };
+  const thisEnd = addAthleticsDetroitCalendarDays(today, ATHLETICS_WEEK_DAYS);
+  return {
+    startKey: addAthleticsDetroitCalendarDays(thisEnd, 1),
+    endKey: addAthleticsDetroitCalendarDays(today, ATHLETICS_WEEK_DAYS * 2),
+  };
 }
 
 function selectAthleticsInDayBounds(

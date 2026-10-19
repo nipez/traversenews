@@ -291,13 +291,11 @@ assert.ok(
   "fresh bay card should ship",
 );
 assert.ok(
-  letter.civic.every((c) => c.title !== "City Commission"),
-  "identical civic from yesterday is skipped",
-);
-assert.ok(
   letter.alerts.every((c) => !c.url.includes("alert-1")),
   "identical alert from yesterday is skipped",
 );
+// Civic / sports / What's on are upcoming listings, not spent news cards —
+// see test:letter-listings-window. This fixture has no live civic events.
 
 // --- Saturday head must not return Tuesday (look back past yesterday only) ---
 const GARFIELD_TITLE =

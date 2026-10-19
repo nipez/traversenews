@@ -795,15 +795,18 @@ export function pickAroundBackfillCard(
 /**
  * Assemble the morning letter from the same live mix rules as /email preview.
  *
- * Uniqueness:
+ * Uniqueness (lead / Around / alerts only):
  * - Every past morning letter and homepage edition in the archive — never
- *   recycle a card that already ran on either surface (URL / title).
+ *   recycle a bay or alert card that already ran (URL / title).
  * - Same-story second-outlet rewrites inside SAME_STORY_LOOKBACK_DAYS stay out.
  * - When a prior identity hits a cluster, every member URL/title is excluded
  *   so a second-desk rewrite cannot follow.
  * - Lead (“The one to read”): newest unused original, else best unused hard
  *   news — never an already-run original with an empty fallthrough.
  * - Shorter unused mix beats padding with already-run heads. Hard news first.
+ * - Sports / What’s on / civic stay in their upcoming windows even when a
+ *   prior letter already listed the same game or meeting (they still cannot
+ *   resurface as Around cards via collectPastBayExclusion).
  *
  * Never invents stories, kickoffs, or meetings.
  */
@@ -899,6 +902,10 @@ export function buildEmailEditionSnapshot(
     .slice(0, 2);
 
   // Same featured pool as /whats-on (timed nights out — not library-first noon).
+  // Upcoming listings are not spent news cards: keep sports / events / civic
+  // while they are still in window even if a prior letter already showed them.
+  // Their identities still feed collectPastBayExclusion so a mailed volleyball
+  // head cannot resurface as an Around bay card.
   const tonight = selectTonightEvents(data.events, data.sources, {
     now: at,
     limit: 6,
@@ -907,14 +914,12 @@ export function buildEmailEditionSnapshot(
     timedOnly: true,
   })
     .map(toEventCard)
-    .filter((e) => !wasInPriorLetter(e, priorExpanded))
     .slice(0, 3);
 
   const civic = dedupeEvents(data.events)
     .filter((e) => isCivicEvent(e, data.sources))
     .filter((e) => eventInUpcomingWindow(e, at))
     .map(toEventCard)
-    .filter((e) => !wasInPriorLetter(e, priorExpanded))
     .slice(0, 2);
 
   const weekGames = filterAthleticsSlate(
@@ -935,7 +940,6 @@ export function buildEmailEditionSnapshot(
       if (g.time_unknown) card.time_unknown = true;
       return card;
     })
-    .filter((g) => !wasInPriorLetter(g, priorExpanded))
     .slice(0, 4);
 
   const subject_override =
