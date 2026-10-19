@@ -41,7 +41,7 @@ export const ANN_ARBOR_SITE: SiteConfig = {
   gaId: null,
   letterPreviewOnly: true,
   description:
-    "Ann Arbor and Washtenaw County local news: original reporting plus headlines from other desks, events, and civic listings.",
+    "Ann Arbor news today — original local reporting across Ann Arbor, Ypsilanti, Saline, Chelsea, and Dexter, plus events, civic, and schools.",
   localKicker: "Town",
   staffEmail: "nick@traverse.news",
   tipsEmail: "tips@traverse.news",

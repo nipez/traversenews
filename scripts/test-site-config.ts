@@ -343,7 +343,11 @@ assert(
 setSite("traverse");
 {
   const t = publicTitleSegments();
-  assert(t.home === "Traverse City News · traverse.news", "TC home title");
+  assert(
+    t.home === "Traverse City News Today | Local MI News – traverse.news",
+    "TC home title",
+  );
+  assert(t.home.length <= 60, "TC home title under ~60 chars");
   assert(t.events === "Events in Traverse City", "TC events title");
   assert(t.sports === "Prep sports in Traverse City", "TC sports title");
   assert(t.schools === "Schools in Traverse City", "TC schools title");
@@ -372,7 +376,10 @@ setSite("traverse");
 setSite("ann-arbor");
 {
   const t = publicTitleSegments();
-  assert(t.home === "Ann Arbor News · a2.news", "AA home title");
+  assert(
+    t.home === "Ann Arbor News Today | Local MI News – a2.news",
+    "AA home title",
+  );
   assert(t.events === "Events in Ann Arbor", "AA events uses place, not TC");
   assert(
     !t.civic.includes("Traverse"),

@@ -2,7 +2,11 @@ import { DeskRail } from "@/components/DeskRail";
 import { PublicShell } from "@/components/PublicShell";
 import { SectionHero } from "@/components/SectionHero";
 import { SchoolsDistrictToggle } from "@/components/SchoolsDistrictToggle";
-import { publicPageMeta, publicTitleSegments } from "@/lib/page-meta";
+import {
+  publicMetaDescriptions,
+  publicPageMeta,
+  publicTitleSegments,
+} from "@/lib/page-meta";
 import {
   getSchoolsSnapshot,
   getSectionHeadersSnapshot,
@@ -12,6 +16,7 @@ export const dynamic = "force-dynamic";
 
 export function generateMetadata() {
   return publicPageMeta(publicTitleSegments().schools, {
+    description: publicMetaDescriptions().schools,
     canonicalPath: "/schools",
   });
 }

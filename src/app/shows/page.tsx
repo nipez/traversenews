@@ -4,7 +4,11 @@ import { PublicShell } from "@/components/PublicShell";
 import { SectionHero } from "@/components/SectionHero";
 import { ShowsVenueFilter } from "@/components/ShowsVenueFilter";
 import { detroitDayKey } from "@/lib/dates";
-import { publicPageMeta, publicTitleSegments } from "@/lib/page-meta";
+import {
+  publicMetaDescriptions,
+  publicPageMeta,
+  publicTitleSegments,
+} from "@/lib/page-meta";
 import { getSite } from "@/lib/sites";
 import {
   getSectionHeadersSnapshot,
@@ -15,6 +19,7 @@ export const dynamic = "force-dynamic";
 
 export function generateMetadata() {
   return publicPageMeta(publicTitleSegments().shows, {
+    description: publicMetaDescriptions().shows,
     canonicalPath: "/shows",
   });
 }

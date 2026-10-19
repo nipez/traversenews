@@ -41,7 +41,9 @@ import {
   sourceIdForDistrict,
 } from "@/lib/schools";
 import {
+  buildNewsSitemapXml,
   buildSitemapXml,
+  NEWS_SITEMAP_CACHE_KEY,
   SITEMAP_CACHE_KEY,
   SITEMAP_TTL_SECONDS,
 } from "@/lib/sitemap";
@@ -721,6 +723,13 @@ export async function writeAllPublicSnapshots(data: AppData): Promise<void> {
           stories: data.stories,
           editions: data.editions,
           email_editions: data.email_editions,
+        }),
+        { expirationTtl: SITEMAP_TTL_SECONDS },
+      ),
+      kv.put(
+        NEWS_SITEMAP_CACHE_KEY,
+        buildNewsSitemapXml({
+          stories: data.stories,
         }),
         { expirationTtl: SITEMAP_TTL_SECONDS },
       ),

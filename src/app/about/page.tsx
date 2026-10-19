@@ -1,6 +1,10 @@
 import { DeskRail } from "@/components/DeskRail";
 import { PublicShell } from "@/components/PublicShell";
-import { publicPageMeta, publicTitleSegments } from "@/lib/page-meta";
+import {
+  publicMetaDescriptions,
+  publicPageMeta,
+  publicTitleSegments,
+} from "@/lib/page-meta";
 import { getPageCopySnapshot } from "@/lib/public-snapshots";
 import { SafeEssayBody, SafeInlineCopy } from "@/lib/safe-copy";
 
@@ -8,6 +12,7 @@ export const dynamic = "force-dynamic";
 
 export function generateMetadata() {
   return publicPageMeta(publicTitleSegments().about, {
+    description: publicMetaDescriptions().about,
     canonicalPath: "/about",
   });
 }

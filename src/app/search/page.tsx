@@ -1,13 +1,18 @@
 import Link from "next/link";
 import { PublicShell } from "@/components/PublicShell";
 import { getAppData } from "@/lib/data/store";
-import { publicPageMeta, publicTitleSegments } from "@/lib/page-meta";
+import {
+  publicMetaDescriptions,
+  publicPageMeta,
+  publicTitleSegments,
+} from "@/lib/page-meta";
 import { searchAppData, searchHasAny, type SearchHit } from "@/lib/search";
 
 export const dynamic = "force-dynamic";
 
 export function generateMetadata() {
   return publicPageMeta(publicTitleSegments().search, {
+    description: publicMetaDescriptions().search,
     canonicalPath: "/search",
   });
 }

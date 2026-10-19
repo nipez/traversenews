@@ -3,7 +3,11 @@ import { OfficialCalendars } from "@/components/OfficialCalendars";
 import { PublicShell } from "@/components/PublicShell";
 import { SectionHero } from "@/components/SectionHero";
 import { formatCivicDate, formatEventWhenParts } from "@/lib/dates";
-import { publicPageMeta, publicTitleSegments } from "@/lib/page-meta";
+import {
+  publicMetaDescriptions,
+  publicPageMeta,
+  publicTitleSegments,
+} from "@/lib/page-meta";
 import { getSite } from "@/lib/sites";
 import {
   getCivicSnapshot,
@@ -15,6 +19,7 @@ export const dynamic = "force-dynamic";
 
 export function generateMetadata() {
   return publicPageMeta(publicTitleSegments().civic, {
+    description: publicMetaDescriptions().civic,
     canonicalPath: "/civic",
   });
 }
